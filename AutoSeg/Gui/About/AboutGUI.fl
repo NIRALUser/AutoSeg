@@ -1,0 +1,86 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0109 
+header_name {.h} 
+code_name {.cxx}
+class AboutGUI {open
+} {
+  Function {AboutGUI()} {open
+  } {
+    Fl_Window g_MainWindow {
+      label {AutoSeg - About} open selected
+      xywh {1020 303 425 370} type Single modal visible
+    } {
+      Fl_Button {} {
+        image {AutoSeg.jpg} xywh {4 5 222 170} deactivate
+      }
+      Fl_Button {} {
+        label {AutoSeg 2.0}
+        xywh {275 14 115 30} box NO_BOX labelfont 1 labelsize 17
+      }
+      Fl_Button {} {
+        label {Clement Vachet}
+        xywh {275 35 115 30} box NO_BOX labelsize 15 align 20
+      }
+      Fl_Return_Button g_OKButton {
+        label OK
+        callback {OKButtonPressed();}
+        xywh {190 335 53 25}
+      }
+      Fl_Button {} {
+        image {NeuroLib.jpg} xywh {40 251 345 84} box NO_BOX deactivate
+      }
+      Fl_Button {} {
+        label {Original Pipeline: }
+        xywh {232 125 90 24} box NO_BOX labelfont 1 labelsize 11
+      }
+      Fl_Button {} {
+        label {Sylvain Gouttard}
+        xywh {317 125 105 24} box NO_BOX labelsize 12 align 16
+      }
+      Fl_Button {} {
+        label {Website:  }
+        xywh {30 230 58 24} box NO_BOX labelfont 1 labelsize 13 align 16
+      }
+      Fl_Button {} {
+        label {www.niral.unc.edu}
+        xywh {90 230 120 24} box NO_BOX labelsize 13 align 16
+      }
+      Fl_Button {} {
+        label {Acknowledgement: }
+        xywh {236 145 90 24} box NO_BOX labelfont 1 labelsize 11
+      }
+      Fl_Button {} {
+        label {Kitware Inc.}
+        xywh {350 145 70 24} box NO_BOX labelsize 12 align 16
+      }
+      Fl_Button {} {
+        label {cvachet@@unc.edu}
+        xywh {270 55 155 30} box NO_BOX align 20
+      }
+      Fl_Button {} {
+        label {Laboratory: }
+        xywh {10 185 75 24} box NO_BOX labelfont 1 labelsize 13 align 16
+      }
+      Fl_Button {} {
+        label {Neuro Image Research and Analysis Laboratories}
+        xywh {90 185 293 24} box NO_BOX labelsize 13 align 16
+      }
+      Fl_Button {} {
+        label {University of North Carolina at Chapel Hill (NC, USA)}
+        xywh {90 205 310 24} box NO_BOX labelsize 13 align 16
+      }
+      Fl_Button {} {
+        label {Emilie Perrot}
+        xywh {275 80 115 30} box NO_BOX
+      }
+      Fl_Button {} {
+        label {Clementine Ouziel}
+        xywh {285 100 100 25} box NO_BOX
+      }
+    }
+  }
+  Function {OKButtonPressed()} {open return_type {virtual void}
+  } {}
+  Function {~AboutGUI()} {open return_type virtual
+  } {}
+} 

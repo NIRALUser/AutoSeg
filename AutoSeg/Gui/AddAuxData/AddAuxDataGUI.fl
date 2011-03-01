@@ -1,0 +1,156 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0109 
+header_name {.h} 
+code_name {.cxx}
+class AddAuxDataGUI {open
+} {
+  Function {AddAuxDataGUI()} {open
+  } {
+    Fl_Window g_MainWindow {
+      label {AutoSeg - AddAuxData} open
+      xywh {648 323 615 600} type Double modal visible
+    } {
+      Fl_Button {} {
+        label {Select the files:}
+        xywh {135 9 225 38} box NO_BOX
+      }
+      Fl_Button g_AuxT1File {
+        label {...}
+        callback {SetAuxT1FileGUI()}
+        tooltip {Set the T1 Image} xywh {25 66 25 25} deactivate
+      }
+      Fl_Button g_AuxT2File {
+        label {...}
+        callback {SetAuxT2FileGUI()}
+        tooltip {Set the T1 Image} xywh {25 108 25 25} deactivate
+      }
+      Fl_Button g_AuxPDFile {
+        label {...}
+        callback {SetAuxPDFileGUI()}
+        tooltip {Set the T1 Image} xywh {25 150 25 25} deactivate
+      }
+      Fl_Button g_Aux1File {
+        label {...}
+        callback {SetAux1FileGUI()}
+        tooltip {Set the Aux1 Image} xywh {25 192 25 25} deactivate
+      }
+      Fl_Button g_Aux2File {
+        label {...}
+        callback {SetAux2FileGUI()}
+        tooltip {Set the Aux2 Image} xywh {25 234 25 25} deactivate
+      }
+      Fl_Button g_Aux3File {
+        label {...}
+        callback {SetAux3FileGUI()}
+        tooltip {Set the Aux3 Image} xywh {25 277 25 25} deactivate
+      }
+      Fl_Button g_Aux4File {
+        label {...}
+        callback {SetAux4FileGUI()}
+        tooltip {Set the Aux4 Image} xywh {25 319 25 25} deactivate
+      }
+      Fl_Button g_Aux5File {
+        label {...}
+        callback {SetAux5FileGUI()}
+        tooltip {Set the Aux5 Image} xywh {25 361 25 25} deactivate
+      }
+      Fl_Button g_Aux6File {
+        label {...}
+        callback {SetAux6FileGUI()}
+        tooltip {Set the Aux6 Image} xywh {25 404 25 25} deactivate
+      }
+      Fl_Button g_Aux7File {
+        label {...}
+        callback {SetAux7FileGUI()}
+        tooltip {Set the Aux7 Image} xywh {25 446 25 25} deactivate
+      }
+      Fl_Button g_Aux8File {
+        label {...}
+        callback {SetAux8FileGUI()}
+        tooltip {Set the Aux8 Image} xywh {25 489 25 25} deactivate
+      }
+      Fl_Output g_AuxT1FileDisp {
+        label {T1 Image} selected
+        xywh {145 66 430 24} deactivate
+      }
+      Fl_Output g_AuxT2FileDisp {
+        label {T2 Image}
+        xywh {145 108 430 24} deactivate
+      }
+      Fl_Output g_AuxPDFileDisp {
+        label {PD Image}
+        xywh {147 149 430 24} deactivate
+      }
+      Fl_Output g_Aux1FileDisp {
+        label {Aux1 Image}
+        xywh {145 192 430 24} deactivate
+      }
+      Fl_Output g_Aux2FileDisp {
+        label {Aux2 Image}
+        xywh {145 234 430 24} deactivate
+      }
+      Fl_Output g_Aux3FileDisp {
+        label {Aux3 Image}
+        xywh {145 277 430 24} deactivate
+      }
+      Fl_Output g_Aux4FileDisp {
+        label {Aux4 Image}
+        xywh {145 319 430 24} deactivate
+      }
+      Fl_Output g_Aux5FileDisp {
+        label {Aux5 Image}
+        xywh {145 361 430 24} deactivate
+      }
+      Fl_Output g_Aux6FileDisp {
+        label {Aux6 Image}
+        xywh {145 404 430 24} deactivate
+      }
+      Fl_Output g_Aux7FileDisp {
+        label {Aux7 Image}
+        xywh {145 446 430 24} deactivate
+      }
+      Fl_Output g_Aux8FileDisp {
+        label {Aux8 Image}
+        xywh {145 489 430 24} deactivate
+      }
+      Fl_Return_Button g_OKButton {
+        label OK
+        callback {OKButtonPressed();}
+        xywh {385 550 85 25}
+      }
+      Fl_Button g_CancelButton {
+        label Cancel
+        callback {CancelButtonPressed();}
+        xywh {485 550 85 25}
+      }
+    }
+  }
+  Function {SetAuxT1FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAuxT2FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAuxPDFileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux1FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux2FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux3FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux4FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux5FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux6FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux7FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetAux8FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {OKButtonPressed()} {open return_type {virtual void}
+  } {}
+  Function {~AddAuxDataGUI()} {open return_type virtual
+  } {}
+  Function {CancelButtonPressed()} {open return_type {virtual void}
+  } {}
+} 

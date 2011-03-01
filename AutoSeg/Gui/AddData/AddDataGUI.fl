@@ -1,0 +1,68 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0109 
+header_name {.h} 
+code_name {.cxx}
+class AddDataGUI {open selected
+} {
+  Function {AddDataGUI()} {open
+  } {
+    Fl_Window g_MainWindow {
+      label {AutoSeg - AddData} open
+      xywh {625 468 520 275} type Double modal visible
+    } {
+      Fl_Button {} {
+        label {Select the files:}
+        xywh {135 9 225 38} box NO_BOX
+      }
+      Fl_Button g_T1File {
+        label {...}
+        callback {SetT1FileGUI()}
+        tooltip {Set the T1 Image} xywh {25 70 25 25}
+      }
+      Fl_Button g_T2File {
+        label {...}
+        callback {SetT2FileGUI()}
+        tooltip {Set the T2 Image} xywh {25 130 25 25} deactivate
+      }
+      Fl_Button g_PDFile {
+        label {...}
+        callback {SetPDFileGUI()}
+        tooltip {Set the PD Image} xywh {25 190 25 25} deactivate
+      }
+      Fl_Output g_T1FileDisp {
+        label {T1 Image}
+        xywh {60 70 450 25} align 5
+      }
+      Fl_Output g_T2FileDisp {
+        label {T2 Image}
+        xywh {60 130 450 25} align 5 deactivate
+      }
+      Fl_Output g_PDFileDisp {
+        label {PD Image}
+        xywh {60 190 450 25} align 5 deactivate
+      }
+      Fl_Return_Button g_OKButton {
+        label OK
+        callback {OKButtonPressed();}
+        xywh {365 240 60 25}
+      }
+      Fl_Button g_CancelButton {
+        label Cancel
+        callback {CancelButtonPressed();}
+        xywh {440 240 70 25}
+      }
+    }
+  }
+  Function {SetT1FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetT2FileGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetPDFileGUI()} {open return_type {virtual void}
+  } {}
+  Function {OKButtonPressed()} {open return_type {virtual void}
+  } {}
+  Function {~AddDataGUI()} {open return_type virtual
+  } {}
+  Function {CancelButtonPressed()} {open return_type {virtual void}
+  } {}
+} 
