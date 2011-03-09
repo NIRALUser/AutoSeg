@@ -3812,6 +3812,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"            Run (output '${warpCmd} -c ${AtlasAffRegCase} ${SkullStrippedFile} ${DofOutWarpFile} ${Alpha} ${Beta} ${Gamma} ${MaxPerturbation} ${NumIteration} ${NumBasis}')"<<std::endl;
 		BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
 		BMSAutoSegMainFile<<"         EndIf (${DofOutWarpFileList})"<<std::endl;
+
 		BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
 		BMSAutoSegMainFile<<"         # Transforming all volumes, by default uses cspline interpolation"<<std::endl;
 		BMSAutoSegMainFile<<"            echo ('Applying transformation...')"<<std::endl;
@@ -3824,6 +3825,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       //   BMSAutoSegMainFile<<"         Run (output ${warptoolCmd})"<<std::endl;
 		BMSAutoSegMainFile<<"         Run (output '${warpCmd} -a ${AtlasAffRegCase} ${DofOutWarpFile} ${OutputFile} -linear')"<<std::endl;
 		BMSAutoSegMainFile<<"         AppendFile(${ReportFile} ${output})"<<std::endl<<std::endl;
+
+		BMSAutoSegMainFile<<"         Run (output 'gzip ${DofOutWarpFile}')"<<std::endl;
 	}
 	else if (GetBRAINSDemonWarpMethod())
 	{
@@ -4452,6 +4455,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 		if (!GetBRAINSDemonWarpMethod())
 		{
+			BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_initializetransform.txt)"<<std::endl; 
 			BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${GridTemplate})"<<std::endl;
 			BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
 		}
@@ -4467,6 +4471,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 		if (GetClassicWarpingMethod())
 		{
+			BMSAutoSegMainFile<<"              If (${IsHFieldFileZipped} == 1)"<<std::endl;
+			BMSAutoSegMainFile<<"                 # Unzipping HField File "<<std::endl;
+			BMSAutoSegMainFile<<"                 Run (output 'gunzip -f ${ZippedHFieldFile}')"<<std::endl;
+			BMSAutoSegMainFile<<"                 set(IsHFieldFileZipped 0)"<<std::endl;
+			BMSAutoSegMainFile<<"              EndIf (${IsHFieldFileZipped})"<<std::endl;
 	  //      BMSAutoSegMainFile<<"           SetApp(warptoolCmd @WarpTool)"<<std::endl;
 	  // 	  BMSAutoSegMainFile<<"           SetAppOption(warptoolCmd.SourceImage ${LabelAff}) "<<std::endl;        
 	  // 	  BMSAutoSegMainFile<<"           SetAppOption(warptoolCmd.HFieldFile ${HFieldFile}) "<<std::endl;
