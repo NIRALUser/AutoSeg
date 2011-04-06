@@ -599,6 +599,7 @@ int main(const int argc, const char **argv)
 				SubsampleIter = Subsample->Begin();
 
 				// mean computation
+			
 				double totalProb = 0;
 				double meanSum = 0;
 				for (int k=0; k<(Subsample->Size()); k++)
@@ -617,7 +618,7 @@ int main(const int argc, const char **argv)
 				}
 				double standardDeviation = sqrt((1/totalProb)*sdSum) ;
 			
-				tab[0][j]=totalProb*pixVol;
+				tab[0][j]=nbPix*pixVol;
 				tab[1][j]=mean;
 				tab[2][j]=standardDeviation;
 				tab[3][j]=Subsample->GetMeasurementVectorByIndex(0)[0];
