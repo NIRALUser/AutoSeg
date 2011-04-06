@@ -400,9 +400,9 @@ int main(const int argc, const char **argv)
       cerr << "changeOrig needs 3 comma separated entries: px,py,pz " << endl;
       exit(1); 
     } else {
-      origCoor[0] = (int)textend[0];
-      origCoor[1] = (int)textend[1];
-      origCoor[2] = (int)textend[2];
+      origCoor[0] = textend[0];
+      origCoor[1] = textend[1];
+      origCoor[2] = textend[2];
     } 
   }
   bool changeSpOn    = ipExistsArgument(argv, "-changeSp");
@@ -1100,7 +1100,7 @@ int main(const int argc, const char **argv)
 	  if(pix <= Lbl && pix > 0)
 	    {
 	      itout.Set(outpix);
-	      if(pix != 0)
+	      if(debug && pix != 0)
 		std::cout << "Pix: " << pix << " Lbl: " << Lbl << " Outputval: " << outpix << std::endl;
 	    }
 	  else
