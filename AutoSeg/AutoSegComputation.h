@@ -19,10 +19,12 @@
 # define AUTOSEGCOMPUTATION_H
 
 #include <iostream>
+#include <cstring>
 #include <fstream>
 #include <itksys/Process.h>
 #include <vector>
 #include <itksys/Glob.hxx>
+#include <cstdlib>
 
 #include "TextDisplayGUIControls.h"
 

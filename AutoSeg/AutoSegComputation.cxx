@@ -17,7 +17,6 @@
 =========================================================================*/
 
 #include "AutoSegComputation.h"
-#include <cstdlib>
 
 AutoSegComputation::AutoSegComputation()
 {}
