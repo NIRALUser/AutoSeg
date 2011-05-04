@@ -18,12 +18,10 @@
 # ifndef AUTOSEGCOMPUTATION_H
 # define AUTOSEGCOMPUTATION_H
 
-#include <iostream.h>
-#include <cstring>
-#include "fstream.h"
-#include <stdio.h>
+#include <iostream>
+#include <fstream>
 #include <itksys/Process.h>
-#include <vector.h>
+#include <vector>
 #include <itksys/Glob.hxx>
 
 #include "TextDisplayGUIControls.h"

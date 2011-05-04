@@ -935,7 +935,7 @@ void AutoSegComputation::ComputeData()
 	std::string idAux8;
 	std::vector<std::string> Aux8List;
 
-	ofstream file(DataFile.c_str(), ios::out );
+	std::ofstream file(DataFile.c_str(), std::ios::out );
 	if (file)
 	{
 		file<<"// Automatic Data Selection"<<std::endl;
@@ -945,7 +945,7 @@ void AutoSegComputation::ComputeData()
 		std::cerr<<"Can not open file AutoSeg_Data.txt"<<std::endl;
 	}
 
-	ofstream Auxfile (AuxDataFile.c_str(), ios::out);
+	std::ofstream Auxfile (AuxDataFile.c_str(), std::ios::out);
 	if (Auxfile)
 	{
 		Auxfile<<"// Automatic Auxiliairy Data Selection"<<std::endl;
@@ -1304,7 +1304,7 @@ void AutoSegComputation::ComputeData()
 					}
 				}
 			}
-			ofstream file(DataFile.c_str(), ios::app );
+			std::ofstream file(DataFile.c_str(), std::ios::app );
 			if (file)
 			{	
 				file<<(OrigT1CasesList.at(i)).c_str();
@@ -1315,7 +1315,7 @@ void AutoSegComputation::ComputeData()
 					file<<" "<<(PDList.at(cptPD-1)).c_str();
 				}
 				if(GetAux1Image()){
-					ofstream Auxfile (AuxDataFile.c_str(), ios::app );
+					std::ofstream Auxfile (AuxDataFile.c_str(), std::ios::app );
 					if (Auxfile)
 					{
 						if (GetAuxT1Image() && !AuxT1List.empty()){
@@ -4949,12 +4949,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"   set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
 		BMSAutoSegMainFile<<"   set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
 
-		BMSAutoSegMainFile<<"	Set(tmpMRMLFile ${MRMLPath}/tmp.mrml)"<<endl;
-		BMSAutoSegMainFile<<"	WriteFile(${tmpMRMLFile} '<MRML >\\n')"<<endl;
-		BMSAutoSegMainFile<<"	AppendFile(${tmpMRMLFile} '</MRML>\\n')"<<endl;
+		BMSAutoSegMainFile<<"	Set(tmpMRMLFile ${MRMLPath}/tmp.mrml)"<<std::endl;
+		BMSAutoSegMainFile<<"	WriteFile(${tmpMRMLFile} '<MRML >\\n')"<<std::endl;
+		BMSAutoSegMainFile<<"	AppendFile(${tmpMRMLFile} '</MRML>\\n')"<<std::endl;
 		BMSAutoSegMainFile<<"   Set (command_line ${ModelMakerCmd} ${AllROIFile} --generateAll --modelSceneFile ${tmpMRMLFile})"<<std::endl;
 		BMSAutoSegMainFile<<"   Run (prog_output ${command_line} prog_error)"<<std::endl;
-		BMSAutoSegMainFile<<"	DeleteFile(${tmpMRMLFile})"<<endl;
+		BMSAutoSegMainFile<<"	DeleteFile(${tmpMRMLFile})"<<std::endl;
 
 		BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
 		BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode1\"  name=\"warp_ROI\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
