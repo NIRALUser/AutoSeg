@@ -1,0 +1,109 @@
+//     Automatic Segmentation Parameter File
+
+// Atlases
+Tissue Segmentation Atlas Directory: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/ABC_wskull/
+Tissue Segmentation Atlas Type: T1
+Common Coordinate Image: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_wskull.nrrd
+Common Coordinate Image Type: T1
+ROI Atlas File: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final.nrrd
+
+// Subcortical Structures
+Amygdala Left: 
+Amygdala Right: 
+Caudate Left: 
+Caudate Right: 
+Hippocampus Left: 
+Hippocampus Right: 
+Pallidus Left: 
+Pallidus Right: 
+Putamen Left: 
+Putamen Right: 
+Lateral Ventricle Left: 
+Lateral Ventricle Right: 
+
+// Generic ROI Maps
+ROI File 1: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_subcort.nrrd
+ROI File 2: 
+ROI File 3: 
+ROI File 4: 
+ROI File 5: 
+
+// Parcellation Maps
+Tissue Map: Soft
+Parcellation File 1: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_parc.nrrd
+Parcellation File 2: 
+Parcellation File 3: 
+
+// Tissue Segmentation
+EM Software: ABC
+Filter Iterations: 10
+Filter TimeStep: 0.01
+Filter Method: Curvature flow
+Max Bias Degree: 2
+Initial Distribution Estimator: robust
+Prior 1: 1
+Prior 2: 1
+Prior 3: 0.7
+Prior 4: 1
+Fluid Atlas Warp: 1
+Fluid Atlas Affine: 0
+Fluid Atlas FATW: 0
+Fluid Atlas Warp Iterations: 6
+Fluid Atlas Warp Max Step: 0.5
+Atlas Linear Mapping: affine
+Image Linear Mapping: id
+
+
+// Loop
+Loop: 1
+Atlas Loop: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/ABC/
+Loop - Number of iterations: 2
+
+// Grid Template
+Rigid Registration: 1
+Is ROIAtlasGridTemplate: 1
+GridTemplate SizeX: 0
+GridTemplate SizeY: 0
+GridTemplate SizeZ: 0
+GridTemplate SpacingX: 0
+GridTemplate SpacingY: 0
+GridTemplate SpacingZ: 0
+
+// Atlas Warping
+Warping Method: BRAINSDemonWarp
+Alpha: 0.01
+Beta: 0.01
+Gamma: 0.001
+Max Perturbation: 0.5
+NumBasis: 2000
+Scale 4 - Number Of Iterations: 50
+Scale 2 - Number Of Iterations: 25
+Scale 1 - Number Of Iterations: 100
+Registration Filter Type: LogDemons
+Deformation Field Smoothing Sigma: 1
+Pyramid Levels: 3
+Moving Shrink Factors: 4,4,4
+Fixed Shrink Factors: 4,4,4
+Iteration Count Pyramid Levels: 100,50,40
+
+// Skull Stripping
+Delete Vessels: 0
+
+// Intensity Rescaling
+Intensity Rescaling: Histogram quantile
+
+// Regional histogram
+Quantiles: 1,5,33,50,66,95,99
+Point Spacing: 10
+
+// N4 ITK Bias Field Correction
+N4 ITK Bias Field Correction: 1
+N4 Number of iterations: 50,40,30
+N4 Spline distance: 0
+N4 Shrink factor: 4
+N4 Convergence threshold: 0.0001
+N4 BSpline grid resolutions: 1,1,1
+N4 BSpline alpha: 0
+N4 BSpline beta: 0.5
+N4 Histogram sharpening: 0
+N4 BSpline order: 3
