@@ -12,86 +12,159 @@ IF (${CMAKE_SOURCE_DIR} STREQUAL ${AUTOSEG_SOURCE_DIR})
   SET (EXECUTABLE_OUTPUT_PATH ${AUTOSEG_BINARY_DIR}/bin CACHE PATH "Single output directory for building all executables.")
 ENDIF (${CMAKE_SOURCE_DIR} STREQUAL ${AUTOSEG_SOURCE_DIR})
 
-OPTION(COMPILE_AUTOSEG "Compile AutoSeg." ON)
-IF(COMPILE_AUTOSEG)
-  SUBDIRS(AutoSeg)
-ENDIF(COMPILE_AUTOSEG)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
+set(CMAKE_HELPER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+include(${CMAKE_HELPER_DIR}/CMakeBuildMacros.cmake)
+include(${CMAKE_HELPER_DIR}/PreventInSourceBuilds.cmake)
+include(${CMAKE_HELPER_DIR}/CMakeCommonExternalDefinitions.cmake)
 
-OPTION(COMPILE_IMAGEMATH "Compile ImageMath." ON)
-IF(COMPILE_IMAGEMATH)
-  SUBDIRS(ImageMath)
-ENDIF(COMPILE_IMAGEMATH)
+FIND_PACKAGE(FLTK REQUIRED)
 
-OPTION(COMPILE_IMAGESTAT "Compile ImageStat." ON)
-IF(COMPILE_IMAGESTAT)
-  SUBDIRS(ImageStat)
-ENDIF(COMPILE_IMAGESTAT)
+  #External Projects
+  include(ExternalProject)
+  if(CMAKE_EXTRA_GENERATOR)
+    set(gen "${CMAKE_EXTRA_GENERATOR} - ${CMAKE_GENERATOR}")
+  else()
+    set(gen "${CMAKE_GENERATOR}")
+  endif()
 
-OPTION(COMPILE_CONVERTITKFORMATS "Compile convertITKformats." ON)
-IF(COMPILE_CONVERTITKFORMATS)
-  SUBDIRS(convertITKformats)
-ENDIF(COMPILE_CONVERTITKFORMATS)
+OPTION(COMPILE_EXTERNAL_AUTOSEG "Compile AutoSeg." ON)
+IF(COMPILE_EXTERNAL_AUTOSEG)
+  PACKAGE_NEEDS_ITK("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  set(proj AutoSeg)
+  ExternalProject_Add(${proj}
+  SVN_REPOSITORY "https://www.nitrc.org/svn/autoseg/trunk/AutoSeg"
+  SVN_USERNAME slicerbot
+  SVN_PASSWORD slicer
+    SOURCE_DIR ${proj}
+    BINARY_DIR ${proj}-build
+    DEPENDS ${ITK_DEPEND}
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      ${LOCAL_CMAKE_BUILD_OPTIONS}
+      -DITK_DIR:PATH=${ITK_DIR}
+      -DFLTK_DIR:PATH=${FLTK_DIR}
+    INSTALL_COMMAND ""
+    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+  )
+  FORCE_BUILD_CHECK(${proj})
+ENDIF(COMPILE_EXTERNAL_AUTOSEG)
 
-OPTION(COMPILE_CORTTHICK "Compile CortThick." ON)
-IF(COMPILE_CORTTHICK)
-  SUBDIRS(CortThick)
-ENDIF(COMPILE_CORTTHICK)
+OPTION(COMPILE_EXTERNAL_NIRAL_UTILITIES "Compile NIRALUtilities." ON)
+IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
+  SUBDIRS (Libraries)
+  PACKAGE_NEEDS_ITK("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  PACKAGE_NEEDS_VTK_NOGUI("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  set(proj NIRALUtilities)
+  ExternalProject_Add(${proj}
+  SVN_REPOSITORY "https://www.nitrc.org/svn/niral_utilities/trunk/"
+  SVN_USERNAME slicerbot
+  SVN_PASSWORD slicer
+    SOURCE_DIR ${proj}
+    BINARY_DIR ${proj}-build
+    DEPENDS ${ITK_DEPEND} ${VTK_DEPEND}
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      ${LOCAL_CMAKE_BUILD_OPTIONS}
+      -DITK_DIR:PATH=${ITK_DIR}
+      -DVTK_DIR:PATH=${VTK_DIR}
+      -DCOMPILE_CONVERTITKFORMATS:BOOL=COMPILE_EXTERNAL_NIRAL_UTILITIES
+      -DCOMPILE_IMAGESTAT:BOOL=COMPILE_EXTERNAL_NIRAL_UTILITIES
+      -DCOMPILE_IMAGEMATH:BOOL=COMPILE_EXTERNAL_NIRAL_UTILITIES
+      -DCOMPILE_INTENSITYRESCALER:BOOL=COMPILE_EXTERNAL_NIRAL_UTILITIES
+    INSTALL_COMMAND ""
+    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+  )
+  FORCE_BUILD_CHECK(${proj})
+ENDIF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
 
-OPTION(COMPILE_INTENSITYRESCALER "Compile IntensityRescaler." ON)
-IF(COMPILE_INTENSITYRESCALER)
-  SUBDIRS (Libraries/Display)
-  SUBDIRS (Libraries/Algorithms)
-  SUBDIRS(IntensityRescaler)
-ENDIF(COMPILE_INTENSITYRESCALER)
+OPTION(COMPILE_EXTERNAL_CORTTHICK "Compile CortThick." ON)
+IF(COMPILE_EXTERNAL_CORTTHICK)
+  PACKAGE_NEEDS_ITK("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  PACKAGE_NEEDS_SlicerExecutionModel("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  PACKAGE_NEEDS_VTKWITHQT("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  set(proj CortThick)
+  ExternalProject_Add(${proj}
+  SVN_REPOSITORY "https://www.nitrc.org/svn/arctic/trunk/CortThick/"
+  SVN_USERNAME slicerbot
+  SVN_PASSWORD slicer
+    SOURCE_DIR ${proj}
+    BINARY_DIR ${proj}-build
+    DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND} ${VTK_DEPEND}
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      ${LOCAL_CMAKE_BUILD_OPTIONS}
+      -DITK_DIR:PATH=${ITK_DIR}
+      -DFLTK_DIR:PATH=${FLTK_DIR}
+      -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
+      -DVTK_DIR:PATH=${VTK_DIR}
+    INSTALL_COMMAND ""
+    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+  )
+  FORCE_BUILD_CHECK(${proj})
+ENDIF(COMPILE_EXTERNAL_CORTTHICK)
 
+OPTION(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP "Compile SegPostProcessCLP." ON)
+IF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
+  PACKAGE_NEEDS_ITK("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  PACKAGE_NEEDS_SlicerExecutionModel("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+  set(proj SegPostProcessCLP)
+  ExternalProject_Add(${proj}
+  SVN_REPOSITORY "https://www.nitrc.org/svn/spharm-pdm/Applications/SegPostProcessCLP/"
+  SVN_USERNAME slicerbot
+  SVN_PASSWORD slicer
+    SOURCE_DIR ${proj}
+    BINARY_DIR ${proj}-build
+    DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND}
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      ${LOCAL_CMAKE_BUILD_OPTIONS}
+      -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
+      -DITK_DIR:PATH=${ITK_DIR}
+    INSTALL_COMMAND ""
+    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+  )
+  FORCE_BUILD_CHECK(${proj})
+ENDIF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
 
-OPTION(COMPILE_SEGPOSTPROCESS "Compile SegPostProcess." ON)
-IF(COMPILE_SEGPOSTPROCESS)
-  SUBDIRS(SegPostProcess)
-ENDIF(COMPILE_SEGPOSTPROCESS)
-
-
-#   #External Projects
-#   include(ExternalProject)
-#   if(CMAKE_EXTRA_GENERATOR)
-#     set(gen "${CMAKE_EXTRA_GENERATOR} - ${CMAKE_GENERATOR}")
-#   else()
-#     set(gen "${CMAKE_GENERATOR}")
-#   endif()
-# 
-#   OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
-#   IF(COMPILE_EXTERNAL_ABC)
-#     # Build ABC https://www.nitrc.org/svn/abc/tags/ABC-REL1.3/
-#     set(proj ABC)
-#     IF (Slicer3_FOUND)
-#       ExternalProject_Add(${proj}
-#         SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.3/"
-#         SVN_USERNAME slicerbot
-#         SVN_PASSWORD slicer
-#         SOURCE_DIR ${proj}
-#         BINARY_DIR ${proj}-build
-#         DEPENDS  ${ITK_DEPEND}
-#         CMAKE_GENERATOR ${gen}
-#         CMAKE_ARGS
-#           ${LOCAL_CMAKE_BUILD_OPTIONS}
-#           -DSlicer3_DIR:PATH=${Slicer3_DIR}
-#           -DITK_DIR:PATH=${ITK_DIR}
-#       INSTALL_COMMAND ""
-#       )
-#     ELSE (Slicer3_FOUND)
-#       ExternalProject_Add(${proj}
-#         SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.3/"
-#         SVN_USERNAME slicerbot
-#         SVN_PASSWORD slicer
-#         SOURCE_DIR ${proj}
-#         BINARY_DIR ${proj}-build
-#         DEPENDS  ${ITK_DEPEND}
-#         CMAKE_GENERATOR ${gen}
-#         CMAKE_ARGS
-#           ${LOCAL_CMAKE_BUILD_OPTIONS}
-#           -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
-#           -DITK_DIR:PATH=${ITK_DIR}
-#       INSTALL_COMMAND ""
-#       )
-#     ENDIF (Slicer3_FOUND)
-#   ENDIF(COMPILE_EXTERNAL_ABC)
+  OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
+  IF(COMPILE_EXTERNAL_ABC)
+    # Build ABC https://www.nitrc.org/svn/abc/trunk/
+  PACKAGE_NEEDS_SlicerExecutionModel("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+    set(proj abc)
+    IF (Slicer3_FOUND)
+      ExternalProject_Add(${proj}
+        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/trunk/"
+        SVN_USERNAME slicerbot
+        SVN_PASSWORD slicer
+        SOURCE_DIR ${proj}
+        BINARY_DIR ${proj}-build
+        DEPENDS  ${ITK_DEPEND}
+        CMAKE_GENERATOR ${gen}
+        CMAKE_ARGS
+          ${LOCAL_CMAKE_BUILD_OPTIONS}
+          -DSlicer3_DIR:PATH=${Slicer3_DIR}
+          -DITK_DIR:PATH=${ITK_DIR}
+	  -DCOMPILE_SLICER3COMMANDLINE:BOOL=OFF
+	  -DCOMPILE_COMMANDLINE:BOOL=COMPILE_EXTERNAL_ABC
+      INSTALL_COMMAND ""
+      )
+    ELSE (Slicer3_FOUND)
+      ExternalProject_Add(${proj}
+        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/trunk/"
+        SVN_USERNAME slicerbot
+        SVN_PASSWORD slicer
+        SOURCE_DIR ${proj}
+        BINARY_DIR ${proj}-build
+        DEPENDS  ${ITK_DEPEND}
+        CMAKE_GENERATOR ${gen}
+        CMAKE_ARGS
+          ${LOCAL_CMAKE_BUILD_OPTIONS}
+          -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
+          -DITK_DIR:PATH=${ITK_DIR}
+	  -DCOMPILE_SLICER3COMMANDLINE:BOOL=OFF
+	  -DCOMPILE_COMMANDLINE:BOOL=COMPILE_EXTERNAL_ABC
+      INSTALL_COMMAND ""
+      )
+    ENDIF (Slicer3_FOUND)
+  ENDIF(COMPILE_EXTERNAL_ABC)
