@@ -2105,9 +2105,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"set (SegPostProcessCmd SegPostProcessCLP)"<<std::endl;
 	BMSAutoSegMainFile<<"set (IntensityRescalerCmd IntensityRescaler)"<<std::endl;
 	BMSAutoSegMainFile<<"set (convCmd convertITKformats)"<<std::endl;
-	BMSAutoSegMainFile<<"set (imgConvCmd convert)"<<std::endl;
-	BMSAutoSegMainFile<<"set (reorientCmd imconvert3)"<<std::endl;
-	BMSAutoSegMainFile<<"set (montageCmd montage)"<<std::endl;
 	BMSAutoSegMainFile<<"set (ImageStatCmd ImageStat)"<<std::endl;
 	BMSAutoSegMainFile<<"set (fWarpCmd fWarp)"<<std::endl;
 	BMSAutoSegMainFile<<"set (txApplyCmd txApply)"<<std::endl;
@@ -2376,6 +2373,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"      set (CasePath ${OrigCasePath})"<<std::endl;
 		BMSAutoSegMainFile<<"      set (CaseHead ${OrigCaseHead})"<<std::endl;
 		BMSAutoSegMainFile<<"      ListFileInDir(OutputFileN4List ${OrigCasePath}/${AutoSegDir}/${Bias}/ ${OrigCaseHead}${ProcessExtension}.nrrd)"<<std::endl;
+		BMSAutoSegMainFile<<"      If (${OutputFileN4List} == '')"<<std::endl;
 		BMSAutoSegMainFile<<"		Set (NbOfIterations "<<GetNbOfIterations()<<")"<<std::endl;
 		BMSAutoSegMainFile<<"		Set (SplineDistance "<<GetSplineDistance()<<")"<<std::endl;
 		BMSAutoSegMainFile<<"		Set (ShrinkFactor "<<GetShrinkFactor()<<")"<<std::endl;
@@ -2520,8 +2518,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 		if(GetN4ITKBiasFieldCorrection())
 		{
-			BMSAutoSegMainFile<<"      set (FirstCases ${OrigFirstCasePath}/${AutoSegDir}/${Bias}/${OrigFirstCaseHead}${ProcessExtension}.nrrd)"<<std::endl;
-			BMSAutoSegMainFile<<"      GetFilename (FirstCaseHead ${FirstCases} NAME_WITHOUT_EXTENSION)"<<std::endl;
+			BMSAutoSegMainFile<<"      set (FirstCase ${OrigFirstCasePath}/${AutoSegDir}/${Bias}/${OrigFirstCaseHead}${ProcessExtension}.nrrd)"<<std::endl;
+			BMSAutoSegMainFile<<"      GetFilename (FirstCaseHead ${FirstCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
 		}
 		else
 		{
@@ -2547,12 +2545,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"            ListFileInDir(TxtInitFileList ${AtlasIsoPath} ${TxtInitFileTail})"<<std::endl;
 		BMSAutoSegMainFile<<"            If (${TxtInitFileList} == '')"<<std::endl;  
 		BMSAutoSegMainFile<<"               echo ('Computing rigid transformation...')"<<std::endl;
-		BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCases} --transformType Rigid --useCenterOfHeadAlign --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+		BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --useCenterOfHeadAlign --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
 		BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
 		BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
 		BMSAutoSegMainFile<<"            Else ()"<<std::endl;
 		BMSAutoSegMainFile<<"               echo ('Computing rigid transformation with initial transform...')"<<std::endl;
-		BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCases} --transformType Rigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+		BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
 		BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
 		BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
 		BMSAutoSegMainFile<<"            EndIf (${TxtInitFileList})"<<std::endl;
@@ -2665,17 +2663,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 			if(GetN4ITKBiasFieldCorrection())
 			{
 				BMSAutoSegMainFile<<"      set (Case ${Path}/${AutoSegDir}/${Bias}/${CaseHead}${ProcessExtension}.nrrd)"<<std::endl;
+				BMSAutoSegMainFile<<"      set (FirstCase ${Path}/${AutoSegDir}/${Bias}/${FirstCaseHead}${ProcessExtension}.nrrd)"<<std::endl;
+				BMSAutoSegMainFile<<"      GetFilename (FirstCaseHead ${FirstCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
 			}
 			BMSAutoSegMainFile<<"      GetFilename (Path ${Case} PATH)"<<std::endl;
 			BMSAutoSegMainFile<<"      GetFilename (CaseHead ${Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
 
 			BMSAutoSegMainFile<<"         # Creating new Files"<<std::endl;
 			BMSAutoSegMainFile<<"          # Parameter File"<<std::endl;
+			BMSAutoSegMainFile<<"         set (TxtInitFile ${AtlasIsoPath}${FirstCaseHead}.txt)"<<std::endl;
+			BMSAutoSegMainFile<<"          # Parameter File"<<std::endl;
 			BMSAutoSegMainFile<<"         set (TxtOutFile ${AtlasIsoPath}${CaseHead}.txt)"<<std::endl;
 			BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
 			BMSAutoSegMainFile<<"         set (ReportFile ${AtlasIsoPath}${CaseHead}_out.txt)"<<std::endl;
 			BMSAutoSegMainFile<<"          # registered first Image"<<std::endl;
-			BMSAutoSegMainFile<<"         set (FirstCaseregAtlas ${AtlasIsoPath}${FirstCaseHead}${ProcessExtension}_regAtlas.nrrd)"<<std::endl;
+			BMSAutoSegMainFile<<"         set (FirstCaseregAtlas ${AtlasIsoPath}${FirstCaseHead}_regAtlas.nrrd)"<<std::endl;
 			BMSAutoSegMainFile<<"          # Output File"<<std::endl;
 			BMSAutoSegMainFile<<"         set (OutputFileTail ${CaseHead}_reg${FirstFile}_regAtlas.nrrd)"<<std::endl;
 			BMSAutoSegMainFile<<"         set (OutputFile ${AtlasIsoPath}${OutputFileTail})"<<std::endl;
@@ -2683,16 +2685,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 			BMSAutoSegMainFile<<"         If (${TxtOutFileList} == '')"<<std::endl;
 			BMSAutoSegMainFile<<"            # Computing Transformation"<<std::endl;
 			BMSAutoSegMainFile<<"            echo ('Computing rigid transformation...')"<<std::endl;
-			BMSAutoSegMainFile<<"            ListFileInDir(TxtInitFileList ${OrigFirstCasePath} ${TxtInitFileTail})"<<std::endl;
-			BMSAutoSegMainFile<<"            If (${TxtInitFileList} == '')"<<std::endl;
-			BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --useCenterOfHeadAlign --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
-			BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-			BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;      
-			BMSAutoSegMainFile<<"            Else ()"<<std::endl;
 			BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
 			BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-			BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
-			BMSAutoSegMainFile<<"            EndIf (${TxtInitFileList})"<<std::endl;
+			BMSAutoSegMainFile<<"           WriteFile(${ReportFile} ${output})"<<std::endl;
 			BMSAutoSegMainFile<<"         EndIf (${TxtOutFileList})"<<std::endl;
 			BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
 			BMSAutoSegMainFile<<"         echo ('Applying rigid transformation...')"<<std::endl;
@@ -5585,9 +5580,6 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
 	BMSAutoSegAuxFile<<"# Programs "<<std::endl;
 	BMSAutoSegAuxFile<<"set (ImageMathCmd ImageMath)"<<std::endl;
 	BMSAutoSegAuxFile<<"set (convCmd convertITKformats)"<<std::endl;
-	BMSAutoSegAuxFile<<"set (imgConvCmd convert)"<<std::endl;
-	BMSAutoSegAuxFile<<"set (reorientCmd imconvert3)"<<std::endl;
-	BMSAutoSegAuxFile<<"set (montageCmd montage)"<<std::endl;
 	BMSAutoSegAuxFile<<"set (ImageStatCmd ImageStat)"<<std::endl;
 	BMSAutoSegAuxFile<<"set (ResampleVolume2Cmd ResampleVolume2)"<<std::endl<<std::endl;
 	BMSAutoSegAuxFile<<"set (BRAINSFitCmd BRAINSFit)"<<std::endl<<std::endl;

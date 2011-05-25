@@ -62,7 +62,7 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
 
   // Initialization Default Parameter Files
 	std::strcpy(DefaultParameterFile, m_Computation.GetAutoSegPath());
-	std::strcat(DefaultParameterFile, "AutoSeg_DefaultParameters.txt");
+	std::strcat(DefaultParameterFile, "AutoSeg_DefaultParameters_Adult.txt");
 	SetDefaultParameterFile(DefaultParameterFile);
 	IsDefaultParameterFile = LoadParameterFile(GetDefaultParameterFile());
 	if (!IsDefaultParameterFile)
