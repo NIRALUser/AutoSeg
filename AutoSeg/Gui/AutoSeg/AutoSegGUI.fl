@@ -7,7 +7,7 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.0} open
+      label {AutoSeg 2.0.1} open
       xywh {653 127 910 945} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
@@ -45,37 +45,22 @@ class AutoSegGUI {open
           }
         }
         Submenu {} {
-          label Options
+          label Options open
           xywh {0 0 63 20}
         } {
-          MenuItem g_UseDefaultSharpAtlasParameters {
-            label {Use default sharp atlas parameters }
-            callback {UseDefaultSharpAtlasParametersGUI();}
+          MenuItem g_UseDefaultParameters {
+            label {Use default  parameters }
+            callback {UseDefaultParametersGUI();}
             xywh {5 5 30 20}
           }
-          MenuItem g_UseDefaultFuzzyAtlasParameters {
-            label {Use default fuzzy atlas parameters }
-            callback {UseDefaultFuzzyAtlasParametersGUI()}
+          MenuItem g_SetDefaultParameters {
+            label {Set default parameters}
+            callback {SetDefaultParametersGUI();}
             xywh {5 5 30 20}
           }
-          MenuItem g_SetDefaultSharpAtlasParameters {
-            label {Set default sharp atlas parameters}
-            callback {SetDefaultSharpAtlasParametersGUI();}
-            xywh {5 5 30 20}
-          }
-          MenuItem g_SetDefaultFuzzyAtlasParameters {
-            label {Set default fuzzy atlas parameters}
-            callback {SetDefaultFuzzyAtlasParametersGUI();}
-            xywh {5 5 30 20}
-          }
-          MenuItem g_ResetDefaultSharpAtlasParameters {
-            label {Reset default sharp atlas parameters}
-            callback {ResetDefaultSharpAtlasParametersGUI();}
-            xywh {5 5 30 20}
-          }
-          MenuItem g_ResetDefaultFuzzyAtlasParameters {
-            label {Reset default fuzzy atlas parameters}
-            callback {ResetDefaultFuzzyAtlasParametersGUI();}
+          MenuItem g_ResetDefaultParameters {
+            label {Reset default parameters}
+            callback {ResetDefaultParametersGUI();}
             xywh {5 5 30 20}
           }
         }
@@ -97,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.0}
+          label {AutoSeg 2.0.1}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
@@ -121,7 +106,7 @@ class AutoSegGUI {open
           xywh {10 70 880 850} align 69
         } {
           Fl_Group {} {
-            label {Step 1 - Set the process data directory}
+            label {Step 1 - Set the process data directory} open
             xywh {15 95 875 55} box ENGRAVED_BOX align 5
           } {
             Fl_Button g_ProcessDataDirectory {
@@ -157,7 +142,7 @@ class AutoSegGUI {open
             }
           }
           Fl_Group {} {
-            label {Step 3 - Set output data directory}
+            label {Step 3 - Set output data directory} open
             xywh {575 175 315 45} box ENGRAVED_FRAME
           } {
             Fl_Input g_DataAutoSegDirectoryDisp {
@@ -165,7 +150,7 @@ class AutoSegGUI {open
             }
           }
           Fl_Group {} {
-            label {Step 4 - Set data}
+            label {Step 4 - Set data} open
             xywh {15 240 875 585} box ENGRAVED_FRAME align 5
           } {
             Fl_Group g_AutoDataSelectionGroup {
@@ -283,7 +268,7 @@ class AutoSegGUI {open
           }
         }
         Fl_Group g_AuxComputationGroup {
-          label {Regional histogram}
+          label {Regional histogram} open
           xywh {10 70 890 850} hide
         } {
           Fl_Group {} {
@@ -360,11 +345,11 @@ class AutoSegGUI {open
             }
           }
           Fl_Group {} {
-            label {Auxiliary data selection}
+            label {Auxiliary data selection} open
             xywh {15 336 865 568} box ENGRAVED_BOX align 5
           } {
             Fl_Group g_AutoAuxDataSelectionGroup {
-              label { - Automatic auxiliary data selection}
+              label { - Automatic auxiliary data selection} open
               xywh {20 360 820 150} box ENGRAVED_FRAME
             } {
               Fl_Button g_Aux1Title {
@@ -465,38 +450,42 @@ class AutoSegGUI {open
             label {Source selection} open
             xywh {15 95 472 75} box ENGRAVED_BOX align 5
           } {
-            Fl_Check_Button g_AuxT1Button {
-              label {T1 Image}
-              callback {AuxT1ButtonChecked()}
-              xywh {35 102 95 29} type Radio down_box DOWN_BOX
-            }
-            Fl_Check_Button g_AuxT2Button {
-              label {T2 Image}
-              callback {AuxT2ButtonChecked()}
-              xywh {187 102 95 29} type Radio down_box DOWN_BOX
-            }
-            Fl_Check_Button g_AuxPDButton {
-              label {PD Image}
-              callback {AuxPDButtonChecked()}
-              xywh {340 102 85 29} type Radio down_box DOWN_BOX
-            }
             Fl_Group {} {open
-              xywh {15 130 445 35}
+              xywh {40 135 430 30} box ENGRAVED_BOX
             } {
               Fl_Check_Button g_AtlasSpaceButton {
                 label {Atlas Space}
                 callback {AtlasSpaceButtonChecked()}
-                xywh {35 140 105 23} type Radio down_box DOWN_BOX
+                xywh {55 140 105 23} type Radio down_box DOWN_BOX
               }
               Fl_Check_Button g_StrippedButton {
                 label {Skull-stripped}
                 callback {StrippedButtonChecked()}
-                xywh {340 140 110 23} type Radio down_box DOWN_BOX
+                xywh {350 140 110 23} type Radio down_box DOWN_BOX
               }
               Fl_Check_Button g_BiasCorrectedButton {
                 label {Bias corrected}
                 callback {BiasCorrectedButtonChecked()}
-                xywh {187 140 118 23} type Radio down_box DOWN_BOX
+                xywh {197 140 118 23} type Radio down_box DOWN_BOX
+              }
+            }
+            Fl_Group {} {open
+              xywh {40 101 405 29} box ENGRAVED_BOX
+            } {
+              Fl_Check_Button g_AuxT1Button {
+                label {T1 Image}
+                callback {AuxT1ButtonChecked()}
+                xywh {55 101 390 29} type Radio down_box DOWN_BOX
+              }
+              Fl_Check_Button g_AuxT2Button {
+                label {T2 Image}
+                callback {AuxT2ButtonChecked()}
+                xywh {197 101 95 29} type Radio down_box DOWN_BOX
+              }
+              Fl_Check_Button g_AuxPDButton {
+                label {PD Image}
+                callback {AuxPDButtonChecked()}
+                xywh {350 101 85 29} type Radio down_box DOWN_BOX
               }
             }
           }
@@ -526,21 +515,6 @@ class AutoSegGUI {open
           xywh {10 70 890 850} hide
         } {
           Fl_Group {} {
-            label {Tissue atlas} open
-            xywh {25 275 100 110} box ENGRAVED_BOX align 17
-          } {
-            Fl_Round_Button g_SharpAtlasButton {
-              label Sharp
-              callback {SharpAtlasButtonToggled();}
-              xywh {40 305 65 23} down_box ROUND_DOWN_BOX value 1
-            }
-            Fl_Round_Button g_FuzzyAtlasButton {
-              label Fuzzy
-              callback {FuzzyAtlasButtonToggled();}
-              xywh {40 335 70 20} down_box ROUND_DOWN_BOX
-            }
-          }
-          Fl_Group {} {
             label Atlases open
             xywh {25 80 860 185} box ENGRAVED_BOX align 17
           } {
@@ -555,10 +529,10 @@ class AutoSegGUI {open
               tooltip {Set the tissue segmentation atlas directory ( the atlas being 'template.nrrd')} xywh {295 227 23 23}
             }
             Fl_Output g_CommonCoordinateImageDisp {
-              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr} xywh {325 107 500 23} align 0
+              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr,nrrd} xywh {325 107 500 23} align 0
             }
             Fl_Output g_ROIAtlasFileDisp {
-              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr} xywh {325 227 500 23} align 0
+              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr,nrrd} xywh {325 227 500 23} align 0
             }
             Fl_Group {} {
               label {Type :} open
@@ -848,8 +822,8 @@ class AutoSegGUI {open
             }
           }
           Fl_Group {} {
-            label {Parcellation maps}
-            xywh {135 275 750 110} box ENGRAVED_BOX align 17
+            label {Parcellation maps} open
+            xywh {25 275 860 110} box ENGRAVED_BOX align 17
           } {
             Fl_Check_Button g_ParcellationFile1Button {
               label {Parcellation file 1 :}
@@ -890,6 +864,21 @@ class AutoSegGUI {open
               callback {ParcellationFile3ButtonChecked();}
               xywh {150 350 140 25} down_box DOWN_BOX
             }
+            Fl_Group {} {
+              label {Tissue Map} open
+              xywh {40 300 95 75} box ENGRAVED_BOX
+            } {
+              Fl_Round_Button g_SoftTissueMapButton {
+                label Soft
+                callback {SoftTissueMapButtonToggled();}
+                xywh {55 310 64 20} down_box ROUND_DOWN_BOX
+              }
+              Fl_Round_Button g_HardTissueMapButton {
+                label Hard
+                callback {HardTissueMapButtonToggled();}
+                xywh {55 335 64 20} down_box ROUND_DOWN_BOX
+              }
+            }
           }
         }
         Fl_Group g_AdvancedParametersGroup {
@@ -927,7 +916,7 @@ class AutoSegGUI {open
               Fl_Choice g_FilterMethodChoice {
                 label {Filter method : }
                 callback {SetFilterMethodChoiceGUI()} open
-                xywh {205 394 155 22} down_box BORDER_BOX deactivate
+                xywh {205 394 155 22} down_box BORDER_BOX
               } {
                 MenuItem {} {
                   label {Grad aniso diffusion}
@@ -941,33 +930,33 @@ class AutoSegGUI {open
             }
             Fl_Group {} {
               label {Global class priors} open
-              xywh {35 500 385 130} box ENGRAVED_BOX align 5
+              xywh {35 515 385 130} box ENGRAVED_BOX align 5
             } {
               Fl_Counter g_Prior3 {
                 label {Prior 3 : }
                 callback {SetPrior3GUI()}
-                tooltip {Prior 3 (CSF)} xywh {300 535 80 20} type Simple align 4 minimum 0 maximum 10 value 0.7
+                tooltip {Prior 3 (CSF)} xywh {300 550 80 20} type Simple align 4 minimum 0 maximum 10 value 0.7
               }
               Fl_Counter g_Prior4 {
                 label {Prior 4 : }
                 callback {SetPrior4GUI()}
-                tooltip {Prior 4 (other)} xywh {300 575 80 20} type Simple align 4 minimum 0 maximum 10 value 1
+                tooltip {Prior 4 (other)} xywh {300 590 80 20} type Simple align 4 minimum 0 maximum 10 value 1
               }
               Fl_Counter g_Prior2 {
                 label {Prior 2 : }
                 callback {SetPrior2GUI()}
-                tooltip {Prior 2 (Gray matter)} xywh {140 575 80 20} type Simple align 4 minimum 0 maximum 10 value 1
+                tooltip {Prior 2 (Gray matter)} xywh {140 590 80 20} type Simple align 4 minimum 0 maximum 10 value 1
               }
               Fl_Counter g_Prior1 {
                 label {Prior 1 : }
                 callback {SetPrior1GUI()}
-                tooltip {Prior 1 (White matter)} xywh {140 535 80 20} type Simple align 4 minimum 0 maximum 10 value 1.3
+                tooltip {Prior 1 (White matter)} xywh {140 550 80 20} type Simple align 4 minimum 0 maximum 10 value 1.3
               }
             }
             Fl_Counter g_MaxBiasDegree {
               label {Max bias degree : }
               callback {SetMaxBiasDegreeGUI()}
-              tooltip {Maximum Degree of the bias field polynomial} xywh {245 450 80 20} type Simple align 4 minimum 1 maximum 4 step 1 value 4
+              tooltip {Maximum Degree of the bias field polynomial} xywh {245 440 80 20} type Simple align 4 minimum 1 maximum 4 step 1 value 4
             }
             Fl_Button g_UseDefaultEMS {
               label {Use default parameters}
@@ -981,12 +970,12 @@ class AutoSegGUI {open
               Fl_Counter g_FluidAtlasWarpIterations {
                 label {Iterations : }
                 callback {SetFluidAtlasWarpIterationsGUI();}
-                tooltip {Atlas fluid warping iterations} xywh {200 705 80 20} type Simple align 4 minimum 0 maximum 500 step 1 value 10
+                tooltip {Atlas fluid warping iterations} xywh {215 705 80 20} type Simple align 4 minimum 0 maximum 500 step 1 value 50
               }
               Fl_Choice g_AtlasLinearMappingChoice {
                 label {Atlas linear mapping : }
                 callback {SetAtlasLinearMappingChoiceGUI();} open
-                xywh {180 798 80 27} down_box BORDER_BOX align 1
+                xywh {180 828 80 27} down_box BORDER_BOX align 1
               } {
                 MenuItem {} {
                   label affine
@@ -1004,7 +993,7 @@ class AutoSegGUI {open
               Fl_Choice g_ImageLinearMappingChoice {
                 label {Image linear mapping : }
                 callback {SetImageLinearMappingChoiceGUI();} open
-                xywh {185 753 75 22} down_box BORDER_BOX align 1
+                xywh {185 788 75 22} down_box BORDER_BOX align 1
               } {
                 MenuItem {} {
                   label id
@@ -1022,17 +1011,17 @@ class AutoSegGUI {open
               Fl_Counter g_FluidAtlasWarpMaxStep {
                 label {Max step : }
                 callback {SetFluidAtlasWarpMaxStepGUI();}
-                tooltip {Maximum step size for fluid gradient descent} xywh {190 835 90 20} type Simple align 4 minimum 0 maximum 2 step 0.005 value 0.5
+                tooltip {Maximum step size for fluid gradient descent} xywh {205 740 90 20} type Simple align 4 minimum 0 maximum 2 step 0.005 value 0.1
               }
               Fl_Round_Button g_FluidAtlasAffineButton {
                 label Affine
                 callback {FluidAtlasAffineButtonChecked()}
-                xywh {55 675 25 25} down_box ROUND_DOWN_BOX value 1
+                xywh {55 675 25 25} down_box ROUND_DOWN_BOX
               }
               Fl_Round_Button g_FluidAtlasWarpButton {
                 label Warp
                 callback {FluidAtlasWarpButtonChecked()}
-                xywh {145 675 25 25} down_box ROUND_DOWN_BOX
+                xywh {145 675 25 25} down_box ROUND_DOWN_BOX value 1
               }
               Fl_Round_Button g_FluidAtlasFATWButton {
                 label {first Affine, then Warp}
@@ -1068,10 +1057,24 @@ class AutoSegGUI {open
                 xywh {350 185 45 25} when 1 value 1
               }
             }
+            Fl_Choice g_InitialDistributionEstimatorChoice {
+              label {Initial distribution estimator:}
+              callback {SetInitialDistributionEstimatorChoiceGUI()} open
+              xywh {255 470 95 20} down_box BORDER_BOX
+            } {
+              MenuItem {} {
+                label standard
+                xywh {10 10 30 20}
+              }
+              MenuItem {} {
+                label robust
+                xywh {10 10 30 20}
+              }
+            }
           }
           Fl_Group {} {
             label {Skull Stripping} open
-            xywh {465 610 440 40} box ENGRAVED_FRAME
+            xywh {465 610 425 40} box ENGRAVED_FRAME
           } {
             Fl_Check_Button g_DeleteVesselsButton {
               label {Delete Vessels}
@@ -1081,7 +1084,7 @@ class AutoSegGUI {open
           }
           Fl_Group {} {
             label {Intensity Rescaling} open
-            xywh {465 685 440 80} box ENGRAVED_FRAME
+            xywh {465 685 425 80} box ENGRAVED_FRAME
           } {
             Fl_Round_Button g_HistogramQuantileButton {
               label {Histogram quantile matching}
@@ -1096,7 +1099,7 @@ class AutoSegGUI {open
           }
           Fl_Group {} {
             label {Regional histogram} open
-            xywh {465 800 440 115} box ENGRAVED_FRAME
+            xywh {465 800 425 115} box ENGRAVED_FRAME
           } {
             Fl_Button {} {
               label {Quantiles (coma separated list):}
@@ -1112,7 +1115,7 @@ class AutoSegGUI {open
           }
           Fl_Group {} {
             label {N4 ITK Bias Field Correction} open
-            xywh {465 95 440 475} box ENGRAVED_BOX
+            xywh {465 95 425 475} box ENGRAVED_BOX
           } {
             Fl_Check_Button g_N4ITKBiasFieldCorrectionButton {
               label {N4 ITK Bias Field Correction}
@@ -1262,7 +1265,7 @@ class AutoSegGUI {open
               Fl_Round_Button g_CoarseToFineWarpingButton {
                 label {Coarse to fine fluid}
                 callback {CoarseToFineWarpingButtonToggled();}
-                xywh {580 399 115 26} down_box ROUND_DOWN_BOX
+                xywh {580 399 145 26} down_box ROUND_DOWN_BOX
               }
               Fl_Round_Button g_BRAINSDemonWarpButton {
                 label BRAINSDemonWarp
@@ -1270,55 +1273,10 @@ class AutoSegGUI {open
                 xywh {200 405 186 15} down_box ROUND_DOWN_BOX value 1
               }
             }
-            Fl_Counter g_Alpha {
-              label {Alpha : }
-              callback {SetAlphaGUI()}
-              xywh {650 520 90 20} type Simple align 4 minimum 0 maximum 10 step 0.001 value 0.01
-            }
-            Fl_Counter g_Beta {
-              label {Beta : }
-              callback {SetBetaGUI()}
-              xywh {650 560 90 20} type Simple align 4 minimum 0 maximum 10 step 0.001 value 0.01
-            }
-            Fl_Counter g_Gamma {
-              label {Gamma : }
-              callback {SetGammaGUI()}
-              xywh {650 600 90 20} type Simple align 4 minimum 0 maximum 1 step 0.001 value 0.001
-            }
-            Fl_Counter g_MaxPerturbation {
-              label {Max Perturbation : }
-              callback {SetMaxPerturbationGUI()}
-              xywh {650 640 90 20} type Simple align 4 minimum 0 maximum 100 value 0.5
-            }
-            Fl_Counter g_NumBasis {
-              label {NumBasis : }
-              callback {SetNumBasisGUI()}
-              xywh {650 680 90 20} type Simple align 4 minimum 0 maximum 3000 step 0.01 value 0.01
-            }
             Fl_Button g_UseDefaultWarping {
               label {Use default parameters}
               callback {UseDefaultWarpingAdvancedParametersGUI()}
               tooltip {Use default warping parameters} xywh {335 850 180 25}
-            }
-            Fl_Group {} {
-              label {Number of Iterations:}
-              xywh {465 742 380 63} box ENGRAVED_FRAME align 5
-            } {
-              Fl_Counter g_Scale4NbIterations {
-                label {Scale 4 : }
-                callback {SetScale4NbIterationsGUI()}
-                xywh {480 771 90 20} type Simple align 1 step 1 value 50 deactivate
-              }
-              Fl_Counter g_Scale2NbIterations {
-                label {Scale 2 : }
-                callback {SetScale2NbIterationsGUI()}
-                xywh {600 771 90 20} type Simple align 1 step 1 value 25 deactivate
-              }
-              Fl_Counter g_Scale1NbIterations {
-                label {Scale 1 : }
-                callback {SetScale1NbIterationsGUI()}
-                xywh {720 771 90 20} type Simple align 1 step 1 value 100
-              }
             }
             Fl_Group g_BRAINSDemonWarp {
               label BRAINSDemonWarp open
@@ -1376,6 +1334,55 @@ class AutoSegGUI {open
                 xywh {260 671 115 24}
               }
             }
+            Fl_Group g_group_classic_coarsetofine_fluid {open
+              xywh {455 485 385 320} box ENGRAVED_BOX deactivate
+            } {
+              Fl_Counter g_Alpha {
+                label {Alpha : }
+                callback {SetAlphaGUI()}
+                xywh {640 510 90 20} type Simple align 4 minimum 0 maximum 10 step 0.001 value 0.01
+              }
+              Fl_Counter g_Beta {
+                label {Beta : }
+                callback {SetBetaGUI()}
+                xywh {640 545 90 20} type Simple align 4 minimum 0 maximum 10 step 0.001 value 0.01
+              }
+              Fl_Counter g_Gamma {
+                label {Gamma : }
+                callback {SetGammaGUI()}
+                xywh {640 580 90 20} type Simple align 4 minimum 0 maximum 1 step 0.001 value 0.001
+              }
+              Fl_Counter g_MaxPerturbation {
+                label {Max Perturbation : }
+                callback {SetMaxPerturbationGUI()}
+                xywh {640 615 90 20} type Simple align 4 minimum 0 maximum 100 value 0.5
+              }
+              Fl_Counter g_NumBasis {
+                label {NumBasis : }
+                callback {SetNumBasisGUI()}
+                xywh {640 650 90 20} type Simple align 4 minimum 0 maximum 3000 step 0.01 value 0.01
+              }
+              Fl_Group {} {
+                label {Number of Iterations:}
+                xywh {475 702 355 78} box ENGRAVED_FRAME align 5
+              } {
+                Fl_Counter g_Scale4NbIterations {
+                  label {Scale 4 : }
+                  callback {SetScale4NbIterationsGUI()}
+                  xywh {485 731 90 20} type Simple align 1 step 1 value 50 deactivate
+                }
+                Fl_Counter g_Scale2NbIterations {
+                  label {Scale 2 : }
+                  callback {SetScale2NbIterationsGUI()}
+                  xywh {605 731 90 20} type Simple align 1 step 1 value 25 deactivate
+                }
+                Fl_Counter g_Scale1NbIterations {
+                  label {Scale 1 : }
+                  callback {SetScale1NbIterationsGUI()}
+                  xywh {725 731 90 20} type Simple align 1 step 1 value 100
+                }
+              }
+            }
           }
         }
       }
@@ -1389,17 +1396,11 @@ class AutoSegGUI {open
   } {}
   Function {SaveComputationFileGUI()} {return_type {virtual void}
   } {}
-  Function {UseDefaultSharpAtlasParametersGUI()} {return_type {virtual void}
+  Function {UseDefaultParametersGUI()} {return_type {virtual void}
   } {}
-  Function {UseDefaultFuzzyAtlasParametersGUI()} {return_type {virtual void}
+  Function {SetDefaultParametersGUI()} {return_type {virtual void}
   } {}
-  Function {SetDefaultSharpAtlasParametersGUI()} {return_type {virtual void}
-  } {}
-  Function {SetDefaultFuzzyAtlasParametersGUI()} {return_type {virtual void}
-  } {}
-  Function {ResetDefaultSharpAtlasParametersGUI()} {return_type {virtual void}
-  } {}
-  Function {ResetDefaultFuzzyAtlasParametersGUI()} {return_type {virtual void}
+  Function {ResetDefaultParametersGUI()} {return_type {virtual void}
   } {}
   Function {AboutButtonPressed()} {return_type {virtual void}
   } {}
@@ -1408,10 +1409,6 @@ class AutoSegGUI {open
   Function {T2ButtonChecked()} {return_type {virtual void}
   } {}
   Function {PDButtonChecked()} {return_type {virtual void}
-  } {}
-  Function {SharpAtlasButtonToggled()} {return_type {virtual void}
-  } {}
-  Function {FuzzyAtlasButtonToggled()} {return_type {virtual void}
   } {}
   Function {SetDataDirectoryGUI()} {return_type {virtual void}
   } {}
@@ -1535,10 +1532,6 @@ class AutoSegGUI {open
   } {}
   Function {SetParcellationFile3GUI()} {return_type {virtual void}
   } {}
-  Function {EMS15ButtonToggled()} {return_type {virtual void}
-  } {}
-  Function {EMS18ButtonToggled()} {return_type {virtual void}
-  } {}
   Function {ABCButtonToggled()} {return_type {virtual void}
   } {}
   Function {SetFilterIterationsGUI()} {return_type {virtual void}
@@ -1556,14 +1549,6 @@ class AutoSegGUI {open
   Function {SetPrior3GUI()} {return_type {virtual void}
   } {}
   Function {SetPrior4GUI()} {return_type {virtual void}
-  } {}
-  Function {BSplineAtlasWarpButtonChecked()} {return_type {virtual void}
-  } {}
-  Function {SetBSplineAtlasWarpGridXGUI()} {return_type {virtual void}
-  } {}
-  Function {SetBSplineAtlasWarpGridYGUI()} {return_type {virtual void}
-  } {}
-  Function {SetBSplineAtlasWarpGridZGUI()} {return_type {virtual void}
   } {}
   Function {FluidAtlasWarpButtonChecked()} {return_type {virtual void}
   } {}
@@ -1587,7 +1572,7 @@ class AutoSegGUI {open
   } {}
   Function {CoarseToFineWarpingButtonToggled()} {return_type {virtual void}
   } {}
-  Function {SetAlphaGUI()} {open return_type {virtual void}
+  Function {SetAlphaGUI()} {return_type {virtual void}
   } {}
   Function {SetBetaGUI()} {return_type {virtual void}
   } {}
@@ -1704,5 +1689,11 @@ class AutoSegGUI {open
   Function {FluidAtlasFATWButtonChecked()} {return_type {virtual void}
   } {}
   Function {FluidAtlasAffineButtonChecked()} {return_type {virtual void}
+  } {}
+  Function {SetInitialDistributionEstimatorChoiceGUI()} {return_type {virtual void}
+  } {}
+  Function {SoftTissueMapButtonToggled()} {return_type {virtual void}
+  } {}
+  Function {HardTissueMapButtonToggled()} {return_type {virtual void}
   } {}
 } 

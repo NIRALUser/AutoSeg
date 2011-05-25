@@ -2,8 +2,8 @@
   Program:   AutoSeg
   Module:    $RCSfile: AutoSegComputation.h,v $
   Language:  C++
-  Date:      $Date: 2011/02/25 11:19:14 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2011/04/19 08:04:40 $
+  Version:   $Revision: 1.17 $
   Author:    Clement Vachet
 
   Copyright (c) 2004 NeuroImaging Lab @ UNC. All rights reserved.
@@ -119,8 +119,6 @@ class AutoSegComputation
 		void ShowDisplay();
   
   // Tab Parameters
-    // Age Group
-		void SetTissueAtlas(const char *_TissueAtlas){std::strcpy(m_TissueAtlas, _TissueAtlas);};
     // Atlases
 		void SetCommonCoordinateImage(const char *_CommonCoordinateImage){std::strcpy(m_CommonCoordinateImage,_CommonCoordinateImage);};
 		void SetTissueSegmentationAtlasDirectory(const char *_TissueSegmentationAtlasDirectory){std::strcpy(m_TissueSegmentationAtlasDirectory,_TissueSegmentationAtlasDirectory);};
@@ -153,6 +151,7 @@ class AutoSegComputation
 		void SetParcellationFile2(const char *_ParcellationFile2){std::strcpy(m_ParcellationFile2, _ParcellationFile2);};
 		void SetParcellationFile3(const char *_ParcellationFile3){std::strcpy(m_ParcellationFile3, _ParcellationFile3);};
 		void SetParcellationMapSegmentation(bool _IsParcellationMapSegmentation){m_IsParcellationMapSegmentation = _IsParcellationMapSegmentation;};
+		void SetSoftTissueMap(const char *_SoftTissueMap){std::strcpy(m_SoftTissueMap, _SoftTissueMap);};
 
   // Tab Advanced Parameters
     // Tissue Segmentation Parameters
@@ -161,6 +160,7 @@ class AutoSegComputation
 		void SetFilterTimeStep(float _FilterTimeStep){m_FilterTimeStep = _FilterTimeStep;};
 		void SetFilterMethod(const char *_FilterMethod){std::strcpy(m_FilterMethod , _FilterMethod);};
 		void SetMaxBiasDegree(int _MaxBiasDegree){m_MaxBiasDegree = _MaxBiasDegree;};
+		void SetInitialDistributionEstimator(const char *_InitialDistributionEstimator){std::strcpy(m_InitialDistributionEstimator, _InitialDistributionEstimator);};
 		void SetPrior1(float _Prior1){m_Prior1 = _Prior1;};
 		void SetPrior2(float _Prior2){m_Prior2 = _Prior2;};
 		void SetPrior3(float _Prior3){m_Prior3 = _Prior3;};
@@ -301,8 +301,6 @@ class AutoSegComputation
 		
   
   // Tab Parameters
-    // Age Group
-		char *GetTissueAtlas(){return m_TissueAtlas;};
     // Atlases
 		char *GetCommonCoordinateImage(){return m_CommonCoordinateImage;};
 		char *GetTissueSegmentationAtlasDirectory(){return m_TissueSegmentationAtlasDirectory;};
@@ -335,6 +333,7 @@ class AutoSegComputation
 		char *GetParcellationFile2(){return m_ParcellationFile2;};
 		char *GetParcellationFile3(){return m_ParcellationFile3;};
 		bool GetParcellationMapSegmentation(){return m_IsParcellationMapSegmentation;};
+		char *GetSoftTissueMap(){return m_SoftTissueMap;};
 
   // Tab Advanced Parameters
     //Tissue Segmentation Parameters
@@ -343,6 +342,7 @@ class AutoSegComputation
 		float GetFilterTimeStep(){return m_FilterTimeStep;};
 		char *GetFilterMethod(){return m_FilterMethod;};
 		int GetMaxBiasDegree(){return m_MaxBiasDegree;};
+		char *GetInitialDistributionEstimator(){return m_InitialDistributionEstimator;};
 		float GetPrior1(){return m_Prior1;};
 		float GetPrior2(){return m_Prior2;};
 		float GetPrior3(){return m_Prior3;};
@@ -421,7 +421,9 @@ class AutoSegComputation
     // Volume Analysis
 		char *GetSubcorticalStructuresVolumeFile(){return m_SubcorticalStructuresVolumeFile;};
 		char *GetGenericROIMapVolumeFile(){return m_GenericROIMapVolumeFile;};
-		char *GetParcellationMapVolumeFile(){return m_ParcellationMapVolumeFile;};
+		char *GetParcellationMapVolumeFileWM(){return m_ParcellationMapVolumeFileWM;};
+		char *GetParcellationMapVolumeFileGM(){return m_ParcellationMapVolumeFileGM;};
+		char *GetParcellationMapVolumeFileCSF(){return m_ParcellationMapVolumeFileCSF;};
 		char *GetTissueSegmentationVolumeFile(){return m_TissueSegmentationVolumeFile;};
     // Set Private Parameters
 		void SetBMSAutoSegFile();
@@ -441,7 +443,9 @@ class AutoSegComputation
     // Volume Analysis
 		void SetSubcorticalStructuresVolumeFile();
 		void SetGenericROIMapVolumeFile();
-		void SetParcellationMapVolumeFile();
+		void SetParcellationMapVolumeFileWM();
+		void SetParcellationMapVolumeFileGM();
+		void SetParcellationMapVolumeFileCSF();
 		void SetTissueSegmentationVolumeFile();
 		void SetData(const char *_Data, char *_T1);
 		void SetData(const char *_Data, char *_T1, char *_SecondImage);
@@ -466,26 +470,12 @@ class AutoSegComputation
 		void WriteBMSDataFile();
 		void WriteBMSAutoSegMRMLSourceFile();
 		void WriteBMSAutoSegMRMLParcelFile();
-		void WriteBMSAutoSegMRMLStructFile();
+// 		void WriteBMSAutoSegMRMLStructFile();
 		void WriteBMSAutoSegMRMLAllROIFile();
 
 		
   // Execute BatchMake Script to compute Automatic Segmentation
 		void ExecuteBatchMake(char *_Input, int _Mode);  
-
-//functions used to get Data
-//extract the identification name of the image
-std::string id_sub (std::string adr, size_t lenght){
-	int i=0;
-	std::string  id,id1;
-	id=adr.substr(lenght,adr.size()-lenght+1);
-	while(id.at(i)!='\0' && ((id.at(i)!='T' && id.at(i)!='t') || (id.at(i+1)!='1' && id.at(i+1)!='2'))&& ((id.at(i)!='P' && id.at(i)!='p') || (id.at(i+1)!='D' && id.at(i+1)!='d')) && ((id.at(i)!='F' && id.at(i)!='f') || (id.at(i+1)!='A' && id.at(i+1)!='a'))&& ((id.at(i)!='M' && id.at(i)!='m') || (id.at(i+1)!='D' && id.at(i+1)!='d'))){
-			i++;
-		}
-	id1=id.substr(0,i);
-	
-	return id1;
-}
 
 
   // Output Files (saved in ProcessDataDirectory)
@@ -512,7 +502,9 @@ std::string id_sub (std::string adr, size_t lenght){
 		char m_AuxComputationFile[512];
 		char m_SubcorticalStructuresVolumeFile[512];
 		char m_GenericROIMapVolumeFile[512];
-		char m_ParcellationMapVolumeFile[512];
+		char m_ParcellationMapVolumeFileWM[512];
+		char m_ParcellationMapVolumeFileGM[512];
+		char m_ParcellationMapVolumeFileCSF[512];
 		char m_TissueSegmentationVolumeFile[512];
 		bool m_IsAutoSegInProcess;
 
@@ -562,8 +554,6 @@ std::string id_sub (std::string adr, size_t lenght){
 		Fl_Text_Buffer m_TextBuf;
   
   // Tab Parameters
-    // Age Group
-		char m_TissueAtlas[10];
     // Atlases
 		char m_CommonCoordinateImage[512];
 		char m_TissueSegmentationAtlasDirectory[512];
@@ -596,6 +586,7 @@ std::string id_sub (std::string adr, size_t lenght){
 		char m_ParcellationFile2[512];
 		char m_ParcellationFile3[512];
 		bool m_IsParcellationMapSegmentation;
+		char m_SoftTissueMap[10];
   
   //Tab Advanced Parameters
     // Tissue Segmentation Parameters
@@ -604,6 +595,7 @@ std::string id_sub (std::string adr, size_t lenght){
 		float m_FilterTimeStep;
 		char m_FilterMethod[50];
 		int m_MaxBiasDegree;
+		char m_InitialDistributionEstimator[50];
 		float m_Prior1;
 		float m_Prior2;
 		float m_Prior3;

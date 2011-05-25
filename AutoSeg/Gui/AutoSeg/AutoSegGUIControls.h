@@ -2,8 +2,8 @@
   Program:   AutoSeg
   Module:    $RCSfile: AutoSegGUIControls.h,v $
   Language:  C++
-  Date:      $Date: 2011/02/25 11:19:14 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2011/04/19 08:04:40 $
+  Version:   $Revision: 1.19 $
   Author:    Clement Vachet
 
   Copyright (c) 2004 NeuroImaging Lab @ UNC. All rights reserved.
@@ -61,12 +61,9 @@ class AutoSegGUIControls : public AutoSegGUI
 		void SaveParameterFileGUI();
 		void SaveComputationFileGUI();
 
-		void UseDefaultSharpAtlasParametersGUI();
-		void UseDefaultFuzzyAtlasParametersGUI();
-		void SetDefaultSharpAtlasParametersGUI();
-		void SetDefaultFuzzyAtlasParametersGUI();
-		void ResetDefaultSharpAtlasParametersGUI();
-		void ResetDefaultFuzzyAtlasParametersGUI();
+		void UseDefaultParametersGUI();
+		void SetDefaultParametersGUI();
+		void ResetDefaultParametersGUI();
 		void ExitAutoSeg();
     //SubMenu Help
 		void AboutButtonPressed();  
@@ -179,6 +176,8 @@ class AutoSegGUIControls : public AutoSegGUI
 		void SetParcellationFile1GUI();
 		void SetParcellationFile2GUI();
 		void SetParcellationFile3GUI();
+		void SoftTissueMapButtonToggled();
+		void HardTissueMapButtonToggled();
   
   // Tab AdvancedParameters
     // Tissue Segmentation
@@ -187,6 +186,7 @@ class AutoSegGUIControls : public AutoSegGUI
 		void SetFilterTimeStepGUI();
 		void SetFilterMethodChoiceGUI();
 		void SetMaxBiasDegreeGUI();
+		void SetInitialDistributionEstimatorChoiceGUI();
 		void SetPrior1GUI();
 		void SetPrior2GUI();
 		void SetPrior3GUI();
@@ -252,11 +252,9 @@ class AutoSegGUIControls : public AutoSegGUI
 		void LoadComputationFile(const char *_FileName);
 		void LoadAuxComputationFile(const char *_FileName);
   // Default Parameters Files
-		void SetDefaultSharpAtlasParameterFile(const char *_DefaultSharpAtlasParameterFile);
-		void SetDefaultFuzzyAtlasParameterFile(const char *_DefaultFuzzyAtlasParameterFile);
+		void SetDefaultParameterFile(const char *_DefaultParameterFile);
   
-		char *GetDefaultSharpAtlasParameterFile();
-		char *GetDefaultFuzzyAtlasParameterFile();
+		char *GetDefaultParameterFile();
 
   // Check inputs to compute data automatically
 		bool CheckInputAutoDataSelection();
@@ -288,7 +286,7 @@ class AutoSegGUIControls : public AutoSegGUI
 		void SetIntensityRescalingMethod();
 		void InitializeData();
 		void InitializeAuxData();
-		void InitializeParameters(bool _TissueAtlas=0);
+		void InitializeParameters();
 		void UpdateParameters();
  
   // Computation
@@ -304,8 +302,7 @@ class AutoSegGUIControls : public AutoSegGUI
 		bool m_IsParcellationMapSegmentation;
   
   // Default Parameter Files
-		char m_DefaultSharpAtlasParameterFile[512];
-		char m_DefaultFuzzyAtlasParameterFile[512];  
+		char m_DefaultParameterFile[512];
 };
 
 #endif

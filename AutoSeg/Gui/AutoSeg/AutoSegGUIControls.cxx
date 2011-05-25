@@ -3,8 +3,8 @@
   Program:   AutoSeg
   Module:    $RCSfile: AutoSegGUIControls.cxx,v $
   Language:  C++
-  Date:      $Date: 2011/02/25 11:19:14 $
-  Version:   $Revision: 1.24 $
+  Date:      $Date: 2011/04/19 08:04:40 $
+  Version:   $Revision: 1.25 $
   Author:    Clement Vachet
 
   Copyright (c) 2004 NeuroImaging Lab @ UNC. All rights reserved.
@@ -22,11 +22,9 @@
 AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
 	: AutoSegGUI()
 {
-	bool IsDefaultSharpAtlasParameterFile;
-	bool IsDefaultFuzzyAtlasParameterFile;  
+	bool IsDefaultParameterFile;
 
-	char DefaultSharpAtlasParameterFile[512];
-	char DefaultFuzzyAtlasParameterFile[512];
+	char DefaultParameterFile[512];
 
 	g_MainWindow->show();
 	m_BrowserWidths = NULL;
@@ -52,7 +50,7 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
 	m_Computation.SetAux6Image(g_Aux6Button->value());
 	m_Computation.SetAux7Image(g_Aux7Button->value());
 	m_Computation.SetAux8Image(g_Aux8Button->value());
-	
+
 	g_DataAutoSegDirectoryDisp->value("AutoSeg");
 	m_Computation.SetDataAutoSegDirectory("AutoSeg");
 	m_Computation.SetComputeVolume(g_ComputeVolumeButton->value());
@@ -63,18 +61,12 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
 	m_Computation.SetIsAutoSegInProcess(false);
 
   // Initialization Default Parameter Files
-	std::strcpy(DefaultSharpAtlasParameterFile, m_Computation.GetAutoSegPath());
-	std::strcat(DefaultSharpAtlasParameterFile, "AutoSeg_DefaultSharpAtlasParameters.txt");
-	SetDefaultSharpAtlasParameterFile(DefaultSharpAtlasParameterFile);
-
-	std::strcpy(DefaultFuzzyAtlasParameterFile, m_Computation.GetAutoSegPath());
-	std::strcat(DefaultFuzzyAtlasParameterFile, "AutoSeg_DefaultFuzzyAtlasParameters.txt");
-	SetDefaultFuzzyAtlasParameterFile(DefaultFuzzyAtlasParameterFile);
-	IsDefaultSharpAtlasParameterFile = LoadParameterFile(GetDefaultSharpAtlasParameterFile());
-	if (!IsDefaultSharpAtlasParameterFile)
+	std::strcpy(DefaultParameterFile, m_Computation.GetAutoSegPath());
+	std::strcat(DefaultParameterFile, "AutoSeg_DefaultParameters.txt");
+	SetDefaultParameterFile(DefaultParameterFile);
+	IsDefaultParameterFile = LoadParameterFile(GetDefaultParameterFile());
+	if (!IsDefaultParameterFile)
 	{
-		IsDefaultFuzzyAtlasParameterFile = LoadParameterFile(GetDefaultFuzzyAtlasParameterFile());
-		if (!IsDefaultFuzzyAtlasParameterFile)
 			InitializeParameters();
 	}
 }
@@ -169,74 +161,34 @@ void AutoSegGUIControls::SaveComputationFileGUI()
 	}
 }
 
-void AutoSegGUIControls::UseDefaultSharpAtlasParametersGUI()
+void AutoSegGUIControls::UseDefaultParametersGUI()
 {
-	LoadParameterFile(GetDefaultSharpAtlasParameterFile());
+	LoadParameterFile(GetDefaultParameterFile());
 }
 
-void AutoSegGUIControls::UseDefaultFuzzyAtlasParametersGUI()
+void AutoSegGUIControls::SetDefaultParametersGUI()
 {
-	LoadParameterFile(GetDefaultFuzzyAtlasParameterFile());
-}
-
-void AutoSegGUIControls::SetDefaultSharpAtlasParametersGUI()
-{
-	if (g_SharpAtlasButton->value())
+	if (fl_choice("Do you really want to set the current parameters as default parameters?","No", "Yes", NULL))
 	{
-		if (fl_choice("Do you really want to set the current parameters as default sharp atlas parameters?","No", "Yes", NULL))
-		{
-			UpdateParameters();
-			m_Computation.WriteParameterFile(GetDefaultSharpAtlasParameterFile());      
-		}
+		UpdateParameters();
+		m_Computation.WriteParameterFile(GetDefaultParameterFile());      
 	}
-	else
-		fl_alert("'Fuzzy' tissue atlas is selected!\nYou cannot set your current parameters as default sharp atlas parameters...");
 }
 
-void AutoSegGUIControls::SetDefaultFuzzyAtlasParametersGUI()
+void AutoSegGUIControls::ResetDefaultParametersGUI()
 {
-	if (g_FuzzyAtlasButton->value())
-	{      
-		if (fl_choice("Do you really want to set the current parameters as default fuzzy atlas parameters?","No", "Yes", NULL))
-		{
-			UpdateParameters();
-			m_Computation.WriteParameterFile(GetDefaultFuzzyAtlasParameterFile());
-		}
-	}
-	else
-		fl_alert("'Sharp' tissue atlas is selected! \nYou cannot set your current parameters as default fuzzy atlas parameters...");
+	InitializeParameters();
+	m_Computation.WriteParameterFile(GetDefaultParameterFile());
 }
 
-void AutoSegGUIControls::ResetDefaultSharpAtlasParametersGUI()
+void AutoSegGUIControls::SetDefaultParameterFile(const char *_DefaultParameterFile)
 {
-	InitializeParameters(0);
-	m_Computation.WriteParameterFile(GetDefaultSharpAtlasParameterFile());
+	std::strcpy(m_DefaultParameterFile, _DefaultParameterFile);  
 }
 
-void AutoSegGUIControls::ResetDefaultFuzzyAtlasParametersGUI()
+char * AutoSegGUIControls::GetDefaultParameterFile()
 {
-	InitializeParameters(1);
-	m_Computation.WriteParameterFile(GetDefaultFuzzyAtlasParameterFile());
-}
-
-void AutoSegGUIControls::SetDefaultSharpAtlasParameterFile(const char *_DefaultSharpAtlasParameterFile)
-{
-	std::strcpy(m_DefaultSharpAtlasParameterFile, _DefaultSharpAtlasParameterFile);  
-}
-
-void AutoSegGUIControls::SetDefaultFuzzyAtlasParameterFile(const char *_DefaultFuzzyAtlasParameterFile)
-{
-	std::strcpy(m_DefaultFuzzyAtlasParameterFile, _DefaultFuzzyAtlasParameterFile);  
-}
-
-char * AutoSegGUIControls::GetDefaultSharpAtlasParameterFile()
-{
-	return m_DefaultSharpAtlasParameterFile;
-}
-
-char * AutoSegGUIControls::GetDefaultFuzzyAtlasParameterFile()
-{
-	return m_DefaultFuzzyAtlasParameterFile;
+	return m_DefaultParameterFile;
 }
 
 // Load computation file
@@ -1029,6 +981,110 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 					m_Computation.SetAux8("");
 				}
 			}
+			else if ( (std::strncmp("Aux1 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux1LabelDisp->value(Line+11);
+					m_Computation.SetAux1Label(Line+11);
+				}
+				else
+				{
+					g_Aux1LabelDisp->value(NULL);
+					m_Computation.SetAux1Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux2 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux2LabelDisp->value(Line+11);
+					m_Computation.SetAux2Label(Line+11);
+				}
+				else
+				{
+					g_Aux2LabelDisp->value(NULL);
+					m_Computation.SetAux2Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux3 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux3LabelDisp->value(Line+11);
+					m_Computation.SetAux3Label(Line+11);
+				}
+				else
+				{
+					g_Aux3LabelDisp->value(NULL);
+					m_Computation.SetAux3Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux4 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux4LabelDisp->value(Line+11);
+					m_Computation.SetAux4Label(Line+11);
+				}
+				else
+				{
+					g_Aux4LabelDisp->value(NULL);
+					m_Computation.SetAux4Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux5 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux5LabelDisp->value(Line+11);
+					m_Computation.SetAux5Label(Line+11);
+				}
+				else
+				{
+					g_Aux5LabelDisp->value(NULL);
+					m_Computation.SetAux5Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux6 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux6LabelDisp->value(Line+11);
+					m_Computation.SetAux6Label(Line+11);
+				}
+				else
+				{
+					g_Aux6LabelDisp->value(NULL);
+					m_Computation.SetAux6Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux7 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux7LabelDisp->value(Line+11);
+					m_Computation.SetAux7Label(Line+11);
+				}
+				else
+				{
+					g_Aux7LabelDisp->value(NULL);
+					m_Computation.SetAux7Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux8 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					g_Aux8LabelDisp->value(Line+11);
+					m_Computation.SetAux8Label(Line+11);
+				}
+				else
+				{
+					g_Aux8LabelDisp->value(NULL);
+					m_Computation.SetAux8Label("");
+				}
+			}
 			else if ( (std::strncmp("Atlas Space Image: ", Line, 19)) == 0)
 			{
 				AtlasSpaceImage = atoi(Line+19);
@@ -1195,37 +1251,7 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
       
 			if (mode == file)
 			{
-				if ( (std::strncmp("Tissue Atlas: ", Line, 14)) == 0)
-				{	
-					m_Computation.SetTissueAtlas(Line+14);
-					if (std::strcmp(Line+14, "Sharp") == 0)
-					{
-						g_SharpAtlasButton->set();
-						g_FuzzyAtlasButton->clear();
-					}
-					else if (std::strcmp(Line+14, "Fuzzy") == 0)
-					{
-						g_SharpAtlasButton->clear();
-						g_FuzzyAtlasButton->set();
-					}
-				}	  
-	  // Backward compatibility AutoSeg < 1.2
-				if ( (std::strncmp("Age Group: ", Line, 11)) == 0)
-				{
-					if (std::strcmp(Line+11, "Adult") == 0)
-					{	    
-						g_SharpAtlasButton->clear();
-						g_FuzzyAtlasButton->set();
-						m_Computation.SetTissueAtlas("Fuzzy");	      
-					}
-					else if (std::strcmp(Line+11, "Elderly") == 0)
-					{
-						g_SharpAtlasButton->set();
-						g_FuzzyAtlasButton->clear();
-						m_Computation.SetTissueAtlas("Sharp");	      
-					}
-				}
-				else if ( (std::strncmp("Common Coordinate Image: ", Line, 25)) == 0)
+				 if ( (std::strncmp("Common Coordinate Image: ", Line, 25)) == 0)
 				{
 					if (std::strlen(Line+25) != 0)
 					{
@@ -1584,6 +1610,21 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_ROIFile5Disp->value(NULL); 
 					}
 				}
+				else if ( (std::strncmp("Tissue Map: ", Line, 12)) == 0)
+				{
+					m_Computation.SetSoftTissueMap(Line+12);
+					if (std::strcmp(Line+12, "Soft") == 0)
+					{
+						g_SoftTissueMapButton->set();
+						g_HardTissueMapButton->clear();
+					}
+					else
+					{
+						g_SoftTissueMapButton->clear();
+						g_HardTissueMapButton->set();
+						m_Computation.SetSoftTissueMap("Hard");
+					}
+				}
 				else if ( (std::strncmp("Parcellation File 1: ", Line, 21)) == 0)
 				{
 					if (std::strlen(Line+21) != 0)
@@ -1749,6 +1790,7 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_ABCButton->set();
 						g_FilterMethodChoice->activate();
 						g_FluidAtlasWarpGroup->activate();
+						g_InitialDistributionEstimatorChoice->activate();
 					}
 					else
 						std::cout<<"No such EM Software!"<<std::endl;	      
@@ -1778,6 +1820,14 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					MaxBiasDegree = atoi(Line+17);
 					m_Computation.SetMaxBiasDegree(MaxBiasDegree);
 					g_MaxBiasDegree->value(MaxBiasDegree);	
+				}
+				else if ( (std::strncmp("Initial Distribution Estimator: ", Line, 32)) == 0)
+				{
+					m_Computation.SetInitialDistributionEstimator(Line+32);
+					if (std::strcmp(Line+32, "standard") == 0)
+					  g_InitialDistributionEstimatorChoice->value(0);
+					else
+					  g_InitialDistributionEstimatorChoice->value(1);
 				}
 				else if ( (std::strncmp("Prior 1: ", Line, 9)) == 0)
 				{
@@ -1958,6 +2008,7 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_NumBasis->activate();
 						g_Scale4NbIterations->deactivate();
 						g_Scale2NbIterations->deactivate();
+						g_group_classic_coarsetofine_fluid->activate();
 					}
 					else if (std::strcmp(Line+16, "Coarse-to-fine") == 0)
 					{
@@ -1975,6 +2026,7 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_NumBasis->deactivate();
 						g_Scale4NbIterations->activate();
 						g_Scale2NbIterations->activate();
+						g_group_classic_coarsetofine_fluid->activate();
 					}
 					else if (std::strcmp(Line+16, "BRAINSDemonWarp") == 0)
 					{
@@ -1984,6 +2036,7 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_ClassicWarpingButton->clear();
 						g_BRAINSDemonWarpButton->set();
 						g_BRAINSDemonWarp->activate();
+						g_group_classic_coarsetofine_fluid->deactivate();
 						g_Alpha->deactivate();
 						g_Beta->deactivate();
 						g_Gamma->deactivate();
@@ -2040,18 +2093,27 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				}
 				else if ( (std::strncmp("Registration Filter Type: ", Line, 26)) == 0)
 				{
-					RegistrationFilterType =Line+26;
-					m_Computation.SetRegistrationFilterType(RegistrationFilterType.c_str());	
-					if (RegistrationFilterType=="Demons")
+					RegistrationFilterType =Line+26;	
+					if (RegistrationFilterType=="Demons"){
+						m_Computation.SetRegistrationFilterType("Demons");
 						g_RegistrationFilterType->value(0);
-					else if(RegistrationFilterType=="FastSymmetricForces")
+					}
+					else if(RegistrationFilterType=="FastSymmetricForces"){
+						m_Computation.SetRegistrationFilterType("FastSymmetricForces");
 						g_RegistrationFilterType->value(1);
-					else if(RegistrationFilterType=="Diffeomorphic")
+					}
+					else if(RegistrationFilterType=="Diffeomorphic"){
+						m_Computation.SetRegistrationFilterType("Diffeomorphic");
 						g_RegistrationFilterType->value(2);
-					else if(RegistrationFilterType=="LogDemons")
+					}
+					else if(RegistrationFilterType=="LogDemons"){
+						m_Computation.SetRegistrationFilterType("LogDemons");
 						g_RegistrationFilterType->value(3);
-					else if(RegistrationFilterType=="SymmetricLogDemons")
+					}
+					else if(RegistrationFilterType=="SymmetricLogDemons"){
+						m_Computation.SetRegistrationFilterType("SymmetricLogDemons");
 						g_RegistrationFilterType->value(4);
+					}
 				}
 				else if ( (std::strncmp("Deformation Field Smoothing Sigma: ", Line, 35)) == 0)
 				{
@@ -2290,6 +2352,7 @@ void AutoSegGUIControls::Aux1ButtonChecked()
 		g_Aux1Disp->activate();
 		g_Aux1LabelDisp->activate();
 		m_Computation.SetAux1Image(1);
+		m_Computation.SetAux1Label(g_Aux1LabelDisp->value());
 		g_Aux2Button->activate();
 		
 		if (g_Aux2Button->value())
@@ -2893,86 +2956,86 @@ void AutoSegGUIControls::ComputeDataGUI()
 
 // Automatic Aux Data Computation
 void AutoSegGUIControls::ComputeAuxDataGUI()
-{	
+{
 	if (g_Aux1Button->value())
 	{
 		m_Computation.SetAux1(g_Aux1Disp->value());
-		m_Computation.SetAux1Label(g_Aux1LabelDisp->value());
+		//m_Computation.SetAux1Label(g_Aux1LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux1("");
-		m_Computation.SetAux1Label("");
+		//m_Computation.SetAux1Label("");
 	}
 	if (g_Aux2Button->value())
 	{
 		m_Computation.SetAux2(g_Aux2Disp->value());
-		m_Computation.SetAux2Label(g_Aux2LabelDisp->value());
+		//m_Computation.SetAux2Label(g_Aux2LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux2("");
-		m_Computation.SetAux2Label("");
+		//m_Computation.SetAux2Label("");
 	}
 	if (g_Aux3Button->value())
 	{
 		m_Computation.SetAux3(g_Aux3Disp->value());
-		m_Computation.SetAux3Label(g_Aux3LabelDisp->value());
+		//m_Computation.SetAux3Label(g_Aux3LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux3("");
-		m_Computation.SetAux3Label("");
+		//m_Computation.SetAux3Label("");
 	}
 	if (g_Aux4Button->value())
 	{
 		m_Computation.SetAux4(g_Aux4Disp->value());
-		m_Computation.SetAux4Label(g_Aux4LabelDisp->value());
+		//m_Computation.SetAux4Label(g_Aux4LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux4("");
-		m_Computation.SetAux4Label("");
+		//m_Computation.SetAux4Label("");
 	}
 	if (g_Aux5Button->value())
 	{
 		m_Computation.SetAux5(g_Aux5Disp->value());
-		m_Computation.SetAux5Label(g_Aux5LabelDisp->value());
+		//m_Computation.SetAux5Label(g_Aux5LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux5("");
-		m_Computation.SetAux5Label("");
+		//m_Computation.SetAux5Label("");
 	}
 	if (g_Aux6Button->value())
 	{
 		m_Computation.SetAux6(g_Aux6Disp->value());
-		m_Computation.SetAux6Label(g_Aux6LabelDisp->value());
+		//m_Computation.SetAux6Label(g_Aux6LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux6("");
-		m_Computation.SetAux6Label("");
+		//m_Computation.SetAux6Label("");
 	}
 	if (g_Aux7Button->value())
 	{
 		m_Computation.SetAux7(g_Aux7Disp->value());
-		m_Computation.SetAux7Label(g_Aux7LabelDisp->value());
+		//m_Computation.SetAux7Label(g_Aux7LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux7("");
-		m_Computation.SetAux7Label("");
+		//m_Computation.SetAux7Label("");
 	}
 	if (g_Aux8Button->value())
 	{
 		m_Computation.SetAux8(g_Aux8Disp->value());
-		m_Computation.SetAux8Label(g_Aux8LabelDisp->value());
+		//m_Computation.SetAux8Label(g_Aux8LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux8("");
-		m_Computation.SetAux8Label("");
+		//m_Computation.SetAux8Label("");
 	}
 	InitAuxBrowser();
 	m_Computation.ComputeData();
@@ -4470,6 +4533,21 @@ void AutoSegGUIControls::SetParcellationFile3GUI()
 	}
 }
 
+void AutoSegGUIControls::SoftTissueMapButtonToggled()
+{
+	g_SoftTissueMapButton->set();
+	g_HardTissueMapButton->clear();
+	m_Computation.SetSoftTissueMap("Soft");
+
+}
+
+void AutoSegGUIControls::HardTissueMapButtonToggled()
+{
+	g_SoftTissueMapButton->clear();
+	g_HardTissueMapButton->set();
+	m_Computation.SetSoftTissueMap("Hard");
+}
+
 void AutoSegGUIControls::ParcellationFile1ButtonChecked()
 {
 	if (g_ParcellationFile1Button->value())
@@ -4647,30 +4725,6 @@ void AutoSegGUIControls::StopAutoSeg()
 		m_Computation.StopBatchMake();
 }
 
-void AutoSegGUIControls::SharpAtlasButtonToggled()
-{
-	bool IsDefaultSharpAtlasParameterFile;
-
-	m_Computation.SetTissueAtlas("Sharp");
-	g_SharpAtlasButton->set();
-	g_FuzzyAtlasButton->clear();
-	IsDefaultSharpAtlasParameterFile = LoadParameterFile(GetDefaultSharpAtlasParameterFile(),advancedParameters); 
-	if (!IsDefaultSharpAtlasParameterFile)
-		InitializeParameters(0);
-}
-
-void AutoSegGUIControls::FuzzyAtlasButtonToggled()
-{
-	bool IsDefaultFuzzyAtlasParametersFile;
-
-	m_Computation.SetTissueAtlas("Fuzzy");
-	g_SharpAtlasButton->clear();
-	g_FuzzyAtlasButton->set();
-	IsDefaultFuzzyAtlasParametersFile = LoadParameterFile(GetDefaultFuzzyAtlasParameterFile(),advancedParameters);
-	if (!IsDefaultFuzzyAtlasParametersFile)
-		InitializeParameters(1);
-}
-
 // Compute Automatic Segmentation
 void AutoSegGUIControls::ComputeGUI()
 {
@@ -4745,6 +4799,14 @@ void AutoSegGUIControls::InitializeAuxData()
 	{
 		m_Computation.SetNbAuxData(g_AuxDataBrowser->size()-1);
 		m_Computation.AllocateAuxDataList();
+		m_Computation.SetAux1Label(g_Aux1LabelDisp->value());
+		m_Computation.SetAux2Label(g_Aux2LabelDisp->value());
+		m_Computation.SetAux3Label(g_Aux3LabelDisp->value());
+		m_Computation.SetAux4Label(g_Aux4LabelDisp->value());
+		m_Computation.SetAux5Label(g_Aux5LabelDisp->value());
+		m_Computation.SetAux6Label(g_Aux6LabelDisp->value());
+		m_Computation.SetAux7Label(g_Aux7LabelDisp->value());
+		m_Computation.SetAux8Label(g_Aux8LabelDisp->value());
 		for (Line = 2; Line <= g_AuxDataBrowser->size(); Line++)
 			m_Computation.SetAuxDataList(g_AuxDataBrowser->text(Line), Line-2);
 	}
@@ -5101,49 +5163,49 @@ bool AutoSegGUIControls::CheckInputAutoSeg()
 			fl_message("Please, set the transformation...");
 			Warning = true;
 		}
-		else if ((g_Aux1Button->value() != 0) && (std::strlen(g_Aux1Disp->value()) == 0))
+		else if ((g_Aux1Button->value() != 0) && (std::strlen(g_Aux1LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 1 directory name...");
+			fl_message("Please, set the auxiliary 1 directory name...");
 			Warning = true;
 		}
-		else if ((g_Aux2Button->value() != 0) && (std::strlen(g_Aux2Disp->value()) == 0))
+		else if ((g_Aux2Button->value() != 0) && (std::strlen(g_Aux2LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 2 directory name...");
+			fl_message("Please, set the auxiliary 2 directory name...");
 			Warning = true;
 		}
-		else if ((g_Aux3Button->value() != 0) && (std::strlen(g_Aux3Disp->value()) == 0))
+		else if ((g_Aux3Button->value() != 0) && (std::strlen(g_Aux3LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 3 directory name...");
+			fl_message("Please, set the auxiliary 3 directory name...");
 			Warning = true;
 		}
-		else if ((g_Aux4Button->value() != 0) && (std::strlen(g_Aux4Disp->value()) == 0))
+		else if ((g_Aux4Button->value() != 0) && (std::strlen(g_Aux4LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 4 directory name...");
+			fl_message("Please, set the auxiliary 4 directory name...");
 			Warning = true;
 		}
-		else if ((g_Aux5Button->value() != 0) && (std::strlen(g_Aux5Disp->value()) == 0))
+		else if ((g_Aux5Button->value() != 0) && (std::strlen(g_Aux5LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 5 directory name...");
+			fl_message("Please, set the auxiliary 5 directory name...");
 			Warning = true;
 		}
-		else if ((g_Aux6Button->value() != 0) && (std::strlen(g_Aux6Disp->value()) == 0))
+		else if ((g_Aux6Button->value() != 0) && (std::strlen(g_Aux6LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 6 directory name...");
+			fl_message("Please, set the auxiliaiy 6 directory name...");
 			Warning = true;
 		}
-		else if ((g_Aux7Button->value() != 0) && (std::strlen(g_Aux7Disp->value()) == 0))
+		else if ((g_Aux7Button->value() != 0) && (std::strlen(g_Aux7LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 7 directory name...");
+			fl_message("Please, set the auxiliary 7 directory name...");
 			Warning = true;
 		}
-		else if ((g_Aux8Button->value() != 0) && (std::strlen(g_Aux8Disp->value()) == 0))
+		else if ((g_Aux8Button->value() != 0) && (std::strlen(g_Aux8LabelDisp->value()) == 0))
 		{
-			fl_message("Please, set the auxiliairy 8 directory name...");
+			fl_message("Please, set the auxiliary 8 directory name...");
 			Warning = true;
 		}		
 		else if (g_AuxDataBrowser->size() < 2)
 		{
-			fl_message("Please, set the auxiliairy data to be computed...");
+			fl_message("Please, set the auxiliary data to be computed...");
 			Warning = true;
 		}
 	}
@@ -5158,20 +5220,23 @@ void AutoSegGUIControls::ABCButtonToggled()
 	g_FilterMethodChoice->activate();
 	g_FilterMethodChoice->value(1);
 	g_FilterIterations->value(10);
-	g_FluidAtlasWarpButton->clear();
-	g_FluidAtlasAffineButton->set();
+	g_InitialDistributionEstimatorChoice->activate();
+	g_InitialDistributionEstimatorChoice->value(1);
+	g_FluidAtlasWarpButton->set();
+	g_FluidAtlasAffineButton->clear();
 	g_FluidAtlasFATWButton->clear();
 	g_FluidAtlasWarpGroup->activate();
-	g_FluidAtlasWarpIterations->value(10);
-	g_FluidAtlasWarpMaxStep->value(0.5);
+	g_FluidAtlasWarpIterations->value(50);
+	g_FluidAtlasWarpMaxStep->value(0.1);
 	g_AtlasLinearMappingChoice->value(0);
 	g_ImageLinearMappingChoice->value(0);
 
 	m_Computation.SetEMSoftware("ABC");
 	m_Computation.SetFilterIterations((int)g_FilterIterations->value());
 	m_Computation.SetFilterMethod("Curvature flow");
-	m_Computation.SetFluidAtlasWarp(0);
-	m_Computation.SetFluidAtlasAffine(1);
+	m_Computation.SetInitialDistributionEstimator("robust");
+	m_Computation.SetFluidAtlasWarp(1);
+	m_Computation.SetFluidAtlasAffine(0);
 	m_Computation.SetFluidAtlasFATW(0);
 	m_Computation.SetFluidAtlasWarpIterations((int)g_FluidAtlasWarpIterations->value());
 	m_Computation.SetFluidAtlasWarpMaxStep((float)g_FluidAtlasWarpMaxStep->value());
@@ -5217,6 +5282,14 @@ void AutoSegGUIControls::SetFilterMethodChoiceGUI()
 		m_Computation.SetFilterMethod("Curvature flow");
 	else
 		m_Computation.SetFilterMethod("Grad aniso diffusion");
+}
+
+void AutoSegGUIControls::SetInitialDistributionEstimatorChoiceGUI()
+{
+  if (g_InitialDistributionEstimatorChoice->value() == 0)
+    m_Computation.SetInitialDistributionEstimator("standard");
+  else
+    m_Computation.SetInitialDistributionEstimator("robust");
 }
 
 void AutoSegGUIControls::SetMaxBiasDegreeGUI()
@@ -5349,6 +5422,7 @@ void AutoSegGUIControls::ClassicWarpingButtonToggled()
 	g_Scale2NbIterations->deactivate();
 	g_Scale1NbIterations->value(100);
 	g_BRAINSDemonWarp->deactivate();
+	g_group_classic_coarsetofine_fluid->activate();
   
 	m_Computation.SetClassicWarpingMethod(1);
 	m_Computation.SetBRAINSDemonWarpMethod(0);
@@ -5375,6 +5449,7 @@ void AutoSegGUIControls::CoarseToFineWarpingButtonToggled()
 	g_Scale2NbIterations->value(25);
 	g_Scale1NbIterations->value(100);
 	g_BRAINSDemonWarp->deactivate();
+	g_group_classic_coarsetofine_fluid->activate();
   
 	m_Computation.SetClassicWarpingMethod(0);
 	m_Computation.SetBRAINSDemonWarpMethod(0);
@@ -5399,6 +5474,7 @@ void AutoSegGUIControls::BRAINSDemonWarpToggled()
 	g_Gamma->deactivate();
 	g_MaxPerturbation->deactivate();
 	g_BRAINSDemonWarp->activate();
+	g_group_classic_coarsetofine_fluid->deactivate();
   
 	m_Computation.SetBRAINSDemonWarpMethod(1);
 	m_Computation.SetClassicWarpingMethod(0);
@@ -5470,41 +5546,32 @@ void AutoSegGUIControls::SetDeformationFieldSmoothingSigmaGUI()
 }
 
 void AutoSegGUIControls::SetRegistrationFilterTypeGUI()
-{
-	if (g_RegistrationFilterType->value() == 0)
+{	
+	if(g_RegistrationFilterType->value()==0)
 		m_Computation.SetRegistrationFilterType("Demons");
-	else if(g_RegistrationFilterType->value() == 1)
+	if(g_RegistrationFilterType->value()==1)
 		m_Computation.SetRegistrationFilterType("FastSymmetricForces");
-	else if(g_RegistrationFilterType->value() == 2)
+	if(g_RegistrationFilterType->value()==2)
 		m_Computation.SetRegistrationFilterType("Diffeomorphic");
-	else if(g_RegistrationFilterType->value() == 3)
+	if(g_RegistrationFilterType->value()==3)
 		m_Computation.SetRegistrationFilterType("LogDemons");
-	else if(g_RegistrationFilterType->value() == 4)
+	if(g_RegistrationFilterType->value()==4)
 		m_Computation.SetRegistrationFilterType("SymmetricLogDemons");
 }
 
 void AutoSegGUIControls::UseDefaultEMSAdvancedParametersGUI()
 {
-	if (g_SharpAtlasButton->value())
-		LoadParameterFile(GetDefaultSharpAtlasParameterFile(),tissueSeg);
-	else
-		LoadParameterFile(GetDefaultFuzzyAtlasParameterFile(),tissueSeg);
+	LoadParameterFile(GetDefaultParameterFile(),tissueSeg);
 }
 
 void AutoSegGUIControls::UseDefaultWarpingAdvancedParametersGUI()
 {
-	if (g_SharpAtlasButton->value())
-		LoadParameterFile(GetDefaultSharpAtlasParameterFile(),warping);
-	else
-		LoadParameterFile(GetDefaultFuzzyAtlasParameterFile(),warping);
+	LoadParameterFile(GetDefaultParameterFile(),warping);
 }
 
 void AutoSegGUIControls::UseDefaultN4AdvancedParametersGUI()
 {
-	if (g_SharpAtlasButton->value())
-		LoadParameterFile(GetDefaultSharpAtlasParameterFile(),N4biasFieldCorrection);
-	else
-		LoadParameterFile(GetDefaultFuzzyAtlasParameterFile(),N4biasFieldCorrection);
+	LoadParameterFile(GetDefaultParameterFile(),N4biasFieldCorrection);
 }
 
 void AutoSegGUIControls::N4ITKBiasFieldCorrectionButtonChecked()
@@ -5596,22 +5663,8 @@ void AutoSegGUIControls::SetPointSpacingGUI()
 // Initialize Parameters
 // _TissueAtlas = 0 (default) -> Sharp Atlas
 // _TissueAtlas = 1 -> Fuzzy Atlas
-void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
+void AutoSegGUIControls::InitializeParameters()
 {
-  // Age Group Parameter
-	if (!_TissueAtlas)
-	{
-		g_SharpAtlasButton->set();
-		g_FuzzyAtlasButton->clear();
-		m_Computation.SetTissueAtlas("Sharp");
-	}
-	else
-	{
-		g_SharpAtlasButton->clear();
-		g_FuzzyAtlasButton->set();      
-		m_Computation.SetTissueAtlas("Fuzzy");
-	}
-
   // Atlases Parameters
 	g_TissueSegmentationAtlasDirectoryDisp->value("/tools/atlas/BrainsegAtlas/adult-atlas-asym-T1-RAI/");
 	g_TissueSegmentationAtlasT1Button->set();
@@ -5666,10 +5719,13 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
 	g_ParcellationFile1Button->set();
 	g_ParcellationFile2Button->clear();
 	g_ParcellationFile2Button->clear();  
+	g_SoftTissueMapButton->set();
+	g_HardTissueMapButton->clear();  
 	m_Computation.SetParcellationFile1(g_ParcellationFile1Disp->value());
 	m_Computation.SetParcellationFile2(g_ParcellationFile2Disp->value());
 	m_Computation.SetParcellationFile3(g_ParcellationFile3Disp->value());
-  
+	m_Computation.SetSoftTissueMap("Soft");
+
   //Generic ROI Maps
 	g_ROIFile1Disp->value("/tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/HuangROIAtlas.nrrd");
 	g_ROIFile2Disp->value(NULL);
@@ -5692,24 +5748,25 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
 	m_Computation.SetROIFile4(g_ROIFile4Disp->value());
 	m_Computation.SetROIFile5(g_ROIFile5Disp->value());
   
-
   //Tissue Segmentation Parameters
 	g_ABCButton->set();
 	g_FilterIterations->value(10);
 	g_FilterTimeStep->value(0.01);
 	g_FilterMethodChoice->activate();
 	g_FilterMethodChoice->value(1);
+	g_InitialDistributionEstimatorChoice->activate();
+	g_InitialDistributionEstimatorChoice->value(1);
 	g_MaxBiasDegree->value(4);
 	g_Prior1->value(1.3);
 	g_Prior2->value(1.0);
 	g_Prior3->value(0.7);
 	g_Prior4->value(1.0);
 	g_FluidAtlasWarpGroup->activate();
-	g_FluidAtlasWarpButton->clear();
-	g_FluidAtlasAffineButton->set();
+	g_FluidAtlasWarpButton->set();
+	g_FluidAtlasAffineButton->clear();
 	g_FluidAtlasFATWButton->clear();
-	g_FluidAtlasWarpIterations->value(10);
-	g_FluidAtlasWarpMaxStep->value(0.5);
+	g_FluidAtlasWarpIterations->value(50);
+	g_FluidAtlasWarpMaxStep->value(0.1);
 	g_AtlasLinearMappingChoice->value(0);
 	g_ImageLinearMappingChoice->value(0);
 	g_AtlasLoopDisp->value("/tools/atlas/BrainsegAtlas/adult-atlas-asym-stripped-T1-RAI/");
@@ -5718,13 +5775,14 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
 	m_Computation.SetFilterIterations((int)g_FilterIterations->value());
 	m_Computation.SetFilterTimeStep((float)g_FilterTimeStep->value());
 	m_Computation.SetFilterMethod("Curvature flow");
+	m_Computation.SetInitialDistributionEstimator("robust");
 	m_Computation.SetMaxBiasDegree((int)g_MaxBiasDegree->value());
 	m_Computation.SetPrior1((float)g_Prior1->value());
 	m_Computation.SetPrior2((float)g_Prior2->value());
 	m_Computation.SetPrior3((float)g_Prior3->value());
 	m_Computation.SetPrior4((float)g_Prior4->value());
-	m_Computation.SetFluidAtlasWarp(0);
-	m_Computation.SetFluidAtlasAffine(1);
+	m_Computation.SetFluidAtlasWarp(1);
+	m_Computation.SetFluidAtlasAffine(0);
 	m_Computation.SetFluidAtlasFATW(0);
 	m_Computation.SetFluidAtlasWarpIterations((int)g_FluidAtlasWarpIterations->value());
 	m_Computation.SetFluidAtlasWarpMaxStep((float)g_FluidAtlasWarpMaxStep->value());
@@ -5746,7 +5804,7 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
 	g_BSplineAlpha->value(0);
 	g_BSplineBeta->value(0.5);
 	g_HistogramSharpening->value("0");
-	m_Computation.SetN4ITKBiasFieldCorrection(0);
+	m_Computation.SetN4ITKBiasFieldCorrection(1);
 	m_Computation.SetNbOfIterations ("50,40,30");
 	m_Computation.SetBSplineGridResolutions ("1,1,1");
 	m_Computation.SetConvergenceThreshold((float)g_ConvergenceThreshold->value());
@@ -5775,7 +5833,7 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
 	m_Computation.SetGridTemplateSpacingX((float)g_GridTemplateSpacingX->value());
 	m_Computation.SetGridTemplateSpacingY((float)g_GridTemplateSpacingY->value());
 	m_Computation.SetGridTemplateSpacingZ((float)g_GridTemplateSpacingZ->value());
-  
+
   // Warping Parameters
 	g_ClassicWarpingButton->clear();
 	g_CoarseToFineWarpingButton->clear();
@@ -5797,6 +5855,7 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
 	g_Scale1NbIterations->value(100);
 	g_Scale1NbIterations->deactivate();
 	g_BRAINSDemonWarp->activate();
+	g_group_classic_coarsetofine_fluid->deactivate();
 	g_RegistrationFilterType->value(3);
 	g_DeformationFieldSmoothingSigma->value(1.0);
 	g_PyramidLevels->value(5);
@@ -5813,7 +5872,8 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
 	m_Computation.SetScale2NbIterations((int)g_Scale2NbIterations->value());
 	m_Computation.SetScale1NbIterations((int)g_Scale1NbIterations->value());
 	m_Computation.SetNumBasis((float)g_NumBasis->value());
-	m_Computation.SetRegistrationFilterType((const char *)g_RegistrationFilterType->value());
+	//m_Computation.SetRegistrationFilterType((int)g_RegistrationFilterType->value());
+	m_Computation.SetRegistrationFilterType("LogDemons");
 	m_Computation.SetDeformationFieldSmoothingSigma((float)g_DeformationFieldSmoothingSigma->value());
 	m_Computation.SetPyramidLevels((int)g_PyramidLevels->value());
 	m_Computation.SetMovingShrinkFactors("16,16,16");
@@ -5823,12 +5883,12 @@ void AutoSegGUIControls::InitializeParameters(bool _TissueAtlas)
   // Skull Stripping parameters
 	g_DeleteVesselsButton->clear();
 	m_Computation.SetDeleteVessels(0);
-  
+
   // Intensity Rescaling parameters
 	g_HistogramQuantileButton->set();
 	g_TissueMeanMatchButton->clear();
 	m_Computation.SetIntensityRescalingMethod(1);
-	
+
   // Regional histogram	
 	g_QuantilesDisp->value("1,5,33,50,66,95,99");
 	m_Computation.SetQuantiles("1,5,33,50,66,95,99");
