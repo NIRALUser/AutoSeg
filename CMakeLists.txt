@@ -52,7 +52,6 @@ ENDIF(COMPILE_EXTERNAL_AUTOSEG)
 
 OPTION(COMPILE_EXTERNAL_NIRAL_UTILITIES "Compile NIRALUtilities." ON)
 IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
-  SUBDIRS (Libraries)
   PACKAGE_NEEDS_ITK("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
   PACKAGE_NEEDS_VTK_NOGUI("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
   set(proj NIRALUtilities)
@@ -129,12 +128,12 @@ ENDIF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
 
   OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
   IF(COMPILE_EXTERNAL_ABC)
-    # Build ABC https://www.nitrc.org/svn/abc/trunk/
+    # Build ABC https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/
   PACKAGE_NEEDS_SlicerExecutionModel("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
     set(proj abc)
     IF (Slicer3_FOUND)
       ExternalProject_Add(${proj}
-        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/trunk/"
+        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
         SVN_USERNAME slicerbot
         SVN_PASSWORD slicer
         SOURCE_DIR ${proj}
@@ -151,7 +150,7 @@ ENDIF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
       )
     ELSE (Slicer3_FOUND)
       ExternalProject_Add(${proj}
-        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/trunk/"
+        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
         SVN_USERNAME slicerbot
         SVN_PASSWORD slicer
         SOURCE_DIR ${proj}
