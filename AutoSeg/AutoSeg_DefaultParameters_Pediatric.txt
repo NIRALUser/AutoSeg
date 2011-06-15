@@ -5,11 +5,9 @@ Tissue Atlas: Sharp
 // Atlases
 Tissue Segmentation Atlas Directory: /tools/atlas/BrainsegAtlas/pediatric-atlas-4years-sym-T1-RAI/
 Tissue Segmentation Atlas Type: T1
-Tissue Segmentation Atlas Orientation: RAI
 
 Common Coordinate Image: /tools/atlas/BrainsegAtlas/pediatric-atlas-4years-sym-T1-RAI/template.gipl
 Common Coordinate Image Type: T1
-Common Coordinate Image Orientation: RAI
 
 ROI Atlas File: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/template.gipl
 
