@@ -14,6 +14,7 @@ ENDIF (${CMAKE_SOURCE_DIR} STREQUAL ${AUTOSEG_SOURCE_DIR})
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
 set(CMAKE_HELPER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+include(ExternalProject)
 include(${CMAKE_HELPER_DIR}/CMakeBuildMacros.cmake)
 include(${CMAKE_HELPER_DIR}/PreventInSourceBuilds.cmake)
 include(${CMAKE_HELPER_DIR}/CMakeCommonExternalDefinitions.cmake)
