@@ -2269,17 +2269,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
 	BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
+	BMSAutoSegMainFile<<"set (CasesList ${T1CasesList})"<<std::endl;
+	BMSAutoSegMainFile<<"ForEach (Case ${CasesList})"<<std::endl;
+	BMSAutoSegMainFile<<"      GetFilename (Path ${Case} PATH)"<<std::endl;
+	BMSAutoSegMainFile<<"      GetFilename(CaseTail ${Case} NAME)"<<std::endl;
+	BMSAutoSegMainFile<<"      GetFilename(CaseHead ${Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
  	BMSAutoSegMainFile<<"# Creating MRMLScene Directory if necessary"<<std::endl;
 	BMSAutoSegMainFile<<"set (MRMLPath ${Path}/${AutoSegDir}/MRMLScene/)"<<std::endl;
 	BMSAutoSegMainFile<<"ListDirInDir (MRMLList ${Path}/${AutoSegDir}/ MRMLScene)"<<std::endl;
 	BMSAutoSegMainFile<<"If (${MRMLList} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"     MakeDirectory (${MRMLPath})"<<std::endl;
 	BMSAutoSegMainFile<<"EndIf (${MRMLList})"<<std::endl;
-
-	BMSAutoSegMainFile<<"set (CasesList ${T1CasesList})"<<std::endl;
-	BMSAutoSegMainFile<<"ForEach (Case ${CasesList})"<<std::endl;
-	BMSAutoSegMainFile<<"      GetFilename(CaseTail ${Case} NAME)"<<std::endl;
-	BMSAutoSegMainFile<<"      GetFilename(CaseHead ${Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
 	BMSAutoSegMainFile<<"# Creating MRMLScene Directory if necessary"<<std::endl;
 	BMSAutoSegMainFile<<"ListDirInDir (MRMLSceneList ${MRMLPath} ${CaseHead}_MRMLScene)"<<std::endl;
 	BMSAutoSegMainFile<<"If (${MRMLSceneList} == '')"<<std::endl;
@@ -2384,8 +2384,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"		Set (BSplineOrder "<<GetBSplineOrder()<<")"<<std::endl;
 		BMSAutoSegMainFile<<"		Set (HistogramSharpening "<<GetHistogramSharpening()<<")"<<std::endl;
 		BMSAutoSegMainFile<<"	   	Set (my_output ${OrigCasePath}/${AutoSegDir}/${Bias}/${OrigCaseHead}${ProcessExtension}.nrrd)"<<std::endl;
-		BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${CaseN4} -)"<<std::endl;
 		BMSAutoSegMainFile<<"      	Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+		BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${CaseN4} ${parameters})"<<std::endl;
 		BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} ${parameters} prog_error)"<<std::endl;
 		BMSAutoSegMainFile<<"If (${flag} == 0)"<<std::endl;
 		BMSAutoSegMainFile<<"ForEach (Case ${T1CasesList})"<<std::endl;
@@ -2394,9 +2394,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
 		BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
-		BMSAutoSegMainFile<<"      GetFilename(CaseHead ${Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+		BMSAutoSegMainFile<<"GetFilename(CaseHead ${Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
 		BMSAutoSegMainFile<<"GetFilename (CasePath ${Case} PATH)"<<std::endl;
-		BMSAutoSegMainFile<<"set (MRMLPath ${Path}/${AutoSegDir}/MRMLScene/${CaseHead}_MRMLScene/)"<<std::endl;
+		BMSAutoSegMainFile<<"set (MRMLPath ${CasePath}/${AutoSegDir}/MRMLScene/${CaseHead}_MRMLScene/)"<<std::endl;
 		BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${CaseHead}_MRMLScene.mrml)"<<std::endl;
 		BMSAutoSegMainFile<<"Set (my_output ${CasePath}/${AutoSegDir}/${Bias}/${CaseHead}${ProcessExtension}.nrrd)"<<std::endl;
 		BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
@@ -2558,14 +2558,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
 		BMSAutoSegMainFile<<"         echo ('Applying rigid transformation...')"<<std::endl;
 
-		BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${FirstCases} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
+		BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${FirstCase} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
 		BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
 
 		BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 		BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
 		BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
-		BMSAutoSegMainFile<<"set (MRMLPath ${Path}/${AutoSegDir}/MRMLScene/${OrigFirstCaseHead}_MRMLScene/)"<<std::endl;
+		BMSAutoSegMainFile<<"set (MRMLPath ${OrigFirstCasePath}/${AutoSegDir}/MRMLScene/${OrigFirstCaseHead}_MRMLScene/)"<<std::endl;
 		BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${OrigFirstCaseHead}_MRMLScene.mrml)"<<std::endl;
 
 		BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
@@ -5457,7 +5457,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 					BMSAutoSegMainFile<<"           set(Posterior _posterior0)"<<std::endl;
 					BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
 					BMSAutoSegMainFile<<"              If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
-					BMSAutoSegMainFile<<"           set(Posterior _posterior1})"<<std::endl;
+					BMSAutoSegMainFile<<"           set(Posterior _posterior1)"<<std::endl;
 					BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
 					BMSAutoSegMainFile<<"              If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
 					BMSAutoSegMainFile<<"           set(Posterior _posterior2)"<<std::endl;
