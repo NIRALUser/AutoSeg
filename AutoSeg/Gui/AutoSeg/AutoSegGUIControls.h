@@ -41,10 +41,10 @@
 //ITK Libraries
 #include <itksys/Process.h>
 
-enum Mode
-{
-	file, advancedParameters,tissueSeg, warping,N4biasFieldCorrection
-};
+// enum Mode
+// {
+// 	file, advancedParameters,tissueSeg, warping,N4biasFieldCorrection
+// };
 
 class AutoSegGUIControls : public AutoSegGUI
 {
@@ -248,9 +248,9 @@ class AutoSegGUIControls : public AutoSegGUI
 	private:
 
   // Load Files
-		bool LoadParameterFile(const char *_FileName, enum Mode mode=file);
-		void LoadComputationFile(const char *_FileName);
-		void LoadAuxComputationFile(const char *_FileName);
+		bool UpdateParameterGUI(const char *_FileName, enum Mode mode=file);
+		void UpdateComputationGUI(const char *_FileName);
+		void UpdateAuxComputationGUI(const char *_FileName);
   // Default Parameters Files
 		void SetDefaultParameterFile(const char *_DefaultParameterFile);
   
@@ -296,6 +296,7 @@ class AutoSegGUIControls : public AutoSegGUI
 		int *m_AuxBrowserWidths;
 		
 		AutoSegComputation m_Computation;
+		//Mode m_Mode;
 
 		bool m_IsSubcorticalStructureSegmentation;
 		bool m_IsGenericROISegmentation;

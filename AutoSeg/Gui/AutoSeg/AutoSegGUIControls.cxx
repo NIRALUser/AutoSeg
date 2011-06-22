@@ -64,7 +64,8 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
 	std::strcpy(DefaultParameterFile, m_Computation.GetAutoSegPath());
 	std::strcat(DefaultParameterFile, "AutoSeg_DefaultParameters_Adult.txt");
 	SetDefaultParameterFile(DefaultParameterFile);
-	IsDefaultParameterFile = LoadParameterFile(GetDefaultParameterFile());
+	IsDefaultParameterFile = m_Computation.LoadParameterFile(GetDefaultParameterFile());
+	IsDefaultParameterFile = UpdateParameterGUI(GetDefaultParameterFile());
 	if (!IsDefaultParameterFile)
 	{
 			InitializeParameters();
@@ -115,7 +116,8 @@ void AutoSegGUIControls::LoadParameterFileGUI()
 
   //if a name has been set
 	if(fc.count())
-		LoadParameterFile(fc.value());  
+		m_Computation.LoadParameterFile(fc.value());  
+		UpdateParameterGUI(fc.value());
 }
 
 void AutoSegGUIControls::LoadComputationFileGUI()
@@ -129,7 +131,8 @@ void AutoSegGUIControls::LoadComputationFileGUI()
 	if(fc.count())
 	{
 		g_DataBrowser->clear();
-		LoadComputationFile(fc.value());
+		m_Computation.LoadComputationFile(fc.value());
+  		UpdateComputationGUI(fc.value());
 	}
 }
 
@@ -163,7 +166,9 @@ void AutoSegGUIControls::SaveComputationFileGUI()
 
 void AutoSegGUIControls::UseDefaultParametersGUI()
 {
-	LoadParameterFile(GetDefaultParameterFile());
+	m_Computation.LoadParameterFile(GetDefaultParameterFile());
+	UpdateParameterGUI(GetDefaultParameterFile());
+
 }
 
 void AutoSegGUIControls::SetDefaultParametersGUI()
@@ -191,8 +196,8 @@ char * AutoSegGUIControls::GetDefaultParameterFile()
 	return m_DefaultParameterFile;
 }
 
-// Load computation file
-void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
+// Update GUI
+void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
 {
 	FILE* ComputationFile;
 	char Line[1536];
@@ -213,20 +218,17 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 			{
 				if (std::strlen(Line+24) != 0)
 				{
-					m_Computation.SetProcessDataDirectory(Line+24); 
 					g_ProcessDataDirectoryDisp->value(Line+24);
 					g_ProcessDataDirectoryDisp->position(g_ProcessDataDirectoryDisp->size());
 				}
 				else
 				{
-					g_ProcessDataDirectoryDisp->value("");  
-					m_Computation.SetProcessDataDirectory("");
+					g_ProcessDataDirectoryDisp->value("");
 				}
 			}
 			else if ( (std::strncmp("Is T2 Image: ", Line, 13)) == 0)
 			{
 				IsT2Image = atoi(Line+13);
-				m_Computation.SetT2Image(IsT2Image); 
 				if (IsT2Image == 0)
 				{
 					g_T2Button->clear();
@@ -244,7 +246,6 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is PD Image: ", Line, 13)) == 0)
 			{
 				IsPDImage = atoi(Line+13);
-				m_Computation.SetPDImage(IsPDImage); 	 
 				if (IsPDImage == 0)
 				{
 					g_PDButton->clear();
@@ -264,12 +265,10 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 			{
 				if (std::strlen(Line+24))
 				{
-					m_Computation.SetDataAutoSegDirectory(Line+24);
 					g_DataAutoSegDirectoryDisp->value(Line+24);
 				}
 				else
 				{
-					m_Computation.SetDataAutoSegDirectory(""); 
 					g_DataAutoSegDirectoryDisp->value(NULL);
 				}
 			}
@@ -277,14 +276,12 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 			{
 				if (std::strlen(Line+16) != 0)
 				{
-					m_Computation.SetDataDirectory(Line+16); 
 					g_DataDirectoryDisp->value(Line+16); 
 					g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
 				}
 				else
 				{
-					m_Computation.SetDataDirectory(""); 
-					g_DataDirectoryDisp->value(NULL);          
+					g_DataDirectoryDisp->value(NULL);
 				}
 			}
 			else if ( (std::strncmp("T1 Files: ", Line, 10)) == 0)
@@ -293,12 +290,10 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 				{
 					g_T1Disp->value(Line+10);
 					g_T1Disp->position(g_T1Disp->size());
-					m_Computation.SetT1(Line+10); 	      
 				}
 				else
 				{
 					g_T1Disp->value(NULL);
-					m_Computation.SetT1("");
 				}
 			}
 			else if ( (std::strncmp("T2 Files: ", Line, 10)) == 0)
@@ -307,12 +302,10 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 				{
 					g_T2Disp->value(Line+10);	 
 					g_T2Disp->position(g_T2Disp->size());
-					m_Computation.SetT2(Line+10);
 				}
 				else
 				{
 					g_T2Disp->value(NULL);
-					m_Computation.SetT2(""); 
 				}
 			}
 			else if ( (std::strncmp("PD Files: ", Line, 10)) == 0)
@@ -321,18 +314,15 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 				{
 					g_PDDisp->value(Line+10);	  
 					g_PDDisp->position(g_PDDisp->size());
-					m_Computation.SetPD(Line+10);
 				}
 				else
 				{
-					g_PDDisp->value(NULL);	    
-					m_Computation.SetPD(""); 
+					g_PDDisp->value(NULL);
 				}     
 			}
 			else if ( (std::strncmp("Compute Volume: ", Line, 16)) == 0)
 			{
 				ComputeVolume = atoi(Line+16);
-				m_Computation.SetComputeVolume(ComputeVolume);
 				if (ComputeVolume == 1)
 					g_ComputeVolumeButton->set();
 				else
@@ -341,7 +331,6 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Compute cortical thickness: ", Line, 28)) == 0)
 			{
 				ComputeCorticalThickness = atoi(Line+28);
-				m_Computation.SetComputeCorticalThickness(ComputeCorticalThickness);
 				if (ComputeCorticalThickness == 1)
 					g_ComputeCorticalThicknessButton->set();
 				else
@@ -350,7 +339,6 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Recompute: ", Line, 11)) == 0)
 			{
 				Recompute = atoi(Line+11);
-				m_Computation.SetRecompute(Recompute);
 				if (Recompute == 1)
 					g_RecomputeButton->set();
 				else
@@ -359,7 +347,6 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Use Condor: ", Line, 12)) == 0)
 			{
 				UseCondor = atoi(Line+12);
-				m_Computation.SetUseCondor(UseCondor);
 				if (UseCondor == 1)
 					g_UseCondorButton->set();
 				else
@@ -377,7 +364,7 @@ void AutoSegGUIControls::LoadComputationFile(const char *_FileName)
 		std::cout<<"Error Opening File: "<<_FileName<<std::endl;
 }
 
-void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
+void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
 {
 	FILE* AuxComputationFile;
 	char Line[1536];
@@ -398,7 +385,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			if ( (std::strncmp("Is AuxT1 Image: ", Line, 16)) == 0)
 			{
 				IsAuxT1Image = atoi(Line+16);
-				m_Computation.SetAuxT1Image(IsAuxT1Image);
 				if (IsAuxT1Image == 1)
 				{
 					g_AuxT1Button->setonly();
@@ -407,7 +393,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is AuxT2 Image: ", Line, 16)) == 0)
 			{
 				IsAuxT2Image = atoi(Line+16);
-				m_Computation.SetAuxT2Image(IsAuxT2Image);
 				if (IsAuxT2Image == 1)
 				{
 					g_AuxT2Button->setonly();
@@ -416,7 +401,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else
 			{
 				IsAuxPDImage = atoi(Line+16);
-				m_Computation.SetAuxPDImage(IsAuxPDImage);
 				if (IsAuxPDImage == 1)
 				{
 					g_AuxPDButton->setonly();
@@ -424,8 +408,7 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			}
 			if ( (std::strncmp("Is Aux1 Image: ", Line, 15)) == 0)
 			{
-				IsAux1Image = atoi(Line+15);
-				m_Computation.SetAux1Image(IsAux1Image); 	 
+				IsAux1Image = atoi(Line+15);	 
 				if (IsAux1Image == 0)
 				{
 					g_Aux1Button->clear();
@@ -503,7 +486,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is Aux2 Image: ", Line, 15)) == 0)
 			{
 				IsAux2Image = atoi(Line+15);
-				m_Computation.SetAux2Image(IsAux2Image); 	 
 				if ((IsAux2Image == 0) || ((IsAux2Image == 1) && (IsAux1Image == 0)))
 				{
 					g_Aux2Button->clear();
@@ -573,7 +555,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is Aux3 Image: ", Line, 15)) == 0)
 			{
 				IsAux3Image = atoi(Line+15);
-				m_Computation.SetAux3Image(IsAux3Image); 	 
 				if ((IsAux3Image == 0) || ((IsAux3Image == 1) && ((IsAux2Image == 0) || (IsAux1Image == 0))))
 				{
 					g_Aux3Button->clear();
@@ -635,7 +616,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is Aux4 Image: ", Line, 15)) == 0)
 			{
 				IsAux4Image = atoi(Line+15);
-				m_Computation.SetAux4Image(IsAux4Image); 	 
 				if ((IsAux4Image == 0) || ((IsAux4Image == 1) && ((IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
 				{
 					g_Aux4Button->clear();
@@ -689,7 +669,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is Aux5 Image: ", Line, 15)) == 0)
 			{
 				IsAux5Image = atoi(Line+15);
-				m_Computation.SetAux5Image(IsAux5Image); 	 
 				if ((IsAux5Image == 0) || ((IsAux5Image == 1) && ((IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
 				{
 					g_Aux5Button->clear();
@@ -735,7 +714,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is Aux6 Image: ", Line, 15)) == 0)
 			{
 				IsAux6Image = atoi(Line+15);
-				m_Computation.SetAux6Image(IsAux6Image); 	 
 				if ((IsAux6Image == 0) || ((IsAux6Image == 1) && ((IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
 				{
 					g_Aux6Button->clear();
@@ -773,7 +751,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is Aux7 Image: ", Line, 15)) == 0)
 			{
 				IsAux7Image = atoi(Line+15);
-				m_Computation.SetAux7Image(IsAux7Image); 	 
 				if ((IsAux7Image == 0) || ((IsAux7Image == 1) && ((IsAux6Image == 0) || (IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
 				{
 					g_Aux7Button->clear();
@@ -803,7 +780,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Is Aux8 Image: ", Line, 15)) == 0)
 			{
 				IsAux8Image = atoi(Line+15);
-				m_Computation.SetAux8Image(IsAux8Image); 	 
 				if ((IsAux8Image == 0) || ((IsAux8Image == 1) && ((IsAux7Image == 0) || (IsAux6Image == 0) || (IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
 				{
 					g_Aux8Button->clear();
@@ -826,61 +802,57 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			{
 				if (std::strlen(Line+16) != 0)
 				{
-					m_Computation.SetDataDirectory(Line+16); 
 					g_DataDirectoryDisp->value(Line+16); 
 					g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
 				}
 				else
 				{
-					m_Computation.SetDataDirectory("");
 					g_DataDirectoryDisp->value(NULL);
 				}
 			}
-			else if ( (std::strncmp("AuxT1 Files: ", Line, 13)) == 0)
-			{
-				if (std::strlen(Line+13) != 0)
-				{
-					m_Computation.SetT1(Line+13);
-				}
-				else
-				{
-					m_Computation.SetT1("");
-				}
-			}
-			else if ( (std::strncmp("AuxT2 Files: ", Line, 13)) == 0)
-			{
-				if (std::strlen(Line+13) != 0)
-				{
-					m_Computation.SetT2(Line+13);
-				}
-				else
-				{
-					m_Computation.SetT2("");
-				}
-			}
-			else if ( (std::strncmp("AuxPD Files: ", Line, 13)) == 0)
-			{
-				if (std::strlen(Line+13) != 0)
-				{
-					m_Computation.SetPD(Line+13);
-				}
-				else
-				{
-					m_Computation.SetPD("");
-				}
-			}
+// 			else if ( (std::strncmp("AuxT1 Files: ", Line, 13)) == 0)
+// 			{
+// 				if (std::strlen(Line+13) != 0)
+// 				{
+// 					m_Computation.SetT1(Line+13);
+// 				}
+// 				else
+// 				{
+// 					m_Computation.SetT1("");
+// 				}
+// 			}
+// 			else if ( (std::strncmp("AuxT2 Files: ", Line, 13)) == 0)
+// 			{
+// 				if (std::strlen(Line+13) != 0)
+// 				{
+// 					m_Computation.SetT2(Line+13);
+// 				}
+// 				else
+// 				{
+// 					m_Computation.SetT2("");
+// 				}
+// 			}
+// 			else if ( (std::strncmp("AuxPD Files: ", Line, 13)) == 0)
+// 			{
+// 				if (std::strlen(Line+13) != 0)
+// 				{
+// 					m_Computation.SetPD(Line+13);
+// 				}
+// 				else
+// 				{
+// 					m_Computation.SetPD("");
+// 				}
+// 			}
 			else if ( (std::strncmp("Aux1 Files: ", Line, 12)) == 0)
 			{
 				if (std::strlen(Line+12) != 0)
 				{
 					g_Aux1Disp->value(Line+12);
 					g_Aux1Disp->position(g_Aux1Disp->size());
-					m_Computation.SetAux1(Line+12);
 				}
 				else
 				{
 					g_Aux1Disp->value(NULL);
-					m_Computation.SetAux1("");
 				}
 			}
 			else if ( (std::strncmp("Aux2 Files: ", Line, 12)) == 0)
@@ -889,12 +861,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				{
 					g_Aux2Disp->value(Line+12);
 					g_Aux2Disp->position(g_Aux2Disp->size());
-					m_Computation.SetAux2(Line+12);
 				}
 				else
 				{
 					g_Aux2Disp->value(NULL);
-					m_Computation.SetAux2("");
 				}
 			}
 			else if ( (std::strncmp("Aux3 Files: ", Line, 12)) == 0)
@@ -903,12 +873,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				{
 					g_Aux3Disp->value(Line+12);
 					g_Aux3Disp->position(g_Aux3Disp->size());
-					m_Computation.SetAux3(Line+12);
 				}
 				else
 				{
 					g_Aux3Disp->value(NULL);
-					m_Computation.SetAux3("");
 				}
 			}
 			else if ( (std::strncmp("Aux4 Files: ", Line, 12)) == 0)
@@ -917,12 +885,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				{
 					g_Aux4Disp->value(Line+12);
 					g_Aux4Disp->position(g_Aux4Disp->size());
-					m_Computation.SetAux4(Line+12);
 				}
 				else
 				{
 					g_Aux4Disp->value(NULL);
-					m_Computation.SetAux4("");
 				}
 			}
 			else if ( (std::strncmp("Aux5 Files: ", Line, 12)) == 0)
@@ -931,12 +897,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				{
 					g_Aux5Disp->value(Line+12);
 					g_Aux5Disp->position(g_Aux5Disp->size());
-					m_Computation.SetAux5(Line+12);
 				}
 				else
 				{
 					g_Aux5Disp->value(NULL);
-					m_Computation.SetAux5("");
 				}
 			}
 			else if ( (std::strncmp("Aux6 Files: ", Line, 12)) == 0)
@@ -945,12 +909,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				{
 					g_Aux6Disp->value(Line+12);
 					g_Aux6Disp->position(g_Aux6Disp->size());
-					m_Computation.SetAux6(Line+12);
 				}
 				else
 				{
 					g_Aux6Disp->value(NULL);
-					m_Computation.SetAux6("");
 				}
 			}
 			else if ( (std::strncmp("Aux7 Files: ", Line, 12)) == 0)
@@ -959,12 +921,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				{
 					g_Aux7Disp->value(Line+12);
 					g_Aux7Disp->position(g_Aux7Disp->size());
-					m_Computation.SetAux7(Line+12);
 				}
 				else
 				{
 					g_Aux7Disp->value(NULL);
-					m_Computation.SetAux7("");
 				}
 			}
 			else if ( (std::strncmp("Aux8 Files: ", Line, 12)) == 0)
@@ -973,12 +933,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				{
 					g_Aux8Disp->value(Line+12);
 					g_Aux8Disp->position(g_Aux8Disp->size());
-					m_Computation.SetAux8(Line+12);
 				}
 				else
 				{
 					g_Aux8Disp->value(NULL);
-					m_Computation.SetAux8("");
 				}
 			}
 			else if ( (std::strncmp("Aux1 Label: ", Line, 11)) == 0)
@@ -986,12 +944,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux1LabelDisp->value(Line+11);
-					m_Computation.SetAux1Label(Line+11);
 				}
 				else
 				{
 					g_Aux1LabelDisp->value(NULL);
-					m_Computation.SetAux1Label("");
 				}
 			}
 			else if ( (std::strncmp("Aux2 Label: ", Line, 11)) == 0)
@@ -999,12 +955,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux2LabelDisp->value(Line+11);
-					m_Computation.SetAux2Label(Line+11);
 				}
 				else
 				{
 					g_Aux2LabelDisp->value(NULL);
-					m_Computation.SetAux2Label("");
 				}
 			}
 			else if ( (std::strncmp("Aux3 Label: ", Line, 11)) == 0)
@@ -1012,12 +966,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux3LabelDisp->value(Line+11);
-					m_Computation.SetAux3Label(Line+11);
 				}
 				else
 				{
 					g_Aux3LabelDisp->value(NULL);
-					m_Computation.SetAux3Label("");
 				}
 			}
 			else if ( (std::strncmp("Aux4 Label: ", Line, 11)) == 0)
@@ -1025,12 +977,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux4LabelDisp->value(Line+11);
-					m_Computation.SetAux4Label(Line+11);
 				}
 				else
 				{
 					g_Aux4LabelDisp->value(NULL);
-					m_Computation.SetAux4Label("");
 				}
 			}
 			else if ( (std::strncmp("Aux5 Label: ", Line, 11)) == 0)
@@ -1038,12 +988,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux5LabelDisp->value(Line+11);
-					m_Computation.SetAux5Label(Line+11);
 				}
 				else
 				{
 					g_Aux5LabelDisp->value(NULL);
-					m_Computation.SetAux5Label("");
 				}
 			}
 			else if ( (std::strncmp("Aux6 Label: ", Line, 11)) == 0)
@@ -1051,12 +999,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux6LabelDisp->value(Line+11);
-					m_Computation.SetAux6Label(Line+11);
 				}
 				else
 				{
 					g_Aux6LabelDisp->value(NULL);
-					m_Computation.SetAux6Label("");
 				}
 			}
 			else if ( (std::strncmp("Aux7 Label: ", Line, 11)) == 0)
@@ -1064,12 +1010,10 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux7LabelDisp->value(Line+11);
-					m_Computation.SetAux7Label(Line+11);
 				}
 				else
 				{
 					g_Aux7LabelDisp->value(NULL);
-					m_Computation.SetAux7Label("");
 				}
 			}
 			else if ( (std::strncmp("Aux8 Label: ", Line, 11)) == 0)
@@ -1077,18 +1021,15 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 				if (std::strlen(Line+11) != 0)
 				{
 					g_Aux8LabelDisp->value(Line+11);
-					m_Computation.SetAux8Label(Line+11);
 				}
 				else
 				{
 					g_Aux8LabelDisp->value(NULL);
-					m_Computation.SetAux8Label("");
 				}
 			}
 			else if ( (std::strncmp("Atlas Space Image: ", Line, 19)) == 0)
 			{
 				AtlasSpaceImage = atoi(Line+19);
-				m_Computation.SetAtlasSpaceImage(AtlasSpaceImage);
 				if (AtlasSpaceImage == 1)
 				{
 					g_AtlasSpaceButton->set();
@@ -1103,7 +1044,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Bias Corrected Image: ", Line, 22)) == 0)
 			{
 				BiasCorrectedImage = atoi(Line+22);
-				m_Computation.SetBiasCorrectedImage(BiasCorrectedImage);
 				if (BiasCorrectedImage == 1)
 				{
 					g_BiasCorrectedButton->set();
@@ -1118,7 +1058,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Skull Stripped Image: ", Line, 22)) == 0)
 			{
 				SkullStrippedImage = atoi(Line+22);
-				m_Computation.SetSkullStrippedImage(SkullStrippedImage);
 				if (SkullStrippedImage == 1)
 				{
 					g_StrippedButton->set();
@@ -1133,7 +1072,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Rigid Transformation: ", Line, 22)) == 0)
 			{
 				RigidTransformation = atoi(Line+22);
-				m_Computation.SetRigidTransformation(RigidTransformation);
 				if (RigidTransformation == 1)
 				{
 					g_RigidTransformationButton->set();
@@ -1148,7 +1086,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Affine Transformation: ", Line, 23)) == 0)
 			{
 				AffineTransformation = atoi(Line+23);
-				m_Computation.SetAffineTransformation(AffineTransformation);
 				if (AffineTransformation == 1)
 				{
 					g_AffineTransformationButton->set();
@@ -1163,7 +1100,6 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 			else if ( (std::strncmp("Bspline Transformation: ", Line, 24)) == 0)
 			{
 				BsplineTransformation = atoi(Line+24);
-				m_Computation.SetBsplineTransformation(BsplineTransformation);
 				if (BsplineTransformation == 1)
 				{
 					g_BsplineTransformationButton->set();
@@ -1190,14 +1126,13 @@ void AutoSegGUIControls::LoadAuxComputationFile(const char *_FileName)
 	}
 }
 
-
-// Load parameter file
+// Update GUI
 // Mode = file: Read the total file
 // Mode = advancedParameters: Read only the advanced parameters (tissue segmentation, warping parameters and N4 ITK Bias Field Correction parameters)
 // Mode = tissueSeg: Read only the tissue segmentation parameters
 // Mode = warping: Read only the warping parameters
 // Mode = N4biasFieldCorrection: Read only the N4 ITK Bias Field Correction parameters
-bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode)
+bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mode)
 {
 	FILE* ParameterFile;
 	char Line[512]; 
@@ -1233,12 +1168,10 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 		g_LoopButton->clear();
 		g_LoopIteration->deactivate();
 		g_AtlasLoopGroup->deactivate();
-		m_Computation.SetLoop(0);
 		// Init for N4
 		g_N4ITKBiasFieldCorrectionButton->clear();
 		g_N4ParametersGroup->deactivate();
 		g_N4AdvancedParametersGroup->deactivate();
-		m_Computation.SetN4ITKBiasFieldCorrection(0);	
 	}
 
 	if ((ParameterFile = fopen(_FileName,"r")) != NULL) 
@@ -1255,13 +1188,11 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				{
 					if (std::strlen(Line+25) != 0)
 					{
-						m_Computation.SetCommonCoordinateImage(Line+25); 
 						g_CommonCoordinateImageDisp->value(Line+25);
 						g_CommonCoordinateImageDisp->position(g_CommonCoordinateImageDisp->size());
 					}
 					else
 					{
-						m_Computation.SetCommonCoordinateImage("");
 						g_CommonCoordinateImageDisp->value(NULL);
 					}
 				}
@@ -1283,19 +1214,16 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				{
 					if (std::strlen(Line+37) != 0)
 					{
-						m_Computation.SetTissueSegmentationAtlasDirectory(Line+37); 
 						g_TissueSegmentationAtlasDirectoryDisp->value(Line+37); 
 						g_TissueSegmentationAtlasDirectoryDisp->position(g_TissueSegmentationAtlasDirectoryDisp->size());
 					}
 					else
 					{
-						m_Computation.SetTissueSegmentationAtlasDirectory("");
 						g_TissueSegmentationAtlasDirectoryDisp->value(NULL);
 					}
 				}
 				else if ( (std::strncmp("Tissue Segmentation Atlas Type: ", Line, 32)) == 0)
 				{
-					m_Computation.SetTissueSegmentationAtlasType(Line+32);
 					if (std::strcmp(Line+32, "T1") == 0)
 					{
 						g_TissueSegmentationAtlasT1Button->set();		
@@ -1311,13 +1239,11 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				{
 					if (std::strlen(Line+16) != 0)
 					{
-						m_Computation.SetROIAtlasFile(Line+16); 
 						g_ROIAtlasFileDisp->value(Line+16);
 						g_ROIAtlasFileDisp->position(g_ROIAtlasFileDisp->size());
 					}
 					else
 					{
-						m_Computation.SetROIAtlasFile("");
 						g_ROIAtlasFileDisp->value(NULL);
 					}
 				}
@@ -1326,7 +1252,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+15) != 0)
 					{
 						g_AmygdalaLeftButton->set();
-						m_Computation.SetAmygdalaLeft(Line+15); 
 						g_AmygdalaLeftDisp->activate();
 						g_AmygdalaLeftDisp->value(Line+15); 
 						g_AmygdalaLeftDisp->position(g_AmygdalaLeftDisp->size());
@@ -1343,7 +1268,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+16) != 0)
 					{
 						g_AmygdalaRightButton->set();
-						m_Computation.SetAmygdalaRight(Line+16);
 						g_AmygdalaRightDisp->activate();
 						g_AmygdalaRightDisp->value(Line+16);   
 						g_AmygdalaRightDisp->position(g_AmygdalaRightDisp->size());
@@ -1360,7 +1284,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+14) != 0)
 					{
 						g_CaudateLeftButton->set();
-						m_Computation.SetCaudateLeft(Line+14); 
 						g_CaudateLeftDisp->activate();
 						g_CaudateLeftDisp->value(Line+14); 
 						g_CaudateLeftDisp->position(g_CaudateLeftDisp->size());
@@ -1377,7 +1300,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+15) != 0)
 					{
 						g_CaudateRightButton->set();
-						m_Computation.SetCaudateRight(Line+15); 
 						g_CaudateRightDisp->activate();
 						g_CaudateRightDisp->value(Line+15); 
 						g_CaudateRightDisp->position(g_CaudateRightDisp->size());
@@ -1394,7 +1316,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+18) != 0)
 					{
 						g_HippocampusLeftButton->set();
-						m_Computation.SetHippocampusLeft(Line+18); 
 						g_HippocampusLeftDisp->activate();
 						g_HippocampusLeftDisp->value(Line+18); 
 						g_HippocampusLeftDisp->position(g_HippocampusLeftDisp->size());
@@ -1411,7 +1332,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+19) != 0)
 					{
 						g_HippocampusRightButton->set();
-						m_Computation.SetHippocampusRight(Line+19); 
 						g_HippocampusRightDisp->activate();
 						g_HippocampusRightDisp->value(Line+19); 
 						g_HippocampusRightDisp->position(g_HippocampusRightDisp->size());
@@ -1428,7 +1348,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+15) != 0)
 					{
 						g_PallidusLeftButton->set();
-						m_Computation.SetPallidusLeft(Line+15); 
 						g_PallidusLeftDisp->activate();
 						g_PallidusLeftDisp->value(Line+15);
 						g_PallidusLeftDisp->position(g_PallidusLeftDisp->size());
@@ -1445,7 +1364,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+16) != 0)
 					{
 						g_PallidusRightButton->set();
-						m_Computation.SetPallidusRight(Line+16); 
 						g_PallidusRightDisp->activate();
 						g_PallidusRightDisp->value(Line+16);
 						g_PallidusRightDisp->position(g_PallidusRightDisp->size());
@@ -1462,7 +1380,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+14) != 0)
 					{
 						g_PutamenLeftButton->set();
-						m_Computation.SetPutamenLeft(Line+14); 
 						g_PutamenLeftDisp->activate();
 						g_PutamenLeftDisp->value(Line+14); 
 						g_PutamenLeftDisp->position(g_PutamenLeftDisp->size());
@@ -1479,7 +1396,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+15) != 0)
 					{
 						g_PutamenRightButton->set();
-						m_Computation.SetPutamenRight(Line+15); 
 						g_PutamenRightDisp->activate();
 						g_PutamenRightDisp->value(Line+15); 
 						g_PutamenRightDisp->position(g_PutamenRightDisp->size());
@@ -1496,7 +1412,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+24) != 0)
 					{
 						g_LateralVentricleLeftButton->set();
-						m_Computation.SetLateralVentricleLeft(Line+24); 
 						g_LateralVentricleLeftDisp->activate();
 						g_LateralVentricleLeftDisp->value(Line+24); 
 						g_LateralVentricleLeftDisp->position(g_LateralVentricleLeftDisp->size());
@@ -1513,7 +1428,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+25) != 0)
 					{
 						g_LateralVentricleRightButton->set();
-						m_Computation.SetLateralVentricleRight(Line+25); 
 						g_LateralVentricleRightDisp->activate();
 						g_LateralVentricleRightDisp->value(Line+25); 
 						g_LateralVentricleRightDisp->position(g_LateralVentricleRightDisp->size());
@@ -1530,7 +1444,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+12) != 0)
 					{
 						g_ROIFile1Button->set();
-						m_Computation.SetROIFile1(Line+12); 
 						g_ROIFile1Disp->activate();
 						g_ROIFile1Disp->value(Line+12); 
 						g_ROIFile1Disp->position(g_ROIFile1Disp->size());
@@ -1547,7 +1460,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+12) != 0)
 					{
 						g_ROIFile2Button->set();
-						m_Computation.SetROIFile2(Line+12); 
 						g_ROIFile2Disp->activate();
 						g_ROIFile2Disp->value(Line+12); 
 						g_ROIFile2Disp->position(g_ROIFile2Disp->size());
@@ -1564,7 +1476,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+12) != 0)
 					{
 						g_ROIFile3Button->set();
-						m_Computation.SetROIFile3(Line+12); 
 						g_ROIFile3Disp->activate();
 						g_ROIFile3Disp->value(Line+12); 
 						g_ROIFile3Disp->position(g_ROIFile3Disp->size());
@@ -1581,7 +1492,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+12) != 0)
 					{
 						g_ROIFile4Button->set();
-						m_Computation.SetROIFile4(Line+12); 
 						g_ROIFile4Disp->activate();
 						g_ROIFile4Disp->value(Line+12); 
 						g_ROIFile4Disp->position(g_ROIFile4Disp->size());
@@ -1598,7 +1508,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+12) != 0)
 					{
 						g_ROIFile5Button->set();
-						m_Computation.SetROIFile5(Line+12); 
 						g_ROIFile5Disp->activate();
 						g_ROIFile5Disp->value(Line+12); 
 						g_ROIFile5Disp->position(g_ROIFile5Disp->size());
@@ -1612,7 +1521,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				}
 				else if ( (std::strncmp("Tissue Map: ", Line, 12)) == 0)
 				{
-					m_Computation.SetSoftTissueMap(Line+12);
 					if (std::strcmp(Line+12, "Soft") == 0)
 					{
 						g_SoftTissueMapButton->set();
@@ -1622,7 +1530,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					{
 						g_SoftTissueMapButton->clear();
 						g_HardTissueMapButton->set();
-						m_Computation.SetSoftTissueMap("Hard");
 					}
 				}
 				else if ( (std::strncmp("Parcellation File 1: ", Line, 21)) == 0)
@@ -1630,7 +1537,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+21) != 0)
 					{
 						g_ParcellationFile1Button->set();
-						m_Computation.SetParcellationFile1(Line+21); 
 						g_ParcellationFile1Disp->activate();
 						g_ParcellationFile1Disp->value(Line+21); 
 						g_ParcellationFile1Disp->position(g_ParcellationFile1Disp->size());
@@ -1647,7 +1553,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+21) != 0)
 					{
 						g_ParcellationFile2Button->set();
-						m_Computation.SetParcellationFile2(Line+21); 
 						g_ParcellationFile2Disp->activate();
 						g_ParcellationFile2Disp->value(Line+21); 
 						g_ParcellationFile2Disp->position(g_ParcellationFile2Disp->size());
@@ -1664,7 +1569,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					if (std::strlen(Line+21) != 0)
 					{
 						g_ParcellationFile3Button->set();
-						m_Computation.SetParcellationFile3(Line+21); 
 						g_ParcellationFile3Disp->activate();
 						g_ParcellationFile3Disp->value(Line+21); 
 						g_ParcellationFile3Disp->position(g_ParcellationFile3Disp->size());
@@ -1679,7 +1583,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ((std::strncmp("Rigid Registration: ", Line, 20)) == 0)
 				{
 					RigidRegistration = (atoi(Line+20));
-					m_Computation.SetRigidRegistration(RigidRegistration);
 					if (RigidRegistration == 1)
 					{
 						g_RigidRegistrationButton->set();
@@ -1694,7 +1597,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ((std::strncmp("Is ROIAtlasGridTemplate: ", Line, 25)) == 0)
 				{
 					IsROIAtlasGridTemplate = atoi(Line+25);
-					m_Computation.SetROIAtlasGridTemplate(IsROIAtlasGridTemplate);
 					if (IsROIAtlasGridTemplate)
 					{
 						g_GridTemplateAtlasButton->set();
@@ -1711,43 +1613,36 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ((std::strncmp("GridTemplate SizeX: ", Line, 20)) == 0)
 				{
 					GridTemplateSizeX = atoi(Line+20);
-					m_Computation.SetGridTemplateSizeX(GridTemplateSizeX);
 					g_GridTemplateSizeX->value(GridTemplateSizeX);
 				}
 				else if ((std::strncmp("GridTemplate SizeY: ", Line, 20)) == 0)
 				{
 					GridTemplateSizeY = atoi(Line+20);
-					m_Computation.SetGridTemplateSizeY(GridTemplateSizeY);
 					g_GridTemplateSizeY->value(GridTemplateSizeY);
 				}
 				else if ((std::strncmp("GridTemplate SizeZ: ", Line, 20)) == 0)
 				{
 					GridTemplateSizeZ = atoi(Line+20);
-					m_Computation.SetGridTemplateSizeZ(GridTemplateSizeZ);
 					g_GridTemplateSizeZ->value(GridTemplateSizeZ);
 				}
 				else if ((std::strncmp("GridTemplate SpacingX: ", Line, 23)) == 0)
 				{
 					GridTemplateSpacingX = atof(Line+23);
-					m_Computation.SetGridTemplateSpacingX(GridTemplateSpacingX);
 					g_GridTemplateSpacingX->value(GridTemplateSpacingX);
 				}
 				else if ((std::strncmp("GridTemplate SpacingY: ", Line, 23)) == 0)
 				{
 					GridTemplateSpacingY = atof(Line+23);
-					m_Computation.SetGridTemplateSpacingY(GridTemplateSpacingY);
 					g_GridTemplateSpacingY->value(GridTemplateSpacingY);
 				}
 				else if ((std::strncmp("GridTemplate SpacingZ: ", Line, 23)) == 0)
 				{
 					GridTemplateSpacingZ = atof(Line+23);
-					m_Computation.SetGridTemplateSpacingZ(GridTemplateSpacingZ);
 					g_GridTemplateSpacingZ->value(GridTemplateSpacingZ);
 				}
 				else if ((std::strncmp("Delete Vessels: ", Line, 16)) == 0)
 				{
 					DeleteVessels = (atoi(Line+16));
-					m_Computation.SetDeleteVessels(DeleteVessels);
 					if (DeleteVessels == 1)
 						g_DeleteVesselsButton->set();
 					else
@@ -1757,34 +1652,29 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				{
 					if (std::strcmp(Line+21,"Histogram quantile") == 0)
 					{
-						m_Computation.SetIntensityRescalingMethod(1);
 						g_HistogramQuantileButton->set();
 						g_TissueMeanMatchButton->clear();
 					}
 					else
 					{
-						m_Computation.SetIntensityRescalingMethod(2);
 						g_TissueMeanMatchButton->set();
 						g_HistogramQuantileButton->clear();
 					}
 				}
 				else if ( (std::strncmp("Quantiles: ", Line, 11)) == 0)
 				{
-					m_Computation.SetQuantiles(Line+11);
 					g_QuantilesDisp->value(Line+11);		
 				}
 				else if ( (std::strncmp("Point Spacing: ", Line, 15)) == 0)
 				{
 					PointSpacing = atof(Line+15);
-					m_Computation.SetPointSpacing(PointSpacing);
 					g_PointSpacingDisp->value(PointSpacing);
 				}
 			}
 			if (mode == tissueSeg ||mode == advancedParameters||mode == file)
 			{
 				if ((std::strncmp("EM Software: ", Line, 13)) == 0)
-				{	
-					m_Computation.SetEMSoftware(Line+13);
+				{
 					if (std::strcmp(Line+13,"ABC") == 0)
 					{
 						g_ABCButton->set();
@@ -1798,18 +1688,15 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ( (std::strncmp("Filter Iterations: ", Line, 19)) == 0)
 				{
 					FilterIterations = atoi(Line+19);
-					m_Computation.SetFilterIterations(FilterIterations);
 					g_FilterIterations->value(FilterIterations);	
 				}
 				else if ( (std::strncmp("Filter TimeStep: ", Line, 17)) == 0)
 				{
 					FilterTimeStep = atof(Line+17);
-					m_Computation.SetFilterTimeStep(FilterTimeStep);
 					g_FilterTimeStep->value(FilterTimeStep);	
 				}
 				else if ( (std::strncmp("Filter Method: ", Line, 15)) == 0)
 				{
-					m_Computation.SetFilterMethod(Line+15);
 					if (std::strcmp(Line+15, "Curvature flow") == 0)
 						g_FilterMethodChoice->value(1);
 					else
@@ -1818,12 +1705,10 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ( (std::strncmp("Max Bias Degree: ", Line, 17)) == 0)
 				{
 					MaxBiasDegree = atoi(Line+17);
-					m_Computation.SetMaxBiasDegree(MaxBiasDegree);
 					g_MaxBiasDegree->value(MaxBiasDegree);	
 				}
 				else if ( (std::strncmp("Initial Distribution Estimator: ", Line, 32)) == 0)
 				{
-					m_Computation.SetInitialDistributionEstimator(Line+32);
 					if (std::strcmp(Line+32, "standard") == 0)
 					  g_InitialDistributionEstimatorChoice->value(0);
 					else
@@ -1832,25 +1717,21 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ( (std::strncmp("Prior 1: ", Line, 9)) == 0)
 				{
 					Prior1 = atof(Line+9);
-					m_Computation.SetPrior1(Prior1);
 					g_Prior1->value(Prior1);	
 				}
 				else if ( (std::strncmp("Prior 2: ", Line, 9)) == 0)
 				{
 					Prior2 = atof(Line+9);
-					m_Computation.SetPrior2(Prior2);
 					g_Prior2->value(Prior2);	
 				}
 				else if ( (std::strncmp("Prior 3: ", Line, 9)) == 0)
 				{
 					Prior3 = atof(Line+9);
-					m_Computation.SetPrior3(Prior3);
 					g_Prior3->value(Prior3);	
 				}
 				else if ( (std::strncmp("Prior 4: ", Line, 9)) == 0)
 				{
 					Prior4 = atof(Line+9);
-					m_Computation.SetPrior4(Prior4);
 					g_Prior4->value(Prior4);	
 				}
 				else if ( (std::strncmp("Fluid Atlas Warp: ", Line, 18)) == 0)
@@ -1861,14 +1742,10 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_FluidAtlasWarpButton->set();
 						g_FluidAtlasAffineButton->clear();
 						g_FluidAtlasFATWButton->clear();
-						m_Computation.SetFluidAtlasWarp(1);
-						m_Computation.SetFluidAtlasAffine(0);
-						m_Computation.SetFluidAtlasFATW(0);
 					}
 					else
 					{
 						g_FluidAtlasWarpButton->clear();
-						m_Computation.SetFluidAtlasWarp(0);
 					}	    
 				}
 				else if ( (std::strncmp("Fluid Atlas Affine: ", Line, 20)) == 0)
@@ -1879,14 +1756,10 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_FluidAtlasAffineButton->set();
 						g_FluidAtlasWarpButton->clear();
 						g_FluidAtlasFATWButton->clear();
-						m_Computation.SetFluidAtlasAffine(1);
-						m_Computation.SetFluidAtlasWarp(0);
-						m_Computation.SetFluidAtlasFATW(0);
 					}
 					else
 					{
 						g_FluidAtlasAffineButton->clear();
-						m_Computation.SetFluidAtlasAffine(0);
 					}	    
 				}
 				else if ( (std::strncmp("Fluid Atlas FATW: ", Line, 18)) == 0)
@@ -1897,31 +1770,24 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_FluidAtlasFATWButton->set();
 						g_FluidAtlasWarpButton->clear();
 						g_FluidAtlasAffineButton->clear();
-						m_Computation.SetFluidAtlasFATW(1);
-						m_Computation.SetFluidAtlasWarp(0);
-						m_Computation.SetFluidAtlasAffine(0);
 					}
 					else
 					{
 						g_FluidAtlasFATWButton->clear();
-						m_Computation.SetFluidAtlasFATW(0);
 					}	    
 				}
 				else if ( (std::strncmp("Fluid Atlas Warp Iterations: ", Line, 29)) == 0)
 				{
 					FluidAtlasWarpIterations = atoi(Line+29);
-					m_Computation.SetFluidAtlasWarpIterations(FluidAtlasWarpIterations);
 					g_FluidAtlasWarpIterations->value(FluidAtlasWarpIterations);	
 				}
 				else if ( (std::strncmp("Fluid Atlas Warp Max Step: ", Line, 27)) == 0)
 				{
 					FluidAtlasWarpMaxStep = atof(Line+27);
-					m_Computation.SetFluidAtlasWarpMaxStep(FluidAtlasWarpMaxStep);
 					g_FluidAtlasWarpMaxStep->value(FluidAtlasWarpMaxStep);	
 				}
 				else if ( (std::strncmp("Atlas Linear Mapping: ", Line, 22)) == 0)
 				{
-					m_Computation.SetAtlasLinearMapping(Line+22);
 					if (std::strcmp(Line+22, "affine") == 0)
 						g_AtlasLinearMappingChoice->value(0);
 					else if (std::strcmp(Line+22, "affine") == 0)
@@ -1931,7 +1797,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				}
 				else if ( (std::strncmp("Image Linear Mapping: ", Line, 22)) == 0)
 				{
-					m_Computation.SetImageLinearMapping(Line+22);
 					if (std::strcmp(Line+22, "id") == 0)
 						g_ImageLinearMappingChoice->value(0);
 					else if (std::strcmp(Line+22, "rigid") == 0)
@@ -1947,7 +1812,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_LoopButton->set();
 						g_AtlasLoopGroup->activate();
 						g_LoopIteration->activate();
-						m_Computation.SetLoop(1);
 					}
 					else
 					{
@@ -1956,14 +1820,12 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 							g_LoopButton->set();
 							g_AtlasLoopGroup->activate();
 							g_LoopIteration->activate();
-							m_Computation.SetLoop(1);
 						}
 						else
 						{
 							g_LoopButton->clear();
 							g_AtlasLoopGroup->deactivate();
 							g_LoopIteration->deactivate();
-							m_Computation.SetLoop(0);
 						}
 					}
 				}
@@ -1971,20 +1833,17 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				{
 					if (std::strlen(Line+12) != 0)
 					{
-						m_Computation.SetAtlasLoop(Line+12); 
 						g_AtlasLoopDisp->value(Line+12);
 						g_AtlasLoopDisp->position(g_AtlasLoopDisp->size());
 					}
 					else
 					{
-						m_Computation.SetAtlasLoop("");
 						g_AtlasLoopDisp->value(NULL);
 					}
 				}
 				else if ( (std::strncmp("Loop - Number of iterations: ", Line, 29)) == 0)
 				{
 					LoopIteration = atoi(Line+29);
-					m_Computation.SetLoopIteration(LoopIteration);
 					g_LoopIteration->value(LoopIteration);	
 				}
 			}
@@ -1994,8 +1853,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				{	
 					if (std::strcmp(Line+16, "Classic") == 0)
 					{
-						m_Computation.SetClassicWarpingMethod(1);
-						m_Computation.SetBRAINSDemonWarpMethod(0);
 						g_ClassicWarpingButton->set();
 						g_CoarseToFineWarpingButton->clear();
 						g_BRAINSDemonWarpButton->clear();
@@ -2012,8 +1869,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					}
 					else if (std::strcmp(Line+16, "Coarse-to-fine") == 0)
 					{
-						m_Computation.SetClassicWarpingMethod(0);
-						m_Computation.SetBRAINSDemonWarpMethod(0);
 						g_CoarseToFineWarpingButton->set();
 						g_ClassicWarpingButton->clear();
 						g_BRAINSDemonWarpButton->clear();
@@ -2030,8 +1885,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 					}
 					else if (std::strcmp(Line+16, "BRAINSDemonWarp") == 0)
 					{
-						m_Computation.SetClassicWarpingMethod(0);
-						m_Computation.SetBRAINSDemonWarpMethod(1);
 						g_CoarseToFineWarpingButton->clear();
 						g_ClassicWarpingButton->clear();
 						g_BRAINSDemonWarpButton->set();
@@ -2052,110 +1905,91 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ( (std::strncmp("Alpha: ", Line, 7)) == 0)
 				{
 					Alpha = atof(Line+7);
-					m_Computation.SetAlpha(Alpha);
 					g_Alpha->value(Alpha);	
 				}
 				else if ( (std::strncmp("Beta: ", Line, 6)) == 0)
 				{
 					Beta = atof(Line+6);
-					m_Computation.SetBeta(Beta);
 					g_Beta->value(Beta);	
 				}
 				else if ( (std::strncmp("Gamma: ", Line, 7)) == 0)
 				{
 					Gamma = atof(Line+7);
-					m_Computation.SetGamma(Gamma);
 					g_Gamma->value(Gamma);	
 				}
 				else if ( (std::strncmp("Max Perturbation: ", Line, 18)) == 0)
 				{
 					MaxPerturbation = atof(Line+18);
-					m_Computation.SetMaxPerturbation(MaxPerturbation);
 					g_MaxPerturbation->value(MaxPerturbation);	
 				}
 				else if ( (std::strncmp("Scale 4 - Number Of Iterations: ", Line, 32)) == 0)
 				{
 					Scale4NbIterations = atoi(Line+32);
-					m_Computation.SetScale4NbIterations(Scale4NbIterations);
 					g_Scale4NbIterations->value(Scale4NbIterations);	
 				}
 				else if ( (std::strncmp("Scale 2 - Number Of Iterations: ", Line, 32)) == 0)
 				{
 					Scale2NbIterations = atoi(Line+32);
-					m_Computation.SetScale2NbIterations(Scale2NbIterations);
 					g_Scale2NbIterations->value(Scale2NbIterations);	
 				}
 				else if ( (std::strncmp("Scale 1 - Number Of Iterations: ", Line, 32)) == 0)
 				{
 					Scale1NbIterations = atoi(Line+32);
-					m_Computation.SetScale1NbIterations(Scale1NbIterations);
 					g_Scale1NbIterations->value(Scale1NbIterations);	
 				}
 				else if ( (std::strncmp("Registration Filter Type: ", Line, 26)) == 0)
 				{
 					RegistrationFilterType =Line+26;	
 					if (RegistrationFilterType=="Demons"){
-						m_Computation.SetRegistrationFilterType("Demons");
 						g_RegistrationFilterType->value(0);
 					}
 					else if(RegistrationFilterType=="FastSymmetricForces"){
-						m_Computation.SetRegistrationFilterType("FastSymmetricForces");
 						g_RegistrationFilterType->value(1);
 					}
 					else if(RegistrationFilterType=="Diffeomorphic"){
-						m_Computation.SetRegistrationFilterType("Diffeomorphic");
 						g_RegistrationFilterType->value(2);
 					}
 					else if(RegistrationFilterType=="LogDemons"){
-						m_Computation.SetRegistrationFilterType("LogDemons");
 						g_RegistrationFilterType->value(3);
 					}
 					else if(RegistrationFilterType=="SymmetricLogDemons"){
-						m_Computation.SetRegistrationFilterType("SymmetricLogDemons");
 						g_RegistrationFilterType->value(4);
 					}
 				}
 				else if ( (std::strncmp("Deformation Field Smoothing Sigma: ", Line, 35)) == 0)
 				{
 					DeformationFieldSmoothingSigma = atof(Line+35);
-					m_Computation.SetDeformationFieldSmoothingSigma(DeformationFieldSmoothingSigma);
 					g_DeformationFieldSmoothingSigma->value(DeformationFieldSmoothingSigma);	
 				}
 				else if ( (std::strncmp("Pyramid Levels: ", Line, 16)) == 0)
 				{
 					PyramidLevels = atoi(Line+16);
-					m_Computation.SetPyramidLevels(PyramidLevels);
 					g_PyramidLevels->value(PyramidLevels);	
 				}
 				else if ( (std::strncmp("Moving Shrink Factors: ", Line, 23)) == 0)
 				{
 					MovingShrinkFactors =Line+23;
-					m_Computation.SetMovingShrinkFactors(MovingShrinkFactors.c_str());
 					g_MovingShrinkFactors->value(MovingShrinkFactors.c_str());	
 				}
 				else if ( (std::strncmp("Fixed Shrink Factors: ", Line, 22)) == 0)
 				{
 					FixedShrinkFactors =Line+22;
-					m_Computation.SetFixedShrinkFactors(FixedShrinkFactors.c_str());
 					g_FixedShrinkFactors->value(FixedShrinkFactors.c_str());	
 				}
 				else if ( (std::strncmp("Iteration Count Pyramid Levels: ", Line, 32)) == 0)
 				{
 					IterationCountPyramidLevels =Line+32;
-					m_Computation.SetIterationCountPyramidLevels(IterationCountPyramidLevels.c_str());
 					g_IterationCountPyramidLevels->value(IterationCountPyramidLevels.c_str());	
 				}
 	  // consistency with the first version of the tool
 				else if ( (std::strncmp("Number Of Iterations: ", Line, 22)) == 0)
 				{
 					Scale1NbIterations = atoi(Line+22);
-					m_Computation.SetScale1NbIterations(Scale1NbIterations);
 					g_Scale1NbIterations->value(Scale1NbIterations);	
 				}
 				else if ( (std::strncmp("NumBasis: ", Line, 10)) == 0)
 				{
 					NumBasis = atof(Line+10);
-					m_Computation.SetNumBasis(NumBasis);
 					g_NumBasis->value(NumBasis);	
 				}
 			}
@@ -2169,7 +2003,6 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 						g_N4ITKBiasFieldCorrectionButton->set();
 						g_N4ParametersGroup->activate();
 						g_N4AdvancedParametersGroup->activate();
-						m_Computation.SetN4ITKBiasFieldCorrection(1);
 					}
 					else
 					{
@@ -2178,14 +2011,12 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 							g_N4ITKBiasFieldCorrectionButton->set();
 							g_N4ParametersGroup->activate();
 							g_N4AdvancedParametersGroup->activate();
-							m_Computation.SetN4ITKBiasFieldCorrection(1);
 						}
 						else
 						{
 							g_N4ITKBiasFieldCorrectionButton->clear();
 							g_N4ParametersGroup->deactivate();
 							g_N4AdvancedParametersGroup->deactivate();
-							m_Computation.SetN4ITKBiasFieldCorrection(0);
 						}
 					}
 					
@@ -2193,55 +2024,46 @@ bool AutoSegGUIControls::LoadParameterFile(const char *_FileName, enum Mode mode
 				else if ( (std::strncmp("N4 Number of iterations: ", Line, 25)) == 0)
 				{
 					NbOfIterations = Line+25;
-					m_Computation.SetNbOfIterations(NbOfIterations.c_str());
 					g_NbOfIterations->value(NbOfIterations.c_str());	
 				}
 				else if ( (std::strncmp("N4 Spline distance: ", Line, 20)) == 0)
 				{
 					SplineDistance = atof(Line+20);
-					m_Computation.SetSplineDistance(SplineDistance);
 					g_SplineDistance->value(SplineDistance);	
 				}
 				else if ( (std::strncmp("N4 Shrink factor: ", Line, 18)) == 0)
 				{
 					ShrinkFactor = atoi(Line+18);
-					m_Computation.SetShrinkFactor(ShrinkFactor);
 					g_ShrinkFactor->value(ShrinkFactor);	
 				}
 				else if ( (std::strncmp("N4 Convergence threshold: ", Line, 26)) == 0)
 				{
 					ConvergenceThreshold = atof(Line+26);
-					m_Computation.SetConvergenceThreshold(ConvergenceThreshold);
 					g_ConvergenceThreshold->value(ConvergenceThreshold);	
 				}
 				else if ( (std::strncmp("N4 BSpline grid resolutions: ", Line, 29)) == 0)
 				{
 					BSplineGridResolutions = Line+29;
-					m_Computation.SetBSplineGridResolutions(BSplineGridResolutions.c_str());
 					g_BSplineGridResolutions->value(BSplineGridResolutions.c_str());	
 				}
 				else if ( (std::strncmp("N4 BSpline alpha: ", Line, 18)) == 0)
 				{
 					BSplineAlpha = atof(Line+18);
-					m_Computation.SetBSplineAlpha(BSplineAlpha);
 					g_BSplineAlpha->value(BSplineAlpha);	
 				}
 				else if ( (std::strncmp("N4 BSpline beta: ", Line, 17)) == 0)
 				{
 					BSplineBeta = atof(Line+17);
-					m_Computation.SetBSplineBeta(BSplineBeta);
 					g_BSplineBeta->value(BSplineBeta);	
 				}
 				else if ( (std::strncmp("N4 Histogram sharpening: ", Line, 25)) == 0)
 				{
 					HistogramSharpening = Line+25;
-					m_Computation.SetHistogramSharpening(HistogramSharpening.c_str());
 					g_HistogramSharpening->value(HistogramSharpening.c_str());	
 				}
 				else if ( (std::strncmp("N4 BSpline order: ", Line, 18)) == 0)
 				{
 					BSplineOrder =atoi(Line+18);
-					m_Computation.SetBSplineOrder(BSplineOrder);
 					g_BSplineOrder->value(BSplineOrder);	
 				}
 			}
@@ -2960,82 +2782,66 @@ void AutoSegGUIControls::ComputeAuxDataGUI()
 	if (g_Aux1Button->value())
 	{
 		m_Computation.SetAux1(g_Aux1Disp->value());
-		//m_Computation.SetAux1Label(g_Aux1LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux1("");
-		//m_Computation.SetAux1Label("");
 	}
 	if (g_Aux2Button->value())
 	{
 		m_Computation.SetAux2(g_Aux2Disp->value());
-		//m_Computation.SetAux2Label(g_Aux2LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux2("");
-		//m_Computation.SetAux2Label("");
 	}
 	if (g_Aux3Button->value())
 	{
 		m_Computation.SetAux3(g_Aux3Disp->value());
-		//m_Computation.SetAux3Label(g_Aux3LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux3("");
-		//m_Computation.SetAux3Label("");
 	}
 	if (g_Aux4Button->value())
 	{
 		m_Computation.SetAux4(g_Aux4Disp->value());
-		//m_Computation.SetAux4Label(g_Aux4LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux4("");
-		//m_Computation.SetAux4Label("");
 	}
 	if (g_Aux5Button->value())
 	{
 		m_Computation.SetAux5(g_Aux5Disp->value());
-		//m_Computation.SetAux5Label(g_Aux5LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux5("");
-		//m_Computation.SetAux5Label("");
 	}
 	if (g_Aux6Button->value())
 	{
 		m_Computation.SetAux6(g_Aux6Disp->value());
-		//m_Computation.SetAux6Label(g_Aux6LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux6("");
-		//m_Computation.SetAux6Label("");
 	}
 	if (g_Aux7Button->value())
 	{
 		m_Computation.SetAux7(g_Aux7Disp->value());
-		//m_Computation.SetAux7Label(g_Aux7LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux7("");
-		//m_Computation.SetAux7Label("");
 	}
 	if (g_Aux8Button->value())
 	{
 		m_Computation.SetAux8(g_Aux8Disp->value());
-		//m_Computation.SetAux8Label(g_Aux8LabelDisp->value());
 	}
 	else
 	{
 		m_Computation.SetAux8("");
-		//m_Computation.SetAux8Label("");
 	}
 	InitAuxBrowser();
 	m_Computation.ComputeData();
@@ -4758,7 +4564,7 @@ void AutoSegGUIControls::ComputeGUI()
 				m_Computation.SetIsAutoSegInProcess(true);   
 				while (m_Computation.GetIsAutoSegInProcess())
 				{
-					m_Computation.Computation();        
+					m_Computation.Computation();
 					Fl::check();
 				}
 			}
@@ -4788,7 +4594,7 @@ void AutoSegGUIControls::InitializeData()
 		m_Computation.AllocateDataList();
       
 		for (Line = 2; Line <= g_DataBrowser->size(); Line++)
-			m_Computation.SetDataList(g_DataBrowser->text(Line), Line-2); 
+			m_Computation.SetDataList(g_DataBrowser->text(Line), Line-2,1); 
 	}
 }
 
@@ -5561,17 +5367,20 @@ void AutoSegGUIControls::SetRegistrationFilterTypeGUI()
 
 void AutoSegGUIControls::UseDefaultEMSAdvancedParametersGUI()
 {
-	LoadParameterFile(GetDefaultParameterFile(),tissueSeg);
+	m_Computation.LoadParameterFile(GetDefaultParameterFile(),tissueSeg);
+	UpdateParameterGUI(GetDefaultParameterFile(),tissueSeg);
 }
 
 void AutoSegGUIControls::UseDefaultWarpingAdvancedParametersGUI()
 {
-	LoadParameterFile(GetDefaultParameterFile(),warping);
+	m_Computation.LoadParameterFile(GetDefaultParameterFile(),warping);
+	UpdateParameterGUI(GetDefaultParameterFile(),warping);
 }
 
 void AutoSegGUIControls::UseDefaultN4AdvancedParametersGUI()
 {
-	LoadParameterFile(GetDefaultParameterFile(),N4biasFieldCorrection);
+	m_Computation.LoadParameterFile(GetDefaultParameterFile(),N4biasFieldCorrection);
+	UpdateParameterGUI(GetDefaultParameterFile(),N4biasFieldCorrection);
 }
 
 void AutoSegGUIControls::N4ITKBiasFieldCorrectionButtonChecked()
@@ -5872,7 +5681,6 @@ void AutoSegGUIControls::InitializeParameters()
 	m_Computation.SetScale2NbIterations((int)g_Scale2NbIterations->value());
 	m_Computation.SetScale1NbIterations((int)g_Scale1NbIterations->value());
 	m_Computation.SetNumBasis((float)g_NumBasis->value());
-	//m_Computation.SetRegistrationFilterType((int)g_RegistrationFilterType->value());
 	m_Computation.SetRegistrationFilterType("LogDemons");
 	m_Computation.SetDeformationFieldSmoothingSigma((float)g_DeformationFieldSmoothingSigma->value());
 	m_Computation.SetPyramidLevels((int)g_PyramidLevels->value());

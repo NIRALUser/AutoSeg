@@ -19,12 +19,17 @@
 #include "AutoSegComputation.h"
 
 AutoSegComputation::AutoSegComputation()
-{}
+{
+	m_AllocationData=0;
+	m_AllocationAuxData=0;
+}
 
 AutoSegComputation::~AutoSegComputation()
 {
-	DesallocateDataList();
-	DesallocateAuxDataList();
+	if(m_AllocationData==1)
+		DesallocateDataList();
+	if(m_AllocationAuxData==1)
+		DesallocateAuxDataList();
 }
 
 void AutoSegComputation::SetBMSAutoSegFile()
@@ -154,7 +159,7 @@ void AutoSegComputation::AllocateDataList()
 	m_T1List = new char *[GetNbData()];
 	for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
 	{
-		m_T1List[DataNumber] = new char[512];  
+		m_T1List[DataNumber] = new char[512];
 		std::strcpy(m_T1List[DataNumber], "");
 	}
 	if (GetT2Image())
@@ -166,6 +171,8 @@ void AutoSegComputation::AllocateDataList()
 			std::strcpy(m_T2List[DataNumber], "");
 		}
 	}
+	else
+		m_T2List=NULL;
 	if (GetPDImage())
 	{
 		m_PDList = new char *[GetNbData()];
@@ -175,6 +182,9 @@ void AutoSegComputation::AllocateDataList()
 			std::strcpy(m_PDList[DataNumber], "");
 		}
 	}
+	else
+		m_PDList=NULL;
+	m_AllocationData=1;
 }
 
 void AutoSegComputation::AllocateAuxDataList()
@@ -282,6 +292,7 @@ void AutoSegComputation::AllocateAuxDataList()
 			std::strcpy(m_Aux8List[DataNumber], "");
 		}
 	}
+	m_AllocationAuxData=1;
 }
 
 void AutoSegComputation::DesallocateDataList()
@@ -292,14 +303,14 @@ void AutoSegComputation::DesallocateDataList()
 	{
 		for (DataNumber = 1; DataNumber < GetNbData(); DataNumber++)
 			delete[] m_T1List[DataNumber];
-		delete []m_T1List;  
+		delete []m_T1List;
 		m_T1List = NULL;
 	}
 	if (m_T2List)
 	{
 		for (DataNumber = 1; DataNumber < GetNbData(); DataNumber++)
 			delete[] m_T2List[DataNumber];
-		delete []m_T2List;  
+		delete []m_T2List;
 		m_T2List = NULL;
 	}
 	if (m_PDList)
@@ -396,16 +407,32 @@ void AutoSegComputation::DesallocateAuxDataList()
 	}
 }
 
-void AutoSegComputation::SetDataList(const char *_Data, int _DataNumber)
+//_GUIMode=1 : With GUI
+//_GUIMode=0 : Without GUI
+void AutoSegComputation::SetDataList(const char *_Data, int _DataNumber, bool _GUIMode)
 {
-	if ( !GetT2Image() && !GetPDImage()) 
-		SetData(_Data, m_T1List[_DataNumber]);
-	else if (GetT2Image() && GetPDImage()) 
-		SetData(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber], m_PDList[_DataNumber]);
-	else if (GetT2Image())
-		SetData(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber]);
+	if (_GUIMode==0)
+	{
+		if ( !GetT2Image() && !GetPDImage()) 
+			SetData(_Data, m_T1List[_DataNumber]);
+		else if (GetT2Image() && GetPDImage()) 
+			SetDatawoGUI(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber], m_PDList[_DataNumber]);
+		else if (GetT2Image())
+			SetDatawoGUI(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber]);
+		else
+			SetDatawoGUI(_Data, m_T1List[_DataNumber], m_PDList[_DataNumber]);
+	}
 	else
-		SetData(_Data, m_T1List[_DataNumber], m_PDList[_DataNumber]);
+	{
+		if ( !GetT2Image() && !GetPDImage()) 
+			SetData(_Data, m_T1List[_DataNumber]);
+		else if (GetT2Image() && GetPDImage()) 
+			SetData(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber], m_PDList[_DataNumber]);
+		else if (GetT2Image())
+			SetData(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber]);
+		else
+			SetData(_Data, m_T1List[_DataNumber], m_PDList[_DataNumber]);
+	}
 }
 
 void AutoSegComputation::SetAuxDataList(const char *_Data, int _DataNumber)
@@ -614,12 +641,20 @@ void AutoSegComputation::SetAuxData(const char *_Data, char *_T1)
 void AutoSegComputation::SetData(const char *_Data, char *_T1, char *_SecondImage)
 {
 	int Char1 = 0;
-
 	while (std::strncmp(" ", _Data+Char1, 1) != 0)
 		Char1++;    
-
 	std::strncpy(_T1, _Data+2, Char1-2);
 	_T1[Char1-2] = '\0';
+	std::strcpy(_SecondImage,_Data+Char1+1);
+}
+
+void AutoSegComputation::SetDatawoGUI(const char *_Data, char *_T1, char *_SecondImage)
+{
+	int Char1 = 0;
+	while (std::strncmp(" ", _Data+Char1, 1) != 0)
+		Char1++;    
+	std::strncpy(_T1, _Data, Char1);
+	_T1[Char1] = '\0';
 	std::strcpy(_SecondImage,_Data+Char1+1);
 }
 
@@ -651,6 +686,23 @@ void AutoSegComputation::SetData(const char *_Data, char *_T1, char *_T2, char *
 	std::strncpy(_T2,_Data+Char1+1+2, Char2-2);
 	_T2[Char2-2] = '\0';
 	std::strcpy(_PD, _Data+Char1+Char2+2);
+}
+
+void AutoSegComputation::SetDatawoGUI(const char *_Data, char *_T1, char *_T2, char *_PD)
+{
+	int Char1 = 0;
+	int Char2 = 0;
+
+	while (std::strncmp(" ", _Data+Char1, 1) != 0)
+		Char1++;
+	while (std::strncmp(" ", _Data+Char1+1+Char2, 1) != 0)
+		Char2++;
+
+	std::strncpy(_T1, _Data, Char1);
+	_T1[Char1] = '\0';
+	std::strncpy(_T2,_Data+Char1+1, Char2);
+	_T2[Char2] = '\0';
+	std::strcpy(_PD, _Data+Char1+Char2);
 }
 
 void AutoSegComputation::SetAuxData(const char *_Data, char *_T1, char *_Aux1, char *_Aux2)
@@ -1272,6 +1324,35 @@ void AutoSegComputation::Computation()
 	ExecuteBatchMake(GetBMSAutoSegFile(),1);
 }
 
+// Compute Automatic Segmentation
+void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile)
+{
+	LoadComputationFile(_computationFile);
+	LoadParameterFile(_parameterFile);
+	SetBMSAutoSegFile();
+	SetBMSAutoSegMainFile();
+	SetLogFile();
+	SetAux1Image(0);
+
+	if (GetComputeVolume())
+	{
+		SetTissueSegmentationVolumeFile();
+		if (GetSubcorticalStructureSegmentation())
+			SetSubcorticalStructuresVolumeFile();
+		if (GetGenericROISegmentation())
+			SetGenericROIMapVolumeFile();
+		if (GetParcellationMapSegmentation())
+			SetParcellationMapVolumeFileWM();
+			SetParcellationMapVolumeFileGM();
+			SetParcellationMapVolumeFileCSF();
+	}
+	WriteBMSAutoSegFile();
+	WriteBMSAutoSegMainFile();
+	m_KillProcess = false;
+	m_output.clear();
+	ExecuteBatchMake(GetBMSAutoSegFile(),0);
+}
+
 void AutoSegComputation::ShowDisplay()
 {
 	TextDisplay.g_MainWindow->show();  
@@ -1279,7 +1360,9 @@ void AutoSegComputation::ShowDisplay()
 }
 
 // Execute Batchmake script
-void AutoSegComputation::ExecuteBatchMake(char *_Input, int _Mode)
+//_GUIMode == 1 with GUI
+//_GUIMode == 0 without GUI
+void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
 {
   //Text Display
   //std::string m_output;
@@ -1296,7 +1379,7 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _Mode)
   //std::strcpy(BatchMakeApplicationDir, GetAutoSegPath());
   //std::strcat(BatchMakeApplicationDir, "BatchMakeApplications");
 
-	if (_Mode == 1)
+	if (_GUIMode == 1)
 	{                
 		TextDisplay.g_TextDisp->buffer(m_TextBuf); 
 		TextDisplay.g_MainWindow->show(); 
@@ -1320,7 +1403,7 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _Mode)
 	itksysProcess_SetOption(m_Process,itksysProcess_Option_HideWindow,1);
 	itksysProcess_Execute(m_Process);   
   
-	if (_Mode == 1)
+	if (_GUIMode == 1 || _GUIMode == 0)
 	{
 		while(Value = itksysProcess_WaitForData(m_Process,&data,&length,&timeout))
 		{
@@ -1329,7 +1412,11 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _Mode)
 				for(int i=0;i<length;i++)
 					m_output +=data[i]; 
 				m_TextBuf.text(m_output.c_str());
-				TextDisplay.g_TextDisp->scroll(1000,0);
+				if (_GUIMode == 1)
+				{
+					m_TextBuf.text(m_output.c_str());
+					TextDisplay.g_TextDisp->scroll(1000,0);
+				}
 			}
 			timeout = 0.05;
 			Fl::check();
@@ -1353,8 +1440,10 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _Mode)
 	}
   
 	itksysProcess_WaitForExit(m_Process, 0);   
-  
-	LogFile<<m_output.c_str()<<std::endl;
+	if (_GUIMode == 1)
+		LogFile<<m_output.c_str()<<std::endl;
+	if (_GUIMode == 0)
+		std::cout<<m_output.c_str()<<std::endl;
  
 	result = 1;
 	switch(itksysProcess_GetState(m_Process))
@@ -1884,6 +1973,7 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
 	ParameterFile<<"Common Coordinate Image Type: "<<GetCommonCoordinateImageType()<<std::endl;
 	ParameterFile<<"ROI Atlas File: "<<GetROIAtlasFile()<<std::endl<<std::endl;
 	ParameterFile<<"// Subcortical Structures"<<std::endl;  
+	ParameterFile<<"Subcortical Structure Segmentation: "<<GetSubcorticalStructureSegmentation()<<std::endl;
 	ParameterFile<<"Amygdala Left: "<<GetAmygdalaLeft()<<std::endl;
 	ParameterFile<<"Amygdala Right: "<<GetAmygdalaRight()<<std::endl;
 	ParameterFile<<"Caudate Left: "<<GetCaudateLeft()<<std::endl;
@@ -1897,12 +1987,14 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
 	ParameterFile<<"Lateral Ventricle Left: "<<GetLateralVentricleLeft()<<std::endl;
 	ParameterFile<<"Lateral Ventricle Right: "<<GetLateralVentricleRight()<<std::endl<<std::endl;  
 	ParameterFile<<"// Generic ROI Maps"<<std::endl; 
+	ParameterFile<<"Generic ROI Segmentation: "<<GetGenericROISegmentation()<<std::endl;
 	ParameterFile<<"ROI File 1: "<<GetROIFile1()<<std::endl;
 	ParameterFile<<"ROI File 2: "<<GetROIFile2()<<std::endl;
 	ParameterFile<<"ROI File 3: "<<GetROIFile3()<<std::endl;
 	ParameterFile<<"ROI File 4: "<<GetROIFile4()<<std::endl;
 	ParameterFile<<"ROI File 5: "<<GetROIFile5()<<std::endl<<std::endl;
 	ParameterFile<<"// Parcellation Maps"<<std::endl;  
+	ParameterFile<<"Parcellation Map Segmentation: "<<GetParcellationMapSegmentation()<<std::endl;
 	ParameterFile<<"Tissue Map: "<<GetSoftTissueMap()<<std::endl;
 	ParameterFile<<"Parcellation File 1: "<<GetParcellationFile1()<<std::endl;
 	ParameterFile<<"Parcellation File 2: "<<GetParcellationFile2()<<std::endl;
@@ -2043,7 +2135,7 @@ void AutoSegComputation::WriteBMSAutoSegFile()
 void AutoSegComputation::WriteBMSAutoSegMainFile()
 {
 	int DataNumber;
-	std::ofstream BMSAutoSegMainFile(GetBMSAutoSegMainFile());    
+	std::ofstream BMSAutoSegMainFile(GetBMSAutoSegMainFile());
 
 	BMSAutoSegMainFile<<"#--------------------- Automatic Segmentation ------------------------"<<std::endl;
 	BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -8158,4 +8250,1296 @@ void AutoSegComputation::ExecuteSlicer3withScene(std::string pathSlicer)
 	{
 		std::cerr<<"No MRML Scene found"<<std::endl;
 	}
+}
+
+void AutoSegComputation::LoadAuxComputationFile(const char *_FileName)
+{
+	FILE* AuxComputationFile;
+	char Line[1536];
+	int Length;
+	
+  // Computation Options
+	int IsAux1Image, IsAux2Image, IsAux3Image, IsAux4Image, IsAux5Image, IsAux6Image, IsAux7Image, IsAux8Image;
+	int IsAuxT1Image, IsAuxT2Image, IsAuxPDImage;
+	int RigidTransformation, AffineTransformation, BsplineTransformation, AtlasSpaceImage, BiasCorrectedImage, SkullStrippedImage;
+	int nbData=0;
+	std::vector<const char *> DataList;
+	
+	if ((AuxComputationFile = fopen(_FileName,"r")) != NULL) 
+	{
+		while ( (fgets(Line,1536,AuxComputationFile)) != NULL)
+		{
+			Length = std::strlen(Line);
+			Line[Length-1] = '\0';
+			if ( (std::strncmp("Is AuxT1 Image: ", Line, 16)) == 0)
+			{
+				IsAuxT1Image = atoi(Line+16);
+				SetAuxT1Image(IsAuxT1Image);
+			}
+			else if ( (std::strncmp("Is AuxT2 Image: ", Line, 16)) == 0)
+			{
+				IsAuxT2Image = atoi(Line+16);
+				SetAuxT2Image(IsAuxT2Image);
+			}
+			else
+			{
+				IsAuxPDImage = atoi(Line+16);
+				SetAuxPDImage(IsAuxPDImage);
+			}
+			if ( (std::strncmp("Is Aux1 Image: ", Line, 15)) == 0)
+			{
+				IsAux1Image = atoi(Line+15);
+				SetAux1Image(IsAux1Image);
+			}
+			else if ( (std::strncmp("Is Aux2 Image: ", Line, 15)) == 0)
+			{
+				IsAux2Image = atoi(Line+15);
+				SetAux2Image(IsAux2Image);
+			}
+			else if ( (std::strncmp("Is Aux3 Image: ", Line, 15)) == 0)
+			{
+				IsAux3Image = atoi(Line+15);
+				SetAux3Image(IsAux3Image);
+			}
+			else if ( (std::strncmp("Is Aux4 Image: ", Line, 15)) == 0)
+			{
+				IsAux4Image = atoi(Line+15);
+				SetAux4Image(IsAux4Image);
+			}
+			else if ( (std::strncmp("Is Aux5 Image: ", Line, 15)) == 0)
+			{
+				IsAux5Image = atoi(Line+15);
+				SetAux5Image(IsAux5Image);
+			}
+			else if ( (std::strncmp("Is Aux6 Image: ", Line, 15)) == 0)
+			{
+				IsAux6Image = atoi(Line+15);
+				SetAux6Image(IsAux6Image);
+			}
+			else if ( (std::strncmp("Is Aux7 Image: ", Line, 15)) == 0)
+			{
+				IsAux7Image = atoi(Line+15);
+				SetAux7Image(IsAux7Image);
+			}
+			else if ( (std::strncmp("Is Aux8 Image: ", Line, 15)) == 0)
+			{
+				IsAux8Image = atoi(Line+15);
+				SetAux8Image(IsAux8Image);
+			}
+			else if ( (std::strncmp("Data Directory: ", Line, 16)) == 0)
+			{
+				if (std::strlen(Line+16) != 0)
+				{
+					SetDataDirectory(Line+16);
+				}
+				else
+				{
+					SetDataDirectory("");
+				}
+			}
+			else if ( (std::strncmp("AuxT1 Files: ", Line, 13)) == 0)
+			{
+				if (std::strlen(Line+13) != 0)
+				{
+					SetT1(Line+13);
+				}
+				else
+				{
+					SetT1("");
+				}
+			}
+			else if ( (std::strncmp("AuxT2 Files: ", Line, 13)) == 0)
+			{
+				if (std::strlen(Line+13) != 0)
+				{
+					SetT2(Line+13);
+				}
+				else
+				{
+					SetT2("");
+				}
+			}
+			else if ( (std::strncmp("AuxPD Files: ", Line, 13)) == 0)
+			{
+				if (std::strlen(Line+13) != 0)
+				{
+					SetPD(Line+13);
+				}
+				else
+				{
+					SetPD("");
+				}
+			}
+			else if ( (std::strncmp("Aux1 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux1(Line+12);
+				}
+				else
+				{
+					SetAux1("");
+				}
+			}
+			else if ( (std::strncmp("Aux2 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux2(Line+12);
+				}
+				else
+				{
+					SetAux2("");
+				}
+			}
+			else if ( (std::strncmp("Aux3 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux3(Line+12);
+				}
+				else
+				{
+					SetAux3("");
+				}
+			}
+			else if ( (std::strncmp("Aux4 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux4(Line+12);
+				}
+				else
+				{
+					SetAux4("");
+				}
+			}
+			else if ( (std::strncmp("Aux5 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux5(Line+12);
+				}
+				else
+				{
+					SetAux5("");
+				}
+			}
+			else if ( (std::strncmp("Aux6 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux6(Line+12);
+				}
+				else
+				{
+					SetAux6("");
+				}
+			}
+			else if ( (std::strncmp("Aux7 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux7(Line+12);
+				}
+				else
+				{
+					SetAux7("");
+				}
+			}
+			else if ( (std::strncmp("Aux8 Files: ", Line, 12)) == 0)
+			{
+				if (std::strlen(Line+12) != 0)
+				{
+					SetAux8(Line+12);
+				}
+				else
+				{
+					SetAux8("");
+				}
+			}
+			else if ( (std::strncmp("Aux1 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux1Label(Line+11);
+				}
+				else
+				{
+					SetAux1Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux2 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux2Label(Line+11);
+				}
+				else
+				{
+					SetAux2Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux3 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux3Label(Line+11);
+				}
+				else
+				{
+					SetAux3Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux4 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux4Label(Line+11);
+				}
+				else
+				{
+					SetAux4Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux5 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux5Label(Line+11);
+				}
+				else
+				{
+					SetAux5Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux6 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux6Label(Line+11);
+				}
+				else
+				{
+					SetAux6Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux7 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux7Label(Line+11);
+				}
+				else
+				{
+					SetAux7Label("");
+				}
+			}
+			else if ( (std::strncmp("Aux8 Label: ", Line, 11)) == 0)
+			{
+				if (std::strlen(Line+11) != 0)
+				{
+					SetAux8Label(Line+11);
+				}
+				else
+				{
+					SetAux8Label("");
+				}
+			}
+			else if ( (std::strncmp("Atlas Space Image: ", Line, 19)) == 0)
+			{
+				AtlasSpaceImage = atoi(Line+19);
+				SetAtlasSpaceImage(AtlasSpaceImage);
+				if (AtlasSpaceImage == 1)
+				{
+					BiasCorrectedImage = 0;
+					SkullStrippedImage = 0;
+				}
+			}
+			else if ( (std::strncmp("Bias Corrected Image: ", Line, 22)) == 0)
+			{
+				BiasCorrectedImage = atoi(Line+22);
+				SetBiasCorrectedImage(BiasCorrectedImage);
+				if (BiasCorrectedImage == 1)
+				{
+					AtlasSpaceImage = 0;
+					SkullStrippedImage = 0;
+				}
+			}
+			else if ( (std::strncmp("Skull Stripped Image: ", Line, 22)) == 0)
+			{
+				SkullStrippedImage = atoi(Line+22);
+				SetSkullStrippedImage(SkullStrippedImage);
+				if (SkullStrippedImage == 1)
+				{
+					AtlasSpaceImage = 0;
+					BiasCorrectedImage = 0;
+				}
+			}
+			else if ( (std::strncmp("Rigid Transformation: ", Line, 22)) == 0)
+			{
+				RigidTransformation = atoi(Line+22);
+				SetRigidTransformation(RigidTransformation);
+				if (RigidTransformation == 1)
+				{
+					AffineTransformation = 0;
+					BsplineTransformation = 0;
+				}
+			}
+			else if ( (std::strncmp("Affine Transformation: ", Line, 23)) == 0)
+			{
+				AffineTransformation = atoi(Line+23);
+				SetAffineTransformation(AffineTransformation);
+				if (AffineTransformation == 1)
+				{
+					BsplineTransformation = 0;
+					RigidTransformation = 0;
+				}
+			}
+			else if ( (std::strncmp("Bspline Transformation: ", Line, 24)) == 0)
+			{
+				BsplineTransformation = atoi(Line+24);
+				SetBsplineTransformation(BsplineTransformation);
+				if (BsplineTransformation == 1)
+				{
+					AffineTransformation = 0;
+					RigidTransformation = 0;
+				}
+			}
+			else if ( (std::strncmp("AuxData: ", Line, 9)) == 0)
+			{
+				DataList.push_back(Line+9);
+				nbData++;	
+				
+			}
+		}
+	fclose(AuxComputationFile);
+	if (nbData!=0)
+	{
+		SetNbData(nbData);
+		AllocateAuxDataList();
+		for(int i=0;i<nbData;i++)
+			SetAuxDataList(DataList.at(i),i);
+	}
+	}
+	else
+	{
+		std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+	}
+}
+
+// Load computation file
+void AutoSegComputation::LoadComputationFile(const char *_FileName)
+{
+	FILE* ComputationFile;
+	char Line[1536];
+	int Length;
+  // Computation Options
+	int IsT2Image, IsPDImage;
+	int nbData=0;
+	std::vector<const char *> DataList;
+	int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor;
+
+	if ((ComputationFile = fopen(_FileName,"r")) != NULL) 
+	{
+		while ( (fgets(Line,1536,ComputationFile)) != NULL)
+		{
+			Length = std::strlen(Line);
+			Line[Length-1] = '\0';
+
+			if ( (std::strncmp("Process Data Directory: ", Line, 24)) == 0)
+			{
+				if (std::strlen(Line+24) != 0)
+				{
+					SetProcessDataDirectory(Line+24);
+				}
+				else
+				{
+					SetProcessDataDirectory("");
+				}
+			}
+			else if ( (std::strncmp("Is T2 Image: ", Line, 13)) == 0)
+			{
+				IsT2Image = atoi(Line+13);
+				SetT2Image(IsT2Image);
+			}
+			else if ( (std::strncmp("Is PD Image: ", Line, 13)) == 0)
+			{
+				IsPDImage = atoi(Line+13);
+				SetPDImage(IsPDImage);
+			}
+			else if( (std::strncmp("Data AutoSeg Directory: ", Line, 24)) == 0)
+			{
+				if (std::strlen(Line+24))
+				{
+					SetDataAutoSegDirectory(Line+24);
+				}
+				else
+				{
+					SetDataAutoSegDirectory("");
+				}
+			}
+			else if ( (std::strncmp("Data Directory: ", Line, 16)) == 0)
+			{
+				if (std::strlen(Line+16) != 0)
+				{
+					SetDataDirectory(Line+16);
+				}
+				else
+				{
+					SetDataDirectory("");
+				}
+			}
+			else if ( (std::strncmp("T1 Files: ", Line, 10)) == 0)
+			{
+				if (std::strlen(Line+10) != 0)
+				{
+					SetT1(Line+10);
+				}
+				else
+				{
+					SetT1("");
+				}
+			}
+			else if ( (std::strncmp("T2 Files: ", Line, 10)) == 0)
+			{
+				if (std::strlen(Line+10) != 0)
+				{
+					SetT2(Line+10);
+				}
+				else
+				{
+					SetT2("");
+				}
+			}
+			else if ( (std::strncmp("PD Files: ", Line, 10)) == 0)
+			{
+				if (std::strlen(Line+10) != 0)        
+				{
+					SetPD(Line+10);
+				}
+				else
+				{
+					SetPD("");
+				}
+			}
+			else if ( (std::strncmp("Compute Volume: ", Line, 16)) == 0)
+			{
+				ComputeVolume = atoi(Line+16);
+				SetComputeVolume(ComputeVolume);
+			}
+			else if ( (std::strncmp("Compute cortical thickness: ", Line, 28)) == 0)
+			{
+				ComputeCorticalThickness = atoi(Line+28);
+				SetComputeCorticalThickness(ComputeCorticalThickness);
+			}
+			else if ( (std::strncmp("Recompute: ", Line, 11)) == 0)
+			{
+				Recompute = atoi(Line+11);
+				SetRecompute(Recompute);
+			}
+			else if ( (std::strncmp("Use Condor: ", Line, 12)) == 0)
+			{
+				UseCondor = atoi(Line+12);
+				SetUseCondor(UseCondor);
+			}
+			else if ( (std::strncmp("Data: ", Line, 6)) == 0)
+			{
+				DataList.push_back(Line+6);
+				nbData++;
+			}
+
+		}
+		fclose(ComputationFile);
+		if (nbData!=0)
+		{
+			SetNbData(nbData);
+			AllocateDataList();
+			for(int i=0;i<nbData;i++)
+			{
+				SetDataList(DataList.at(i),i,0);
+			}
+		}
+	}
+	else
+		std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+}
+
+// Load parameter file
+// Mode = file: Read the total file
+// Mode = advancedParameters: Read only the advanced parameters (tissue segmentation, warping parameters and N4 ITK Bias Field Correction parameters)
+// Mode = tissueSeg: Read only the tissue segmentation parameters
+// Mode = warping: Read only the warping parameters
+// Mode = N4biasFieldCorrection: Read only the N4 ITK Bias Field Correction parameters
+bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode)
+{
+	FILE* ParameterFile;
+	char Line[512]; 
+	int Length;
+    // Tissue Segmentation
+	int FilterIterations, MaxBiasDegree, Loop;
+	float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, FluidAtlasWarpMaxStep;
+	int FluidAtlasWarp, FluidAtlasFATW, FluidAtlasAffine, FluidAtlasWarpIterations, LoopIteration;
+    // Rigid Registration
+	int RigidRegistration, IsROIAtlasGridTemplate;
+	int GridTemplateSizeX, GridTemplateSizeY, GridTemplateSizeZ;
+	float GridTemplateSpacingX, GridTemplateSpacingY, GridTemplateSpacingZ;
+    // Atlas Warping
+	float Alpha, Beta, Gamma, MaxPerturbation, NumBasis,DeformationFieldSmoothingSigma;
+	int Scale4NbIterations, Scale2NbIterations, Scale1NbIterations,PyramidLevels;
+	std::string RegistrationFilterType,MovingShrinkFactors,FixedShrinkFactors,IterationCountPyramidLevels;
+    // Skull Stripping
+	int DeleteVessels;
+    // Regional histogram
+	float PointSpacing;
+    // N4 ITK Bias Field Correction
+	std::string NbOfIterations,BSplineGridResolutions,HistogramSharpening;
+	int N4ITKBiasFieldCorrection,ShrinkFactor,BSplineOrder;
+	float ConvergenceThreshold,BSplineBeta,BSplineAlpha,SplineDistance;
+  
+	bool IsParameterFileLoaded=false;
+
+	if (mode ==file)
+	{
+		// INIT / default setting for backward comaptibility
+		
+		// Init for EMS loop
+		SetLoop(0);
+		// Init for N4
+		SetN4ITKBiasFieldCorrection(0);	
+	}
+
+	if ((ParameterFile = fopen(_FileName,"r")) != NULL) 
+	{
+		IsParameterFileLoaded = true;
+		while ( (fgets(Line,512,ParameterFile)) != NULL)
+		{
+			Length = std::strlen(Line);
+			Line[Length-1] = '\0';
+      
+			if (mode == file)
+			{
+				 if ( (std::strncmp("Common Coordinate Image: ", Line, 25)) == 0)
+				{
+					if (std::strlen(Line+25) != 0)
+					{
+						SetCommonCoordinateImage(Line+25);
+					}
+					else
+					{
+						SetCommonCoordinateImage("");
+					}
+				}
+				else if ( (std::strncmp("Common Coordinate Image Type: ", Line, 30)) == 0)
+				{
+					SetCommonCoordinateImageType(Line+30);
+					if (std::strcmp(Line+30, "T1") == 0)
+					{
+						SetCommonCoordinateImageType("T1");
+					}
+					else
+					{
+						SetCommonCoordinateImageType("T2");
+					}
+				}
+				else if ( (std::strncmp("Tissue Segmentation Atlas Directory: ", Line, 37)) == 0)
+				{
+					if (std::strlen(Line+37) != 0)
+					{
+						SetTissueSegmentationAtlasDirectory(Line+37); 
+					}
+					else
+					{
+						SetTissueSegmentationAtlasDirectory("");
+					}
+				}
+				else if ( (std::strncmp("Tissue Segmentation Atlas Type: ", Line, 32)) == 0)
+				{
+					SetTissueSegmentationAtlasType(Line+32);
+					if (std::strcmp(Line+32, "T1") == 0)
+					{
+						SetTissueSegmentationAtlasType("T1");
+					}
+					else
+					{
+						SetTissueSegmentationAtlasType("T2");
+					}	
+				}
+				else if ( (std::strncmp("ROI Atlas File: ", Line, 16)) == 0)
+				{
+					if (std::strlen(Line+16) != 0)
+					{
+						SetROIAtlasFile(Line+16);
+					}
+					else
+					{
+						SetROIAtlasFile("");
+					}
+				}
+				else if ( (std::strncmp("Subcortical Structure Segmentation: ", Line, 36)) == 0)
+				{
+					if (atoi(Line+36) == 1)
+					{
+						SetSubcorticalStructureSegmentation(1);
+					}
+					else
+					{
+						SetSubcorticalStructureSegmentation(0);
+					}
+				}
+				else if ( (std::strncmp("Amygdala Left: ", Line, 15)) == 0)
+				{
+					if (std::strlen(Line+15) != 0)
+					{
+						SetAmygdalaLeft(Line+15);
+					}
+					else
+					{
+						SetAmygdalaLeft("");
+					}
+				}
+				else if ( (std::strncmp("Amygdala Right: ", Line, 16)) == 0)
+				{
+					if (std::strlen(Line+16) != 0)
+					{
+						SetAmygdalaRight(Line+16);
+					}
+					else
+					{
+						SetAmygdalaRight("");
+					}
+				}     
+				else if ( (std::strncmp("Caudate Left: ", Line, 14)) == 0)
+				{
+					if (std::strlen(Line+14) != 0)
+					{
+						SetCaudateLeft(Line+14);
+					}
+					else
+					{
+						SetCaudateLeft("");
+					}
+				}     
+				else if ( (std::strncmp("Caudate Right: ", Line, 15)) == 0)
+				{
+					if (std::strlen(Line+15) != 0)
+					{
+						SetCaudateRight(Line+15);
+					}
+					else
+					{
+						SetCaudateRight("");
+					}
+				}     
+				else if ( (std::strncmp("Hippocampus Left: ", Line, 18)) == 0)
+				{
+					if (std::strlen(Line+18) != 0)
+					{
+						SetHippocampusLeft(Line+18);
+					}
+					else
+					{
+						SetHippocampusLeft("");
+					}
+				}     
+				else if ( (std::strncmp("Hippocampus Right: ", Line, 19)) == 0)
+				{
+					if (std::strlen(Line+19) != 0)
+					{
+						SetHippocampusRight(Line+19);
+					}
+					else
+					{
+						SetHippocampusRight(""); 
+					}
+				}     
+				else if ( (std::strncmp("Pallidus Left: ", Line, 15)) == 0)
+				{
+					if (std::strlen(Line+15) != 0)
+					{
+						SetPallidusLeft(Line+15);
+					}
+					else
+					{
+						SetPallidusLeft("");
+					}
+				}     
+				else if ( (std::strncmp("Pallidus Right: ", Line, 16)) == 0)
+				{
+					if (std::strlen(Line+16) != 0)
+					{
+						SetPallidusRight(Line+16);
+					}
+					else
+					{
+						SetPallidusRight("");
+					}
+				}     
+				else if ( (std::strncmp("Putamen Left: ", Line, 14)) == 0)
+				{
+					if (std::strlen(Line+14) != 0)
+					{
+						SetPutamenLeft(Line+14);
+					}
+					else
+					{
+						SetPutamenLeft("");
+					}
+				}     
+				else if ( (std::strncmp("Putamen Right: ", Line, 15)) == 0)
+				{
+					if (std::strlen(Line+15) != 0)
+					{
+						SetPutamenRight(Line+15);
+					}
+					else
+					{
+						SetPutamenRight("");
+					}
+				}     
+				else if ( (std::strncmp("Lateral Ventricle Left: ", Line, 24)) == 0)
+				{
+					if (std::strlen(Line+24) != 0)
+					{
+						SetLateralVentricleLeft(Line+24);
+					}   
+					else
+					{
+						SetLateralVentricleLeft("");
+					}
+				}
+				else if ( (std::strncmp("Lateral Ventricle Right: ", Line, 25)) == 0)
+				{
+					if (std::strlen(Line+25) != 0)
+					{
+						SetLateralVentricleRight(Line+25);
+					}
+					else
+					{
+						SetLateralVentricleRight("");
+					}
+				}
+				else if ( (std::strncmp("Generic ROI Segmentation: ", Line, 26)) == 0)
+				{
+					if (atoi(Line+26) == 1)
+					{
+						SetGenericROISegmentation(1); 
+					}
+					else
+					{
+						SetGenericROISegmentation(0); 
+					}
+				}
+				else if ( (std::strncmp("ROI File 1: ", Line, 12)) == 0)
+				{
+					if (std::strlen(Line+12) != 0)
+					{
+						SetROIFile1(Line+12); 
+					}
+					else
+					{
+						SetROIFile1(""); 
+					}
+				}
+				else if ( (std::strncmp("ROI File 2: ", Line, 12)) == 0)
+				{
+					if (std::strlen(Line+12) != 0)
+					{
+						SetROIFile2(Line+12);
+					}
+					else
+					{
+						SetROIFile2("");
+					}
+				}
+				else if ( (std::strncmp("ROI File 3: ", Line, 12)) == 0)
+				{
+					if (std::strlen(Line+12) != 0)
+					{
+						SetROIFile3(Line+12);
+					}
+					else
+					{
+						SetROIFile3("");
+					}
+				}
+				else if ( (std::strncmp("ROI File 4: ", Line, 12)) == 0)
+				{
+					if (std::strlen(Line+12) != 0)
+					{
+						SetROIFile4(Line+12);
+					}
+					else
+					{
+						SetROIFile4("");
+					}
+				}
+				else if ( (std::strncmp("ROI File 5: ", Line, 12)) == 0)
+				{
+					if (std::strlen(Line+12) != 0)
+					{
+						SetROIFile5(Line+12);
+					}
+					else
+					{
+						SetROIFile5("");
+					}
+				}
+				else if ( (std::strncmp("Parcellation Map Segmentation: ", Line, 31)) == 0)
+				{
+					if (atoi(Line+31) == 1)
+					{
+						SetParcellationMapSegmentation(1);
+					}
+					else
+					{
+						SetParcellationMapSegmentation(0);
+					}
+				}
+				else if ( (std::strncmp("Tissue Map: ", Line, 12)) == 0)
+				{
+					SetSoftTissueMap(Line+12);
+					if (std::strcmp(Line+12, "Soft") == 0)
+					{
+						SetSoftTissueMap("Soft");
+					}
+					else
+					{
+						SetSoftTissueMap("Hard");
+					}
+				}
+				else if ( (std::strncmp("Parcellation File 1: ", Line, 21)) == 0)
+				{
+					if (std::strlen(Line+21) != 0)
+					{
+						SetParcellationFile1(Line+21);
+					}
+					else
+					{
+						SetParcellationFile1("");
+					}
+				}
+				else if ( (std::strncmp("Parcellation File 2: ", Line, 21)) == 0)
+				{
+					if (std::strlen(Line+21) != 0)
+					{
+						SetParcellationFile2(Line+21);
+					}
+					else
+					{
+						SetParcellationFile2("");
+					}
+				}
+				else if ( (std::strncmp("Parcellation File 3: ", Line, 21)) == 0)
+				{
+					if (std::strlen(Line+21) != 0)
+					{
+						SetParcellationFile3(Line+21);
+					}
+					else
+					{
+						SetParcellationFile3("");
+					}
+				}
+				else if ((std::strncmp("Rigid Registration: ", Line, 20)) == 0)
+				{
+					RigidRegistration = (atoi(Line+20));
+					SetRigidRegistration(RigidRegistration);
+				}
+				else if ((std::strncmp("Is ROIAtlasGridTemplate: ", Line, 25)) == 0)
+				{
+					IsROIAtlasGridTemplate = atoi(Line+25);
+					SetROIAtlasGridTemplate(IsROIAtlasGridTemplate);
+				}
+				else if ((std::strncmp("GridTemplate SizeX: ", Line, 20)) == 0)
+				{
+					GridTemplateSizeX = atoi(Line+20);
+					SetGridTemplateSizeX(GridTemplateSizeX);
+				}
+				else if ((std::strncmp("GridTemplate SizeY: ", Line, 20)) == 0)
+				{
+					GridTemplateSizeY = atoi(Line+20);
+					SetGridTemplateSizeY(GridTemplateSizeY);
+				}
+				else if ((std::strncmp("GridTemplate SizeZ: ", Line, 20)) == 0)
+				{
+					GridTemplateSizeZ = atoi(Line+20);
+					SetGridTemplateSizeZ(GridTemplateSizeZ);
+				}
+				else if ((std::strncmp("GridTemplate SpacingX: ", Line, 23)) == 0)
+				{
+					GridTemplateSpacingX = atof(Line+23);
+					SetGridTemplateSpacingX(GridTemplateSpacingX);
+				}
+				else if ((std::strncmp("GridTemplate SpacingY: ", Line, 23)) == 0)
+				{
+					GridTemplateSpacingY = atof(Line+23);
+					SetGridTemplateSpacingY(GridTemplateSpacingY);
+				}
+				else if ((std::strncmp("GridTemplate SpacingZ: ", Line, 23)) == 0)
+				{
+					GridTemplateSpacingZ = atof(Line+23);
+					SetGridTemplateSpacingZ(GridTemplateSpacingZ);
+				}
+				else if ((std::strncmp("Delete Vessels: ", Line, 16)) == 0)
+				{
+					DeleteVessels = (atoi(Line+16));
+					SetDeleteVessels(DeleteVessels);
+				}
+				else if ((std::strncmp("Intensity Rescaling: ", Line, 21)) == 0)
+				{
+					if (std::strcmp(Line+21,"Histogram quantile") == 0)
+					{
+						SetIntensityRescalingMethod(1);
+					}
+					else
+					{
+						SetIntensityRescalingMethod(2);
+					}
+				}
+				else if ( (std::strncmp("Quantiles: ", Line, 11)) == 0)
+				{
+					SetQuantiles(Line+11);	
+				}
+				else if ( (std::strncmp("Point Spacing: ", Line, 15)) == 0)
+				{
+					PointSpacing = atof(Line+15);
+					SetPointSpacing(PointSpacing);
+				}
+			}
+			if (mode == tissueSeg ||mode == advancedParameters||mode == file)
+			{
+				if ((std::strncmp("EM Software: ", Line, 13)) == 0)
+				{	
+					SetEMSoftware(Line+13);
+				}
+				else if ( (std::strncmp("Filter Iterations: ", Line, 19)) == 0)
+				{
+					FilterIterations = atoi(Line+19);
+					SetFilterIterations(FilterIterations);
+				}
+				else if ( (std::strncmp("Filter TimeStep: ", Line, 17)) == 0)
+				{
+					FilterTimeStep = atof(Line+17);
+					SetFilterTimeStep(FilterTimeStep);	
+				}
+				else if ( (std::strncmp("Filter Method: ", Line, 15)) == 0)
+				{
+					SetFilterMethod(Line+15);
+				}
+				else if ( (std::strncmp("Max Bias Degree: ", Line, 17)) == 0)
+				{
+					MaxBiasDegree = atoi(Line+17);
+					SetMaxBiasDegree(MaxBiasDegree);
+				}
+				else if ( (std::strncmp("Initial Distribution Estimator: ", Line, 32)) == 0)
+				{
+					SetInitialDistributionEstimator(Line+32);
+				}
+				else if ( (std::strncmp("Prior 1: ", Line, 9)) == 0)
+				{
+					Prior1 = atof(Line+9);
+					SetPrior1(Prior1);	
+				}
+				else if ( (std::strncmp("Prior 2: ", Line, 9)) == 0)
+				{
+					Prior2 = atof(Line+9);
+					SetPrior2(Prior2);
+				}
+				else if ( (std::strncmp("Prior 3: ", Line, 9)) == 0)
+				{
+					Prior3 = atof(Line+9);
+					SetPrior3(Prior3);
+				}
+				else if ( (std::strncmp("Prior 4: ", Line, 9)) == 0)
+				{
+					Prior4 = atof(Line+9);
+					SetPrior4(Prior4);
+				}
+				else if ( (std::strncmp("Fluid Atlas Warp: ", Line, 18)) == 0)
+				{
+					FluidAtlasWarp = atoi(Line+18);
+					if (FluidAtlasWarp == 1)
+					{
+						SetFluidAtlasWarp(1);
+						SetFluidAtlasAffine(0);
+						SetFluidAtlasFATW(0);
+					}
+					else
+					{
+						SetFluidAtlasWarp(0);
+					}
+				}
+				else if ( (std::strncmp("Fluid Atlas Affine: ", Line, 20)) == 0)
+				{
+					FluidAtlasAffine = atoi(Line+20);
+					if (FluidAtlasAffine == 1)
+					{
+						SetFluidAtlasAffine(1);
+						SetFluidAtlasWarp(0);
+						SetFluidAtlasFATW(0);
+					}
+					else
+					{
+						SetFluidAtlasAffine(0);
+					}
+				}
+				else if ( (std::strncmp("Fluid Atlas FATW: ", Line, 18)) == 0)
+				{
+					FluidAtlasFATW = atoi(Line+18);
+					if (FluidAtlasFATW == 1)
+					{
+						SetFluidAtlasFATW(1);
+						SetFluidAtlasWarp(0);
+						SetFluidAtlasAffine(0);
+					}
+					else
+					{
+						SetFluidAtlasFATW(0);
+					}
+				}
+				else if ( (std::strncmp("Fluid Atlas Warp Iterations: ", Line, 29)) == 0)
+				{
+					FluidAtlasWarpIterations = atoi(Line+29);
+					SetFluidAtlasWarpIterations(FluidAtlasWarpIterations);	
+				}
+				else if ( (std::strncmp("Fluid Atlas Warp Max Step: ", Line, 27)) == 0)
+				{
+					FluidAtlasWarpMaxStep = atof(Line+27);
+					SetFluidAtlasWarpMaxStep(FluidAtlasWarpMaxStep);
+				}
+				else if ( (std::strncmp("Atlas Linear Mapping: ", Line, 22)) == 0)
+				{
+					SetAtlasLinearMapping(Line+22);
+				}
+				else if ( (std::strncmp("Image Linear Mapping: ", Line, 22)) == 0)
+				{
+					SetImageLinearMapping(Line+22);
+				}
+				else if ((std::strncmp("Loop: ", Line, 6)) == 0)
+				{
+					Loop= atoi(Line+6);
+					if (mode==tissueSeg)
+					{
+						SetLoop(1);
+					}
+					else
+					{
+						if (Loop == 1)
+						{
+							SetLoop(1);
+						}
+						else
+						{
+							SetLoop(0);
+						}
+					}
+				}
+				else if ( (std::strncmp("Atlas Loop: ", Line, 12)) == 0)
+				{
+					if (std::strlen(Line+12) != 0)
+					{
+						SetAtlasLoop(Line+12);
+					}
+					else
+					{
+						SetAtlasLoop("");
+					}
+				}
+				else if ( (std::strncmp("Loop - Number of iterations: ", Line, 29)) == 0)
+				{
+					LoopIteration = atoi(Line+29);
+					SetLoopIteration(LoopIteration);
+				}
+			}
+			if (mode == warping||mode == advancedParameters||mode == file)
+			{
+				if ( (std::strncmp("Warping Method: ", Line, 16)) == 0)
+				{	
+					if (std::strcmp(Line+16, "Classic") == 0)
+					{
+						SetClassicWarpingMethod(1);
+						SetBRAINSDemonWarpMethod(0);
+					}
+					else if (std::strcmp(Line+16, "Coarse-to-fine") == 0)
+					{
+						SetClassicWarpingMethod(0);
+						SetBRAINSDemonWarpMethod(0);
+					}
+					else if (std::strcmp(Line+16, "BRAINSDemonWarp") == 0)
+					{
+						SetClassicWarpingMethod(0);
+						SetBRAINSDemonWarpMethod(1);
+					}
+					else
+						std::cerr<<"Error while reading parameter file: warping method incorrect!"<<std::endl;
+				}
+				else if ( (std::strncmp("Alpha: ", Line, 7)) == 0)
+				{
+					Alpha = atof(Line+7);
+					SetAlpha(Alpha);
+				}
+				else if ( (std::strncmp("Beta: ", Line, 6)) == 0)
+				{
+					Beta = atof(Line+6);
+					SetBeta(Beta);	
+				}
+				else if ( (std::strncmp("Gamma: ", Line, 7)) == 0)
+				{
+					Gamma = atof(Line+7);
+					SetGamma(Gamma);
+				}
+				else if ( (std::strncmp("Max Perturbation: ", Line, 18)) == 0)
+				{
+					MaxPerturbation = atof(Line+18);
+					SetMaxPerturbation(MaxPerturbation);	
+				}
+				else if ( (std::strncmp("Scale 4 - Number Of Iterations: ", Line, 32)) == 0)
+				{
+					Scale4NbIterations = atoi(Line+32);
+					SetScale4NbIterations(Scale4NbIterations);	
+				}
+				else if ( (std::strncmp("Scale 2 - Number Of Iterations: ", Line, 32)) == 0)
+				{
+					Scale2NbIterations = atoi(Line+32);
+					SetScale2NbIterations(Scale2NbIterations);	
+				}
+				else if ( (std::strncmp("Scale 1 - Number Of Iterations: ", Line, 32)) == 0)
+				{
+					Scale1NbIterations = atoi(Line+32);
+					SetScale1NbIterations(Scale1NbIterations);
+				}
+				else if ( (std::strncmp("Registration Filter Type: ", Line, 26)) == 0)
+				{
+					RegistrationFilterType =Line+26;	
+					if (RegistrationFilterType=="Demons"){
+						SetRegistrationFilterType("Demons");
+					}
+					else if(RegistrationFilterType=="FastSymmetricForces"){
+						SetRegistrationFilterType("FastSymmetricForces");
+					}
+					else if(RegistrationFilterType=="Diffeomorphic"){
+						SetRegistrationFilterType("Diffeomorphic");
+					}
+					else if(RegistrationFilterType=="LogDemons"){
+						SetRegistrationFilterType("LogDemons");
+					}
+					else if(RegistrationFilterType=="SymmetricLogDemons"){
+						SetRegistrationFilterType("SymmetricLogDemons");
+					}
+				}
+				else if ( (std::strncmp("Deformation Field Smoothing Sigma: ", Line, 35)) == 0)
+				{
+					DeformationFieldSmoothingSigma = atof(Line+35);
+					SetDeformationFieldSmoothingSigma(DeformationFieldSmoothingSigma);
+				}
+				else if ( (std::strncmp("Pyramid Levels: ", Line, 16)) == 0)
+				{
+					PyramidLevels = atoi(Line+16);
+					SetPyramidLevels(PyramidLevels);
+				}
+				else if ( (std::strncmp("Moving Shrink Factors: ", Line, 23)) == 0)
+				{
+					MovingShrinkFactors =Line+23;
+					SetMovingShrinkFactors(MovingShrinkFactors.c_str());
+				}
+				else if ( (std::strncmp("Fixed Shrink Factors: ", Line, 22)) == 0)
+				{
+					FixedShrinkFactors =Line+22;
+					SetFixedShrinkFactors(FixedShrinkFactors.c_str());
+				}
+				else if ( (std::strncmp("Iteration Count Pyramid Levels: ", Line, 32)) == 0)
+				{
+					IterationCountPyramidLevels =Line+32;
+					SetIterationCountPyramidLevels(IterationCountPyramidLevels.c_str());
+				}
+	  // consistency with the first version of the tool
+				else if ( (std::strncmp("Number Of Iterations: ", Line, 22)) == 0)
+				{
+					Scale1NbIterations = atoi(Line+22);
+					SetScale1NbIterations(Scale1NbIterations);
+				}
+				else if ( (std::strncmp("NumBasis: ", Line, 10)) == 0)
+				{
+					NumBasis = atof(Line+10);
+					SetNumBasis(NumBasis);
+				}
+			}
+			if(mode == N4biasFieldCorrection||mode == advancedParameters||mode == file)
+			{	
+				if ((std::strncmp("N4 ITK Bias Field Correction: ", Line, 30)) == 0)
+				{
+					N4ITKBiasFieldCorrection= atoi(Line+30);
+					if(mode == N4biasFieldCorrection)
+					{
+						SetN4ITKBiasFieldCorrection(1);
+					}
+					else
+					{
+						if (N4ITKBiasFieldCorrection == 1)
+						{
+							SetN4ITKBiasFieldCorrection(1);
+						}
+						else
+						{
+							SetN4ITKBiasFieldCorrection(0);
+						}
+					}
+					
+				}
+				else if ( (std::strncmp("N4 Number of iterations: ", Line, 25)) == 0)
+				{
+					NbOfIterations = Line+25;
+					SetNbOfIterations(NbOfIterations.c_str());
+				}
+				else if ( (std::strncmp("N4 Spline distance: ", Line, 20)) == 0)
+				{
+					SplineDistance = atof(Line+20);
+					SetSplineDistance(SplineDistance);
+				}
+				else if ( (std::strncmp("N4 Shrink factor: ", Line, 18)) == 0)
+				{
+					ShrinkFactor = atoi(Line+18);
+					SetShrinkFactor(ShrinkFactor);
+				}
+				else if ( (std::strncmp("N4 Convergence threshold: ", Line, 26)) == 0)
+				{
+					ConvergenceThreshold = atof(Line+26);
+					SetConvergenceThreshold(ConvergenceThreshold);
+				}
+				else if ( (std::strncmp("N4 BSpline grid resolutions: ", Line, 29)) == 0)
+				{
+					BSplineGridResolutions = Line+29;
+					SetBSplineGridResolutions(BSplineGridResolutions.c_str());
+				}
+				else if ( (std::strncmp("N4 BSpline alpha: ", Line, 18)) == 0)
+				{
+					BSplineAlpha = atof(Line+18);
+					SetBSplineAlpha(BSplineAlpha);
+				}
+				else if ( (std::strncmp("N4 BSpline beta: ", Line, 17)) == 0)
+				{
+					BSplineBeta = atof(Line+17);
+					SetBSplineBeta(BSplineBeta);
+				}
+				else if ( (std::strncmp("N4 Histogram sharpening: ", Line, 25)) == 0)
+				{
+					HistogramSharpening = Line+25;
+					SetHistogramSharpening(HistogramSharpening.c_str());
+				}
+				else if ( (std::strncmp("N4 BSpline order: ", Line, 18)) == 0)
+				{
+					BSplineOrder =atoi(Line+18);
+					SetBSplineOrder(BSplineOrder);
+				}
+			}
+		}
+		fclose(ParameterFile);
+	}
+	else
+	{
+		std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+	}
+
+	return IsParameterFileLoaded;
 }

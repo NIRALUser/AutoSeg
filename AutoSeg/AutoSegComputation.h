@@ -32,6 +32,11 @@
 #include <FL/Fl_Text_Display.H>
 #include <FL/fl_ask.H>
 
+enum Mode
+{
+	file, advancedParameters,tissueSeg, warping,N4biasFieldCorrection
+};
+
 class AutoSegComputation
 {
 	public:
@@ -45,7 +50,6 @@ class AutoSegComputation
   // Get Automatic Data File
 		char *GetDataFile(){return m_DataFile;};
 		char *GetAuxDataFile(){return m_AuxDataFile;};
-
   // Write Files
 		void WriteParameterFile(const char *_FileName);
 		void WriteComputationFile(const char *_FileName);
@@ -218,13 +222,14 @@ class AutoSegComputation
 		void SetDeleteVessels(bool _DeleteVessels){m_DeleteVessels = _DeleteVessels;};
     // Intensity Rescaling
 		void SetIntensityRescalingMethod(int _IntensityRescalingMethod){m_IntensityRescalingMethod = _IntensityRescalingMethod;};
+    //Data
 		void SetNbData(int _NbData){m_NbData = _NbData;};
 		void SetNbAuxData(int _NbAuxData){m_NbAuxData = _NbAuxData;};
 		void AllocateDataList();
 		void AllocateAuxDataList();
 		void DesallocateDataList();
 		void DesallocateAuxDataList();
-		void SetDataList(const char *_Data, int _DataNumber);
+		void SetDataList(const char *_Data, int _DataNumber, bool _GUIMode);
 		void SetAuxDataList(const char *_Data, int _DataNumber);
    // Regional histogram
 		void SetQuantiles(const char *_Quantiles){std::strcpy(m_Quantiles, _Quantiles);};
@@ -233,10 +238,14 @@ class AutoSegComputation
 		void ComputeData();
   // Compute Automatic Segmentation
 		void Computation();
+		void ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile);
 		void StopBatchMake();
   // Show MRML Scene
 		void ExecuteSlicer3withScene(std::string pathSlicer);
-
+  // Load Files
+		bool LoadParameterFile(const char *_FileName, enum Mode mode=file);
+		void LoadComputationFile(const char *_FileName);
+		void LoadAuxComputationFile(const char *_FileName);
 	private:
 
 		char m_AutoSegPath[512];
@@ -450,6 +459,8 @@ class AutoSegComputation
 		void SetData(const char *_Data, char *_T1);
 		void SetData(const char *_Data, char *_T1, char *_SecondImage);
 		void SetData(const char *_Data, char *_T1, char *_T2, char *_PD);
+		void SetDatawoGUI(const char *_Data, char *_T1, char *_SecondImage);
+		void SetDatawoGUI(const char *_Data, char *_T1, char *_T2, char *_PD);
 		void SetAuxData(const char *_Data, char *_T1);
 		void SetAuxData(const char *_Data, char *_T1, char *_SecondImage);
 		void SetAuxData(const char *_Data, char *_T1, char *_Aux1, char *_Aux2);
@@ -475,13 +486,13 @@ class AutoSegComputation
 
 		
   // Execute BatchMake Script to compute Automatic Segmentation
-		void ExecuteBatchMake(char *_Input, int _Mode);  
+		void ExecuteBatchMake(char *_Input, int _GUIMode);  
 
 
   // Output Files (saved in ProcessDataDirectory)
    // Data File (.txt)
 		char m_DataFile[512];
-		char m_AuxDataFile[512];	
+		char m_AuxDataFile[512];
    // BatchMake Script to compute Data  
 		char m_BMSDataFile[512];
    // BatchMake Script to compute Automatic Segmentation
@@ -662,6 +673,9 @@ class AutoSegComputation
    // Number of data
 		int m_NbData;
 		int m_NbAuxData;
+   // Allocation of data
+		int m_AllocationData;
+		int m_AllocationAuxData;
    // 1 if T2 Images are computed
 		bool m_IsT2Image;
    // 1 if PD Images are computed

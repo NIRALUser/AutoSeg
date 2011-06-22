@@ -18,8 +18,10 @@
 =========================================================================*/
 
 #include <iostream>
+#include "argio.h"
 
 #include "AutoSegGUIControls.h"
+#include "AutoSegComputation.h"
 
 #define AUTOSEG_VERSION "1.2"
 
@@ -36,29 +38,49 @@ void PrintHelp(char* progname)
 
 int main(int argc, char *argv[])
 {
-	if (argc == 1)
+	if (argc <=1 || ipExistsArgument(argv, "-h") || ipExistsArgument(argv, "--help")) {
+		std::cout << "AutoSeg 2.1 version (25.May.2011)" << std::endl;
+		std::cout << " performs automatic brain tissue classification and structural segmentation" << std::endl;
+		std::cout << "usage: AutoSeg [-computationFile computationFile] [-parameterFile parameterFile]"<< std::endl;
+		std::cout << std::endl;
+		std::cout << "-computationFile	computation file" << std::endl;;
+		std::cout << "-parameterFile	parameter file" << std::endl; 
+		std::cout << "-gui	open AutoSeg interface" << std::endl;
+		std::cout << std::endl << std::endl;
+		exit(0);
+	}
+	bool gui = ipExistsArgument(argv, "-gui");
+	char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);  
+	char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
+	if (gui)
 	{
-		const char *AutoSegHome = "AUTOSEG_HOME";
-		char *AutoSegPath = NULL;
-
-		AutoSegPath = getenv(AutoSegHome);
-		if (AutoSegPath != NULL)
+		if (argc == 2)
 		{
-			AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath);  
-			Fl::scheme("plastic");
-			Fl::run();
-			delete MainWindow;
-			return 0;
-		}
-		else
-		{
-			std::cerr<<"The environment variable 'AUTOSEG_HOME' needs to be set"<<std::endl;
-			std::cerr<<"bash usage : export AUTOSEG_HOME=<InputDirectory>"<<std::endl;
-			std::cerr<<"tcsh usage : setenv AUTOSEG_HOME <InputDirectory>"<<std::endl;
-			return -1;
+			const char *AutoSegHome = "AUTOSEG_HOME";
+			char *AutoSegPath = NULL;
+			AutoSegPath = getenv(AutoSegHome);
+			if (AutoSegPath != NULL)
+			{
+				AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath);  
+				Fl::scheme("plastic");
+				Fl::run();
+				delete MainWindow;
+				return 0;
+			}
+			else
+			{
+				std::cerr<<"The environment variable 'AUTOSEG_HOME' needs to be set"<<std::endl;
+				std::cerr<<"bash usage : export AUTOSEG_HOME=<InputDirectory>"<<std::endl;
+				std::cerr<<"tcsh usage : setenv AUTOSEG_HOME <InputDirectory>"<<std::endl;
+				return -1;
+			}
 		}
 	}
-  
+	else if ((argc == 5) && computationFile && parameterFile)
+	{
+		AutoSegComputation m_Computation;
+		m_Computation.ComputationWithoutGUI(computationFile, parameterFile);
+	}
 	else if ( (argc == 2) && ( (!strcmp(argv[1],"-v")) || (!strcmp(argv[1],"--version")) ) )
 	{ 
 		std::cout<<"AutoSeg "<<AUTOSEG_VERSION<<" - Compiled on: " << __DATE__ << " - "<< __TIME__ <<std::endl;
