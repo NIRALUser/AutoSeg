@@ -6,26 +6,28 @@ Tissue Atlas: Sharp
 Tissue Segmentation Atlas Directory: /tools/atlas/BrainsegAtlas/pediatric-atlas-4years-sym-T1-RAI/
 Tissue Segmentation Atlas Type: T1
 
-Common Coordinate Image: /tools/atlas/BrainsegAtlas/pediatric-atlas-4years-sym-T1-RAI/template.gipl
+Common Coordinate Image: /tools/atlas/BrainsegAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/template.nrrd
 Common Coordinate Image Type: T1
 
-ROI Atlas File: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/template.gipl
+ROI Atlas File: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/template.nrrd
 
 // Subcortical Structures
-Amygdala Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/amygdalaLeft.gipl
-Amygdala Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/amygdalaRight.gipl
-Caudate Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/caudateLeft.gipl
-Caudate Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/caudateRight.gipl
-Hippocampus Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/hippocampusLeft.gipl
-Hippocampus Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/hippocampusRight.gipl
-Pallidus Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/pallidusLeft.gipl
-Pallidus Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/pallidusRight.gipl
-Putamen Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/putamenLeft.gipl
-Putamen Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/putamenRight.gipl
-Lateral Ventricle Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/latVentricleLeftMask.gipl
-Lateral Ventricle Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/latVentricleRightMask.gipl
+Subcortical Structure Segmentation: 1
+Amygdala Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/amygdalaLeft.nrrd
+Amygdala Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/amygdalaRight.nrrd
+Caudate Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/caudateLeft.nrrd
+Caudate Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/caudateRight.nrrd
+Hippocampus Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/hippocampusLeft.nrrd
+Hippocampus Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/hippocampusRight.nrrd
+Pallidus Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/pallidusLeft.nrrd
+Pallidus Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/pallidusRight.nrrd
+Putamen Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/putamenLeft.nrrd
+Putamen Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/putamenRight.nrrd
+Lateral Ventricle Left: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/latVentricleLeftMask.nrrd
+Lateral Ventricle Right: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/latVentricleRightMask.nrrd
 
 // Generic ROI Maps
+Generic ROI Segmentation: 0
 ROI File 1: 
 ROI File 2: 
 ROI File 3: 
@@ -33,7 +35,8 @@ ROI File 4:
 ROI File 5: 
 
 // Parcellation Maps
-Parcellation File 1: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/Parcellation.gipl
+Parcellation Map Segmentation: 1
+Parcellation File 1: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/Parcellation.nrrd
 Parcellation File 2: 
 Parcellation File 3: 
 

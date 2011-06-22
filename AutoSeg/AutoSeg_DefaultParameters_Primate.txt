@@ -8,6 +8,7 @@ Common Coordinate Image Type: T1
 ROI Atlas File: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final.nrrd
 
 // Subcortical Structures
+Subcortical Structure Segmentation: 0
 Amygdala Left: 
 Amygdala Right: 
 Caudate Left: 
@@ -22,6 +23,7 @@ Lateral Ventricle Left:
 Lateral Ventricle Right: 
 
 // Generic ROI Maps
+Generic ROI Segmentation: 1
 ROI File 1: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_subcort.nrrd
 ROI File 2: 
 ROI File 3: 
@@ -29,6 +31,7 @@ ROI File 4:
 ROI File 5: 
 
 // Parcellation Maps
+Parcellation Map Segmentation: 1
 Tissue Map: Soft
 Parcellation File 1: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_parc.nrrd
 Parcellation File 2: 

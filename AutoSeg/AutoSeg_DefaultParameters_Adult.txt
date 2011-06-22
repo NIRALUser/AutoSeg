@@ -8,6 +8,7 @@ Common Coordinate Image Type: T1
 ROI Atlas File: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/template.nrrd
 
 // Subcortical Structures
+Subcortical Structure Segmentation: 1
 Amygdala Left: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/amygdalaLeft.nrrd
 Amygdala Right: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/amygdalaRight.nrrd
 Caudate Left: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/caudateLeft.nrrd
@@ -22,6 +23,7 @@ Lateral Ventricle Left: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brai
 Lateral Ventricle Right: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/latVentricleRightMask.nrrd
 
 // Generic ROI Maps
+Generic ROI Segmentation: 1
 ROI File 1: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/HuangROIAtlas.nrrd
 ROI File 2: 
 ROI File 3: 
@@ -29,6 +31,7 @@ ROI File 4:
 ROI File 5: 
 
 // Parcellation Maps
+Parcellation Map Segmentation: 1
 Tissue Map: Soft
 Parcellation File 1: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/Parcellation.nrrd
 Parcellation File 2: 
