@@ -23,7 +23,7 @@
 #include "AutoSegGUIControls.h"
 #include "AutoSegComputation.h"
 
-#define AUTOSEG_VERSION "1.2"
+#define AUTOSEG_VERSION "2.2"
 
 void PrintHelp(char* progname)
 {
@@ -39,7 +39,7 @@ void PrintHelp(char* progname)
 int main(int argc, char *argv[])
 {
 	if (argc <=1 || ipExistsArgument(argv, "-h") || ipExistsArgument(argv, "--help")) {
-		std::cout << "AutoSeg 2.1 version (25.May.2011)" << std::endl;
+		std::cout << "AutoSeg "<<AUTOSEG_VERSION<<" - Compiled on: " << __DATE__ << " - "<< __TIME__ <<std::endl;
 		std::cout << " performs automatic brain tissue classification and structural segmentation" << std::endl;
 		std::cout << "usage: AutoSeg [-computationFile computationFile] [-parameterFile parameterFile]"<< std::endl;
 		std::cout << std::endl;
