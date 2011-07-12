@@ -98,10 +98,20 @@ void AutoSegComputation::SetParameterFile()
   std::strcat(m_ParameterFile, "AutoSeg_Parameters.txt");
 }
 
+void AutoSegComputation::SetParameterFile(const char *_ParameterFile)
+{
+  std::strcpy(m_ParameterFile, _ParameterFile);
+}
+
 void AutoSegComputation::SetComputationFile()
 {
   std::strcpy(m_ComputationFile, GetProcessDataDirectory());
   std::strcat(m_ComputationFile, "AutoSeg_Computation.txt");
+}
+
+void AutoSegComputation::SetComputationFile(const char *_ComputationFile)
+{
+  std::strcpy(m_ComputationFile, _ComputationFile);
 }
 
 void AutoSegComputation::SetLogFile()
@@ -1329,6 +1339,8 @@ void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, con
 {
   LoadComputationFile(_computationFile);
   LoadParameterFile(_parameterFile);
+  SetParameterFile(_computationFile);
+  SetComputationFile(_parameterFile);
   SetBMSAutoSegFile();
   SetBMSAutoSegMainFile();
   SetLogFile();
