@@ -2269,48 +2269,57 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"echo ('CHECKING IMAGE TYPE...')"<<std::endl;
 	BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 	BMSAutoSegMainFile<<"GetParam(Case ${OrigT1CasesList} 0)"<<std::endl;
-	BMSAutoSegMainFile<<"GetFilename (Extension ${Case} EXTENSION)"<<std::endl;
+	BMSAutoSegMainFile<<"GetFilename (T1ImageExtension ${Case} EXTENSION)"<<std::endl;
+
 	BMSAutoSegMainFile<<"set (Mode -1)"<<std::endl;
-	BMSAutoSegMainFile<<"If (${Extension} == '.gipl')"<<std::endl;
+	BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.gipl')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (Mode 1)"<<std::endl;
 	BMSAutoSegMainFile<<"   echo ('Gipl Format')"<<std::endl;
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;
-	BMSAutoSegMainFile<<"If (${Extension} == '.gipl.gz')"<<std::endl;
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
+	BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.gipl.gz')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (Mode 1)"<<std::endl;
 	BMSAutoSegMainFile<<"   echo ('Zipped Gipl Format')"<<std::endl;
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;
-	BMSAutoSegMainFile<<"If (${Extension} == '.mhd')"<<std::endl;
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
+	BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.mhd')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
 	BMSAutoSegMainFile<<"   echo ('Meta Format')"<<std::endl;
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;
-	BMSAutoSegMainFile<<"If (${Extension} == '.hdr')"<<std::endl;
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
+	BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.hdr')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
 	BMSAutoSegMainFile<<"   echo ('Analyse Format')"<<std::endl;
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;  
-	BMSAutoSegMainFile<<"If (${Extension} == '.mha')"<<std::endl;
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;  
+	BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.mha')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
 	BMSAutoSegMainFile<<"   echo ('Meta Format')"<<std::endl;
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;
-	BMSAutoSegMainFile<<"If (${Extension} == '.nhdr')"<<std::endl;
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
+	BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.nhdr')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
 	BMSAutoSegMainFile<<"   echo ('NRRD Format')"<<std::endl;  
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;  
-	BMSAutoSegMainFile<<"If (${Extension} == '.nrrd')"<<std::endl;
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;  
+	BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.nrrd')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (Mode 1)"<<std::endl;
 	BMSAutoSegMainFile<<"   echo ('NRRD Format')"<<std::endl;  
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;  
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;  
 	BMSAutoSegMainFile<<"If ( ${Mode} == -1)"<<std::endl;
-	BMSAutoSegMainFile<<"   echo(Unknown format ${Extension})"<<std::endl;
-	BMSAutoSegMainFile<<"EndIf (${Extension})"<<std::endl;
+	BMSAutoSegMainFile<<"   echo(Unknown format ${T1ImageExtension})"<<std::endl;
+	BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
 	BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 	BMSAutoSegMainFile<<"echo ('CHECKING IMAGE TYPE: DONE!')"<<std::endl;
 	BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
 
-	BMSAutoSegMainFile<<"   set (T1CasesList ${OrigT1CasesList})"<<std::endl;
+	BMSAutoSegMainFile<<"set (T1CasesList ${OrigT1CasesList})"<<std::endl;
 	if (GetT2Image())
-		BMSAutoSegMainFile<<"   set (T2CasesList ${OrigT2CasesList})"<<std::endl;
+	  {
+	    BMSAutoSegMainFile<<"GetParam(Case ${OrigT2CasesList} 0)"<<std::endl;
+	    BMSAutoSegMainFile<<"GetFilename (T2ImageExtension ${Case} EXTENSION)"<<std::endl;
+	    BMSAutoSegMainFile<<"set (T2CasesList ${OrigT2CasesList})"<<std::endl;
+	  }
 	if (GetPDImage())
-		BMSAutoSegMainFile<<"   set (PDCasesList ${OrigPDCasesList})"<<std::endl;
+	  {
+	    BMSAutoSegMainFile<<"GetParam(Case ${OrigPDCasesList} 0)"<<std::endl;
+	    BMSAutoSegMainFile<<"GetFilename (PDImageExtension ${Case} EXTENSION)"<<std::endl;
+	    BMSAutoSegMainFile<<"set (PDCasesList ${OrigPDCasesList})"<<std::endl;
+	  }
 
 	BMSAutoSegMainFile<<"# Grid Template"<<std::endl;
 	if (GetROIAtlasGridTemplate())
@@ -2417,14 +2426,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLScalarVolumeNode1\"  name=\"${CaseTail}\"  hideFromEditors=\"false\"  selectable=\"true\"  selected=\"false\"  storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode1\"  userTags=\"\"  displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode1\"  ijkToRASDirections=\"-1   -0   0 -0   -1   -0 0 -0 1 \"  spacing=\"1 1 1\"  origin=\"87.5 127.5 -87.5\"  labelMap=\"0\" ></Volume>\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <VolumeDisplay\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLScalarVolumeDisplayNode1\"  name=\"vtkMRMLScalarVolumeDisplayNode1\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\"  color=\"0.5 0.5 0.5\"  selectedColor=\"1 0 0\"  selectedAmbient=\"0.4\"  ambient=\"0\"  diffuse=\"1\"  selectedSpecular=\"0.5\"  specular=\"0\"  power=\"1\"  opacity=\"1\"  visibility=\"true\"  clipping=\"false\"  sliceIntersectionVisibility=\"false\"  backfaceCulling=\"true\"  scalarVisibility=\"false\"  vectorVisibility=\"false\"  tensorVisibility=\"false\"  autoScalarRange=\"true\"  scalarRange=\"0 100\"  colorNodeRef=\"vtkMRMLColorTableNodeGrey\"   window=\"118\"  level=\"63\"  upperThreshold=\"32767\"  lowerThreshold=\"-32768\"  interpolate=\"1\"  autoWindowLevel=\"1\"  applyThreshold=\"0\"  autoThreshold=\"0\" ></VolumeDisplay>\\n')"<<std::endl;
-
-
 	BMSAutoSegMainFile<<"      Else ()"<<std::endl;
 	BMSAutoSegMainFile<<"         echo ('${CaseHead}_MRMLScene.mrml already exists!')"<<std::endl;
 	BMSAutoSegMainFile<<"EndIf (${OutputList})"<<std::endl;
 	BMSAutoSegMainFile<<"EndForEach (Case)"<<std::endl;
 
-
+	BMSAutoSegMainFile<<"Set(ProcessExtension '')"<<std::endl;
 	if (GetN4ITKBiasFieldCorrection())
 	{
 		BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
@@ -2441,11 +2448,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 		BMSAutoSegMainFile<<"set (CasesListN4 ${T1CasesList})"<<std::endl;
 		BMSAutoSegMainFile<<"set (FirstCasesList ${T1CasesList})"<<std::endl;
+		BMSAutoSegMainFile<<"Set(T1ImageExtension '.nrrd')"<<std::endl;
 		if (GetT2Image())
-			BMSAutoSegMainFile<<"set (CasesListN4 ${CasesListN4} ${T2CasesList})"<<std::endl;
+		  {
+		    BMSAutoSegMainFile<<"set (CasesListN4 ${CasesListN4} ${T2CasesList})"<<std::endl;
+		    BMSAutoSegMainFile<<"Set(T2ImageExtension '.nrrd')"<<std::endl;
+		  }
 		if (GetPDImage())
-			BMSAutoSegMainFile<<"set (CasesListN4 ${CasesListN4} ${PDCasesList})"<<std::endl;
-		
+		  {
+		    BMSAutoSegMainFile<<"set (CasesListN4 ${CasesListN4} ${PDCasesList})"<<std::endl;
+		    BMSAutoSegMainFile<<"Set(PDImageExtension '.nrrd')"<<std::endl;
+		  }		
 
 		BMSAutoSegMainFile<<"Set(Bias Bias)"<<std::endl;
 		BMSAutoSegMainFile<<"Set(ProcessExtension ${ProcessExtension}_${Bias})"<<std::endl;
@@ -2592,6 +2605,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 			IsT1FirstFile = true;
 		}
 
+		BMSAutoSegMainFile<<"Set(T1ImageExtension '.nrrd')"<<std::endl;
+		if (GetT2Image())
+		  BMSAutoSegMainFile<<"Set(T2ImageExtension '.nrrd')"<<std::endl;
+		if (GetPDImage())
+		  BMSAutoSegMainFile<<"Set(PDImageExtension '.nrrd')"<<std::endl;
+		
 		BMSAutoSegMainFile<<"echo(${FirstFile}' registration...')"<<std::endl;
 		BMSAutoSegMainFile<<"echo( )"<<std::endl;
 		BMSAutoSegMainFile<<"ForEach (FirstCase ${FirstCasesList})  "<<std::endl;
@@ -2804,11 +2823,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	}
 	else
 	{
-		BMSAutoSegMainFile<<"set(T1RegistrationExtension '')"<<std::endl;
-		if (GetT2Image())
-			BMSAutoSegMainFile<<"set(T2RegistrationExtension '')"<<std::endl;
-		if (GetPDImage())
-			BMSAutoSegMainFile<<"set(PDRegistrationExtension '')"<<std::endl<<std::endl;
+	  BMSAutoSegMainFile<<"set(T1RegistrationExtension '')"<<std::endl;
+	  if (GetT2Image())
+	    BMSAutoSegMainFile<<"set(T2RegistrationExtension '')"<<std::endl;
+	  if (GetPDImage())
+	    BMSAutoSegMainFile<<"set(PDRegistrationExtension '')"<<std::endl<<std::endl;
 	}
 
 	int iteration=0;
@@ -2851,6 +2870,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 		if (GetLoop() && iteration !=0)
 		{
+		  BMSAutoSegMainFile<<"Set(T1ImageExtension '.nrrd')"<<std::endl;
+		  if (GetT2Image())
+		    BMSAutoSegMainFile<<"Set(T2ImageExtension '.nrrd')"<<std::endl;
+		  if (GetPDImage())
+		    BMSAutoSegMainFile<<"Set(PDImageExtension '.nrrd')"<<std::endl;
+
 			BMSAutoSegMainFile<<"      set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;	
 			BMSAutoSegMainFile<<"      ListDirInDir (EMSList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration<<")"<<std::endl;
 			BMSAutoSegMainFile<<"      set (InputPath ${EMSPath})"<<std::endl;
@@ -2908,7 +2933,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"         MakeDirectory(${EMSPath})"<<std::endl;
 		BMSAutoSegMainFile<<"      EndIf (${EMSList})"<<std::endl;
 
-		BMSAutoSegMainFile<<"      set (T1InputCase ${InputPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+		BMSAutoSegMainFile<<"      set (T1InputCase ${InputPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${T1ImageExtension})"<<std::endl;
 		BMSAutoSegMainFile<<"      GetFilename (T1InputCaseHead ${T1InputCase} NAME_WITHOUT_EXTENSION)"<<std::endl; 
 	
 		if (GetT2Image())
@@ -2916,7 +2941,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 			BMSAutoSegMainFile<<"      If (${T2CasesList} != '')"<<std::endl;
 			BMSAutoSegMainFile<<"         GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
 			BMSAutoSegMainFile<<"         GetFilename(T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-			BMSAutoSegMainFile<<"         set (T2InputCase ${InputPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+			BMSAutoSegMainFile<<"         set (T2InputCase ${InputPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}${T2ImageExtension})"<<std::endl;
 			BMSAutoSegMainFile<<"      EndIf (${T2CasesList})"<<std::endl;
 		}
 	
@@ -2925,7 +2950,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 			BMSAutoSegMainFile<<"      If (${PDCasesList} != '')"<<std::endl;
 			BMSAutoSegMainFile<<"         GetParam (PDCase ${PDCasesList} ${CaseNumber})"<<std::endl;
 			BMSAutoSegMainFile<<"         GetFilename(PDCaseHead ${PDCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
-			BMSAutoSegMainFile<<"         set (PDInputCase ${InputPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+			BMSAutoSegMainFile<<"         set (PDInputCase ${InputPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}${PDImageExtension})"<<std::endl;
 			BMSAutoSegMainFile<<"      EndIf (${PDCasesList})"<<std::endl;
 		}
 	
