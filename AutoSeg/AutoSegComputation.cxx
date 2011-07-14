@@ -2548,6 +2548,16 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
   }
 
+
+    BMSAutoSegMainFile<<"Set (NbOfIterations "<<GetNbOfIterations()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (SplineDistance "<<GetSplineDistance()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (ShrinkFactor "<<GetShrinkFactor()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (ConvergenceThreshold "<<GetConvergenceThreshold()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (BSplineGridResolutions "<<GetBSplineGridResolutions()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (BSplineAlpha "<<GetBSplineAlpha()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (BSplineBeta "<<GetBSplineBeta()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (BSplineOrder "<<GetBSplineOrder()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"Set (HistogramSharpening "<<GetHistogramSharpening()<<")"<<std::endl;  
   if (GetN4ITKBiasFieldCorrection())
   {
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
@@ -2592,15 +2602,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     BMSAutoSegMainFile<<"  ListFileInDir(OutputFileN4List ${BiasPath} ${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"  If (${OutputFileN4List} == '')"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (NbOfIterations "<<GetNbOfIterations()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (SplineDistance "<<GetSplineDistance()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (ShrinkFactor "<<GetShrinkFactor()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (ConvergenceThreshold "<<GetConvergenceThreshold()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (BSplineGridResolutions "<<GetBSplineGridResolutions()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (BSplineAlpha "<<GetBSplineAlpha()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (BSplineBeta "<<GetBSplineBeta()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (BSplineOrder "<<GetBSplineOrder()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (HistogramSharpening "<<GetHistogramSharpening()<<")"<<std::endl;
     BMSAutoSegMainFile<<"    Set (my_output ${BiasPath}${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
     BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${CaseN4} ${parameters})"<<std::endl;
@@ -3401,11 +3402,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     if (GetT2Image())
     {
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Skull stripping T2w image...)"<<std::endl;
       BMSAutoSegMainFile<<"        GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${T2CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(T2FinalTargetList ${StrippedPath} ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${T2FinalTargetList} == '')"<<std::endl;
       BMSAutoSegMainFile<<"            set (T2CurrentCaseTail ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
@@ -3419,11 +3419,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     if (GetPDImage())
     {
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Skull stripping PDw image...)"<<std::endl;
       BMSAutoSegMainFile<<"        GetParam (PDCase ${PDCasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (PDCaseHead ${PDCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${PDCaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(PDFinalTargetList ${StrippedPath} ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${PDFinalTargetList} == '')"<<std::endl;
       BMSAutoSegMainFile<<"            set (PDCurrentCaseTail ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
@@ -3440,6 +3439,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     if (GetLoop() && iteration==0)
     {
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Bias field correction...)"<<std::endl;
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+
       BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}_Bias.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"             Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
       BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${parameters})"<<std::endl;
