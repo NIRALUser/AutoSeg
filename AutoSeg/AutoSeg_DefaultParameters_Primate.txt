@@ -110,3 +110,8 @@ N4 BSpline alpha: 0
 N4 BSpline beta: 0.5
 N4 Histogram sharpening: 0
 N4 BSpline order: 3
+
+// Reorientation
+Reorientation: 0
+Input Orientation: 
+Output Orientation: 
