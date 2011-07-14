@@ -2774,7 +2774,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
     BMSAutoSegMainFile<<"         echo ('Applying rigid transformation...')"<<std::endl;
 
-    BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${FirstCase} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
+    BMSAutoSegMainFile<<"       set (command_line ${ResampleVolume2Cmd} ${FirstCase} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
 
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
@@ -2908,14 +2908,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"         If (${TxtOutFileList} == '')"<<std::endl;
       BMSAutoSegMainFile<<"            # Computing Transformation"<<std::endl;
       BMSAutoSegMainFile<<"            echo ('Computing rigid transformation...')"<<std::endl;
-      BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+      BMSAutoSegMainFile<<"    	        set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
       BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
       BMSAutoSegMainFile<<"           WriteFile(${ReportFile} ${output})"<<std::endl;
       BMSAutoSegMainFile<<"         EndIf (${TxtOutFileList})"<<std::endl;
       BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
       BMSAutoSegMainFile<<"         echo ('Applying rigid transformation...')"<<std::endl;
-      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Case} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
-      BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"         set (command_line ${ResampleVolume2Cmd} ${Case} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
+      BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
       BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
@@ -3884,7 +3884,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
     BMSAutoSegMainFile<<"               echo ('Error:No Skull Stripped File!')"<<std::endl;
-    BMSAutoSegMainFile<<"         	 EndIf (${SkullStrippedList})"<<std::endl;
+    BMSAutoSegMainFile<<"            EndIf (${SkullStrippedList})"<<std::endl;
     BMSAutoSegMainFile<<"            set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
       
     BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
@@ -3902,7 +3902,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            set (Output -o ${OutputFile} -O ${TransformOutputFile} --outputPixelType short)"<<std::endl;
     BMSAutoSegMainFile<<"    	set (command_line ${BRAINSDemonWarpCmd} ${Input} ${Output} ${parameters})"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"    	set (command_line ${ResampleVolume2Cmd} ${atlasROIFile} ${OutputFile} --hfieldtype displacement -i bs -H ${TransformOutputFile} --Reference ${GridTemplate})"<<std::endl;
+    BMSAutoSegMainFile<<"    	set (command_line ${ResampleVolume2Cmd} ${atlasROIFile} ${OutputFile} --hfieldtype displacement -i bs -H ${TransformOutputFile} --Reference ${SkullStrippedFile})"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output_2 ${command_line} prog_error)"<<std::endl;
   }
   else
@@ -4408,7 +4408,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (!GetBRAINSDemonWarpMethod())
     {
       BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_initializetransform.txt)"<<std::endl; 
-      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureAff} --transformationFile ${TransformInputFile} -i bs --Reference ${GridTemplate})"<<std::endl;
+      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureAff} --transformationFile ${TransformInputFile} -i bs --Reference ${SkullStrippedFile})"<<std::endl;
       BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
     BMSAutoSegMainFile<<"	          Else ()"<<std::endl;
@@ -4435,7 +4435,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     else if (GetBRAINSDemonWarpMethod())
     {
-      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureWarp} -H ${NrrdFile} -i linear --hfieldtype displacement --Reference ${GridTemplate})"<<std::endl;
+      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureWarp} -H ${NrrdFile} -i linear --hfieldtype displacement --Reference ${SkullStrippedFile})"<<std::endl;
       BMSAutoSegMainFile<<"      	   Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
     else
@@ -4507,7 +4507,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (!GetBRAINSDemonWarpMethod())
     {
       BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_initializetransform.txt)"<<std::endl; 
-      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${GridTemplate})"<<std::endl;
+      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${SkullStrippedFile})"<<std::endl;
       BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
 
@@ -4538,7 +4538,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     else if (GetBRAINSDemonWarpMethod())
     {
-      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelWarp} -H ${NrrdFile} -i nn --hfieldtype displacement --Reference ${GridTemplate})"<<std::endl;
+      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelWarp} -H ${NrrdFile} -i nn --hfieldtype displacement --Reference ${SkullStrippedFile})"<<std::endl;
       BMSAutoSegMainFile<<"      	   Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
     else
