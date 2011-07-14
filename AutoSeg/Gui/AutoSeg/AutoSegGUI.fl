@@ -7,8 +7,8 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.2} open selected
-      xywh {653 127 910 945} type Double box UP_BOX resizable visible
+      label {AutoSeg 2.3} open selected
+      xywh {712 94 910 945} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 0 633 25}
@@ -82,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.2}
+          label {AutoSeg 2.3}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
@@ -871,7 +871,7 @@ class AutoSegGUI {open
               Fl_Round_Button g_SoftTissueMapButton {
                 label Soft
                 callback {SoftTissueMapButtonToggled();}
-                xywh {55 310 64 20} down_box ROUND_DOWN_BOX
+                xywh {55 310 64 20} down_box ROUND_DOWN_BOX value 1
               }
               Fl_Round_Button g_HardTissueMapButton {
                 label Hard
@@ -896,7 +896,7 @@ class AutoSegGUI {open
               Fl_Round_Button g_ABCButton {
                 label ABC
                 callback {ABCButtonToggled();}
-                tooltip {Atlas Brain Classification} xywh {215 113 78 26} down_box ROUND_DOWN_BOX value 1
+                tooltip {Atlas Brain Classification} xywh {215 113 40 26} down_box ROUND_DOWN_BOX value 1
               }
             }
             Fl_Group {} {
@@ -1016,17 +1016,17 @@ class AutoSegGUI {open
               Fl_Round_Button g_FluidAtlasAffineButton {
                 label Affine
                 callback {FluidAtlasAffineButtonChecked()}
-                xywh {55 675 25 25} down_box ROUND_DOWN_BOX
+                xywh {55 675 40 25} down_box ROUND_DOWN_BOX
               }
               Fl_Round_Button g_FluidAtlasWarpButton {
                 label Warp
                 callback {FluidAtlasWarpButtonChecked()}
-                xywh {145 675 25 25} down_box ROUND_DOWN_BOX value 1
+                xywh {145 675 40 25} down_box ROUND_DOWN_BOX value 1
               }
               Fl_Round_Button g_FluidAtlasFATWButton {
                 label {first Affine, then Warp}
                 callback {FluidAtlasFATWButtonChecked()}
-                xywh {235 675 160 25} down_box ROUND_DOWN_BOX
+                xywh {235 675 40 25} down_box ROUND_DOWN_BOX
               }
             }
             Fl_Group {} {
@@ -1049,7 +1049,7 @@ class AutoSegGUI {open
               Fl_Check_Button g_LoopButton {
                 label {Do Loop}
                 callback {LoopButtonChecked()}
-                xywh {75 185 25 25} down_box DOWN_BOX value 1
+                xywh {75 185 40 25} down_box DOWN_BOX value 1
               }
               Fl_Spinner g_LoopIteration {
                 label {\# iterations}
@@ -1074,113 +1074,128 @@ class AutoSegGUI {open
           }
           Fl_Group {} {
             label {Skull Stripping} open
-            xywh {465 610 425 40} box ENGRAVED_FRAME
+            xywh {465 680 425 40} box ENGRAVED_BOX
           } {
             Fl_Check_Button g_DeleteVesselsButton {
               label {Delete Vessels}
               callback {DeleteVesselsButtonChecked();}
-              xywh {610 616 65 24} down_box DOWN_BOX
+              xywh {610 687 65 24} down_box DOWN_BOX
             }
           }
           Fl_Group {} {
             label {Intensity Rescaling} open
-            xywh {465 685 425 80} box ENGRAVED_FRAME
+            xywh {465 755 425 45} box ENGRAVED_BOX
           } {
             Fl_Round_Button g_HistogramQuantileButton {
               label {Histogram quantile matching}
               callback {HistogramQuantileButtonToggled()}
-              xywh {590 696 205 24} down_box ROUND_DOWN_BOX value 1
+              xywh {480 764 86 24} down_box ROUND_DOWN_BOX value 1
             }
             Fl_Round_Button g_TissueMeanMatchButton {
               label {Tissue mean matching}
               callback {TissueMeanMatchButtonToggled()}
-              xywh {590 726 165 24} down_box ROUND_DOWN_BOX
+              xywh {700 764 66 24} down_box ROUND_DOWN_BOX
             }
           }
           Fl_Group {} {
             label {Regional histogram} open
-            xywh {465 800 425 115} box ENGRAVED_FRAME
+            xywh {465 835 425 80} box ENGRAVED_BOX
           } {
-            Fl_Button {} {
-              label {Quantiles (coma separated list):}
-              xywh {510 830 116 25} box NO_BOX
-            }
             Fl_Input g_QuantilesDisp {
-              xywh {675 830 196 25}
+              label {Quantiles (coma separated list):}
+              xywh {679 847 196 25}
             }
             Fl_Value_Input g_PointSpacingDisp {
               label {Point spacing (mm):}
-              xywh {715 870 30 25} maximum 1000 step 1 value 10
+              xywh {715 879 30 25} maximum 1000 step 1 value 10
             }
           }
           Fl_Group {} {
             label {N4 ITK Bias Field Correction} open
-            xywh {465 95 425 475} box ENGRAVED_BOX
+            xywh {465 214 425 431} box ENGRAVED_BOX
           } {
             Fl_Check_Button g_N4ITKBiasFieldCorrectionButton {
               label {N4 ITK Bias Field Correction}
               callback {N4ITKBiasFieldCorrectionButtonChecked()}
-              xywh {560 105 80 25} down_box DOWN_BOX value 1
+              xywh {560 224 80 25} down_box DOWN_BOX value 1
             }
             Fl_Group g_N4ParametersGroup {
               label {N4 Parameters} open
-              xywh {475 150 390 180} box ENGRAVED_BOX
+              xywh {475 269 390 180} box ENGRAVED_BOX
             } {
               Fl_Spinner g_ConvergenceThreshold {
                 label {Convergence threshold:}
                 callback {SetConvergenceThresholdGUI()}
-                xywh {705 295 75 25} type Float when 1 step 0.0001 value 0.0001
+                xywh {705 414 75 25} type Float when 1 step 0.0001 value 0.0001
               }
               Fl_Spinner g_SplineDistance {
                 label {Spline distance:}
                 callback {SetSplineDistanceGUI()}
-                xywh {705 225 75 25} type Float when 1 step 0.5 value 1
+                xywh {705 344 75 25} type Float when 1 step 0.5 value 1
               }
               Fl_Spinner g_ShrinkFactor {
                 label {Shrink factor:}
                 callback {SetShrinkFactorGUI()}
-                xywh {705 260 75 25} when 1 value 4
+                xywh {705 379 75 25} when 1 value 4
               }
               Fl_Input g_NbOfIterations {
                 label {\# iterations}
                 callback {SetNbOfIterationsGUI()}
-                xywh {640 155 140 25} when 1
+                xywh {640 274 140 25} when 1
               }
               Fl_Input g_BSplineGridResolutions {
                 label {BSpline Grid Resolutions}
                 callback {SetBSplineGridResolutionsGUI()}
-                xywh {685 190 95 25} when 1
+                xywh {685 309 95 25} when 1
               }
             }
             Fl_Group g_N4AdvancedParametersGroup {
               label {N4 Advanced Parameters} open
-              xywh {475 360 390 155} box ENGRAVED_BOX
+              xywh {475 479 390 116} box ENGRAVED_BOX
             } {
               Fl_Spinner g_BSplineOrder {
                 label {BSpline order:}
                 callback {SetBSplineOrderGUI()}
-                xywh {695 440 50 25} when 1 value 3
+                xywh {580 559 50 25} when 1 value 3
               }
               Fl_Spinner g_BSplineAlpha {
                 label {BSpline alpha:}
                 callback {SetBSplineAlphaGUI()}
-                xywh {690 370 55 25} type Float when 1 step 0.5 value 1
+                xywh {580 490 50 25} type Float when 1 step 0.5 value 1
               }
               Fl_Spinner g_BSplineBeta {
                 label {BSpline beta:}
                 callback {SetBSplineBetaGUI()}
-                xywh {695 405 50 25} type Float when 1 step 0.5 value 0.5
+                xywh {580 525 50 25} type Float when 1 step 0.5 value 0.5
               }
               Fl_Input g_HistogramSharpening {
                 label {Histogram sharpening:}
                 callback {SetHistogramSharpeningGUI()}
-                xywh {680 475 65 25} when 1
+                xywh {725 530 65 25} align 1 when 1
               }
             }
             Fl_Button g_UseDefaultN4 {
               label {Use default parameters}
               callback {UseDefaultN4AdvancedParametersGUI()}
-              xywh {585 530 175 25}
+              xywh {585 605 175 25}
+            }
+          }
+          Fl_Group {} {
+            label Reorientation open
+            xywh {465 95 420 85} box ENGRAVED_BOX
+          } {
+            Fl_Input g_InputDataOrientationDisp {
+              label {Input orientation: }
+              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 111 40 24} deactivate
+            }
+            Fl_Input g_OutputDataOrientationDisp {
+              label {Output orientation: }
+              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 141 40 24} deactivate
+            }
+            Fl_Check_Button g_ReorientationButton {
+              label Reorientation
+              callback {ReorientationButtonChecked()}
+              xywh {515 125 40 26} down_box DOWN_BOX
             }
           }
         }
@@ -1643,6 +1658,8 @@ class AutoSegGUI {open
   Function {SetPointSpacingGUI()} {return_type {virtual void}
   } {}
   Function {~AutoSegGUI()} {return_type virtual
+  } {}
+  Function {ReorientationButtonChecked()} {return_type {virtual void}
   } {}
   Function {N4ITKBiasFieldCorrectionButtonChecked()} {return_type {virtual void}
   } {}

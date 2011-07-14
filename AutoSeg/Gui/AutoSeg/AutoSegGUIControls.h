@@ -41,269 +41,268 @@
 //ITK Libraries
 #include <itksys/Process.h>
 
-// enum Mode
-// {
-// 	file, advancedParameters,tissueSeg, warping,N4biasFieldCorrection
-// };
-
 class AutoSegGUIControls : public AutoSegGUI
 {
-	public:
+  public:
   
-		AutoSegGUIControls(char *_AutoSegPath);
-		virtual ~AutoSegGUIControls();
+    AutoSegGUIControls(char *_AutoSegPath);
+    virtual ~AutoSegGUIControls();
 
   // Menu
     // SubMenu File
-		void LoadParameterFileGUI();
-		void LoadComputationFileGUI();
+    void LoadParameterFileGUI();
+    void LoadComputationFileGUI();
 
-		void SaveParameterFileGUI();
-		void SaveComputationFileGUI();
+    void SaveParameterFileGUI();
+    void SaveComputationFileGUI();
 
-		void UseDefaultParametersGUI();
-		void SetDefaultParametersGUI();
-		void ResetDefaultParametersGUI();
-		void ExitAutoSeg();
+    void UseDefaultParametersGUI();
+    void SetDefaultParametersGUI();
+    void ResetDefaultParametersGUI();
+    void ExitAutoSeg();
     //SubMenu Help
-		void AboutButtonPressed();  
+    void AboutButtonPressed();  
   
     // Tab Computation
-		void SetProcessDataDirectoryGUI();
+    void SetProcessDataDirectoryGUI();
     // Data Selection
-		void T2ButtonChecked();
-		void PDButtonChecked();  
-		void Aux1ButtonChecked();
-		void Aux2ButtonChecked();
-		void Aux3ButtonChecked();
-		void Aux4ButtonChecked();
-		void Aux5ButtonChecked();
-		void Aux6ButtonChecked();
-		void Aux7ButtonChecked();
-		void Aux8ButtonChecked();
-		void AuxT1ButtonChecked();
-		void AuxT2ButtonChecked();
-		void AuxPDButtonChecked();
+    void T2ButtonChecked();
+    void PDButtonChecked();  
+    void Aux1ButtonChecked();
+    void Aux2ButtonChecked();
+    void Aux3ButtonChecked();
+    void Aux4ButtonChecked();
+    void Aux5ButtonChecked();
+    void Aux6ButtonChecked();
+    void Aux7ButtonChecked();
+    void Aux8ButtonChecked();
+    void AuxT1ButtonChecked();
+    void AuxT2ButtonChecked();
+    void AuxPDButtonChecked();
 		
     // Automatic Data Selection  
-		void SetDataDirectoryGUI();
-		void ComputeDataGUI();
-		void ComputeAuxDataGUI();
+    void SetDataDirectoryGUI();
+    void ComputeDataGUI();
+    void ComputeAuxDataGUI();
     // Browser Interaction
-		void AddDataGUI();
-		void AddAuxDataGUI();
+    void AddDataGUI();
+    void AddAuxDataGUI();
 		
-		void RemoveDataGUI();
-		void RemoveAuxDataGUI();
+    void RemoveDataGUI();
+    void RemoveAuxDataGUI();
 		
-		void ClearDataGUI();
-		void ClearAuxDataGUI();
+    void ClearDataGUI();
+    void ClearAuxDataGUI();
     // Automatic Segmentation Computation
-		void ComputeGUI();
+    void ComputeGUI();
     // Computation Parameters
-		void ComputeVolumeButtonChecked();
-		void ComputeCorticalThicknessButtonChecked();
-		void RecomputeButtonChecked();
-		void UseCondorButtonChecked();
+    void ComputeVolumeButtonChecked();
+    void ComputeCorticalThicknessButtonChecked();
+    void RecomputeButtonChecked();
+    void UseCondorButtonChecked();
 		
     //Regional Histogram Parameters
-		void AtlasSpaceButtonChecked();
-		void BiasCorrectedButtonChecked();
-		void StrippedButtonChecked();
-		void RigidTransformationButtonChecked();
-		void AffineTransformationButtonChecked();
-		void BsplineTransformationButtonChecked();
+    void AtlasSpaceButtonChecked();
+    void BiasCorrectedButtonChecked();
+    void StrippedButtonChecked();
+    void RigidTransformationButtonChecked();
+    void AffineTransformationButtonChecked();
+    void BsplineTransformationButtonChecked();
 
-  //void CoarseToFineWarpingButtonChecked();
     // Display
-		void ShowDisplayButtonPressed();
-		void ShowMRMLSceneButtonPressed();
-		void StopAutoSeg();
+    void ShowDisplayButtonPressed();
+    void ShowMRMLSceneButtonPressed();
+    void StopAutoSeg();
 
   // Tab Parameters
      // Age Group
-		void SharpAtlasButtonToggled();
-		void FuzzyAtlasButtonToggled();
+    void SharpAtlasButtonToggled();
+    void FuzzyAtlasButtonToggled();
      // Atlas Selection
-		void SetCommonCoordinateImageGUI();
-		void SetTissueSegmentationAtlasDirectoryGUI();
-		void SetROIAtlasFileGUI();
-		void TissueSegmentationAtlasT1ButtonToggled();
-		void TissueSegmentationAtlasT2ButtonToggled();
-		void CommonCoordinateImageT1ButtonToggled();
-		void CommonCoordinateImageT2ButtonToggled();
+    void SetCommonCoordinateImageGUI();
+    void SetTissueSegmentationAtlasDirectoryGUI();
+    void SetROIAtlasFileGUI();
+    void TissueSegmentationAtlasT1ButtonToggled();
+    void TissueSegmentationAtlasT2ButtonToggled();
+    void CommonCoordinateImageT1ButtonToggled();
+    void CommonCoordinateImageT2ButtonToggled();
     // Subcortical Structure Selection
-		void AllStructuresButtonChecked();
-		void AmygdalaLeftButtonChecked();
-		void AmygdalaRightButtonChecked();
-		void CaudateLeftButtonChecked();
-		void CaudateRightButtonChecked();
-		void HippocampusLeftButtonChecked();
-		void HippocampusRightButtonChecked();
-		void PallidusLeftButtonChecked();
-		void PallidusRightButtonChecked();
-		void PutamenLeftButtonChecked();
-		void PutamenRightButtonChecked();
-		void LateralVentricleLeftButtonChecked();
-		void LateralVentricleRightButtonChecked();
-		void SetAmygdalaLeftGUI();
-		void SetAmygdalaRightGUI();
-		void SetCaudateLeftGUI();
-		void SetCaudateRightGUI();
-		void SetHippocampusLeftGUI();
-		void SetHippocampusRightGUI();
-		void SetPallidusLeftGUI();
-		void SetPallidusRightGUI();
-		void SetPutamenLeftGUI();
-		void SetPutamenRightGUI();
-		void SetLateralVentricleLeftGUI();
-		void SetLateralVentricleRightGUI();
+    void AllStructuresButtonChecked();
+    void AmygdalaLeftButtonChecked();
+    void AmygdalaRightButtonChecked();
+    void CaudateLeftButtonChecked();
+    void CaudateRightButtonChecked();
+    void HippocampusLeftButtonChecked();
+    void HippocampusRightButtonChecked();
+    void PallidusLeftButtonChecked();
+    void PallidusRightButtonChecked();
+    void PutamenLeftButtonChecked();
+    void PutamenRightButtonChecked();
+    void LateralVentricleLeftButtonChecked();
+    void LateralVentricleRightButtonChecked();
+    void SetAmygdalaLeftGUI();
+    void SetAmygdalaRightGUI();
+    void SetCaudateLeftGUI();
+    void SetCaudateRightGUI();
+    void SetHippocampusLeftGUI();
+    void SetHippocampusRightGUI();
+    void SetPallidusLeftGUI();
+    void SetPallidusRightGUI();
+    void SetPutamenLeftGUI();
+    void SetPutamenRightGUI();
+    void SetLateralVentricleLeftGUI();
+    void SetLateralVentricleRightGUI();
     // Generic ROI Maps
-		void ROIFile1ButtonChecked();
-		void ROIFile2ButtonChecked();
-		void ROIFile3ButtonChecked();
-		void ROIFile4ButtonChecked();
-		void ROIFile5ButtonChecked();  
-		void SetROIFile1GUI();
-		void SetROIFile2GUI();
-		void SetROIFile3GUI();
-		void SetROIFile4GUI();
-		void SetROIFile5GUI();
+    void ROIFile1ButtonChecked();
+    void ROIFile2ButtonChecked();
+    void ROIFile3ButtonChecked();
+    void ROIFile4ButtonChecked();
+    void ROIFile5ButtonChecked();  
+    void SetROIFile1GUI();
+    void SetROIFile2GUI();
+    void SetROIFile3GUI();
+    void SetROIFile4GUI();
+    void SetROIFile5GUI();
   // Parcellation File
-		void ParcellationFile1ButtonChecked();
-		void ParcellationFile2ButtonChecked();
-		void ParcellationFile3ButtonChecked();
-		void SetParcellationFile1GUI();
-		void SetParcellationFile2GUI();
-		void SetParcellationFile3GUI();
-		void SoftTissueMapButtonToggled();
-		void HardTissueMapButtonToggled();
+    void ParcellationFile1ButtonChecked();
+    void ParcellationFile2ButtonChecked();
+    void ParcellationFile3ButtonChecked();
+    void SetParcellationFile1GUI();
+    void SetParcellationFile2GUI();
+    void SetParcellationFile3GUI();
+    void SoftTissueMapButtonToggled();
+    void HardTissueMapButtonToggled();
   
   // Tab AdvancedParameters
     // Tissue Segmentation
-		void ABCButtonToggled();
-		void SetFilterIterationsGUI();
-		void SetFilterTimeStepGUI();
-		void SetFilterMethodChoiceGUI();
-		void SetMaxBiasDegreeGUI();
-		void SetInitialDistributionEstimatorChoiceGUI();
-		void SetPrior1GUI();
-		void SetPrior2GUI();
-		void SetPrior3GUI();
-		void SetPrior4GUI();
-		void FluidAtlasWarpButtonChecked();
-		void FluidAtlasFATWButtonChecked();
-		void FluidAtlasAffineButtonChecked();
-		void SetFluidAtlasWarpIterationsGUI();
-		void SetFluidAtlasWarpMaxStepGUI();
-		void SetAtlasLinearMappingChoiceGUI();
-		void SetImageLinearMappingChoiceGUI();
-		void UseDefaultEMSAdvancedParametersGUI();
-		void SetLoopGUI();
-		void LoopButtonChecked();
-		void SetLoopIterationGUI();
+    void ABCButtonToggled();
+    void SetFilterIterationsGUI();
+    void SetFilterTimeStepGUI();
+    void SetFilterMethodChoiceGUI();
+    void SetMaxBiasDegreeGUI();
+    void SetInitialDistributionEstimatorChoiceGUI();
+    void SetPrior1GUI();
+    void SetPrior2GUI();
+    void SetPrior3GUI();
+    void SetPrior4GUI();
+    void FluidAtlasWarpButtonChecked();
+    void FluidAtlasFATWButtonChecked();
+    void FluidAtlasAffineButtonChecked();
+    void SetFluidAtlasWarpIterationsGUI();
+    void SetFluidAtlasWarpMaxStepGUI();
+    void SetAtlasLinearMappingChoiceGUI();
+    void SetImageLinearMappingChoiceGUI();
+    void UseDefaultEMSAdvancedParametersGUI();
+    void SetLoopGUI();
+    void LoopButtonChecked();
+    void SetLoopIterationGUI();
+    // Reorientation
+    void ReorientationButtonChecked();
     // N4ITKBiasFieldCorrection 
-		void N4ITKBiasFieldCorrectionButtonChecked();
-		void UseDefaultN4AdvancedParametersGUI();
-		void SetNbOfIterationsGUI();
-		void SetBSplineGridResolutionsGUI();
-		void SetConvergenceThresholdGUI();
-		void SetSplineDistanceGUI();
-		void SetShrinkFactorGUI();
-		void SetBSplineOrderGUI();
-		void SetBSplineAlphaGUI();
-		void SetBSplineBetaGUI();
-		void SetHistogramSharpeningGUI();
+    void N4ITKBiasFieldCorrectionButtonChecked();
+    void UseDefaultN4AdvancedParametersGUI();
+    void SetNbOfIterationsGUI();
+    void SetBSplineGridResolutionsGUI();
+    void SetConvergenceThresholdGUI();
+    void SetSplineDistanceGUI();
+    void SetShrinkFactorGUI();
+    void SetBSplineOrderGUI();
+    void SetBSplineAlphaGUI();
+    void SetBSplineBetaGUI();
+    void SetHistogramSharpeningGUI();
     // Rigid Registration
-		void RigidRegistrationButtonChecked();
-		void GridTemplateAtlasButtonToggled();
-		void GridTemplateManualButtonToggled();
+    void RigidRegistrationButtonChecked();
+    void GridTemplateAtlasButtonToggled();
+    void GridTemplateManualButtonToggled();
     // Atlas Warping
-		void ClassicWarpingButtonToggled();
-		void CoarseToFineWarpingButtonToggled();
-		void BRAINSDemonWarpToggled();
-		void SetAlphaGUI();
-		void SetBetaGUI();
-		void SetGammaGUI();
-		void SetMaxPerturbationGUI();
-		void SetNumBasisGUI();
-		void SetScale4NbIterationsGUI();
-		void SetScale2NbIterationsGUI();
-		void SetScale1NbIterationsGUI();
-		void SetPyramidLevelsGUI();
-		void SetMovingShrinkFactorsGUI();
-		void SetFixedShrinkFactorsGUI();
-		void SetIterationCountPyramidLevelsGUI();
-		void SetDeformationFieldSmoothingSigmaGUI();
-		void SetRegistrationFilterTypeGUI();
-		void UseDefaultWarpingAdvancedParametersGUI();
+    void ClassicWarpingButtonToggled();
+    void CoarseToFineWarpingButtonToggled();
+    void BRAINSDemonWarpToggled();
+    void SetAlphaGUI();
+    void SetBetaGUI();
+    void SetGammaGUI();
+    void SetMaxPerturbationGUI();
+    void SetNumBasisGUI();
+    void SetScale4NbIterationsGUI();
+    void SetScale2NbIterationsGUI();
+    void SetScale1NbIterationsGUI();
+    void SetPyramidLevelsGUI();
+    void SetMovingShrinkFactorsGUI();
+    void SetFixedShrinkFactorsGUI();
+    void SetIterationCountPyramidLevelsGUI();
+    void SetDeformationFieldSmoothingSigmaGUI();
+    void SetRegistrationFilterTypeGUI();
+    void UseDefaultWarpingAdvancedParametersGUI();
     // Skull Stripping
-		void DeleteVesselsButtonChecked();
+    void DeleteVesselsButtonChecked();
     // Intensity Rescaling
-		void HistogramQuantileButtonToggled();
-		void TissueMeanMatchButtonToggled();
+    void HistogramQuantileButtonToggled();
+    void TissueMeanMatchButtonToggled();
     // Regional histogram
-		void SetPointSpacingGUI();
+    void SetPointSpacingGUI();
     
-	private:
+  private:
 
   // Load Files
-		bool UpdateParameterGUI(const char *_FileName, enum Mode mode=file);
-		void UpdateComputationGUI(const char *_FileName);
-		void UpdateAuxComputationGUI(const char *_FileName);
+    bool UpdateParameterGUI(const char *_FileName, enum Mode mode=file);
+    void UpdateComputationGUI(const char *_FileName);
+    void UpdateAuxComputationGUI(const char *_FileName);
   // Default Parameters Files
-		void SetDefaultParameterFile(const char *_DefaultParameterFile);
+    void SetDefaultParameterFile(const char *_DefaultParameterFile);
   
-		char *GetDefaultParameterFile();
+    char *GetDefaultParameterFile();
 
   // Check inputs to compute data automatically
-		bool CheckInputAutoDataSelection();
-		bool CheckInputAutoAuxDataSelection();
+    bool CheckInputAutoDataSelection();
+    bool CheckInputAutoAuxDataSelection();
 		
   // Check inputs to compute Automatic Segmentation
-		bool CheckInputAutoSeg();
-		void CheckDirectoryName(char *_Directory);
+    bool CheckInputAutoSeg();
+    void CheckDirectoryName(char *_Directory);
 
   //Automatic Data Selection
-		void ComputeData();
-		void AddBrowserAutoData();
-		void AddAuxBrowserAutoData();
+    void ComputeData();
+    void AddBrowserAutoData();
+    void AddAuxBrowserAutoData();
 		
-		void CheckData(char *_Line);
-		void CheckData2(char *_Line);
+    void CheckData(char *_Line);
+    void CheckData2(char *_Line);
   
   // Browser
-		void InitBrowser();
-		void InitAuxBrowser();
-		
-		void RightJustifyData(const char *_Input, char *_Output);
-		void RightJustifyAuxData(const char *_Input, char *_Output);
+    void InitBrowser();
+    void InitAuxBrowser();
 
-		void SetSubcorticalStructures();
-		void SetGenericROIMaps();
-		void SetParcellationMap();
-		void SetGridTemplateParameters();
-		void SetIntensityRescalingMethod();
-		void InitializeData();
-		void InitializeAuxData();
-		void InitializeParameters();
-		void UpdateParameters();
+    void RightJustifyData(const char *_Input, char *_Output);
+    void RightJustifyAuxData(const char *_Input, char *_Output);
+
+    void SetSubcorticalStructures();
+    void SetGenericROIMaps();
+    void SetParcellationMap();
+    void SetGridTemplateParameters();
+    void SetReorientationParameters();
+    void SetN4Parameters();
+    void SetIntensityRescalingMethod();
+    void SetRegionalHistogramParameters();
+    void InitializeData();
+    void InitializeAuxData();
+    void InitializeParameters();
+    void UpdateParameters();
  
   // Computation
-		int CheckStudy();
+    int CheckStudy();
 
-		int *m_BrowserWidths;
-		int *m_AuxBrowserWidths;
+    int *m_BrowserWidths;
+    int *m_AuxBrowserWidths;
 		
-		AutoSegComputation m_Computation;
+    AutoSegComputation m_Computation;
 		//Mode m_Mode;
 
-		bool m_IsSubcorticalStructureSegmentation;
-		bool m_IsGenericROISegmentation;
-		bool m_IsParcellationMapSegmentation;
+    bool m_IsSubcorticalStructureSegmentation;
+    bool m_IsGenericROISegmentation;
+    bool m_IsParcellationMapSegmentation;
   
   // Default Parameter Files
-		char m_DefaultParameterFile[512];
+    char m_DefaultParameterFile[512];
 };
 
 #endif
