@@ -179,6 +179,10 @@ class AutoSegComputation
     void SetLoop(bool _Loop){m_Loop=_Loop;};
     void SetAtlasLoop(const char *_AtlasLoop){std::strcpy(m_AtlasLoop,_AtlasLoop);};
     void SetLoopIteration(int _LoopIteration){m_LoopIteration=_LoopIteration;};
+    // Reorientation Parameters
+    void SetReorientation(bool _Reorientation){m_Reorientation = _Reorientation;};
+    void SetInputDataOrientation(const char *_InputDataOrientation){std::strcpy(m_InputDataOrientation, _InputDataOrientation);};
+    void SetOutputDataOrientation(const char *_OutputDataOrientation){std::strcpy(m_OutputDataOrientation, _OutputDataOrientation);};
     // N4ITKBiasFieldCorrection Parameters
     void SetN4ITKBiasFieldCorrection(bool _N4ITKBiasFieldCorrection){m_N4ITKBiasFieldCorrection=_N4ITKBiasFieldCorrection;};
     void SetNbOfIterations (const char * _NbOfIterations){std::strcpy(m_NbOfIterations,_NbOfIterations);};
@@ -192,60 +196,60 @@ class AutoSegComputation
     void SetHistogramSharpening(const char *  _HistogramSharpening){std::strcpy(m_HistogramSharpening,_HistogramSharpening);};
 
     // Rigid Registration Parameters
-	void SetRigidRegistration(bool _RigidRegistration){m_RigidRegistration = _RigidRegistration;};
-	void SetROIAtlasGridTemplate(bool _IsROIAtlasGridTemplate){m_IsROIAtlasGridTemplate = _IsROIAtlasGridTemplate;};
-	void SetGridTemplateSizeX(int _GridTemplateSizeX){m_GridTemplateSizeX = _GridTemplateSizeX;};
-	void SetGridTemplateSizeY(int _GridTemplateSizeY){m_GridTemplateSizeY = _GridTemplateSizeY;};
-	void SetGridTemplateSizeZ(int _GridTemplateSizeZ){m_GridTemplateSizeZ = _GridTemplateSizeZ;};
-	void SetGridTemplateSpacingX(float _GridTemplateSpacingX){m_GridTemplateSpacingX = _GridTemplateSpacingX;};
-	void SetGridTemplateSpacingY(float _GridTemplateSpacingY){m_GridTemplateSpacingY = _GridTemplateSpacingY;};
-	void SetGridTemplateSpacingZ(float _GridTemplateSpacingZ){m_GridTemplateSpacingZ = _GridTemplateSpacingZ;};
+    void SetRigidRegistration(bool _RigidRegistration){m_RigidRegistration = _RigidRegistration;};
+    void SetROIAtlasGridTemplate(bool _IsROIAtlasGridTemplate){m_IsROIAtlasGridTemplate = _IsROIAtlasGridTemplate;};
+    void SetGridTemplateSizeX(int _GridTemplateSizeX){m_GridTemplateSizeX = _GridTemplateSizeX;};
+    void SetGridTemplateSizeY(int _GridTemplateSizeY){m_GridTemplateSizeY = _GridTemplateSizeY;};
+    void SetGridTemplateSizeZ(int _GridTemplateSizeZ){m_GridTemplateSizeZ = _GridTemplateSizeZ;};
+    void SetGridTemplateSpacingX(float _GridTemplateSpacingX){m_GridTemplateSpacingX = _GridTemplateSpacingX;};
+    void SetGridTemplateSpacingY(float _GridTemplateSpacingY){m_GridTemplateSpacingY = _GridTemplateSpacingY;};
+    void SetGridTemplateSpacingZ(float _GridTemplateSpacingZ){m_GridTemplateSpacingZ = _GridTemplateSpacingZ;};
 		
     // Warping Parameters
-	void SetClassicWarpingMethod(bool _IsClassicWarpingMethod){m_IsClassicWarpingMethod = _IsClassicWarpingMethod;};
-	void SetBRAINSDemonWarpMethod(bool _IsBRAINSDemonWarpMethod){m_IsBRAINSDemonWarpMethod = _IsBRAINSDemonWarpMethod;};
-	void SetAlpha(float _Alpha){m_Alpha = _Alpha;};
-	void SetBeta(float _Beta){m_Beta = _Beta;};
-	void SetGamma(float _Gamma){m_Gamma = _Gamma;};
-	void SetMaxPerturbation(float _MaxPerturbation){m_MaxPerturbation = _MaxPerturbation;};
-	void SetNumBasis(float _NumBasis){m_NumBasis = _NumBasis;};
-	void SetScale4NbIterations(int _Scale4NbIterations){m_Scale4NbIterations = _Scale4NbIterations;};
-	void SetScale2NbIterations(int _Scale2NbIterations){m_Scale2NbIterations = _Scale2NbIterations;};
-	void SetScale1NbIterations(int _Scale1NbIterations){m_Scale1NbIterations = _Scale1NbIterations;};
-	void SetPyramidLevels(int _PyramidLevels){m_PyramidLevels = _PyramidLevels;};
-	void SetMovingShrinkFactors(const char * _MovingShrinkFactors){std::strcpy(m_MovingShrinkFactors,_MovingShrinkFactors);};
-	void SetFixedShrinkFactors(const char * _FixedShrinkFactors){std::strcpy(m_FixedShrinkFactors,_FixedShrinkFactors);};
-	void SetIterationCountPyramidLevels(const char * _IterationCountPyramidLevels){std::strcpy(m_IterationCountPyramidLevels,_IterationCountPyramidLevels);};
-	void SetDeformationFieldSmoothingSigma(float _DeformationFieldSmoothingSigma){m_DeformationFieldSmoothingSigma = _DeformationFieldSmoothingSigma;};
-	void SetRegistrationFilterType(const char * _RegistrationFilterType){std::strcpy(m_RegistrationFilterType,_RegistrationFilterType);};
+    void SetClassicWarpingMethod(bool _IsClassicWarpingMethod){m_IsClassicWarpingMethod = _IsClassicWarpingMethod;};
+    void SetBRAINSDemonWarpMethod(bool _IsBRAINSDemonWarpMethod){m_IsBRAINSDemonWarpMethod = _IsBRAINSDemonWarpMethod;};
+    void SetAlpha(float _Alpha){m_Alpha = _Alpha;};
+    void SetBeta(float _Beta){m_Beta = _Beta;};
+    void SetGamma(float _Gamma){m_Gamma = _Gamma;};
+    void SetMaxPerturbation(float _MaxPerturbation){m_MaxPerturbation = _MaxPerturbation;};
+    void SetNumBasis(float _NumBasis){m_NumBasis = _NumBasis;};
+    void SetScale4NbIterations(int _Scale4NbIterations){m_Scale4NbIterations = _Scale4NbIterations;};
+    void SetScale2NbIterations(int _Scale2NbIterations){m_Scale2NbIterations = _Scale2NbIterations;};
+    void SetScale1NbIterations(int _Scale1NbIterations){m_Scale1NbIterations = _Scale1NbIterations;};
+    void SetPyramidLevels(int _PyramidLevels){m_PyramidLevels = _PyramidLevels;};
+    void SetMovingShrinkFactors(const char * _MovingShrinkFactors){std::strcpy(m_MovingShrinkFactors,_MovingShrinkFactors);};
+    void SetFixedShrinkFactors(const char * _FixedShrinkFactors){std::strcpy(m_FixedShrinkFactors,_FixedShrinkFactors);};
+    void SetIterationCountPyramidLevels(const char * _IterationCountPyramidLevels){std::strcpy(m_IterationCountPyramidLevels,_IterationCountPyramidLevels);};
+    void SetDeformationFieldSmoothingSigma(float _DeformationFieldSmoothingSigma){m_DeformationFieldSmoothingSigma = _DeformationFieldSmoothingSigma;};
+    void SetRegistrationFilterType(const char * _RegistrationFilterType){std::strcpy(m_RegistrationFilterType,_RegistrationFilterType);};
     // Skull Stripping
-	void SetDeleteVessels(bool _DeleteVessels){m_DeleteVessels = _DeleteVessels;};
+    void SetDeleteVessels(bool _DeleteVessels){m_DeleteVessels = _DeleteVessels;};
     // Intensity Rescaling
-	void SetIntensityRescalingMethod(int _IntensityRescalingMethod){m_IntensityRescalingMethod = _IntensityRescalingMethod;};
+    void SetIntensityRescalingMethod(int _IntensityRescalingMethod){m_IntensityRescalingMethod = _IntensityRescalingMethod;};
     //Data
-	void SetNbData(int _NbData){m_NbData = _NbData;};
-	void SetNbAuxData(int _NbAuxData){m_NbAuxData = _NbAuxData;};
-	void AllocateDataList();
-	void AllocateAuxDataList();
-	void DesallocateDataList();
-	void DesallocateAuxDataList();
-	void SetDataList(const char *_Data, int _DataNumber, bool _GUIMode);
-	void SetAuxDataList(const char *_Data, int _DataNumber);
+    void SetNbData(int _NbData){m_NbData = _NbData;};
+    void SetNbAuxData(int _NbAuxData){m_NbAuxData = _NbAuxData;};
+    void AllocateDataList();
+    void AllocateAuxDataList();
+    void DesallocateDataList();
+    void DesallocateAuxDataList();
+    void SetDataList(const char *_Data, int _DataNumber, bool _GUIMode);
+    void SetAuxDataList(const char *_Data, int _DataNumber);
    // Regional histogram
-	void SetQuantiles(const char *_Quantiles){std::strcpy(m_Quantiles, _Quantiles);};
-	void SetPointSpacing(float _PointSpacing){m_PointSpacing = _PointSpacing;};
+    void SetQuantiles(const char *_Quantiles){std::strcpy(m_Quantiles, _Quantiles);};
+    void SetPointSpacing(float _PointSpacing){m_PointSpacing = _PointSpacing;};
    // Compute Automatic Data
-	void ComputeData();
+    void ComputeData();
   // Compute Automatic Segmentation
-	void Computation();
-	void ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile);
-	void StopBatchMake();
+    void Computation();
+    void ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile);
+    void StopBatchMake();
   // Show MRML Scene
-	void ExecuteSlicer3withScene(std::string pathSlicer);
+    void ExecuteSlicer3withScene(std::string pathSlicer);
   // Load Files
-	bool LoadParameterFile(const char *_FileName, enum Mode mode=file);
-	void LoadComputationFile(const char *_FileName);
-	void LoadAuxComputationFile(const char *_FileName);
+    bool LoadParameterFile(const char *_FileName, enum Mode mode=file);
+    void LoadComputationFile(const char *_FileName);
+    void LoadAuxComputationFile(const char *_FileName);
   private:
 
     char m_AutoSegPath[512];
@@ -370,6 +374,10 @@ class AutoSegComputation
     bool GetLoop(){return m_Loop;};
     char *GetAtlasLoop(){return m_AtlasLoop;};
     int GetLoopIteration(){return m_LoopIteration;};
+    // Reorientation
+    bool GetReorientation(){return m_Reorientation;};
+    char *GetInputDataOrientation(){return m_InputDataOrientation;};
+    char *GetOutputDataOrientation(){return m_OutputDataOrientation;};
     // N4ITKBiasFieldCorrection Parameters
     bool GetN4ITKBiasFieldCorrection(){return m_N4ITKBiasFieldCorrection;};
     char * GetNbOfIterations() {return m_NbOfIterations;};
@@ -627,6 +635,10 @@ class AutoSegComputation
     char m_AtlasLoop[512];
     bool m_Loop;
     int m_LoopIteration;
+    // Reorientation Parameters
+    bool m_Reorientation;
+    char m_InputDataOrientation[4];
+    char m_OutputDataOrientation[4];
     // N4ITKBiasFieldCorrection Parameters
     bool m_N4ITKBiasFieldCorrection;
     char m_NbOfIterations[50];
