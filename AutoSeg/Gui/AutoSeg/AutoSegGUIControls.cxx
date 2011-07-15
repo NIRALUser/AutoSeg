@@ -5630,12 +5630,12 @@ void AutoSegGUIControls::InitializeParameters()
   g_ParcellationFile1Button->set();
   g_ParcellationFile2Button->clear();
   g_ParcellationFile2Button->clear();  
-  g_SoftTissueMapButton->set();
-  g_HardTissueMapButton->clear();  
+  g_SoftTissueMapButton->clear();
+  g_HardTissueMapButton->set();  
   m_Computation.SetParcellationFile1(g_ParcellationFile1Disp->value());
   m_Computation.SetParcellationFile2(g_ParcellationFile2Disp->value());
   m_Computation.SetParcellationFile3(g_ParcellationFile3Disp->value());
-  m_Computation.SetSoftTissueMap("Soft");
+  m_Computation.SetSoftTissueMap("Hard");
 
   //Generic ROI Maps
   g_ROIFile1Disp->value("/tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/HuangROIAtlas.nrrd");

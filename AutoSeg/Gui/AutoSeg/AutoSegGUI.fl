@@ -871,12 +871,12 @@ class AutoSegGUI {open
               Fl_Round_Button g_SoftTissueMapButton {
                 label Soft
                 callback {SoftTissueMapButtonToggled();}
-                xywh {55 310 64 20} down_box ROUND_DOWN_BOX value 1
+                xywh {55 310 64 20} down_box ROUND_DOWN_BOX
               }
               Fl_Round_Button g_HardTissueMapButton {
                 label Hard
                 callback {HardTissueMapButtonToggled();}
-                xywh {55 335 64 20} down_box ROUND_DOWN_BOX
+                xywh {55 335 64 20} down_box ROUND_DOWN_BOX value 1
               }
             }
           }

@@ -36,6 +36,7 @@ ROI File 5:
 
 // Parcellation Maps
 Parcellation Map Segmentation: 1
+Tissue Map: Hard
 Parcellation File 1: /tools/atlas/BrainROIAtlas/pediatric-atlas-4years-sym-T1-RAI/nrrd/Parcellation.nrrd
 Parcellation File 2: 
 Parcellation File 3: 

@@ -32,7 +32,7 @@ ROI File 5:
 
 // Parcellation Maps
 Parcellation Map Segmentation: 1
-Tissue Map: Soft
+Tissue Map: Hard
 Parcellation File 1: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/Parcellation.nrrd
 Parcellation File 2: 
 Parcellation File 3: 

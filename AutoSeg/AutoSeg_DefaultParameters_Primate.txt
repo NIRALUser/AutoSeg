@@ -32,7 +32,7 @@ ROI File 5:
 
 // Parcellation Maps
 Parcellation Map Segmentation: 1
-Tissue Map: Soft
+Tissue Map: Hard
 Parcellation File 1: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_parc.nrrd
 Parcellation File 2: 
 Parcellation File 3: 
