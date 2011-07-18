@@ -37,9 +37,9 @@ OPTION(COMPILE_AUTOSEG "Compile AutoSeg." ON)
 IF(COMPILE_AUTOSEG)
   set(proj AutoSeg)
   ExternalProject_Add(${proj}
-  SVN_REPOSITORY "https://www.nitrc.org/svn/autoseg/trunk/AutoSeg"
-  SVN_USERNAME slicerbot
-  SVN_PASSWORD slicer
+    SVN_REPOSITORY "https://www.nitrc.org/svn/autoseg/trunk/AutoSeg"
+    SVN_USERNAME slicerbot
+    SVN_PASSWORD slicer
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND}
@@ -62,9 +62,9 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
   OPTION(COMPILE_EXTERNAL_INTENSITYRESCALER "Compile IntensityRescaler." OFF)
   set(proj NIRALUtilities)
   ExternalProject_Add(${proj}
-  SVN_REPOSITORY "https://www.nitrc.org/svn/niral_utilities/trunk/"
-  SVN_USERNAME slicerbot
-  SVN_PASSWORD slicer
+    SVN_REPOSITORY "https://www.nitrc.org/svn/niral_utilities/trunk/"
+    SVN_USERNAME slicerbot
+    SVN_PASSWORD slicer
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND} ${VTK_DEPEND}
@@ -87,9 +87,9 @@ OPTION(COMPILE_EXTERNAL_CORTTHICK "Compile CortThick." ON)
 IF(COMPILE_EXTERNAL_CORTTHICK)
   set(proj CortThick)
   ExternalProject_Add(${proj}
-  SVN_REPOSITORY "https://www.nitrc.org/svn/arctic/trunk/CortThick/"
-  SVN_USERNAME slicerbot
-  SVN_PASSWORD slicer
+    SVN_REPOSITORY "https://www.nitrc.org/svn/arctic/trunk/CortThick/"
+    SVN_USERNAME slicerbot
+    SVN_PASSWORD slicer
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND} ${VTK_DEPEND}
@@ -110,9 +110,9 @@ OPTION(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP "Compile SegPostProcessCLP." ON)
 IF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
   set(proj SegPostProcessCLP)
   ExternalProject_Add(${proj}
-  SVN_REPOSITORY "https://www.nitrc.org/svn/spharm-pdm/Applications/SegPostProcessCLP/"
-  SVN_USERNAME slicerbot
-  SVN_PASSWORD slicer
+    SVN_REPOSITORY "https://www.nitrc.org/svn/spharm-pdm/Applications/SegPostProcessCLP/"
+    SVN_USERNAME slicerbot
+    SVN_PASSWORD slicer
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND}
@@ -129,41 +129,43 @@ ENDIF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
 
 OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
 IF(COMPILE_EXTERNAL_ABC)
-  # Build ABC https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/
   set(proj abc)
-  IF (Slicer3_FOUND)
-    ExternalProject_Add(${proj}
-        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
-        SVN_USERNAME slicerbot
-        SVN_PASSWORD slicer
-        SOURCE_DIR ${proj}
-        BINARY_DIR ${proj}-build
-        DEPENDS  ${ITK_DEPEND}
-        CMAKE_GENERATOR ${gen}
-        CMAKE_ARGS
-          ${LOCAL_CMAKE_BUILD_OPTIONS}
-          -DSlicer3_DIR:PATH=${Slicer3_DIR}
-          -DITK_DIR:PATH=${ITK_DIR}
-	  -DCOMPILE_SLICER3COMMANDLINE:BOOL=OFF
-	  -DCOMPILE_COMMANDLINE:BOOL=COMPILE_EXTERNAL_ABC
-      INSTALL_COMMAND ""
-      )
-  ELSE (Slicer3_FOUND)
-    ExternalProject_Add(${proj}
-        SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
-        SVN_USERNAME slicerbot
-        SVN_PASSWORD slicer
-        SOURCE_DIR ${proj}
-        BINARY_DIR ${proj}-build
-        DEPENDS  ${ITK_DEPEND}
-        CMAKE_GENERATOR ${gen}
-        CMAKE_ARGS
-          ${LOCAL_CMAKE_BUILD_OPTIONS}
-          -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
-          -DITK_DIR:PATH=${ITK_DIR}
-	  -DCOMPILE_SLICER3COMMANDLINE:BOOL=OFF
-	  -DCOMPILE_COMMANDLINE:BOOL=COMPILE_EXTERNAL_ABC
-      INSTALL_COMMAND ""
-      )
-  ENDIF (Slicer3_FOUND)
+  ExternalProject_Add(${proj}
+    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
+    SVN_USERNAME slicerbot
+    SVN_PASSWORD slicer
+    SOURCE_DIR ${proj}
+    BINARY_DIR ${proj}-build
+    DEPENDS  ${ITK_DEPEND}
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      ${LOCAL_CMAKE_BUILD_OPTIONS}
+      -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
+      -DITK_DIR:PATH=${ITK_DIR}
+      -DCOMPILE_SLICER3COMMANDLINE:BOOL=OFF
+      -DCOMPILE_COMMANDLINE:BOOL=COMPILE_EXTERNAL_ABC
+    INSTALL_COMMAND ""
+    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+  )
 ENDIF(COMPILE_EXTERNAL_ABC)
+
+OPTION(COMPILE_EXTERNAL_BATCHMAKE "Compile External BatchMake." ON)
+IF(COMPILE_EXTERNAL_BATCHMAKE)
+  set(proj BatchMake)
+  ExternalProject_Add(${proj}
+    CVS_REPOSITORY ":pserver:anoncvs@batchmake.org:/cvsroot/BatchMake"
+    CVS_MODULE "BatchMake"
+    CVS_TAG -r BatchMake-1-3
+    UPDATE_COMMAND ""
+    SOURCE_DIR ${proj}
+    BINARY_DIR ${proj}-build
+    DEPENDS ${ITK_DEPEND}
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      ${LOCAL_CMAKE_BUILD_OPTIONS}
+      -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
+      -DITK_DIR:PATH=${ITK_DIR}
+    INSTALL_COMMAND ""
+    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
+  )
+ENDIF(COMPILE_EXTERNAL_BATCHMAKE)
