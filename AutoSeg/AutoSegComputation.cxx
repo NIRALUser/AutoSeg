@@ -8188,7 +8188,7 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
   // Computation Options
   int IsT2Image, IsPDImage;
   int nbData=0;
-  std::vector<const char *> DataList;
+  std::vector<std::string> DataList;
   int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor;
 
   if ((ComputationFile = fopen(_FileName,"r")) != NULL) 
@@ -8282,7 +8282,7 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       SetNbData(nbData);
       AllocateDataList();
       for(int i=0;i<nbData;i++)
-	SetDataList(DataList.at(i),i,0);
+	SetDataList(DataList[i].c_str(),i,0);
     }
   }
   else
