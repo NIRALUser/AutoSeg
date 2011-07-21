@@ -1300,7 +1300,7 @@ class AutoSegGUI {open
               Fl_Spinner g_DeformationFieldSmoothingSigma {
                 label {Deformation Field Smoothing Sigma:}
                 callback {SetDeformationFieldSmoothingSigmaGUI()}
-                xywh {305 575 65 25} type Float step 0.1 value 1
+                xywh {305 575 65 25} type Float step 0.1 value 2
               }
               Fl_Spinner g_PyramidLevels {
                 label {Pyramid Levels:}

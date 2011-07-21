@@ -5772,7 +5772,7 @@ void AutoSegGUIControls::InitializeParameters()
   g_BRAINSDemonWarp->activate();
   g_group_classic_coarsetofine_fluid->deactivate();
   g_RegistrationFilterType->value(3);
-  g_DeformationFieldSmoothingSigma->value(1.0);
+  g_DeformationFieldSmoothingSigma->value(2.0);
   g_PyramidLevels->value(5);
   g_MovingShrinkFactors->value("16,16,16");
   g_FixedShrinkFactors->value("16,16,16");

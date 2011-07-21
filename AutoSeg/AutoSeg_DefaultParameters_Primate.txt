@@ -83,7 +83,7 @@ Scale 4 - Number Of Iterations: 50
 Scale 2 - Number Of Iterations: 25
 Scale 1 - Number Of Iterations: 100
 Registration Filter Type: LogDemons
-Deformation Field Smoothing Sigma: 1
+Deformation Field Smoothing Sigma: 2.0
 Pyramid Levels: 3
 Moving Shrink Factors: 4,4,4
 Fixed Shrink Factors: 4,4,4
