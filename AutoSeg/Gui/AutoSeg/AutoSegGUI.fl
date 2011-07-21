@@ -7,7 +7,7 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.3} open selected
+      label {AutoSeg 2.3.1} open selected
       xywh {712 94 910 945} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
@@ -82,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.3}
+          label {AutoSeg 2.3.1}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
