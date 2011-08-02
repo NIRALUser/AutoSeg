@@ -37,10 +37,8 @@ OPTION(COMPILE_AUTOSEG "Compile AutoSeg." ON)
 IF(COMPILE_AUTOSEG)
   set(proj AutoSeg)
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/autoseg/trunk/AutoSeg"
-    SVN_USERNAME slicerbot
-    SVN_PASSWORD slicer
-    SOURCE_DIR ${proj}
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND}
     CMAKE_GENERATOR ${gen}
