@@ -2020,6 +2020,8 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"GridTemplate SpacingX: "<<GetGridTemplateSpacingX()<<std::endl;
   ParameterFile<<"GridTemplate SpacingY: "<<GetGridTemplateSpacingY()<<std::endl;
   ParameterFile<<"GridTemplate SpacingZ: "<<GetGridTemplateSpacingZ()<<std::endl; 
+  ParameterFile<<"Registration Initialization: "<<GetRegistrationInitialization()<<std::endl;
+  ParameterFile<<"Use T1 initial transform: "<<GetInitRegUseT1InitTransform()<<std::endl;
   ParameterFile<<"\n// Atlas Warping"<<std::endl;
   if (GetClassicWarpingMethod())
     ParameterFile<<"Warping Method: Classic"<<std::endl;
@@ -2179,8 +2181,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"# Parameters"<<std::endl;
   BMSAutoSegMainFile<<"set(EMSoftware "<<GetEMSoftware()<<")"<<std::endl;
   BMSAutoSegMainFile<<"set (ComputeVolume "<<GetComputeVolume()<<")"<<std::endl;
-  BMSAutoSegMainFile<<"set (ComputeCorticalThickness "<<GetComputeCorticalThickness()<<")"<<std::endl;  
-  
+  BMSAutoSegMainFile<<"set (ComputeCorticalThickness "<<GetComputeCorticalThickness()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (RegistrationInitialization "<<GetRegistrationInitialization()<<")"<<std::endl;
+
   BMSAutoSegMainFile<<"# Programs "<<std::endl;
   BMSAutoSegMainFile<<"set (ABCCmd ABC)"<<std::endl;
   BMSAutoSegMainFile<<"set (warpCmd WarpTool)"<<std::endl;
@@ -2749,7 +2752,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            ListFileInDir(TxtInitFileList ${AtlasIsoPath} ${TxtInitFileTail})"<<std::endl;
     BMSAutoSegMainFile<<"            If (${TxtInitFileList} == '')"<<std::endl;  
     BMSAutoSegMainFile<<"               echo ('Computing rigid transformation...')"<<std::endl;
-    BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+    BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
     BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
@@ -2875,14 +2878,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"      set (Case ${Path}/${AutoSegDir}/${OutputOrientation}/${CaseHead}${ProcessExtension}.nrrd)"<<std::endl;
 	  BMSAutoSegMainFile<<"      set (FirstCase ${Path}/${AutoSegDir}/${OutputOrientation}/${FirstCaseHead}${ProcessExtension}.nrrd)"<<std::endl;
 	  BMSAutoSegMainFile<<"      GetFilename (FirstCaseHead ${FirstCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
-	} 
+	}
 
       BMSAutoSegMainFile<<"      GetFilename (Path ${Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (CaseHead ${Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
 
       BMSAutoSegMainFile<<"         # Creating new Files"<<std::endl;
       BMSAutoSegMainFile<<"          # Parameter File"<<std::endl;
-      BMSAutoSegMainFile<<"         set (TxtInitFile ${AtlasIsoPath}${FirstCaseHead}.txt)"<<std::endl;
+      BMSAutoSegMainFile<<"         set (TxtInitFileTail ${CaseHead}_init.txt)"<<std::endl;
+      BMSAutoSegMainFile<<"         set (TxtInitFile ${AtlasIsoPath}${TxtInitFileTail})"<<std::endl;
       BMSAutoSegMainFile<<"          # Parameter File"<<std::endl;
       BMSAutoSegMainFile<<"         set (TxtOutFile ${AtlasIsoPath}${CaseHead}.txt)"<<std::endl;
       BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
@@ -2894,12 +2898,34 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"         set (OutputFile ${AtlasIsoPath}${OutputFileTail})"<<std::endl;
       BMSAutoSegMainFile<<"         ListFileInDir(TxtOutFileList ${AtlasIsoPath} ${CaseHead}.txt)"<<std::endl;
       BMSAutoSegMainFile<<"         If (${TxtOutFileList} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"            # Computing Transformation"<<std::endl;
-      BMSAutoSegMainFile<<"            echo ('Computing rigid transformation...')"<<std::endl;
-      BMSAutoSegMainFile<<"    	        set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
-      BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-      BMSAutoSegMainFile<<"           WriteFile(${ReportFile} ${output})"<<std::endl;
-      BMSAutoSegMainFile<<"         EndIf (${TxtOutFileList})"<<std::endl;
+
+    BMSAutoSegMainFile<<"             # Computing Transformation"<<std::endl;
+    BMSAutoSegMainFile<<"             ListFileInDir(TxtInitFileList ${AtlasIsoPath} ${TxtInitFileTail})"<<std::endl;
+    BMSAutoSegMainFile<<"             If (${TxtInitFileList} == '')"<<std::endl; 
+
+    if (!GetInitRegUseT1InitTransform())
+      {
+	BMSAutoSegMainFile<<"               echo ('Computing rigid transformation...')"<<std::endl;
+	BMSAutoSegMainFile<<"    	    set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+	BMSAutoSegMainFile<<"      	    Run (output ${command_line} prog_error)"<<std::endl;
+	BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;    
+      }
+    else
+      {	
+	BMSAutoSegMainFile<<"               echo ('Computing rigid transformation using T1 transform file as initialization...')"<<std::endl;
+	BMSAutoSegMainFile<<"               set (FirstCaseTransformFile ${AtlasIsoPath}${FirstCaseHead}.txt)"<<std::endl;
+	BMSAutoSegMainFile<<"    	    set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initialTransform ${FirstCaseTransformFile} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+	BMSAutoSegMainFile<<"      	    Run (output ${command_line} prog_error)"<<std::endl;
+	BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;    
+      }
+    BMSAutoSegMainFile<<"             Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"               echo ('Computing rigid transformation with initial transform...')"<<std::endl;
+    BMSAutoSegMainFile<<"    	        set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+    BMSAutoSegMainFile<<"      	        Run (output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegMainFile<<"             EndIf (${TxtInitFileList})"<<std::endl;
+    
+    BMSAutoSegMainFile<<"         EndIf (${TxtOutFileList})"<<std::endl;
       BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
       BMSAutoSegMainFile<<"         echo ('Applying rigid transformation...')"<<std::endl;
       BMSAutoSegMainFile<<"         set (command_line ${ResampleVolume2Cmd} ${Case} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
@@ -3390,7 +3416,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (GetT2Image())
     {
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Skull stripping T2w image...)"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Skull stripping T2w image...')"<<std::endl;
       BMSAutoSegMainFile<<"        GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(T2FinalTargetList ${StrippedPath} ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
@@ -3407,7 +3433,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (GetPDImage())
     {
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Skull stripping PDw image...)"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Skull stripping PDw image...')"<<std::endl;
       BMSAutoSegMainFile<<"        GetParam (PDCase ${PDCasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (PDCaseHead ${PDCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(PDFinalTargetList ${StrippedPath} ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
@@ -3427,7 +3453,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (GetLoop() && iteration==0)
     {
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Bias field correction...)"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Bias field correction...')"<<std::endl;
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
 
       BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}_Bias.nrrd)"<<std::endl;
@@ -8316,6 +8342,7 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
   int RigidRegistration, IsROIAtlasGridTemplate;
   int GridTemplateSizeX, GridTemplateSizeY, GridTemplateSizeZ;
   float GridTemplateSpacingX, GridTemplateSpacingY, GridTemplateSpacingZ;
+  int InitRegUseT1InitTransform;
     // Atlas Warping
   float Alpha, Beta, Gamma, MaxPerturbation, NumBasis,DeformationFieldSmoothingSigma;
   int Scale4NbIterations, Scale2NbIterations, Scale1NbIterations,PyramidLevels;
@@ -8344,6 +8371,9 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
     SetN4ITKBiasFieldCorrection(0);
     // Init for reorientation
     SetReorientation(0);
+    // Init for rigid registration
+    SetRegistrationInitialization("useCenterOfHeadAlign");
+    SetInitRegUseT1InitTransform(0);
   }
 
   if ((ParameterFile = fopen(_FileName,"r")) != NULL) 
@@ -8621,6 +8651,18 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  GridTemplateSpacingZ = atof(Line+23);
 	  SetGridTemplateSpacingZ(GridTemplateSpacingZ);
 	}
+	else if ((std::strncmp("Registration Initialization: ", Line, 29)) == 0)
+	  {
+	    if (std::strlen(Line+29) != 0)
+	      SetRegistrationInitialization(Line+29);
+	    else
+	      SetRegistrationInitialization("");
+	  }
+	else if ((std::strncmp("Use T1 initial transform: ", Line, 26)) == 0)
+	  {
+	    InitRegUseT1InitTransform = atoi(Line+26);
+	    SetInitRegUseT1InitTransform(InitRegUseT1InitTransform);
+	  }	
 	else if ((std::strncmp("Delete Vessels: ", Line, 16)) == 0)
 	{
 	  DeleteVessels = (atoi(Line+16));

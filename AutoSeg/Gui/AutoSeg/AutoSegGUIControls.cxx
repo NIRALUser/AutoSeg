@@ -1145,6 +1145,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   int RigidRegistration, IsROIAtlasGridTemplate;
   int GridTemplateSizeX, GridTemplateSizeY, GridTemplateSizeZ;
   float GridTemplateSpacingX, GridTemplateSpacingY, GridTemplateSpacingZ;
+  int InitRegUseT1InitTransform;
     // Atlas Warping
   float Alpha, Beta, Gamma, MaxPerturbation, NumBasis,DeformationFieldSmoothingSigma;
   int Scale4NbIterations, Scale2NbIterations, Scale1NbIterations,PyramidLevels;
@@ -1635,13 +1636,23 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  if (RigidRegistration == 1)
 	  {
 	    g_RigidRegistrationButton->set();
-	    g_RigidRegistrationGroup->activate();
+	    g_RegridingRegistrationGroup->activate();
+	    g_RegistrationInitializationGroup->activate();
 	  }
 	  else
 	  {
 	    g_RigidRegistrationButton->clear();
-	    g_RigidRegistrationGroup->deactivate();
+	    g_RegridingRegistrationGroup->deactivate();
+	    g_RegistrationInitializationGroup->deactivate();
 	  }
+	}	
+	else if ((std::strncmp("Use T1 initial transform: ", Line, 26)) == 0)
+	{
+	  InitRegUseT1InitTransform = atoi(Line+26);
+	  if (InitRegUseT1InitTransform)
+	    g_InitRegUseT1InitTransformButton->set();
+	  else
+	    g_InitRegUseT1InitTransformButton->clear();
 	}
 	else if ((std::strncmp("Is ROIAtlasGridTemplate: ", Line, 25)) == 0)
 	{
@@ -1688,6 +1699,37 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	{
 	  GridTemplateSpacingZ = atof(Line+23);
 	  g_GridTemplateSpacingZ->value(GridTemplateSpacingZ);
+	}
+	else if ((std::strncmp("Registration Initialization: ", Line, 29)) == 0)
+	{
+	  if (std::strcmp(Line+29,"useCenterOfHeadAlign") == 0)
+	    {
+	      g_InitRegCenterOfHeadButton->set();
+	      g_InitRegMomentsButton->clear();
+	      g_InitRegGeometryButton->clear();
+	      g_InitRegOffButton->clear();
+	    }
+	  else if (std::strcmp(Line+29,"useMomentsAlign") == 0)
+	    {
+	      g_InitRegCenterOfHeadButton->clear();
+	      g_InitRegMomentsButton->set();
+	      g_InitRegGeometryButton->clear();
+	      g_InitRegOffButton->clear();
+	    }
+	  else if (std::strcmp(Line+29,"useGeometryAlign") == 0)
+	    {
+	      g_InitRegCenterOfHeadButton->clear();
+	      g_InitRegMomentsButton->clear();
+	      g_InitRegGeometryButton->set();
+	      g_InitRegOffButton->clear();
+	    }
+	  else if (std::strcmp(Line+29,"Off") == 0)
+	    {
+	      g_InitRegCenterOfHeadButton->clear();
+	      g_InitRegMomentsButton->clear();
+	      g_InitRegGeometryButton->clear();
+	      g_InitRegOffButton->set();
+	    }
 	}
 	else if ((std::strncmp("Delete Vessels: ", Line, 16)) == 0)
 	{
@@ -5271,12 +5313,14 @@ void AutoSegGUIControls::RigidRegistrationButtonChecked()
 {
   if (g_RigidRegistrationButton->value())
   {
-    g_RigidRegistrationGroup->activate();
+    g_RegridingRegistrationGroup->activate();
+    g_RegistrationInitializationGroup->activate();
     m_Computation.SetRigidRegistration(1);
   }
   else
   {
-    g_RigidRegistrationGroup->deactivate();
+    g_RegridingRegistrationGroup->deactivate();
+    g_RegistrationInitializationGroup->deactivate();
     m_Computation.SetRigidRegistration(0);
   }
 }
@@ -5293,6 +5337,50 @@ void AutoSegGUIControls::GridTemplateManualButtonToggled()
   g_GridTemplateManualButton->set();
   g_GridTemplateAtlasButton->clear();
   g_GridParametersGroup->activate();
+}
+
+void AutoSegGUIControls::InitRegCenterOfHeadButtonToggled()
+{
+  g_InitRegCenterOfHeadButton->set();
+  g_InitRegMomentsButton->clear();
+  g_InitRegGeometryButton->clear();
+  g_InitRegOffButton->clear();
+  m_Computation.SetRegistrationInitialization("useCenterOfHeadAlign");
+}
+
+void AutoSegGUIControls::InitRegMomentsButtonToggled()
+{
+  g_InitRegCenterOfHeadButton->clear();
+  g_InitRegMomentsButton->set();
+  g_InitRegGeometryButton->clear();
+  g_InitRegOffButton->clear();
+  m_Computation.SetRegistrationInitialization("useMomentsAlign");
+}
+
+void AutoSegGUIControls::InitRegGeometryButtonToggled()
+{
+  g_InitRegCenterOfHeadButton->clear();
+  g_InitRegMomentsButton->clear();
+  g_InitRegGeometryButton->set();
+  g_InitRegOffButton->clear();
+  m_Computation.SetRegistrationInitialization("useGeometryAlign");
+}
+
+void AutoSegGUIControls::InitRegOffButtonToggled()
+{
+  g_InitRegCenterOfHeadButton->clear();
+  g_InitRegMomentsButton->clear();
+  g_InitRegGeometryButton->clear();
+  g_InitRegOffButton->set();
+  m_Computation.SetRegistrationInitialization("Off");
+}
+
+void AutoSegGUIControls::InitRegUseT1InitTransformButtonChecked()
+{
+  if (g_InitRegUseT1InitTransformButton->value())
+    m_Computation.SetInitRegUseT1InitTransform(1);
+  else
+    m_Computation.SetInitRegUseT1InitTransform(0);
 }
 
 void AutoSegGUIControls::ClassicWarpingButtonToggled()
@@ -5739,7 +5827,12 @@ void AutoSegGUIControls::InitializeParameters()
   g_GridTemplateSizeZ->value(0);
   g_GridTemplateSpacingX->value(0);
   g_GridTemplateSpacingY->value(0);
-  g_GridTemplateSpacingZ->value(0);  
+  g_GridTemplateSpacingZ->value(0);
+  g_InitRegCenterOfHeadButton->set();
+  g_InitRegMomentsButton->clear();
+  g_InitRegGeometryButton->clear();
+  g_InitRegOffButton->clear();
+  g_InitRegUseT1InitTransformButton->clear();
   m_Computation.SetRigidRegistration(1);
   m_Computation.SetROIAtlasGridTemplate((bool)g_GridTemplateAtlasButton->value());  
   m_Computation.SetGridTemplateSizeX((int)g_GridTemplateSizeX->value());
@@ -5748,6 +5841,8 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetGridTemplateSpacingX((float)g_GridTemplateSpacingX->value());
   m_Computation.SetGridTemplateSpacingY((float)g_GridTemplateSpacingY->value());
   m_Computation.SetGridTemplateSpacingZ((float)g_GridTemplateSpacingZ->value());
+  m_Computation.SetRegistrationInitialization("useCenterOfHeadAlign");
+  m_Computation.SetInitRegUseT1InitTransform(0);
 
   // Warping Parameters
   g_ClassicWarpingButton->clear();

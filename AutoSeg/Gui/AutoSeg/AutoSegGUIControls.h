@@ -214,6 +214,11 @@ class AutoSegGUIControls : public AutoSegGUI
     void RigidRegistrationButtonChecked();
     void GridTemplateAtlasButtonToggled();
     void GridTemplateManualButtonToggled();
+    void InitRegCenterOfHeadButtonToggled();
+    void InitRegMomentsButtonToggled();
+    void InitRegGeometryButtonToggled();
+    void InitRegOffButtonToggled();
+    void InitRegUseT1InitTransformButtonChecked();
     // Atlas Warping
     void ClassicWarpingButtonToggled();
     void CoarseToFineWarpingButtonToggled();

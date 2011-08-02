@@ -204,7 +204,9 @@ class AutoSegComputation
     void SetGridTemplateSpacingX(float _GridTemplateSpacingX){m_GridTemplateSpacingX = _GridTemplateSpacingX;};
     void SetGridTemplateSpacingY(float _GridTemplateSpacingY){m_GridTemplateSpacingY = _GridTemplateSpacingY;};
     void SetGridTemplateSpacingZ(float _GridTemplateSpacingZ){m_GridTemplateSpacingZ = _GridTemplateSpacingZ;};
-		
+    void SetRegistrationInitialization(const char *_RegistrationInitialization){std::strcpy(m_RegistrationInitialization, _RegistrationInitialization);};
+    void SetInitRegUseT1InitTransform(bool _InitRegUseT1InitTransform){m_InitRegUseT1InitTransform = _InitRegUseT1InitTransform;};
+
     // Warping Parameters
     void SetClassicWarpingMethod(bool _IsClassicWarpingMethod){m_IsClassicWarpingMethod = _IsClassicWarpingMethod;};
     void SetBRAINSDemonWarpMethod(bool _IsBRAINSDemonWarpMethod){m_IsBRAINSDemonWarpMethod = _IsBRAINSDemonWarpMethod;};
@@ -398,6 +400,8 @@ class AutoSegComputation
     float GetGridTemplateSpacingX(){return m_GridTemplateSpacingX;};
     float GetGridTemplateSpacingY(){return m_GridTemplateSpacingY;};
     float GetGridTemplateSpacingZ(){return m_GridTemplateSpacingZ;};	
+    char *GetRegistrationInitialization(){return m_RegistrationInitialization;};
+    bool GetInitRegUseT1InitTransform(){return m_InitRegUseT1InitTransform;};
     // Warping Parameters
     bool GetClassicWarpingMethod(){return m_IsClassicWarpingMethod;};
     bool GetBRAINSDemonWarpMethod(){return m_IsBRAINSDemonWarpMethod;};
@@ -429,9 +433,7 @@ class AutoSegComputation
     char *GetBMSDataFile(){return m_BMSDataFile;};
     char *GetBMSAutoSegMRMLSourceFile(){return m_BMSAutoSegMRMLSourceFile;};
     char *GetBMSAutoSegMRMLParcelFile(){return m_BMSAutoSegMRMLParcelFile;};
-    char *GetBMSAutoSegMRMLStructFile(){return m_BMSAutoSegMRMLStructFile;};
     char *GetBMSAutoSegMRMLAllROIFile(){return m_BMSAutoSegMRMLAllROIFile;};
-    char *GetBMSAutoSegShowMRMLSceneFile(){return m_BMSAutoSegShowMRMLSceneFile;};
     char *GetParameterFile(){return m_ParameterFile;};
     char *GetComputationFile(){return m_ComputationFile;};
     char *GetLogFile(){return m_LogFile;};
@@ -449,9 +451,7 @@ class AutoSegComputation
     void SetBMSDataFile();
     void SetBMSAutoSegMRMLSourceFile();
     void SetBMSAutoSegMRMLParcelFile();
-    void SetBMSAutoSegMRMLStructFile();
     void SetBMSAutoSegMRMLAllROIFile();
-    void SetBMSAutoSegShowMRMLSceneFile();
     void SetDataFile();
     void SetAuxDataFile();
     void SetParameterFile();
@@ -491,7 +491,6 @@ class AutoSegComputation
     void WriteBMSDataFile();
     void WriteBMSAutoSegMRMLSourceFile();
     void WriteBMSAutoSegMRMLParcelFile();
-// 		void WriteBMSAutoSegMRMLStructFile();
     void WriteBMSAutoSegMRMLAllROIFile();
 
 		
@@ -511,9 +510,7 @@ class AutoSegComputation
     char m_BMSAutoSegFile[512];
     char m_BMSAutoSegMRMLSourceFile[512];
     char m_BMSAutoSegMRMLParcelFile[512];
-    char m_BMSAutoSegMRMLStructFile[512];
     char m_BMSAutoSegMRMLAllROIFile[512];
-    char m_BMSAutoSegShowMRMLSceneFile[512];
    // Log File
     std::string m_output;
     char m_LogFile[512];
@@ -658,7 +655,9 @@ class AutoSegComputation
     int m_GridTemplateSizeZ;
     float m_GridTemplateSpacingX;
     float m_GridTemplateSpacingY;
-    float m_GridTemplateSpacingZ;	
+    float m_GridTemplateSpacingZ;
+    char m_RegistrationInitialization[50];
+    bool m_InitRegUseT1InitTransform;
     // Warping Parameters
     bool m_IsClassicWarpingMethod;
     bool m_IsBRAINSDemonWarpMethod;

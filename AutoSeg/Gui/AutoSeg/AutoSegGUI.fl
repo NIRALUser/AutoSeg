@@ -7,8 +7,8 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.3.1} open selected
-      xywh {712 94 910 945} type Double box UP_BOX resizable visible
+      label {AutoSeg 2.4} open selected
+      xywh {648 108 910 945} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 0 633 25}
@@ -82,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.3.1}
+          label {AutoSeg 2.4}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
@@ -1210,56 +1210,95 @@ class AutoSegGUI {open
             Fl_Check_Button g_RigidRegistrationButton {
               label {Rigid registration}
               callback {RigidRegistrationButtonChecked()}
-              xywh {115 111 150 24} down_box DOWN_BOX value 1
+              xywh {365 116 150 24} down_box DOWN_BOX value 1
             }
-            Fl_Group g_RigidRegistrationGroup {
+            Fl_Group g_RegridingRegistrationGroup {
               label {Re-griding after registration} open
-              xywh {45 150 805 160} box ENGRAVED_FRAME
+              xywh {41 160 384 160} box ENGRAVED_FRAME
             } {
               Fl_Round_Button g_GridTemplateAtlasButton {
                 label {Use Region of Interest Atlas as grid template}
                 callback {GridTemplateAtlasButtonToggled();}
-                xywh {245 166 345 24} down_box ROUND_DOWN_BOX value 1
+                xywh {51 176 345 24} down_box ROUND_DOWN_BOX value 1
               }
               Fl_Round_Button g_GridTemplateManualButton {
                 label {Set grid template information}
                 callback {GridTemplateManualButtonToggled();}
-                xywh {245 196 240 24} down_box ROUND_DOWN_BOX
+                xywh {51 206 240 24} down_box ROUND_DOWN_BOX
               }
               Fl_Group g_GridParametersGroup {open
-                xywh {230 230 360 65} box ENGRAVED_FRAME deactivate
+                xywh {51 240 360 65} box ENGRAVED_FRAME deactivate
               } {
                 Fl_Button {} {
                   label {Image Size: }
-                  xywh {245 235 90 25} box NO_BOX
+                  xywh {66 245 90 25} box NO_BOX
                 }
                 Fl_Button {} {
                   label {Image Spacing: }
-                  xywh {245 265 115 25} box NO_BOX
+                  xywh {66 275 115 25} box NO_BOX
                 }
                 Fl_Value_Input g_GridTemplateSizeX {
                   label {X:}
-                  xywh {400 236 30 24}
+                  xywh {221 246 30 24}
                 }
                 Fl_Value_Input g_GridTemplateSizeY {
                   label {Y:}
-                  xywh {470 236 30 24}
+                  xywh {291 246 30 24}
                 }
                 Fl_Value_Input g_GridTemplateSizeZ {
                   label {Z:}
-                  xywh {540 236 30 24}
+                  xywh {361 246 30 24}
                 }
                 Fl_Value_Input g_GridTemplateSpacingX {
                   label {X:}
-                  xywh {400 266 30 24}
+                  xywh {221 276 30 24}
                 }
                 Fl_Value_Input g_GridTemplateSpacingY {
                   label {Y:}
-                  xywh {470 266 30 24}
+                  xywh {291 276 30 24}
                 }
                 Fl_Value_Input g_GridTemplateSpacingZ {
                   label {Z:}
-                  xywh {541 266 30 24}
+                  xywh {362 276 30 24}
+                }
+              }
+            }
+            Fl_Group g_RegistrationInitializationGroup {
+              label {Registration initialization} open
+              xywh {440 160 410 160} box ENGRAVED_FRAME
+            } {
+              Fl_Group {} {
+                label {T2/PD initial transform} open
+                xywh {450 270 235 40} box ENGRAVED_FRAME align 5
+              } {
+                Fl_Check_Button g_InitRegUseT1InitTransformButton {
+                  label {Use T1 initial transform file}
+                  callback {InitRegUseT1InitTransformButtonChecked();}
+                  xywh {465 278 64 24} down_box DOWN_BOX
+                }
+              }
+              Fl_Group {} {open
+                xywh {450 168 390 73} box ENGRAVED_FRAME
+              } {
+                Fl_Round_Button g_InitRegCenterOfHeadButton {
+                  label useCenterOfHeadAlign
+                  callback {InitRegCenterOfHeadButtonToggled();}
+                  xywh {465 181 49 24} down_box ROUND_DOWN_BOX value 1
+                }
+                Fl_Round_Button g_InitRegMomentsButton {
+                  label useMomentsAlign
+                  callback {InitRegMomentsButtonToggled();}
+                  xywh {465 210 49 24} down_box ROUND_DOWN_BOX
+                }
+                Fl_Round_Button g_InitRegGeometryButton {
+                  label useGeometryAlign
+                  callback {InitRegGeometryButtonToggled();}
+                  xywh {665 181 64 24} down_box ROUND_DOWN_BOX
+                }
+                Fl_Round_Button g_InitRegOffButton {
+                  label Off
+                  callback {InitRegOffButtonToggled();}
+                  xywh {665 210 64 24} down_box ROUND_DOWN_BOX
                 }
               }
             }
@@ -1582,6 +1621,16 @@ class AutoSegGUI {open
   Function {GridTemplateAtlasButtonToggled()} {return_type {virtual void}
   } {}
   Function {GridTemplateManualButtonToggled()} {return_type {virtual void}
+  } {}
+  Function {InitRegCenterOfHeadButtonToggled()} {return_type {virtual void}
+  } {}
+  Function {InitRegMomentsButtonToggled()} {return_type {virtual void}
+  } {}
+  Function {InitRegGeometryButtonToggled()} {return_type {virtual void}
+  } {}
+  Function {InitRegOffButtonToggled()} {return_type {virtual void}
+  } {}
+  Function {InitRegUseT1InitTransformButtonChecked()} {return_type {virtual void}
   } {}
   Function {ClassicWarpingButtonToggled()} {return_type {virtual void}
   } {}

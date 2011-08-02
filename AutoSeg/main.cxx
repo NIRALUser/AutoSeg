@@ -22,7 +22,7 @@
 #include "AutoSegGUIControls.h"
 #include "AutoSegComputation.h"
 
-#define AUTOSEG_VERSION "2.3.1"
+#define AUTOSEG_VERSION "2.4"
 
 void PrintHelp(char* progname)
 {

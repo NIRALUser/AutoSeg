@@ -74,6 +74,8 @@ GridTemplate SizeZ: 0
 GridTemplate SpacingX: 0
 GridTemplate SpacingY: 0
 GridTemplate SpacingZ: 0
+Registration Initialization: useCenterOfHeadAlign
+Use T1 initial transform: 0
 
 // Atlas Warping
 Warping Method: BRAINSDemonWarp
