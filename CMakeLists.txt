@@ -129,7 +129,7 @@ OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
 IF(COMPILE_EXTERNAL_ABC)
   set(proj abc)
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4/"
+    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
     SVN_USERNAME "slicerbot"
     SVN_PASSWORD "slicer"
     SOURCE_DIR ${proj}
