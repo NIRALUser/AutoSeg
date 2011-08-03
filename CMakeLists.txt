@@ -61,8 +61,8 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
   set(proj NIRALUtilities)
   ExternalProject_Add(${proj}
     SVN_REPOSITORY "https://www.nitrc.org/svn/niral_utilities/trunk/"
-    SVN_USERNAME slicerbot
-    SVN_PASSWORD slicer
+    SVN_USERNAME "slicerbot"
+    SVN_PASSWORD "slicer"
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND} ${VTK_DEPEND}
@@ -86,8 +86,8 @@ IF(COMPILE_EXTERNAL_CORTTHICK)
   set(proj CortThick)
   ExternalProject_Add(${proj}
     SVN_REPOSITORY "https://www.nitrc.org/svn/arctic/trunk/CortThick/"
-    SVN_USERNAME slicerbot
-    SVN_PASSWORD slicer
+    SVN_USERNAME "slicerbot"
+    SVN_PASSWORD "slicer"
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND} ${VTK_DEPEND}
@@ -109,8 +109,8 @@ IF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
   set(proj SegPostProcessCLP)
   ExternalProject_Add(${proj}
     SVN_REPOSITORY "https://www.nitrc.org/svn/spharm-pdm/Applications/SegPostProcessCLP/"
-    SVN_USERNAME slicerbot
-    SVN_PASSWORD slicer
+    SVN_USERNAME "slicerbot"
+    SVN_PASSWORD "slicer"
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND}
@@ -129,9 +129,9 @@ OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
 IF(COMPILE_EXTERNAL_ABC)
   set(proj abc)
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
-    SVN_USERNAME slicerbot
-    SVN_PASSWORD slicer
+    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4/"
+    SVN_USERNAME "slicerbot"
+    SVN_PASSWORD "slicer"
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS  ${ITK_DEPEND}
