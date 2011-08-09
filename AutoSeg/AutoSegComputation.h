@@ -437,13 +437,6 @@ class AutoSegComputation
     char *GetParameterFile(){return m_ParameterFile;};
     char *GetComputationFile(){return m_ComputationFile;};
     char *GetLogFile(){return m_LogFile;};
-    // Volume Analysis
-    char *GetSubcorticalStructuresVolumeFile(){return m_SubcorticalStructuresVolumeFile;};
-    char *GetGenericROIMapVolumeFile(){return m_GenericROIMapVolumeFile;};
-    char *GetParcellationMapVolumeFileWM(){return m_ParcellationMapVolumeFileWM;};
-    char *GetParcellationMapVolumeFileGM(){return m_ParcellationMapVolumeFileGM;};
-    char *GetParcellationMapVolumeFileCSF(){return m_ParcellationMapVolumeFileCSF;};
-    char *GetTissueSegmentationVolumeFile(){return m_TissueSegmentationVolumeFile;};
     // Set Private Parameters
     void SetBMSAutoSegFile();
     void SetBMSAutoSegMainFile();
@@ -459,13 +452,7 @@ class AutoSegComputation
     void SetComputationFile();
     void SetComputationFile(const char *_ComputationFile);
     void SetLogFile();
-    // Volume Analysis
-    void SetSubcorticalStructuresVolumeFile();
-    void SetGenericROIMapVolumeFile();
-    void SetParcellationMapVolumeFileWM();
-    void SetParcellationMapVolumeFileGM();
-    void SetParcellationMapVolumeFileCSF();
-    void SetTissueSegmentationVolumeFile();
+
     void SetData(const char *_Data, char *_T1);
     void SetData(const char *_Data, char *_T1, char *_SecondImage);
     void SetData(const char *_Data, char *_T1, char *_T2, char *_PD);
@@ -518,12 +505,6 @@ class AutoSegComputation
     char m_ParameterFile[512];
     char m_ComputationFile[512];
     char m_AuxComputationFile[512];
-    char m_SubcorticalStructuresVolumeFile[512];
-    char m_GenericROIMapVolumeFile[512];
-    char m_ParcellationMapVolumeFileWM[512];
-    char m_ParcellationMapVolumeFileGM[512];
-    char m_ParcellationMapVolumeFileCSF[512];
-    char m_TissueSegmentationVolumeFile[512];
     bool m_IsAutoSegInProcess;
 
   //Tab Computation

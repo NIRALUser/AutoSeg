@@ -108,48 +108,6 @@ void AutoSegComputation::SetLogFile()
   std::strcat(m_LogFile, "AutoSeg.log");
 }
 
-void AutoSegComputation::SetSubcorticalStructuresVolumeFile()
-{
-  std::strcpy(m_SubcorticalStructuresVolumeFile, GetProcessDataDirectory());
-  std::strcat(m_SubcorticalStructuresVolumeFile, "AutoSeg_Volume/");
-  std::strcat(m_SubcorticalStructuresVolumeFile, "AutoSeg_SubcorticalStructureVolume.csv");
-}
-
-void AutoSegComputation::SetGenericROIMapVolumeFile()
-{
-  std::strcpy(m_GenericROIMapVolumeFile, GetProcessDataDirectory());
-  std::strcat(m_GenericROIMapVolumeFile, "AutoSeg_Volume/");
-  std::strcat(m_GenericROIMapVolumeFile, "AutoSeg_GenericROIMapVolume.csv");
-}
-
-void AutoSegComputation::SetParcellationMapVolumeFileWM()
-{
-  std::strcpy(m_ParcellationMapVolumeFileWM, GetProcessDataDirectory());
-  std::strcat(m_ParcellationMapVolumeFileWM, "AutoSeg_Volume/");
-  std::strcat(m_ParcellationMapVolumeFileWM, "AutoSeg_ParcellationMapVolume_WM.csv");
-}
-
-void AutoSegComputation::SetParcellationMapVolumeFileGM()
-{
-  std::strcpy(m_ParcellationMapVolumeFileGM, GetProcessDataDirectory());
-  std::strcat(m_ParcellationMapVolumeFileGM, "AutoSeg_Volume/");
-  std::strcat(m_ParcellationMapVolumeFileGM, "AutoSeg_ParcellationMapVolume_GM.csv");
-}
-
-void AutoSegComputation::SetParcellationMapVolumeFileCSF()
-{
-  std::strcpy(m_ParcellationMapVolumeFileCSF, GetProcessDataDirectory());
-  std::strcat(m_ParcellationMapVolumeFileCSF, "AutoSeg_Volume/");
-  std::strcat(m_ParcellationMapVolumeFileCSF, "AutoSeg_ParcellationMapVolume_CSF.csv");
-}
-
-void AutoSegComputation::SetTissueSegmentationVolumeFile()
-{
-  std::strcpy(m_TissueSegmentationVolumeFile, GetProcessDataDirectory());
-  std::strcat(m_TissueSegmentationVolumeFile, "AutoSeg_Volume/");
-  std::strcat(m_TissueSegmentationVolumeFile, "AutoSeg_TissueSegmentationVolume.csv");
-}
-
 void AutoSegComputation::AllocateDataList()
 {
   int DataNumber;
@@ -1287,19 +1245,6 @@ void AutoSegComputation::Computation()
   }
   SetLogFile();
 
-  if (GetComputeVolume())
-  {
-    SetTissueSegmentationVolumeFile();
-    if (GetSubcorticalStructureSegmentation())
-      SetSubcorticalStructuresVolumeFile();
-    if (GetGenericROISegmentation())
-      SetGenericROIMapVolumeFile();
-    if (GetParcellationMapSegmentation())
-      SetParcellationMapVolumeFileWM();
-    SetParcellationMapVolumeFileGM();
-    SetParcellationMapVolumeFileCSF();
-  }
-  
   WriteParameterFile(GetParameterFile());
   WriteComputationFile(GetComputationFile());
   WriteBMSAutoSegFile();
@@ -1327,19 +1272,6 @@ void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, con
   SetBMSAutoSegMainFile();
   SetLogFile();
   SetAux1Image(0);
-
-  if (GetComputeVolume())
-  {
-    SetTissueSegmentationVolumeFile();
-    if (GetSubcorticalStructureSegmentation())
-      SetSubcorticalStructuresVolumeFile();
-    if (GetGenericROISegmentation())
-      SetGenericROIMapVolumeFile();
-    if (GetParcellationMapSegmentation())
-      SetParcellationMapVolumeFileWM();
-    SetParcellationMapVolumeFileGM();
-    SetParcellationMapVolumeFileCSF();
-  }
   WriteBMSAutoSegFile();
   WriteBMSAutoSegMainFile();
   m_KillProcess = false;
@@ -5311,10 +5243,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"ListDirInDir(VolumeDirList ${ProcessingDir} AutoSeg_Volume)"<<std::endl;
     BMSAutoSegMainFile<<"If (${VolumeDirList} == '')"<<std::endl;
     BMSAutoSegMainFile<<"  MakeDirectory(${VolumeDir})"<<std::endl;
-    BMSAutoSegMainFile<<"EndIf (${VolumeDirList})"<<std::endl;
+    BMSAutoSegMainFile<<"EndIf (${VolumeDirList})"<<std::endl;    
 
     BMSAutoSegMainFile<<"echo ('Tissue segmentation volume analysis:')"<<std::endl;  
-    BMSAutoSegMainFile<<"set (VolumeFile "<<GetTissueSegmentationVolumeFile()<<")"<<std::endl;  
+    BMSAutoSegMainFile<<"set (VolumeFile ${VolumeDir}AutoSeg_TissueSegmentationVolume.csv)"<<std::endl;  
     BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFile} PATH)"<<std::endl; 
     BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFile} NAME)"<<std::endl;
     BMSAutoSegMainFile<<"ListFileInDir(FileList ${Path} ${VolumeFileTail})"<<std::endl;
@@ -5374,7 +5306,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       if (!IsStructureListEmpty)
       {
 	BMSAutoSegMainFile<<"set(List ${StructureList})"<<std::endl;
-	IsListEmpty = false;	      	      
+	IsListEmpty = false;
       }
       if (!IsVentricleListEmpty)
       {
@@ -5385,10 +5317,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	IsListEmpty = false;	
       }	      
 	  
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
       BMSAutoSegMainFile<<"echo ('Subcortical Structures volume analysis:')"<<std::endl;  
-      BMSAutoSegMainFile<<"set (VolumeFile "<<GetSubcorticalStructuresVolumeFile()<<")"<<std::endl;  
+      BMSAutoSegMainFile<<"set (VolumeFile ${VolumeDir}AutoSeg_SubcorticalStructureVolume.csv)"<<std::endl;  
       BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFile} PATH)"<<std::endl; 
       BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFile} NAME)"<<std::endl;
       BMSAutoSegMainFile<<"ListFileInDir(FileList ${Path} ${VolumeFileTail})"<<std::endl;
@@ -5432,98 +5364,108 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
       BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
       BMSAutoSegMainFile<<"echo ('Generic ROI map volume analysis:')"<<std::endl;  
-      BMSAutoSegMainFile<<"set (VolumeFile "<<GetGenericROIMapVolumeFile()<<")"<<std::endl;  
-      BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFile} PATH)"<<std::endl; 
-      BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFile} NAME)"<<std::endl;
-      BMSAutoSegMainFile<<"ListFileInDir(FileList ${Path} ${VolumeFileTail})"<<std::endl;
-      BMSAutoSegMainFile<<"If (${FileList} == '' || ${GenericROIMapComputed} == 1)"<<std::endl;
-      BMSAutoSegMainFile<<"   WriteFile(${VolumeFile} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '##################################\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '# Generic ROI map volume analysis:\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '##################################\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"   set (files_to_cat '')"<<std::endl;
-      BMSAutoSegMainFile<<"   ForEach (T1Case ${T1CasesList})"<<std::endl;
-      BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
-      BMSAutoSegMainFile<<"      GetFilename (T1Dir ${T1Path} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;	  
-      BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
-      BMSAutoSegMainFile<<"      ForEach(GenericROIMap ${GenericROIMapList})"<<std::endl;
-      BMSAutoSegMainFile<<"            GetFilename (GenericROIMapName ${GenericROIMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"            set (File ${WarpROIPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}_corrected_EMS--${GenericROIMapName}-WarpReg.nrrd )"<<std::endl;
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
 
-      BMSAutoSegMainFile<<"            GetFilename (FileHead ${File} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"               #Computing Statistics"<<std::endl;
-      BMSAutoSegMainFile<<"               echo ('Computing Volume information...')"<<std::endl;
-      BMSAutoSegMainFile<<"               set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"ForEach(GenericROIMap ${GenericROIMapList})"<<std::endl;
+      BMSAutoSegMainFile<<"  GetFilename (GenericROIMapName ${GenericROIMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"  set (VolumeFile ${VolumeDir}AutoSeg_${GenericROIMapName}_Volume.csv)"<<std::endl;  
+      BMSAutoSegMainFile<<"  GetFileName(Path ${VolumeFile} PATH)"<<std::endl; 
+      BMSAutoSegMainFile<<"  GetFileName(VolumeFileTail ${VolumeFile} NAME)"<<std::endl;
+      BMSAutoSegMainFile<<"  echo (Generic ROI File: ${GenericROIMapName}:)"<<std::endl;
+      BMSAutoSegMainFile<<"  ListFileInDir(FileList ${Path} ${VolumeFileTail})"<<std::endl;
+      BMSAutoSegMainFile<<"  If (${FileList} == '' || ${GenericROIMapComputed} == 1)"<<std::endl;
+
+      BMSAutoSegMainFile<<"     WriteFile(${VolumeFile} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${VolumeFile} '##################################\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${VolumeFile} '# Generic ROI map volume analysis:\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${VolumeFile} '##################################\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     set (files_to_cat '')"<<std::endl;
+      BMSAutoSegMainFile<<"     ForEach (T1Case ${T1CasesList})"<<std::endl;
+      BMSAutoSegMainFile<<"       GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<"       GetFilename (T1Dir ${T1Path} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"       GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"       echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"       echo('Case Number: '${T1CaseHead})"<<std::endl;
+      BMSAutoSegMainFile<<"       echo( )"<<std::endl;	  
+      BMSAutoSegMainFile<<"       set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
+      BMSAutoSegMainFile<<"       set (File ${WarpROIPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}_corrected_EMS--${GenericROIMapName}-WarpReg.nrrd )"<<std::endl;
+
+      BMSAutoSegMainFile<<"       GetFilename (FileHead ${File} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"       #Computing Statistics"<<std::endl;
+      BMSAutoSegMainFile<<"       echo ('Computing Volume information...')"<<std::endl;
+      BMSAutoSegMainFile<<"       set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
 	  //	BMSAutoSegMainFile<<"            SetApp(ImageStatCmd @ImageStat)"<<std::endl;
 	  // 	BMSAutoSegMainFile<<"            SetAppOption(ImageStatCmd.Input ${SkullStrippedImage})"<<std::endl;
 	  //    BMSAutoSegMainFile<<"            SetAppOption(ImageStatCmd.LabelFile ${File})"<<std::endl;
 	  // 	BMSAutoSegMainFile<<"            SetAppOption(ImageStatCmd.OutBase ${WarpROIPath}${FileHead})"<<std::endl;
 	  // 	BMSAutoSegMainFile<<"            Run (output ${ImageStatCmd})"<<std::endl;
-      BMSAutoSegMainFile<<"               Run (output '${ImageStatCmd} ${SkullStrippedImage} -label ${File} -volumeSummary -outbase ${WarpROIPath}${FileHead}')"<<std::endl;
-      BMSAutoSegMainFile<<"               set (files_to_cat ${files_to_cat} ${WarpROIPath}${FileHead}_volumeSummary.csv)"<<std::endl;
+      BMSAutoSegMainFile<<"       Run (output '${ImageStatCmd} ${SkullStrippedImage} -label ${File} -volumeSummary -outbase ${WarpROIPath}${FileHead}')"<<std::endl;
+      BMSAutoSegMainFile<<"       set (files_to_cat ${files_to_cat} ${WarpROIPath}${FileHead}_volumeSummary.csv)"<<std::endl;
 
-      BMSAutoSegMainFile<<"      EndForEach(GenericROIMap)"<<std::endl;
-      BMSAutoSegMainFile<<"   EndForEach (T1Case)"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ('Gathering volume information for the whole dataset...')"<<std::endl;
-      BMSAutoSegMainFile<<"   Run (output 'cat ${files_to_cat}')"<<std::endl;
-      BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} ${output})"<<std::endl;
-      BMSAutoSegMainFile<<"Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ('Volume File already exists!')"<<std::endl;
-      BMSAutoSegMainFile<<"EndIf(${FileList})"<<std::endl<<std::endl<<std::endl;
+      BMSAutoSegMainFile<<"     EndForEach (T1Case)"<<std::endl;
+      BMSAutoSegMainFile<<"  echo ( )"<<std::endl;
+      BMSAutoSegMainFile<<"  echo ('Gathering volume information for the whole dataset...')"<<std::endl;
+      BMSAutoSegMainFile<<"  Run (output 'cat ${files_to_cat}')"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${VolumeFile} ${output})"<<std::endl;
+      BMSAutoSegMainFile<<"  Else ()"<<std::endl;
+      BMSAutoSegMainFile<<"    echo (${VolumeFileTail} already exists!)"<<std::endl;
+      BMSAutoSegMainFile<<"  EndIf(${FileList})"<<std::endl<<std::endl<<std::endl;
+      BMSAutoSegMainFile<<"EndForEach(GenericROIMap)"<<std::endl;
     }
 
     if (GetParcellationMapSegmentation())
     {
       BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
       BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-      BMSAutoSegMainFile<<"echo ('Parcellation map volume analysis:')"<<std::endl;  
-      BMSAutoSegMainFile<<"set (VolumeFileWM "<<GetParcellationMapVolumeFileWM()<<")"<<std::endl;
-      BMSAutoSegMainFile<<"set (VolumeFileGM "<<GetParcellationMapVolumeFileGM()<<")"<<std::endl;  
-      BMSAutoSegMainFile<<"set (VolumeFileCSF "<<GetParcellationMapVolumeFileCSF()<<")"<<std::endl;  
-      BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFileWM} PATH)"<<std::endl; 
-      BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFileWM} NAME)"<<std::endl;
-      BMSAutoSegMainFile<<"ListFileInDir(FileListWM ${Path} ${VolumeFileTail})"<<std::endl;
-      BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFileGM} PATH)"<<std::endl; 
-      BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFileGM} NAME)"<<std::endl;
-      BMSAutoSegMainFile<<"ListFileInDir(FileListGM ${Path} ${VolumeFileTail})"<<std::endl;
-      BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFileCSF} PATH)"<<std::endl; 
-      BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFileCSF} NAME)"<<std::endl;
-      BMSAutoSegMainFile<<"ListFileInDir(FileListCSF ${Path} ${VolumeFileTail})"<<std::endl;
-      BMSAutoSegMainFile<<"If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"set (flagWM 0)"<<std::endl;
-      BMSAutoSegMainFile<<"set (flagGM 0)"<<std::endl;
-      BMSAutoSegMainFile<<"set (flagCSF 0)"<<std::endl;
-      BMSAutoSegMainFile<<"If (${FileListWM} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"set (flagWM 1)"<<std::endl;
+      BMSAutoSegMainFile<<"echo ('Parcellation map volume analysis:')"<<std::endl;
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+
+      BMSAutoSegMainFile<<"ForEach(ParcellationMap ${ParcellationMapList})"<<std::endl;
+      BMSAutoSegMainFile<<" GetFilename (ParcellationMapName ${ParcellationMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<" echo (Parcellation File: ${ParcellationMapName}:)"<<std::endl;
+      BMSAutoSegMainFile<<" set (VolumeFileWM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_WM.csv)"<<std::endl;
+      BMSAutoSegMainFile<<" set (VolumeFileGM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_GM.csv)"<<std::endl;
+      BMSAutoSegMainFile<<" set (VolumeFileCSF ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_CSF.csv)"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileWM} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileWM} NAME)"<<std::endl;
+      BMSAutoSegMainFile<<" ListFileInDir(FileListWM ${Path} ${VolumeFileTail})"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileGM} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileGM} NAME)"<<std::endl;
+      BMSAutoSegMainFile<<" ListFileInDir(FileListGM ${Path} ${VolumeFileTail})"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileCSF} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileCSF} NAME)"<<std::endl;
+      BMSAutoSegMainFile<<" ListFileInDir(FileListCSF ${Path} ${VolumeFileTail})"<<std::endl;
+      BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"  set (flagWM 0)"<<std::endl;
+      BMSAutoSegMainFile<<"  set (flagGM 0)"<<std::endl;
+      BMSAutoSegMainFile<<"  set (flagCSF 0)"<<std::endl;
+
+      BMSAutoSegMainFile<<"  If (${FileListWM} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"   set (flagWM 1)"<<std::endl;
       BMSAutoSegMainFile<<"   WriteFile(${VolumeFileWM} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileWM} '################################################\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileWM} '# Parcellation map volume analysis: White Matter\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileWM} '################################################\\n\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   set (files_to_cat_WM '')"<<std::endl;
-      BMSAutoSegMainFile<<"EndIf (${FileListWM})"<<std::endl;
+      BMSAutoSegMainFile<<"  EndIf (${FileListWM})"<<std::endl;
 
-      BMSAutoSegMainFile<<"If (${FileListGM} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"set (flagGM 1)"<<std::endl;
+      BMSAutoSegMainFile<<"  If (${FileListGM} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"   set (flagGM 1)"<<std::endl;
       BMSAutoSegMainFile<<"   WriteFile(${VolumeFileGM} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileGM} '################################################\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileGM} '# Parcellation map volume analysis: Grey Matter\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileGM} '################################################\\n\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   set (files_to_cat_GM '')"<<std::endl;
-      BMSAutoSegMainFile<<"EndIf (${FileListGM})"<<std::endl;
+      BMSAutoSegMainFile<<"  EndIf (${FileListGM})"<<std::endl;
 
-      BMSAutoSegMainFile<<"If (${FileListCSF} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"set (flagCSF 1)"<<std::endl;
+      BMSAutoSegMainFile<<"  If (${FileListCSF} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"   set (flagCSF 1)"<<std::endl;
       BMSAutoSegMainFile<<"   WriteFile(${VolumeFileCSF} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '#########################################################\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '# Parcellation map volume analysis: Cerebral Spinal Fluid\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '#########################################################\\n\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   set (files_to_cat_CSF '')"<<std::endl;
-      BMSAutoSegMainFile<<"EndIf (${FileListCSF})"<<std::endl;
+      BMSAutoSegMainFile<<"  EndIf (${FileListCSF})"<<std::endl;
 
       BMSAutoSegMainFile<<"   ForEach (T1Case ${T1CasesList})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
@@ -5555,8 +5497,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
 
       BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
-      BMSAutoSegMainFile<<"      ForEach(ParcellationMap ${ParcellationMapList})"<<std::endl;
-      BMSAutoSegMainFile<<"         GetFilename (ParcellationMapName ${ParcellationMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"         set(TissueNumber 1)"<<std::endl;		
       BMSAutoSegMainFile<<"         ForEach(Label ${LabelList})"<<std::endl;
       BMSAutoSegMainFile<<"            set (LabelFileTail ${SegmentedFileHead}_${Label}.nrrd)"<<std::endl;
@@ -5628,7 +5568,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"           Inc(${TissueNumber} 1)"<<std::endl;
       BMSAutoSegMainFile<<"           Int(${TissueNumber})"<<std::endl;      
       BMSAutoSegMainFile<<"         EndForEach(Label)"<<std::endl;
-      BMSAutoSegMainFile<<"      EndForEach(ParcellationMap)"<<std::endl;
       BMSAutoSegMainFile<<"   EndForEach (T1Case)"<<std::endl;
       BMSAutoSegMainFile<<"   echo ( )"<<std::endl;
       BMSAutoSegMainFile<<"   echo ('Gathering volume information for the whole dataset...')"<<std::endl;
@@ -5644,9 +5583,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"     Run (output 'cat ${files_to_cat_CSF}')"<<std::endl;	
       BMSAutoSegMainFile<<"     AppendFile(${VolumeFileCSF} ${output})"<<std::endl;
       BMSAutoSegMainFile<<"   EndIf (${flagCSF})"<<std::endl;
-      BMSAutoSegMainFile<<"Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ('Volume File already exists!')"<<std::endl;
-      BMSAutoSegMainFile<<"EndIf(${ParcellationMapComputed})"<<std::endl;	  
+      BMSAutoSegMainFile<<"  Else ()"<<std::endl;
+      BMSAutoSegMainFile<<"   echo ('Volume file already exists!')"<<std::endl;
+      BMSAutoSegMainFile<<"  EndIf(${ParcellationMapComputed})"<<std::endl;	  
+      BMSAutoSegMainFile<<"EndForEach(ParcellationMap)"<<std::endl;
     }
 
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
