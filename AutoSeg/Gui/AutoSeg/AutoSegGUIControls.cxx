@@ -1139,8 +1139,11 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   int Length;
     // Tissue Segmentation
   int FilterIterations, MaxBiasDegree, Loop;
-  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, FluidAtlasWarpMaxStep;
+  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, Prior5, FluidAtlasWarpMaxStep;
+  int BSplineAtlasWarp;
+  float BSplineAtlasWarpGridX, BSplineAtlasWarpGridY, BSplineAtlasWarpGridZ;
   int FluidAtlasWarp, FluidAtlasFATW, FluidAtlasAffine, FluidAtlasWarpIterations, LoopIteration;
+  float NeosegPriorThreshold, NeosegParzenKernel, NeosegMahalanobisThreshold;
     // Rigid Registration
   int RigidRegistration, IsROIAtlasGridTemplate;
   int GridTemplateSizeX, GridTemplateSizeY, GridTemplateSizeZ;
@@ -1769,9 +1772,22 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  if (std::strcmp(Line+13,"ABC") == 0)
 	  {
 	    g_ABCButton->set();
+	    g_NeosegButton->clear();
 	    g_FilterMethodChoice->activate();
 	    g_FluidAtlasWarpGroup->activate();
+	    g_BSplineAtlasWarpGroup->deactivate();
+	    g_NeosegParamGroup->deactivate();
 	    g_InitialDistributionEstimatorChoice->activate();
+	  }
+	  else if (std::strcmp(Line+13,"neoseg") == 0)
+	  {
+	    g_NeosegButton->set();
+	    g_ABCButton->clear();
+	    g_FilterMethodChoice->activate();
+	    g_FluidAtlasWarpGroup->deactivate();
+	    g_BSplineAtlasWarpGroup->activate();
+	    g_NeosegParamGroup->activate();
+	    g_InitialDistributionEstimatorChoice->deactivate();
 	  }
 	  else
 	    std::cout<<"No such EM Software!"<<std::endl;	      
@@ -1825,6 +1841,34 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  Prior4 = atof(Line+9);
 	  g_Prior4->value(Prior4);	
 	}
+	else if ( (std::strncmp("Prior 5: ", Line, 9)) == 0)
+	{
+	  Prior5 = atof(Line+9);
+	  g_Prior5->value(Prior5);	
+	}
+	else if ( (std::strncmp("BSpline Atlas Warp: ", Line, 20)) == 0)
+	{
+	  BSplineAtlasWarp = atoi(Line+20);
+	  if (BSplineAtlasWarp == 1)
+	    g_BSplineAtlasWarpButton->set();
+	  else
+	    g_BSplineAtlasWarpButton->clear();	  	    
+	}
+	else if ( (std::strncmp("BSpline Atlas Warp Grid X: ", Line, 27)) == 0)
+	{
+	  BSplineAtlasWarpGridX = atof(Line+27);
+	  g_BSplineAtlasWarpGridX->value(BSplineAtlasWarpGridX);	
+	}	
+	else if ( (std::strncmp("BSpline Atlas Warp Grid Y: ", Line, 27)) == 0)
+	{
+	  BSplineAtlasWarpGridY = atof(Line+27);
+	  g_BSplineAtlasWarpGridY->value(BSplineAtlasWarpGridY);	
+	}	
+	else if ( (std::strncmp("BSpline Atlas Warp Grid Z: ", Line, 27)) == 0)
+	{
+	  BSplineAtlasWarpGridZ = atof(Line+27);
+	  g_BSplineAtlasWarpGridZ->value(BSplineAtlasWarpGridZ);	
+	}	
 	else if ( (std::strncmp("Fluid Atlas Warp: ", Line, 18)) == 0)
 	{
 	  FluidAtlasWarp = atoi(Line+18);
@@ -1895,6 +1939,21 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  else
 	    g_ImageLinearMappingChoice->value(2);
 	}
+	else if ( (std::strncmp("Prior Threshold: ", Line, 17)) == 0)
+	{
+	  NeosegPriorThreshold = atof(Line+17);
+	  g_NeosegPriorThreshold->value(NeosegPriorThreshold);	
+	}	
+	else if ( (std::strncmp("Parzen Kernel: ", Line, 15)) == 0)
+	{
+	  NeosegParzenKernel = atof(Line+15);
+	  g_NeosegParzenKernel->value(NeosegParzenKernel);	
+	}	
+	else if ( (std::strncmp("Mahalanobis Threshold: ", Line, 23)) == 0)
+	{
+	  NeosegMahalanobisThreshold = atof(Line+23);
+	  g_NeosegMahalanobisThreshold->value(NeosegMahalanobisThreshold);	
+	}	
 	else if ((std::strncmp("Loop: ", Line, 6)) == 0)
 	{
 	  Loop= atoi(Line+6);
@@ -5147,13 +5206,24 @@ bool AutoSegGUIControls::CheckInputAutoSeg()
 void AutoSegGUIControls::ABCButtonToggled()
 {
   g_ABCButton->set();
+  g_NeosegButton->clear();
+  g_BSplineAtlasWarpGroup->deactivate();
+  g_FluidAtlasWarpGroup->activate();
+  g_NeosegParamGroup->deactivate();
 
   // AdvancedParameters
   g_FilterMethodChoice->activate();
   g_FilterMethodChoice->value(1);
   g_FilterIterations->value(10);
+  g_FilterTimeStep->value(0.01);
+  g_MaxBiasDegree->value(4);
   g_InitialDistributionEstimatorChoice->activate();
   g_InitialDistributionEstimatorChoice->value(1);
+  g_Prior1->value(1.3);
+  g_Prior2->value(1.0);
+  g_Prior3->value(0.7);
+  g_Prior4->value(1.0);
+  g_Prior5->value(1.0);
   g_FluidAtlasWarpButton->set();
   g_FluidAtlasAffineButton->clear();
   g_FluidAtlasFATWButton->clear();
@@ -5165,8 +5235,15 @@ void AutoSegGUIControls::ABCButtonToggled()
 
   m_Computation.SetEMSoftware("ABC");
   m_Computation.SetFilterIterations((int)g_FilterIterations->value());
+  m_Computation.SetFilterTimeStep((float)g_FilterTimeStep->value());
   m_Computation.SetFilterMethod("Curvature flow");
+  m_Computation.SetMaxBiasDegree((int)g_MaxBiasDegree->value());
   m_Computation.SetInitialDistributionEstimator("robust");
+  m_Computation.SetPrior1((float)g_Prior1->value());
+  m_Computation.SetPrior2((float)g_Prior2->value());
+  m_Computation.SetPrior3((float)g_Prior3->value());
+  m_Computation.SetPrior4((float)g_Prior4->value());
+  m_Computation.SetPrior5((float)g_Prior5->value());
   m_Computation.SetFluidAtlasWarp(1);
   m_Computation.SetFluidAtlasAffine(0);
   m_Computation.SetFluidAtlasFATW(0);
@@ -5175,6 +5252,60 @@ void AutoSegGUIControls::ABCButtonToggled()
   m_Computation.SetAtlasLinearMapping("affine");
   m_Computation.SetImageLinearMapping("id");
 }
+
+void AutoSegGUIControls::NeosegButtonToggled()
+{
+  g_NeosegButton->set();
+  g_ABCButton->clear();
+  g_BSplineAtlasWarpGroup->activate();
+  g_FluidAtlasWarpGroup->deactivate();
+  g_NeosegParamGroup->activate();
+
+  // AdvancedParameters
+  g_FilterMethodChoice->activate();
+  g_FilterMethodChoice->value(1);
+  g_FilterIterations->value(10);
+  g_FilterTimeStep->value(0.01);
+  g_MaxBiasDegree->value(4);
+  g_InitialDistributionEstimatorChoice->deactivate();
+  g_InitialDistributionEstimatorChoice->value(0);
+  g_Prior1->value(0.2);
+  g_Prior2->value(1.4);
+  g_Prior3->value(1.0);
+  g_Prior4->value(0.5);
+  g_Prior5->value(1.0);
+  g_BSplineAtlasWarpButton->set();
+  g_BSplineAtlasWarpGridX->value(5.0);
+  g_BSplineAtlasWarpGridY->value(5.0);
+  g_BSplineAtlasWarpGridZ->value(5.0);
+  g_AtlasLinearMappingChoice->value(0);
+  g_ImageLinearMappingChoice->value(0);
+  g_NeosegPriorThreshold->value(0.8);
+  g_NeosegParzenKernel->value(0.05);
+  g_NeosegMahalanobisThreshold->value(2.0);
+
+  m_Computation.SetEMSoftware("neoseg");
+  m_Computation.SetFilterIterations((int)g_FilterIterations->value());
+  m_Computation.SetFilterTimeStep((float)g_FilterTimeStep->value());
+  m_Computation.SetFilterMethod("Curvature flow");
+  m_Computation.SetMaxBiasDegree((int)g_MaxBiasDegree->value());
+  m_Computation.SetInitialDistributionEstimator("robust");
+  m_Computation.SetPrior1((float)g_Prior1->value());
+  m_Computation.SetPrior2((float)g_Prior2->value());
+  m_Computation.SetPrior3((float)g_Prior3->value());
+  m_Computation.SetPrior4((float)g_Prior4->value());
+  m_Computation.SetPrior5((float)g_Prior5->value());
+  m_Computation.SetBSplineAtlasWarp(1);
+  m_Computation.SetBSplineAtlasWarpGridX((float)g_BSplineAtlasWarpGridX->value());
+  m_Computation.SetBSplineAtlasWarpGridY((float)g_BSplineAtlasWarpGridY->value());
+  m_Computation.SetBSplineAtlasWarpGridZ((float)g_BSplineAtlasWarpGridZ->value());
+  m_Computation.SetAtlasLinearMapping("affine");
+  m_Computation.SetImageLinearMapping("id");
+  m_Computation.SetNeosegPriorThreshold((float)g_NeosegPriorThreshold->value());
+  m_Computation.SetNeosegParzenKernel((float)g_NeosegParzenKernel->value());
+  m_Computation.SetNeosegMahalanobisThreshold((float)g_NeosegMahalanobisThreshold->value());
+}
+
 void AutoSegGUIControls::LoopButtonChecked()
 {
   if (g_LoopButton->value())
@@ -5249,6 +5380,34 @@ void AutoSegGUIControls::SetPrior4GUI()
   m_Computation.SetPrior4((float)g_Prior4->value());
 }
 
+void AutoSegGUIControls::SetPrior5GUI()
+{
+  m_Computation.SetPrior5((float)g_Prior5->value());
+}
+
+void AutoSegGUIControls::BSplineAtlasWarpButtonChecked()
+{
+  if (g_BSplineAtlasWarpButton->value())
+    m_Computation.SetBSplineAtlasWarp(1);
+  else
+    m_Computation.SetBSplineAtlasWarp(0);
+}
+
+void AutoSegGUIControls::SetBSplineAtlasWarpGridXGUI()
+{
+  m_Computation.SetBSplineAtlasWarpGridX((float)g_BSplineAtlasWarpGridX->value());
+}
+
+void AutoSegGUIControls::SetBSplineAtlasWarpGridYGUI()
+{
+  m_Computation.SetBSplineAtlasWarpGridY((float)g_BSplineAtlasWarpGridY->value());
+}
+
+void AutoSegGUIControls::SetBSplineAtlasWarpGridZGUI()
+{
+  m_Computation.SetBSplineAtlasWarpGridZ((float)g_BSplineAtlasWarpGridZ->value());
+}
+
 void AutoSegGUIControls::FluidAtlasWarpButtonChecked()
 {
   g_FluidAtlasWarpButton->set();
@@ -5297,6 +5456,21 @@ void AutoSegGUIControls::SetAtlasLinearMappingChoiceGUI()
     m_Computation.SetAtlasLinearMapping("id");
   else
     m_Computation.SetAtlasLinearMapping("rigid");
+}
+
+void AutoSegGUIControls::SetNeosegPriorThresholdGUI()
+{
+  m_Computation.SetNeosegPriorThreshold((float)g_NeosegPriorThreshold->value());
+}
+
+void AutoSegGUIControls::SetNeosegParzenKernelGUI()
+{
+  m_Computation.SetNeosegParzenKernel((float)g_NeosegParzenKernel->value());
+}
+
+void AutoSegGUIControls::SetNeosegMahalanobisThresholdGUI()
+{
+  m_Computation.SetNeosegMahalanobisThreshold((float)g_NeosegMahalanobisThreshold->value());
 }
 
 void AutoSegGUIControls::SetImageLinearMappingChoiceGUI()
@@ -5760,6 +5934,12 @@ void AutoSegGUIControls::InitializeParameters()
   g_Prior2->value(1.0);
   g_Prior3->value(0.7);
   g_Prior4->value(1.0);
+  g_Prior5->value(1.0);
+  g_BSplineAtlasWarpGroup->deactivate();
+  g_BSplineAtlasWarpButton->clear();
+  g_BSplineAtlasWarpGridX->value(5.0);
+  g_BSplineAtlasWarpGridY->value(5.0);
+  g_BSplineAtlasWarpGridZ->value(5.0);
   g_FluidAtlasWarpGroup->activate();
   g_FluidAtlasWarpButton->set();
   g_FluidAtlasAffineButton->clear();
@@ -5768,6 +5948,10 @@ void AutoSegGUIControls::InitializeParameters()
   g_FluidAtlasWarpMaxStep->value(0.1);
   g_AtlasLinearMappingChoice->value(0);
   g_ImageLinearMappingChoice->value(0);
+  g_NeosegParamGroup->deactivate();
+  g_NeosegPriorThreshold->value(0.8);
+  g_NeosegParzenKernel->value(0.05);
+  g_NeosegMahalanobisThreshold->value(2.0);
   g_AtlasLoopDisp->value("/tools/atlas/BrainsegAtlas/adult-atlas-asym-stripped-T1-RAI/");
   g_LoopIteration->value(1);
 
@@ -5780,6 +5964,11 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetPrior2((float)g_Prior2->value());
   m_Computation.SetPrior3((float)g_Prior3->value());
   m_Computation.SetPrior4((float)g_Prior4->value());
+  m_Computation.SetPrior5((float)g_Prior5->value());
+  m_Computation.SetBSplineAtlasWarp(0);
+  m_Computation.SetBSplineAtlasWarpGridX((float)g_BSplineAtlasWarpGridX->value());
+  m_Computation.SetBSplineAtlasWarpGridY((float)g_BSplineAtlasWarpGridY->value());
+  m_Computation.SetBSplineAtlasWarpGridZ((float)g_BSplineAtlasWarpGridZ->value());
   m_Computation.SetFluidAtlasWarp(1);
   m_Computation.SetFluidAtlasAffine(0);
   m_Computation.SetFluidAtlasFATW(0);
@@ -5787,6 +5976,9 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetFluidAtlasWarpMaxStep((float)g_FluidAtlasWarpMaxStep->value());
   m_Computation.SetAtlasLinearMapping("affine");
   m_Computation.SetImageLinearMapping("id");
+  m_Computation.SetNeosegPriorThreshold((float)g_NeosegPriorThreshold->value());
+  m_Computation.SetNeosegParzenKernel((float)g_NeosegParzenKernel->value());
+  m_Computation.SetNeosegMahalanobisThreshold((float)g_NeosegMahalanobisThreshold->value());
   m_Computation.SetAtlasLoop(g_AtlasLoopDisp->value());
   m_Computation.SetLoopIteration((int)g_LoopIteration->value());
 

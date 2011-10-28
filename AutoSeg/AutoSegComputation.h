@@ -169,6 +169,11 @@ class AutoSegComputation
     void SetPrior2(float _Prior2){m_Prior2 = _Prior2;};
     void SetPrior3(float _Prior3){m_Prior3 = _Prior3;};
     void SetPrior4(float _Prior4){m_Prior4 = _Prior4;};
+    void SetPrior5(float _Prior5){m_Prior5 = _Prior5;};
+    void SetBSplineAtlasWarp(bool _BSplineAtlasWarp){m_BSplineAtlasWarp = _BSplineAtlasWarp;};
+    void SetBSplineAtlasWarpGridX(float _BSplineAtlasWarpGridX){m_BSplineAtlasWarpGridX = _BSplineAtlasWarpGridX;};
+    void SetBSplineAtlasWarpGridY(float _BSplineAtlasWarpGridY){m_BSplineAtlasWarpGridY = _BSplineAtlasWarpGridY;};
+    void SetBSplineAtlasWarpGridZ(float _BSplineAtlasWarpGridZ){m_BSplineAtlasWarpGridZ = _BSplineAtlasWarpGridZ;};
     void SetFluidAtlasWarp(bool _FluidAtlasWarp){m_FluidAtlasWarp = _FluidAtlasWarp;};
     void SetFluidAtlasAffine(bool _FluidAtlasAffine){m_FluidAtlasAffine = _FluidAtlasAffine;};
     void SetFluidAtlasFATW(bool _FluidAtlasFATW){m_FluidAtlasFATW = _FluidAtlasFATW;};
@@ -176,6 +181,9 @@ class AutoSegComputation
     void SetFluidAtlasWarpMaxStep(float _FluidAtlasWarpMaxStep){m_FluidAtlasWarpMaxStep = _FluidAtlasWarpMaxStep;};
     void SetAtlasLinearMapping(const char *_AtlasLinearMapping){std::strcpy(m_AtlasLinearMapping,_AtlasLinearMapping);};
     void SetImageLinearMapping(const char *_ImageLinearMapping){std::strcpy(m_ImageLinearMapping,_ImageLinearMapping);};
+    void SetNeosegPriorThreshold(float _NeosegPriorThreshold){m_NeosegPriorThreshold = _NeosegPriorThreshold;};
+    void SetNeosegParzenKernel(float _NeosegParzenKernel){m_NeosegParzenKernel = _NeosegParzenKernel;};
+    void SetNeosegMahalanobisThreshold(float _NeosegMahalanobisThreshold){m_NeosegMahalanobisThreshold = _NeosegMahalanobisThreshold;};
     void SetLoop(bool _Loop){m_Loop=_Loop;};
     void SetAtlasLoop(const char *_AtlasLoop){std::strcpy(m_AtlasLoop,_AtlasLoop);};
     void SetLoopIteration(int _LoopIteration){m_LoopIteration=_LoopIteration;};
@@ -362,10 +370,11 @@ class AutoSegComputation
     float GetPrior2(){return m_Prior2;};
     float GetPrior3(){return m_Prior3;};
     float GetPrior4(){return m_Prior4;};
+    float GetPrior5(){return m_Prior5;};
     bool GetBSplineAtlasWarp(){return m_BSplineAtlasWarp;};
-    int GetBSplineAtlasWarpGridX(){return m_BSplineAtlasWarpGridX;};
-    int GetBSplineAtlasWarpGridY(){return m_BSplineAtlasWarpGridY;};
-    int GetBSplineAtlasWarpGridZ(){return m_BSplineAtlasWarpGridZ;};
+    float GetBSplineAtlasWarpGridX(){return m_BSplineAtlasWarpGridX;};
+    float GetBSplineAtlasWarpGridY(){return m_BSplineAtlasWarpGridY;};
+    float GetBSplineAtlasWarpGridZ(){return m_BSplineAtlasWarpGridZ;};
     bool GetFluidAtlasWarp(){return m_FluidAtlasWarp;};
     bool GetFluidAtlasAffine(){return m_FluidAtlasAffine;};
     bool GetFluidAtlasFATW(){return m_FluidAtlasFATW;};
@@ -373,6 +382,9 @@ class AutoSegComputation
     float GetFluidAtlasWarpMaxStep(){return m_FluidAtlasWarpMaxStep;};
     char *GetAtlasLinearMapping(){return m_AtlasLinearMapping;};
     char *GetImageLinearMapping(){return m_ImageLinearMapping;};
+    float GetNeosegPriorThreshold(){return m_NeosegPriorThreshold;};
+    float GetNeosegParzenKernel(){return m_NeosegParzenKernel;};
+    float GetNeosegMahalanobisThreshold(){return m_NeosegMahalanobisThreshold;};
     bool GetLoop(){return m_Loop;};
     char *GetAtlasLoop(){return m_AtlasLoop;};
     int GetLoopIteration(){return m_LoopIteration;};
@@ -599,10 +611,11 @@ class AutoSegComputation
     float m_Prior2;
     float m_Prior3;
     float m_Prior4;
+    float m_Prior5;
     bool m_BSplineAtlasWarp;
-    int m_BSplineAtlasWarpGridX;
-    int m_BSplineAtlasWarpGridY;
-    int m_BSplineAtlasWarpGridZ;
+    float m_BSplineAtlasWarpGridX;
+    float m_BSplineAtlasWarpGridY;
+    float m_BSplineAtlasWarpGridZ;
     bool m_FluidAtlasWarp;
     bool m_FluidAtlasAffine;
     bool m_FluidAtlasFATW;
@@ -611,6 +624,9 @@ class AutoSegComputation
     char m_AtlasLinearMapping[50];
     char m_ImageLinearMapping[50];
     char m_AtlasLoop[512];
+    float m_NeosegPriorThreshold;
+    float m_NeosegParzenKernel;
+    float m_NeosegMahalanobisThreshold;
     bool m_Loop;
     int m_LoopIteration;
     // Reorientation Parameters

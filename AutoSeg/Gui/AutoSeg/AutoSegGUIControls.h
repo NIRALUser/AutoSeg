@@ -176,6 +176,7 @@ class AutoSegGUIControls : public AutoSegGUI
   // Tab AdvancedParameters
     // Tissue Segmentation
     void ABCButtonToggled();
+    void NeosegButtonToggled();
     void SetFilterIterationsGUI();
     void SetFilterTimeStepGUI();
     void SetFilterMethodChoiceGUI();
@@ -185,6 +186,11 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetPrior2GUI();
     void SetPrior3GUI();
     void SetPrior4GUI();
+    void SetPrior5GUI();
+    void BSplineAtlasWarpButtonChecked();
+    void SetBSplineAtlasWarpGridXGUI();
+    void SetBSplineAtlasWarpGridYGUI();
+    void SetBSplineAtlasWarpGridZGUI();    
     void FluidAtlasWarpButtonChecked();
     void FluidAtlasFATWButtonChecked();
     void FluidAtlasAffineButtonChecked();
@@ -192,6 +198,9 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetFluidAtlasWarpMaxStepGUI();
     void SetAtlasLinearMappingChoiceGUI();
     void SetImageLinearMappingChoiceGUI();
+    void SetNeosegPriorThresholdGUI();
+    void SetNeosegParzenKernelGUI();
+    void SetNeosegMahalanobisThresholdGUI();
     void UseDefaultEMSAdvancedParametersGUI();
     void SetLoopGUI();
     void LoopButtonChecked();

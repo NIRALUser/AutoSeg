@@ -1885,11 +1885,16 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   std::ofstream ParameterFile(_FileName); 
   ParameterFile<<"//     Automatic Segmentation Parameter File"<<std::endl<<std::endl;
   ParameterFile<<"// Atlases"<<std::endl;
-  ParameterFile<<"Tissue Segmentation Atlas Directory: "<<GetTissueSegmentationAtlasDirectory()<<std::endl;
-  ParameterFile<<"Tissue Segmentation Atlas Type: "<<GetTissueSegmentationAtlasType()<<std::endl;
   ParameterFile<<"Common Coordinate Image: "<<GetCommonCoordinateImage()<<std::endl;
   ParameterFile<<"Common Coordinate Image Type: "<<GetCommonCoordinateImageType()<<std::endl;
+  ParameterFile<<"Tissue Segmentation Atlas Directory: "<<GetTissueSegmentationAtlasDirectory()<<std::endl;
+  ParameterFile<<"Tissue Segmentation Atlas Type: "<<GetTissueSegmentationAtlasType()<<std::endl;
+  ParameterFile<<"\n// Loop"<<std::endl;
+  ParameterFile<<"Loop: "<<GetLoop()<<std::endl;
+  ParameterFile<<"Atlas Loop: "<<GetAtlasLoop()<<std::endl;
+  ParameterFile<<"Loop - Number of iterations: "<<GetLoopIteration()<<std::endl;
   ParameterFile<<"ROI Atlas File: "<<GetROIAtlasFile()<<std::endl<<std::endl;
+
   ParameterFile<<"// Subcortical Structures"<<std::endl;  
   ParameterFile<<"Subcortical Structure Segmentation: "<<GetSubcorticalStructureSegmentation()<<std::endl;
   ParameterFile<<"Amygdala Left: "<<GetAmygdalaLeft()<<std::endl;
@@ -1928,6 +1933,7 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"Prior 2: "<<GetPrior2()<<std::endl;
   ParameterFile<<"Prior 3: "<<GetPrior3()<<std::endl;
   ParameterFile<<"Prior 4: "<<GetPrior4()<<std::endl;
+  ParameterFile<<"Prior 5: "<<GetPrior5()<<std::endl;
   if (std::strcmp(GetEMSoftware(), "ABC") == 0)
   {
     ParameterFile<<"Fluid Atlas Warp: "<<GetFluidAtlasWarp()<<std::endl;
@@ -1935,14 +1941,23 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
     ParameterFile<<"Fluid Atlas FATW: "<<GetFluidAtlasFATW()<<std::endl;
     ParameterFile<<"Fluid Atlas Warp Iterations: "<<GetFluidAtlasWarpIterations()<<std::endl;
     ParameterFile<<"Fluid Atlas Warp Max Step: "<<GetFluidAtlasWarpMaxStep()<<std::endl;
-    ParameterFile<<"Atlas Linear Mapping: "<<GetAtlasLinearMapping()<<std::endl;
-    ParameterFile<<"Image Linear Mapping: "<<GetImageLinearMapping()<<std::endl<<std::endl;
   }
-  ParameterFile<<"\n// Loop"<<std::endl;
-  ParameterFile<<"Loop: "<<GetLoop()<<std::endl;
-  ParameterFile<<"Atlas Loop: "<<GetAtlasLoop()<<std::endl;
-  ParameterFile<<"Loop - Number of iterations: "<<GetLoopIteration()<<std::endl;
-	
+  else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+    {
+      ParameterFile<<"BSpline Atlas Warp: "<<GetBSplineAtlasWarp()<<std::endl;
+      ParameterFile<<"BSpline Atlas Warp Grid X: "<<GetBSplineAtlasWarpGridX()<<std::endl;
+      ParameterFile<<"BSpline Atlas Warp Grid Y: "<<GetBSplineAtlasWarpGridY()<<std::endl;
+      ParameterFile<<"BSpline Atlas Warp Grid Z: "<<GetBSplineAtlasWarpGridZ()<<std::endl;
+    }
+
+  ParameterFile<<"Atlas Linear Mapping: "<<GetAtlasLinearMapping()<<std::endl;
+  ParameterFile<<"Image Linear Mapping: "<<GetImageLinearMapping()<<std::endl;
+  if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+    {
+      ParameterFile<<"Prior Threshold: "<<GetNeosegPriorThreshold()<<std::endl;
+      ParameterFile<<"Parzen Kernel: "<<GetNeosegParzenKernel()<<std::endl;
+      ParameterFile<<"Mahalanobis Threshold: "<<GetNeosegMahalanobisThreshold()<<std::endl;
+    }
   ParameterFile<<"\n// Grid Template"<<std::endl;
   ParameterFile<<"Rigid Registration: "<<GetRigidRegistration()<<std::endl;
   ParameterFile<<"Is ROIAtlasGridTemplate: "<<GetROIAtlasGridTemplate()<<std::endl;
@@ -2118,6 +2133,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
   BMSAutoSegMainFile<<"# Programs "<<std::endl;
   BMSAutoSegMainFile<<"set (ABCCmd ABC)"<<std::endl;
+  BMSAutoSegMainFile<<"set (neosegCmd neoseg)"<<std::endl;
   BMSAutoSegMainFile<<"set (warpCmd WarpTool)"<<std::endl;
   BMSAutoSegMainFile<<"set (ImageMathCmd ImageMath)"<<std::endl;
   BMSAutoSegMainFile<<"set (SegPostProcessCmd SegPostProcessCLP)"<<std::endl;
@@ -3082,6 +3098,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior3()<<"</PRIOR>\\n')"<<std::endl;
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior4()<<"</PRIOR>\\n')"<<std::endl;
     }
+    else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+      {
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior1()<<"</PRIOR>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior2()<<"</PRIOR>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior3()<<"</PRIOR>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior4()<<"</PRIOR>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior5()<<"</PRIOR>\\n')"<<std::endl;
+      }
     else
     {
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR-1>"<<GetPrior1()<<"</PRIOR-1>\\n')"<<std::endl;
@@ -3106,6 +3130,25 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-LINEAR-MAP-TYPE>"<<GetAtlasLinearMapping()<<"</ATLAS-LINEAR-MAP-TYPE>\\n')"<<std::endl;
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<IMAGE-LINEAR-MAP-TYPE>"<<GetImageLinearMapping()<<"</IMAGE-LINEAR-MAP-TYPE>\\n')"<<std::endl;
     }
+    else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+      {
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<DO-ATLAS-WARP>"<<GetBSplineAtlasWarp()<<"</DO-ATLAS-WARP>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-WARP-GRID-X>"<<GetBSplineAtlasWarpGridX()<<"</ATLAS-WARP-GRID-X>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-WARP-GRID-Y>"<<GetBSplineAtlasWarpGridY()<<"</ATLAS-WARP-GRID-Y>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-WARP-GRID-Z>"<<GetBSplineAtlasWarpGridZ()<<"</ATLAS-WARP-GRID-Z>\\n')"<<std::endl;
+      }
+    BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-LINEAR-MAP-TYPE>"<<GetAtlasLinearMapping()<<"</ATLAS-LINEAR-MAP-TYPE>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<IMAGE-LINEAR-MAP-TYPE>"<<GetImageLinearMapping()<<"</IMAGE-LINEAR-MAP-TYPE>\\n')"<<std::endl;
+      
+    if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+      {
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<MAHALANOBIS-THRESHOLD>"<<GetNeosegMahalanobisThreshold()<<"</MAHALANOBIS-THRESHOLD>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PARZEN-KERNEL-WIDTH>"<<GetNeosegParzenKernel()<<"</PARZEN-KERNEL-WIDTH>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR-THRESHOLD>"<<GetNeosegPriorThreshold()<<"</PRIOR-THRESHOLD>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<REFERENCE-IMAGE-INDEX>1</REFERENCE-IMAGE-INDEX>\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<REFERENCE-MODALITY>"<<GetTissueSegmentationAtlasType()<<"</REFERENCE-MODALITY>\\n')"<<std::endl;
+      }
+      
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '</SEGMENTATION-PARAMETERS>\\n')"<<std::endl;
 	
     if (std::strcmp(GetEMSoftware(), "ABC") == 0)
@@ -3115,6 +3158,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	// 	  BMSAutoSegMainFile<<"               SetAppOption(ABCCmd.ParameterFile ${EMSfile})"<<std::endl;
 	// 	  BMSAutoSegMainFile<<"               Run (output ${ABCCmd})"<<std::endl;
       BMSAutoSegMainFile<<"               Run (output '${ABCCmd} ${EMSfile}')"<<std::endl;	  
+    }
+    else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+    {
+      BMSAutoSegMainFile<<"               Run (output '${neosegCmd} ${EMSfile}')"<<std::endl;
     }
     else
     {
@@ -8276,8 +8323,12 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
   int Length;
     // Tissue Segmentation
   int FilterIterations, MaxBiasDegree, Loop;
-  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, FluidAtlasWarpMaxStep;
+  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, Prior5, FluidAtlasWarpMaxStep;
+  int BSplineAtlasWarp;
+  float BSplineAtlasWarpGridX, BSplineAtlasWarpGridY, BSplineAtlasWarpGridZ;
   int FluidAtlasWarp, FluidAtlasFATW, FluidAtlasAffine, FluidAtlasWarpIterations, LoopIteration;
+  float NeosegPriorThreshold, NeosegParzenKernel, NeosegMahalanobisThreshold;
+  
     // Rigid Registration
   int RigidRegistration, IsROIAtlasGridTemplate;
   int GridTemplateSizeX, GridTemplateSizeY, GridTemplateSizeZ;
@@ -8666,6 +8717,31 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  Prior4 = atof(Line+9);
 	  SetPrior4(Prior4);
 	}
+	else if ( (std::strncmp("Prior 5: ", Line, 9)) == 0)
+	{
+	  Prior5 = atof(Line+9);
+	  SetPrior5(Prior5);
+	}
+	else if ( (std::strncmp("BSpline Atlas Warp: ", Line, 20)) == 0)
+	{
+	  BSplineAtlasWarp = atoi(Line+20);
+	  SetBSplineAtlasWarp(BSplineAtlasWarp);
+	}
+	else if ( (std::strncmp("BSpline Atlas Warp Grid X: ", Line, 27)) == 0)
+	{
+	  BSplineAtlasWarpGridX = atof(Line+27);
+	  SetBSplineAtlasWarpGridX(BSplineAtlasWarpGridX);	
+	}	
+	else if ( (std::strncmp("BSpline Atlas Warp Grid Y: ", Line, 27)) == 0)
+	{
+	  BSplineAtlasWarpGridY = atof(Line+27);
+	  SetBSplineAtlasWarpGridY(BSplineAtlasWarpGridY);	
+	}	
+	else if ( (std::strncmp("BSpline Atlas Warp Grid Z: ", Line, 27)) == 0)
+	{
+	  BSplineAtlasWarpGridZ = atof(Line+27);
+	  SetBSplineAtlasWarpGridZ(BSplineAtlasWarpGridZ);	
+	}	
 	else if ( (std::strncmp("Fluid Atlas Warp: ", Line, 18)) == 0)
 	{
 	  FluidAtlasWarp = atoi(Line+18);
@@ -8716,6 +8792,21 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  SetAtlasLinearMapping(Line+22);
 	else if ( (std::strncmp("Image Linear Mapping: ", Line, 22)) == 0)
 	  SetImageLinearMapping(Line+22);
+	else if ( (std::strncmp("Prior Threshold: ", Line, 17)) == 0)
+	{
+	  NeosegPriorThreshold = atof(Line+17);
+	  SetNeosegPriorThreshold(NeosegPriorThreshold);	
+	}	
+	else if ( (std::strncmp("Parzen Kernel: ", Line, 15)) == 0)
+	{
+	  NeosegParzenKernel = atof(Line+15);
+	  SetNeosegParzenKernel(NeosegParzenKernel);	
+	}	
+	else if ( (std::strncmp("Mahalanobis Threshold: ", Line, 23)) == 0)
+	{
+	  NeosegMahalanobisThreshold = atof(Line+23);
+	  SetNeosegMahalanobisThreshold(NeosegMahalanobisThreshold);	
+	}	
 	else if ((std::strncmp("Loop: ", Line, 6)) == 0)
 	{
 	  Loop= atoi(Line+6);

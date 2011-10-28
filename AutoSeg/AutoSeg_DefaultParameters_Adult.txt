@@ -1,10 +1,13 @@
 //     Automatic Segmentation Parameter File
 
 // Atlases
-Tissue Segmentation Atlas Directory: /tools/atlas/BrainsegAtlas/adult-atlas-asym-T1-RAI/
-Tissue Segmentation Atlas Type: T1
 Common Coordinate Image: /tools/atlas/BrainsegAtlas/adult-atlas-asym-T1-RAI/template.nrrd
 Common Coordinate Image Type: T1
+Tissue Segmentation Atlas Directory: /tools/atlas/BrainsegAtlas/adult-atlas-asym-T1-RAI/
+Tissue Segmentation Atlas Type: T1
+Loop: 1
+Atlas Loop: /tools/atlas/BrainsegAtlas/adult-atlas-asym-stripped-T1-RAI/
+Loop - Number of iterations: 1
 ROI Atlas File: /tools/atlas/BrainROIAtlas/adultT1_RAI/nrrd_aligned_Brainsegatlas_adult-asym/template.nrrd
 
 // Subcortical Structures
@@ -55,12 +58,6 @@ Fluid Atlas Warp Iterations: 50
 Fluid Atlas Warp Max Step: 0.1
 Atlas Linear Mapping: affine
 Image Linear Mapping: id
-
-
-// Loop
-Loop: 1
-Atlas Loop: /tools/atlas/BrainsegAtlas/adult-atlas-asym-stripped-T1-RAI/
-Loop - Number of iterations: 1
 
 // Grid Template
 Rigid Registration: 1

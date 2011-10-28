@@ -1,17 +1,17 @@
 //     Automatic Segmentation Parameter File
 
 // Atlases
-Common Coordinate Image: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_wskull.nrrd
-Common Coordinate Image Type: T1
-Tissue Segmentation Atlas Directory: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/ABC_wskull/
-Tissue Segmentation Atlas Type: T1
-Loop: 1
-Atlas Loop: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/ABC/
-Loop - Number of iterations: 2
-ROI Atlas File: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final.nrrd
+Common Coordinate Image: /tools/atlas/BrainsegAtlas/Neonate-Sharp/template.gipl
+Common Coordinate Image Type: T2
+Tissue Segmentation Atlas Directory: /tools/atlas/BrainsegAtlas/Neonate-Sharp/
+Tissue Segmentation Atlas Type: T2
+Loop: 0
+Atlas Loop: /tools/atlas/BrainsegAtlas/Neonate-Sharp/
+Loop - Number of iterations: 1
+ROI Atlas File: /tools/atlas/BrainsegAtlas/Neonate-Sharp/template.gipl
 
 // Subcortical Structures
-Subcortical Structure Segmentation: 0
+Subcortical Structure Segmentation: 1
 Amygdala Left: 
 Amygdala Right: 
 Caudate Left: 
@@ -27,7 +27,7 @@ Lateral Ventricle Right:
 
 // Generic ROI Maps
 Generic ROI Segmentation: 1
-ROI File 1: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_subcort.nrrd
+ROI File 1: 
 ROI File 2: 
 ROI File 3: 
 ROI File 4: 
@@ -36,28 +36,31 @@ ROI File 5:
 // Parcellation Maps
 Parcellation Map Segmentation: 1
 Tissue Map: Hard
-Parcellation File 1: /biomed-resimg/primate/SanchezEmory/BrainDevYerkes/sMRIatlas/12months/T1/random_subjects/sAtlas/T1_12months_Atlas_final_parc.nrrd
+Parcellation File 1: /tools/atlas/BrainsegAtlas/Neonate-Sharp/parcellation.gipl
 Parcellation File 2: 
 Parcellation File 3: 
 
 // Tissue Segmentation
-EM Software: ABC
+EM Software: neoseg
 Filter Iterations: 10
 Filter TimeStep: 0.01
 Filter Method: Curvature flow
-Max Bias Degree: 2
+Max Bias Degree: 4
 Initial Distribution Estimator: robust
-Prior 1: 1
-Prior 2: 1
-Prior 3: 0.7
-Prior 4: 1
-Fluid Atlas Warp: 1
-Fluid Atlas Affine: 0
-Fluid Atlas FATW: 0
-Fluid Atlas Warp Iterations: 6
-Fluid Atlas Warp Max Step: 0.5
+Prior 1: 0.2
+Prior 2: 1.4
+Prior 3: 1
+Prior 4: 0.5
+Prior 5: 1
+BSpline Atlas Warp: 1
+BSpline Atlas Warp Grid X: 5
+BSpline Atlas Warp Grid Y: 5
+BSpline Atlas Warp Grid Z: 5
 Atlas Linear Mapping: affine
 Image Linear Mapping: id
+Prior Threshold: 0.8
+Parzen Kernel: 0.05
+Mahalanobis Threshold: 2
 
 // Grid Template
 Rigid Registration: 1
@@ -68,7 +71,7 @@ GridTemplate SizeZ: 0
 GridTemplate SpacingX: 0
 GridTemplate SpacingY: 0
 GridTemplate SpacingZ: 0
-Registration Initialization: useMomentsAlign
+Registration Initialization: useCenterOfHeadAlign
 Use T1 initial transform: 0
 
 // Atlas Warping
@@ -77,16 +80,16 @@ Alpha: 0.01
 Beta: 0.01
 Gamma: 0.001
 Max Perturbation: 0.5
-NumBasis: 2000
+NumBasis: 0.01
 Scale 4 - Number Of Iterations: 50
 Scale 2 - Number Of Iterations: 25
 Scale 1 - Number Of Iterations: 100
 Registration Filter Type: LogDemons
-Deformation Field Smoothing Sigma: 2.0
-Pyramid Levels: 3
-Moving Shrink Factors: 4,4,4
-Fixed Shrink Factors: 4,4,4
-Iteration Count Pyramid Levels: 100,50,40
+Deformation Field Smoothing Sigma: 2
+Pyramid Levels: 5
+Moving Shrink Factors: 16,16,16
+Fixed Shrink Factors: 16,16,16
+Iteration Count Pyramid Levels: 300,50,30,20,15
 
 // Skull Stripping
 Delete Vessels: 0
@@ -109,6 +112,7 @@ N4 BSpline alpha: 0
 N4 BSpline beta: 0.5
 N4 Histogram sharpening: 0
 N4 BSpline order: 3
+
 
 // Reorientation
 Reorientation: 0
