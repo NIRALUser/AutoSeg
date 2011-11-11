@@ -232,14 +232,12 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
 	if (IsT2Image == 0)
 	{
 	  g_T2Button->clear();
-	  g_T2Title->deactivate();
 	  g_T2Disp->deactivate();
 	  g_T2Disp->value(NULL);
 	}
 	else
 	{
 	  g_T2Button->set();	
-	  g_T2Title->activate();
 	  g_T2Disp->activate();
 	}
       }
@@ -249,14 +247,12 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
 	if (IsPDImage == 0)
 	{
 	  g_PDButton->clear();
-	  g_PDTitle->deactivate();
 	  g_PDDisp->deactivate();
 	  g_PDDisp->value(NULL);
 	}
 	else
 	{
 	  g_PDButton->set();
-	  g_PDTitle->activate();
 	  g_PDDisp->activate();
 	}
 	InitBrowser();
@@ -1153,6 +1149,10 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   float Alpha, Beta, Gamma, MaxPerturbation, NumBasis,DeformationFieldSmoothingSigma;
   int Scale4NbIterations, Scale2NbIterations, Scale1NbIterations,PyramidLevels;
   std::string RegistrationFilterType,MovingShrinkFactors,FixedShrinkFactors,IterationCountPyramidLevels;
+  // - ANTS
+  std::string ANTSIterations, ANTSRegistrationFilterType, ANTSTransformationStep;
+  float ANTSCCWeight, ANTSCCRegionRadius, ANTSMIWeight, ANTSMIBins, ANTSMSQWeight, ANTSGaussianSigma;
+  bool ANTSGaussianSmoothing;  
     // Skull Stripping
   int DeleteVessels;
     // Regional histogram
@@ -1183,6 +1183,8 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
     g_ReorientationButton->clear();
     g_InputDataOrientationDisp->deactivate();
     g_OutputDataOrientationDisp->deactivate();
+    // Init for Atlas Warping
+    g_ANTSWarpingButton->clear();
   }
   
   if ((ParameterFile = fopen(_FileName,"r")) != NULL) 
@@ -2000,54 +2002,52 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       if (mode == warping||mode == advancedParameters||mode == file)
       {
 	if ( (std::strncmp("Warping Method: ", Line, 16)) == 0)
-	{	
+	{
 	  if (std::strcmp(Line+16, "Classic") == 0)
 	  {
 	    g_ClassicWarpingButton->set();
 	    g_CoarseToFineWarpingButton->clear();
 	    g_BRAINSDemonWarpButton->clear();
-	    g_BRAINSDemonWarp->deactivate();
-	    g_Alpha->activate();
-	    g_Beta->activate();
-	    g_Gamma->activate();
-	    g_MaxPerturbation->activate();
-	    g_Scale1NbIterations->activate();
+	    g_ANTSWarpingButton->clear();
+	    g_ANTSWarpingGroup->hide();
+	    g_BRAINSDemonWarpGroup->hide();
+	    g_FluidWarpingGroup->show();
 	    g_NumBasis->activate();
 	    g_Scale4NbIterations->deactivate();
 	    g_Scale2NbIterations->deactivate();
-	    g_group_classic_coarsetofine_fluid->activate();
 	  }
 	  else if (std::strcmp(Line+16, "Coarse-to-fine") == 0)
 	  {
 	    g_CoarseToFineWarpingButton->set();
 	    g_ClassicWarpingButton->clear();
 	    g_BRAINSDemonWarpButton->clear();
-	    g_BRAINSDemonWarp->deactivate();
-	    g_Alpha->activate();
-	    g_Beta->activate();
-	    g_Gamma->activate();
-	    g_MaxPerturbation->activate();
-	    g_Scale1NbIterations->activate();
+	    g_ANTSWarpingButton->clear();
+	    g_ANTSWarpingGroup->hide();
+	    g_BRAINSDemonWarpGroup->hide();
+	    g_FluidWarpingGroup->show();	    
 	    g_NumBasis->deactivate();
 	    g_Scale4NbIterations->activate();
 	    g_Scale2NbIterations->activate();
-	    g_group_classic_coarsetofine_fluid->activate();
 	  }
 	  else if (std::strcmp(Line+16, "BRAINSDemonWarp") == 0)
 	  {
 	    g_CoarseToFineWarpingButton->clear();
 	    g_ClassicWarpingButton->clear();
 	    g_BRAINSDemonWarpButton->set();
-	    g_BRAINSDemonWarp->activate();
-	    g_group_classic_coarsetofine_fluid->deactivate();
-	    g_Alpha->deactivate();
-	    g_Beta->deactivate();
-	    g_Gamma->deactivate();
-	    g_MaxPerturbation->deactivate();
-	    g_Scale1NbIterations->deactivate();
-	    g_NumBasis->deactivate();
-	    g_Scale4NbIterations->deactivate();
-	    g_Scale2NbIterations->deactivate();
+	    g_ANTSWarpingButton->clear();
+	    g_ANTSWarpingGroup->hide();
+	    g_BRAINSDemonWarpGroup->show();
+	    g_FluidWarpingGroup->hide();
+	  }
+	  else if (std::strcmp(Line+16, "ANTS") == 0)
+	  {
+	    g_CoarseToFineWarpingButton->clear();
+	    g_ClassicWarpingButton->clear();
+	    g_BRAINSDemonWarpButton->clear();
+	    g_ANTSWarpingButton->set();
+	    g_ANTSWarpingGroup->show();
+	    g_BRAINSDemonWarpGroup->hide();
+	    g_FluidWarpingGroup->hide();
 	  }
 	  else
 	    std::cerr<<"Error while reading parameter file: warping method incorrect!"<<std::endl;
@@ -2141,6 +2141,67 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	{
 	  NumBasis = atof(Line+10);
 	  g_NumBasis->value(NumBasis);	
+	}
+	else if ( (std::strncmp("ANTS Iterations: ", Line, 17)) == 0)
+	{
+	  ANTSIterations = Line+17;
+	  g_ANTSIterations->value(ANTSIterations.c_str());	
+	}
+	else if ( (std::strncmp("ANTS CC weight: ", Line, 16)) == 0)
+	{
+	  ANTSCCWeight = atof(Line+16);
+	  g_ANTSCCWeight->value(ANTSCCWeight);	
+	}
+	else if ( (std::strncmp("ANTS CC region radius: ", Line, 23)) == 0)
+	{
+	  ANTSCCRegionRadius = atof(Line+23);
+	  g_ANTSCCRegionRadius->value(ANTSCCRegionRadius);	
+	}
+	else if ( (std::strncmp("ANTS MI weight: ", Line, 16)) == 0)
+	{
+	  ANTSMIWeight = atof(Line+16);
+	  g_ANTSMIWeight->value(ANTSMIWeight);	
+	}
+	else if ( (std::strncmp("ANTS MI bins: ", Line, 14)) == 0)
+	{
+	  ANTSMIBins = atoi(Line+14);
+	  g_ANTSMIBins->value(ANTSMIBins);	
+	}
+	else if ( (std::strncmp("ANTS MSQ weight: ", Line, 17)) == 0)
+	{
+	  ANTSMSQWeight = atof(Line+17);
+	  g_ANTSMSQWeight->value(ANTSMSQWeight);	
+	}
+	else if ( (std::strncmp("ANTS Registration Type: ", Line, 24)) == 0)
+	{
+	  ANTSRegistrationFilterType = Line+24;	
+	  if (ANTSRegistrationFilterType=="GreedyDiffeomorphism"){
+	    g_ANTSRegistrationFilterType->value(0);
+	  }
+	  else if(ANTSRegistrationFilterType=="SpatiotemporalDiffeomorphism"){
+	    g_ANTSRegistrationFilterType->value(1);
+	  }
+	  else if(ANTSRegistrationFilterType=="Elastic"){
+	    g_ANTSRegistrationFilterType->value(2);
+	  }
+	  else if(ANTSRegistrationFilterType=="Exponential"){
+	    g_ANTSRegistrationFilterType->value(3);
+	  }
+	}
+	else if ( (std::strncmp("ANTS Registration Step: ", Line, 24)) == 0)
+	{
+	  ANTSTransformationStep = Line+24;
+	  g_ANTSTransformationStep->value(ANTSTransformationStep.c_str());	
+	}
+	else if ( (std::strncmp("ANTS Gaussian Smoothing: ", Line, 25)) == 0)
+	{
+	  ANTSGaussianSmoothing = atoi(Line+25);
+	  g_ANTSGaussianSmoothingButton->value(ANTSGaussianSmoothing);	
+	}
+	else if ( (std::strncmp("ANTS Gaussian Sigma: ", Line, 21)) == 0)
+	{
+	  ANTSGaussianSigma = atof(Line+21);
+	  g_ANTSGaussianSigma->value(ANTSGaussianSigma);	
 	}
       }
       if(mode == N4biasFieldCorrection||mode == advancedParameters||mode == file)
@@ -2246,13 +2307,11 @@ void AutoSegGUIControls::T2ButtonChecked()
 {
   if (g_T2Button->value())
   {
-    g_T2Title->activate();
     g_T2Disp->activate();
     m_Computation.SetT2Image(1);
   }
   else
   {
-    g_T2Title->deactivate();
     g_T2Disp->deactivate(); 
     m_Computation.SetT2Image(0);
   }
@@ -2262,13 +2321,11 @@ void AutoSegGUIControls::PDButtonChecked()
 {
   if (g_PDButton->value())
   {
-    g_PDTitle->activate();
     g_PDDisp->activate();
     m_Computation.SetPDImage(1);
   }
   else
   {
-    g_PDTitle->deactivate();
     g_PDDisp->deactivate();
     m_Computation.SetPDImage(0);
   }
@@ -5562,21 +5619,21 @@ void AutoSegGUIControls::ClassicWarpingButtonToggled()
   g_ClassicWarpingButton->set();
   g_CoarseToFineWarpingButton->clear();
   g_BRAINSDemonWarpButton->clear();
+  g_ANTSWarpingButton->clear();
 
-  g_Alpha->activate();
-  g_Beta->activate();
-  g_Gamma->activate();
-  g_MaxPerturbation->activate();
-  g_Scale1NbIterations->activate();
+  g_ANTSWarpingGroup->hide();
+  g_BRAINSDemonWarpGroup->hide();
+  g_FluidWarpingGroup->show();
+
   g_NumBasis->value(0.01);
   g_NumBasis->activate();
   g_Scale4NbIterations->deactivate();
   g_Scale2NbIterations->deactivate();
   g_Scale1NbIterations->value(100);
-  g_BRAINSDemonWarp->deactivate();
-  g_group_classic_coarsetofine_fluid->activate();
   
+  m_Computation.SetANTSWarpingMethod(0);
   m_Computation.SetClassicWarpingMethod(1);
+  m_Computation.SetCoarseToFineWarpingMethod(0);
   m_Computation.SetBRAINSDemonWarpMethod(0);
   m_Computation.SetNumBasis((float)g_NumBasis->value());
   m_Computation.SetScale1NbIterations((int)g_Scale1NbIterations->value());
@@ -5587,12 +5644,12 @@ void AutoSegGUIControls::CoarseToFineWarpingButtonToggled()
   g_ClassicWarpingButton->clear();
   g_CoarseToFineWarpingButton->set();
   g_BRAINSDemonWarpButton->clear();
+  g_ANTSWarpingButton->clear();
 
-  g_Alpha->activate();
-  g_Beta->activate();
-  g_Gamma->activate();
-  g_MaxPerturbation->activate();
-  g_Scale1NbIterations->activate();
+  g_ANTSWarpingGroup->hide();
+  g_BRAINSDemonWarpGroup->hide();
+  g_FluidWarpingGroup->show();
+
   g_NumBasis->value(2000);
   g_NumBasis->deactivate();
   g_Scale4NbIterations->activate();
@@ -5600,10 +5657,10 @@ void AutoSegGUIControls::CoarseToFineWarpingButtonToggled()
   g_Scale4NbIterations->value(50);
   g_Scale2NbIterations->value(25);
   g_Scale1NbIterations->value(100);
-  g_BRAINSDemonWarp->deactivate();
-  g_group_classic_coarsetofine_fluid->activate();
   
+  m_Computation.SetANTSWarpingMethod(0);
   m_Computation.SetClassicWarpingMethod(0);
+  m_Computation.SetCoarseToFineWarpingMethod(1);
   m_Computation.SetBRAINSDemonWarpMethod(0);
   m_Computation.SetNumBasis((float)g_NumBasis->value());
   m_Computation.SetScale4NbIterations((int)g_Scale4NbIterations->value());
@@ -5611,25 +5668,38 @@ void AutoSegGUIControls::CoarseToFineWarpingButtonToggled()
   m_Computation.SetScale1NbIterations((int)g_Scale1NbIterations->value());
 }
 
-void AutoSegGUIControls::BRAINSDemonWarpToggled()
+void AutoSegGUIControls::BRAINSDemonWarpButtonToggled()
 {
   g_ClassicWarpingButton->clear();
   g_CoarseToFineWarpingButton->clear();
   g_BRAINSDemonWarpButton->set();
+  g_ANTSWarpingButton->clear();
 
-  g_NumBasis->deactivate();
-  g_Scale4NbIterations->deactivate();
-  g_Scale2NbIterations->deactivate();
-  g_Scale1NbIterations->deactivate();
-  g_Alpha->deactivate();
-  g_Beta->deactivate();
-  g_Gamma->deactivate();
-  g_MaxPerturbation->deactivate();
-  g_BRAINSDemonWarp->activate();
-  g_group_classic_coarsetofine_fluid->deactivate();
-  
+  g_ANTSWarpingGroup->hide();
+  g_BRAINSDemonWarpGroup->show();
+  g_FluidWarpingGroup->hide();
+
+  m_Computation.SetANTSWarpingMethod(0);
   m_Computation.SetBRAINSDemonWarpMethod(1);
   m_Computation.SetClassicWarpingMethod(0);
+  m_Computation.SetCoarseToFineWarpingMethod(0);
+}
+
+void AutoSegGUIControls::ANTSWarpingButtonToggled()
+{
+  g_ClassicWarpingButton->clear();
+  g_CoarseToFineWarpingButton->clear();
+  g_BRAINSDemonWarpButton->clear();
+  g_ANTSWarpingButton->set();
+
+  g_ANTSWarpingGroup->show();
+  g_BRAINSDemonWarpGroup->hide();
+  g_FluidWarpingGroup->hide();
+
+  m_Computation.SetANTSWarpingMethod(1);
+  m_Computation.SetBRAINSDemonWarpMethod(0);
+  m_Computation.SetClassicWarpingMethod(0);
+  m_Computation.SetCoarseToFineWarpingMethod(0);  
 }
 
 void AutoSegGUIControls::SetAlphaGUI()
@@ -5709,6 +5779,82 @@ void AutoSegGUIControls::SetRegistrationFilterTypeGUI()
     m_Computation.SetRegistrationFilterType("LogDemons");
   if(g_RegistrationFilterType->value()==4)
     m_Computation.SetRegistrationFilterType("SymmetricLogDemons");
+}
+
+void AutoSegGUIControls::SetANTSIterationsGUI()
+{
+  m_Computation.SetANTSIterations(g_ANTSIterations->value());
+}
+
+void AutoSegGUIControls::SetANTSCCWeightGUI()
+{
+  m_Computation.SetANTSCCWeight(g_ANTSCCWeight->value());
+}
+
+void AutoSegGUIControls::SetANTSCCRegionRadiusGUI()
+{
+  m_Computation.SetANTSCCRegionRadius(g_ANTSCCRegionRadius->value());
+}
+
+void AutoSegGUIControls::SetANTSMIWeightGUI()
+{
+  m_Computation.SetANTSMIWeight(g_ANTSMIWeight->value());
+}
+
+void AutoSegGUIControls::SetANTSMIBinsGUI()
+{
+  m_Computation.SetANTSMIBins(g_ANTSMIBins->value());
+}
+
+void AutoSegGUIControls::SetANTSMSQWeightGUI()
+{
+  m_Computation.SetANTSMSQWeight(g_ANTSMSQWeight->value());
+}
+
+void AutoSegGUIControls::SetANTSRegistrationFilterTypeGUI()
+{
+  if(g_ANTSRegistrationFilterType->value()==0)
+    {
+      g_ANTSTransformationStep->value("0.25");
+      m_Computation.SetANTSTransformationStep(g_ANTSTransformationStep->value());
+      m_Computation.SetANTSRegistrationFilterType("GreedyDiffeomorphism");
+    }
+  if(g_ANTSRegistrationFilterType->value()==1)
+    {
+      g_ANTSTransformationStep->value("0.25,5,0.01");
+      m_Computation.SetANTSTransformationStep(g_ANTSTransformationStep->value());
+      m_Computation.SetANTSRegistrationFilterType("SpatiotemporalDiffeomorphism");
+    }
+  if(g_ANTSRegistrationFilterType->value()==2)
+    {
+      g_ANTSTransformationStep->value("1");
+      m_Computation.SetANTSTransformationStep(g_ANTSTransformationStep->value());
+      m_Computation.SetANTSRegistrationFilterType("Elastic");
+    }
+  if(g_ANTSRegistrationFilterType->value()==3)
+    {
+      g_ANTSTransformationStep->value("0.5,10");
+      m_Computation.SetANTSTransformationStep(g_ANTSTransformationStep->value());
+      m_Computation.SetANTSRegistrationFilterType("Exponential");
+    }
+}
+
+void AutoSegGUIControls::SetANTSTransformationStepGUI()
+{
+  m_Computation.SetANTSTransformationStep(g_ANTSTransformationStep->value());
+}
+
+void AutoSegGUIControls::ANTSGaussianSmoothingButtonChecked()
+{
+  if (g_ANTSGaussianSmoothingButton->value())
+    m_Computation.SetANTSGaussianSmoothing(1);
+  else
+    m_Computation.SetANTSGaussianSmoothing(0);
+}
+
+void AutoSegGUIControls::SetANTSGaussianSigmaGUI()
+{
+  m_Computation.SetANTSGaussianSigma(g_ANTSGaussianSigma->value());
 }
 
 void AutoSegGUIControls::UseDefaultEMSAdvancedParametersGUI()
@@ -6039,7 +6185,13 @@ void AutoSegGUIControls::InitializeParameters()
   // Warping Parameters
   g_ClassicWarpingButton->clear();
   g_CoarseToFineWarpingButton->clear();
-  g_BRAINSDemonWarpButton->set();
+  g_BRAINSDemonWarpButton->clear();
+  g_ANTSWarpingButton->set();
+  g_ANTSWarpingGroup->show();
+  g_BRAINSDemonWarpGroup->hide();
+  g_FluidWarpingGroup->hide();
+
+  // - Fluid Parameters
   g_Alpha->value(0.01);
   g_Beta->value(0.01);
   g_Gamma->value(0.001);
@@ -6056,16 +6208,26 @@ void AutoSegGUIControls::InitializeParameters()
   g_Scale2NbIterations->deactivate();
   g_Scale1NbIterations->value(100);
   g_Scale1NbIterations->deactivate();
-  g_BRAINSDemonWarp->activate();
-  g_group_classic_coarsetofine_fluid->deactivate();
+  // - BRAINSDemonWarp parameters
   g_RegistrationFilterType->value(3);
   g_DeformationFieldSmoothingSigma->value(2.0);
   g_PyramidLevels->value(5);
   g_MovingShrinkFactors->value("16,16,16");
   g_FixedShrinkFactors->value("16,16,16");
   g_IterationCountPyramidLevels->value("300,50,30,20,15");
+  // - ANTS parameters
+  g_ANTSIterations->value("100x50x25");
+  g_ANTSCCWeight->value(1.0);
+  g_ANTSCCRegionRadius->value(2.0);
+  g_ANTSMIWeight->value(0.0);
+  g_ANTSMIBins->value(32);
+  g_ANTSMSQWeight->value(0.0);
+  g_ANTSRegistrationFilterType->value(0);
+  g_ANTSGaussianSmoothingButton->set();
+  g_ANTSGaussianSigma->value(3.0);
+  //
   m_Computation.SetClassicWarpingMethod(0);
-  m_Computation.SetBRAINSDemonWarpMethod(1);
+  m_Computation.SetBRAINSDemonWarpMethod(0);
   m_Computation.SetAlpha((float)g_Alpha->value());
   m_Computation.SetBeta((float)g_Beta->value());
   m_Computation.SetGamma((float)g_Gamma->value());
@@ -6080,6 +6242,15 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetMovingShrinkFactors("16,16,16");
   m_Computation.SetFixedShrinkFactors("16,16,16");
   m_Computation.SetIterationCountPyramidLevels("300,50,30,20,15");
+  m_Computation.SetANTSIterations("100x50x25");
+  m_Computation.SetANTSCCWeight(1.0);
+  m_Computation.SetANTSCCRegionRadius(2.0);
+  m_Computation.SetANTSMIWeight(0.0);
+  m_Computation.SetANTSMIBins(32);
+  m_Computation.SetANTSMSQWeight(0.0);
+  m_Computation.SetANTSRegistrationFilterType("GreedyDiffeomorphism");
+  m_Computation.SetANTSGaussianSmoothing(1);
+  m_Computation.SetANTSGaussianSigma(3.0);
 
   // Skull Stripping parameters
   g_DeleteVesselsButton->clear();

@@ -1974,8 +1974,12 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
     ParameterFile<<"Warping Method: Classic"<<std::endl;
   else if (GetBRAINSDemonWarpMethod())
     ParameterFile<<"Warping Method: BRAINSDemonWarp"<<std::endl;
-  else
+  else if (GetCoarseToFineWarpingMethod())
     ParameterFile<<"Warping Method: Coarse-to-fine"<<std::endl;
+  else if (GetANTSWarpingMethod())
+    ParameterFile<<"Warping Method: ANTS"<<std::endl;
+    
+  ParameterFile<<"// - Fluid Warping parameters"<<std::endl;
   ParameterFile<<"Alpha: "<<GetAlpha()<<std::endl;
   ParameterFile<<"Beta: "<<GetBeta()<<std::endl;
   ParameterFile<<"Gamma: "<<GetGamma()<<std::endl;
@@ -1984,12 +1988,24 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"Scale 4 - Number Of Iterations: "<<GetScale4NbIterations()<<std::endl;
   ParameterFile<<"Scale 2 - Number Of Iterations: "<<GetScale2NbIterations()<<std::endl;
   ParameterFile<<"Scale 1 - Number Of Iterations: "<<GetScale1NbIterations()<<std::endl;
+  ParameterFile<<"// - BRAINSDemonWarp parameters"<<std::endl;
   ParameterFile<<"Registration Filter Type: "<<GetRegistrationFilterType()<<std::endl;
   ParameterFile<<"Deformation Field Smoothing Sigma: "<<GetDeformationFieldSmoothingSigma()<<std::endl;
   ParameterFile<<"Pyramid Levels: "<<GetPyramidLevels()<<std::endl;
   ParameterFile<<"Moving Shrink Factors: "<<GetMovingShrinkFactors()<<std::endl;
   ParameterFile<<"Fixed Shrink Factors: "<<GetFixedShrinkFactors()<<std::endl;
   ParameterFile<<"Iteration Count Pyramid Levels: "<<GetIterationCountPyramidLevels()<<std::endl;
+  ParameterFile<<"// - ANTS parameters"<<std::endl;
+  ParameterFile<<"ANTS Iterations: "<<GetANTSIterations()<<std::endl;
+  ParameterFile<<"ANTS CC weight: "<<GetANTSCCWeight()<<std::endl;
+  ParameterFile<<"ANTS CC region radius: "<<GetANTSCCRegionRadius()<<std::endl;
+  ParameterFile<<"ANTS MI weight: "<<GetANTSMIWeight()<<std::endl;
+  ParameterFile<<"ANTS MI bins: "<<GetANTSMIBins()<<std::endl;
+  ParameterFile<<"ANTS MSQ weight: "<<GetANTSMSQWeight()<<std::endl;
+  ParameterFile<<"ANTS Registration Type: "<<GetANTSRegistrationFilterType()<<std::endl;
+  ParameterFile<<"ANTS Registration Step: "<<GetANTSTransformationStep()<<std::endl;
+  ParameterFile<<"ANTS Gaussian Smoothing: "<<GetANTSGaussianSmoothing()<<std::endl;
+  ParameterFile<<"ANTS Gaussian Sigma: "<<GetANTSGaussianSigma()<<std::endl;  
   ParameterFile<<"\n// Skull Stripping"<<std::endl;
   ParameterFile<<"Delete Vessels: "<<GetDeleteVessels()<<std::endl;
   ParameterFile<<"\n// Intensity Rescaling"<<std::endl;
@@ -1997,7 +2013,7 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
     ParameterFile<<"Intensity Rescaling: Histogram quantile"<<std::endl;
   else
     ParameterFile<<"Intensity Rescaling: Tissue mean match"<<std::endl;
-	
+
   ParameterFile<<"\n// Regional histogram"<<std::endl;
   ParameterFile<<"Quantiles: "<<GetQuantiles()<<std::endl; 
   ParameterFile<<"Point Spacing: "<<GetPointSpacing()<<std::endl; 
@@ -2143,12 +2159,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"set (ImageStatCmd ImageStat)"<<std::endl;
   BMSAutoSegMainFile<<"set (fWarpCmd fWarp)"<<std::endl;
   BMSAutoSegMainFile<<"set (txApplyCmd txApply)"<<std::endl;
-  BMSAutoSegMainFile<<"set (CortThickCLPCmd CortThickCLP)"<<std::endl<<std::endl;
-  BMSAutoSegMainFile<<"set (N4Cmd N4ITKBiasFieldCorrection)"<<std::endl<<std::endl;
-  BMSAutoSegMainFile<<"set (ResampleVolume2Cmd ResampleVolume2)"<<std::endl<<std::endl;
-  BMSAutoSegMainFile<<"set (BRAINSDemonWarpCmd BRAINSDemonWarp)"<<std::endl<<std::endl;
-  BMSAutoSegMainFile<<"set (BRAINSFitCmd BRAINSFit)"<<std::endl<<std::endl;
-  BMSAutoSegMainFile<<"set (ModelMakerCmd ModelMaker)"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"set (CortThickCLPCmd CortThickCLP)"<<std::endl;
+  BMSAutoSegMainFile<<"set (N4Cmd N4ITKBiasFieldCorrection)"<<std::endl;
+  BMSAutoSegMainFile<<"set (ResampleVolume2Cmd ResampleVolume2)"<<std::endl;
+  BMSAutoSegMainFile<<"set (BRAINSDemonWarpCmd BRAINSDemonWarp)"<<std::endl;
+  BMSAutoSegMainFile<<"set (BRAINSFitCmd BRAINSFit)"<<std::endl;
+  BMSAutoSegMainFile<<"set (ModelMakerCmd ModelMaker)"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
+  BMSAutoSegMainFile<<"set (WarpImageMultiTransformCmd WarpImageMultiTransform)"<<std::endl<<std::endl;
   
   BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
   BMSAutoSegMainFile<<"echo ('CHECKING FILES...')"<<std::endl;
@@ -2180,19 +2198,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   }
   
   BMSAutoSegMainFile<<"# Pipeline "<<std::endl;
-  BMSAutoSegMainFile<<"# 1. If necessary, image reorientation "<<std::endl;
-  BMSAutoSegMainFile<<"# 2. N4 ITK bias field correction"<<std::endl;
-  BMSAutoSegMainFile<<"# 3. Registration to commom coordinate image"<<std::endl;
-  BMSAutoSegMainFile<<"# 4. Atlas-based expectation maximization tissue segmentation segmentation"<<std::endl;
-  BMSAutoSegMainFile<<"# 5. Skull-stripping"<<std::endl;
-  BMSAutoSegMainFile<<"# 6. Intensity calibration: histogram quantile matching or tissue mean matching"<<std::endl;
-  BMSAutoSegMainFile<<"# 7. Atlas to case affine registration"<<std::endl;
-  BMSAutoSegMainFile<<"# 8. Atlas to case warping"<<std::endl;
-  BMSAutoSegMainFile<<"# 9. Applying the transformations to the probabilistic maps (ROIs) and label maps (parcellation map and generic ROI map"<<std::endl;
-  BMSAutoSegMainFile<<"# 10. Probabilistic volume thresholding"<<std::endl;
-  BMSAutoSegMainFile<<"# 11. ROI gathering"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"# 1. Initialization"<<std::endl;
+  BMSAutoSegMainFile<<"# 2. Optional: image reorientation (ifno rigid registration)"<<std::endl;
+  BMSAutoSegMainFile<<"# 3. N4 ITK bias field correction"<<std::endl;
+  BMSAutoSegMainFile<<"# 4. Registration to commom coordinate image"<<std::endl;
+  BMSAutoSegMainFile<<"# 5. Atlas-based expectation maximization tissue segmentation segmentation"<<std::endl;
+  BMSAutoSegMainFile<<"# 6. Skull-stripping"<<std::endl;
+  BMSAutoSegMainFile<<"# 7. Optional: Intensity calibration: histogram quantile matching or tissue mean matching - used with fWarp and BRAINSDemonWarp"<<std::endl;
+  BMSAutoSegMainFile<<"# 8. Atlas to case affine registration"<<std::endl;
+  BMSAutoSegMainFile<<"# 9. Atlas to case warping"<<std::endl;
+  BMSAutoSegMainFile<<"# 10. Applying the transformations to the probabilistic maps (ROIs) and label maps (parcellation map and generic ROI map"<<std::endl;
+  BMSAutoSegMainFile<<"# 11. Probabilistic volume thresholding"<<std::endl;
+  BMSAutoSegMainFile<<"# 12. ROI gathering"<<std::endl<<std::endl;
   if (GetComputeCorticalThickness())
-    BMSAutoSegMainFile<<"# 12. Option 1: Regional cortical thickness"<<std::endl;
+    BMSAutoSegMainFile<<"# 13. Option 1: Regional cortical thickness"<<std::endl;
   if (GetComputeVolume())
   {
     BMSAutoSegMainFile<<"# 13. Option 2: Volume information"<<std::endl;
@@ -3046,6 +3065,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<SEGMENTATION-PARAMETERS>\\n')"<<std::endl;
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<SUFFIX>'${SUFFIX}'</SUFFIX>\\n')"<<std::endl;
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-DIRECTORY>'${Atlas}'</ATLAS-DIRECTORY>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-ORIENTATION>file</ATLAS-ORIENTATION>\\n')"<<std::endl;
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<OUTPUT-DIRECTORY>'${EMSPath}'</OUTPUT-DIRECTORY>\\n')"<<std::endl;
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<OUTPUT-FORMAT>Nrrd</OUTPUT-FORMAT>\\n')"<<std::endl;
 	
@@ -3090,7 +3110,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<FILTER-ITERATIONS>"<<GetFilterIterations()<<"</FILTER-ITERATIONS>\\n')"<<std::endl;
     BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<FILTER-TIME-STEP>"<<GetFilterTimeStep()<<"</FILTER-TIME-STEP>\\n')"<<std::endl;
-	
+    BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<FILTER-METHOD>"<<GetFilterMethod()<<"</FILTER-METHOD>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<MAX-BIAS-DEGREE>"<<GetMaxBiasDegree()<<"</MAX-BIAS-DEGREE>\\n')"<<std::endl;
+
     if (std::strcmp(GetEMSoftware(), "ABC") == 0)
     {
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior1()<<"</PRIOR>\\n')"<<std::endl;
@@ -3566,182 +3588,376 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   }while (GetLoop() && iteration<=GetLoopIteration());
 
 
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"# 7. Intensity Calibration"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+
+  // Warping performed via ANTS: no intensity rescaling needed.
+  if (GetANTSWarpingMethod())
+  {    
+
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# 8. 9. Atlas warping via ANTS to the skull stripped image"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   
-  BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"echo (INTENSITY CALIBRATION)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-  BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList}) "<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-  BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
-  BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
-  BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (StrippedCaseHead ${StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;  
-  BMSAutoSegMainFile<<"      # Output File"<<std::endl;
-  BMSAutoSegMainFile<<"      set (OutputFile ${StrippedPath}${StrippedCaseHead}-irescaled.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"      set (OutputFileTail ${StrippedCaseHead}-irescaled.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${StrippedPath} ${StrippedCaseHead}-irescaled.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"set (IRescaled '')"<<std::endl;
 
-  // Intensity rescaling based on histogram quantile matching (ImageMath)
-  if (GetIntensityRescalingMethod() == 1)
-  {
-    
-      // BMSAutoSegMainFile<<"          SetApp(ImageMathCmd @ImageMath)"<<std::endl;
-    //   BMSAutoSegMainFile<<"          SetAppOption(ImageMathCmd.Input ${StrippedCase})"<<std::endl;
-    //   BMSAutoSegMainFile<<"          SetAppOption(ImageMathCmd.MatchHistogramFile ${atlasROIFile})"<<std::endl;
-    //   BMSAutoSegMainFile<<"          SetAppOption(ImageMathCmd.OutputFileName ${OutputFile})"<<std::endl;
-    //   BMSAutoSegMainFile<<"          Run (output ${ImageMathCmd})"<<std::endl;
-    BMSAutoSegMainFile<<"          Run (output '${ImageMathCmd} ${StrippedCase} -matchHistogram ${atlasROIFile} -outfile ${OutputFile}')"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSIterations "<<GetANTSIterations()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSCCWeight "<<GetANTSCCWeight()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSCCRegionRadius "<<GetANTSCCRegionRadius()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSMIWeight "<<GetANTSMIWeight()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSMIBins "<<GetANTSMIBins()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSMSQWeight "<<GetANTSMSQWeight()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSTransformationStep "<<GetANTSTransformationStep()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSGaussianSigma "<<GetANTSGaussianSigma()<<")"<<std::endl;
+
+    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('ATLAS WARPING...')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
+    BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedCaseHead ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS})"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedCaseTail ${StrippedCaseHead}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${StrippedCaseTail})"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (StrippedCaseHead ${StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
+
+    BMSAutoSegMainFile<<"      # Creating WarpROI Directory if necessary"<<std::endl;
+    BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
+    BMSAutoSegMainFile<<"      ListDirInDir (WarpROIList ${T1Path}/${AutoSegDir}/ WarpROI)"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${WarpROIList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"         MakeDirectory( ${WarpROIPath})"<<std::endl;
+    BMSAutoSegMainFile<<"      EndIf (${WarpROIList})"<<std::endl;
+
+    BMSAutoSegMainFile<<"      ListFileInDir(DeformationFieldList ${WarpROIPath} AtlasWarpReg-${StrippedCaseHead}_Warp.nii.gz)"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${DeformationFieldList} == '')"<<std::endl;        
+    BMSAutoSegMainFile<<"         echo ('Computing deformation field...')"<<std::endl;  
+    BMSAutoSegMainFile<<"    	set (command_line ${ANTSCmd} 3 -m CC[${StrippedCase},${atlasROIFile},${ANTSCCWeight},${ANTSCCRegionRadius}] -i ${ANTSIterations} -o ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_ )"<<std::endl;
+    if (GetANTSMIWeight() > 0.01)
+      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${StrippedCase},${atlasROIFile},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
+    if (GetANTSMSQWeight() > 0.01)
+      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${StrippedCase},${atlasROIFile},${ANTSMSQWeight},0.01])"<<std::endl;
+    if (GetANTSMIWeight() > 0.01 || GetANTSMSQWeight() > 0.01)
+      BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
+    if (std::strcmp(GetANTSRegistrationFilterType(), "GreedyDiffeomorphism") == 0)
+      {
+	BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t SyN[${ANTSTransformationStep}])"<<std::endl;
+	if (GetANTSGaussianSmoothing())
+	  BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[${ANTSGaussianSigma},0])"<<std::endl;      
+      }
+    else if (std::strcmp(GetANTSRegistrationFilterType(), "SpatiotemporalDiffeomorphism") == 0)
+      {
+	BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t SyN[${ANTSTransformationStep}])"<<std::endl;
+	if (GetANTSGaussianSmoothing())
+	  BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[${ANTSGaussianSigma},0.5])"<<std::endl;      
+      }
+    else if (std::strcmp(GetANTSRegistrationFilterType(), "Elastic") == 0)
+      {
+	BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t Elast[${ANTSTransformationStep}])"<<std::endl;
+	if (GetANTSGaussianSmoothing())
+	  BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
+      }
+    else if (std::strcmp(GetANTSRegistrationFilterType(), "Exponential") == 0)
+      {
+	BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t Exp[${ANTSTransformationStep}])"<<std::endl;
+	if (GetANTSGaussianSmoothing())
+	  BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
+      }
+    BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"      	set(ANTSLogFile ${WarpROIPath}AtlasWarpReg-${WarpROIPath}${StrippedCaseHead}_ANTS.log)"<<std::endl;
+    BMSAutoSegMainFile<<"      	WriteFile(${ANTSLogFile} ${prog_output})"<<std::endl;
+    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+    BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"      EndIf (${DeformationFieldList})"<<std::endl;
+
+    BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasWarpReg-${StrippedCaseHead}_warp.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;        
+    BMSAutoSegMainFile<<"        echo ('Applying deformation to grayscale image...')"<<std::endl;
+
+    BMSAutoSegMainFile<<"        set (WarpedAtlas ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_warp.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"        set (DeformationField ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_Warp.nii.gz)"<<std::endl;
+    BMSAutoSegMainFile<<"        set (AffineTransform ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_Affine.txt)"<<std::endl;
+    BMSAutoSegMainFile<<"        set (command_line ${WarpImageMultiTransformCmd} 3 ${atlasROIFile} ${WarpedAtlas} -R ${StrippedCase} --use-BSpline ${DeformationField} ${AffineTransform})"<<std::endl;
+
+    BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+    BMSAutoSegMainFile<<"      	  echo('WarpImageMultiTransform Error: '${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+
+
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+
+    BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
+    BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
+
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode9\"  name=\"warp\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSelectionNode1\"    name=\"vtkMRMLSelectionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    activeVolumeID=\"vtkMRMLScalarVolumeNode12\"    secondaryVolumeID=\"vtkMRMLScalarVolumeNode12\"    activeLabelVolumeID=\"vtkMRMLScalarVolumeNode8\"    activeFiducialListID=\"NULL\"    activeROIListID=\"NULL\"    activeCameraID=\"NULL\"    activeViewID=\"NULL\"    activeLayoutID=\"vtkMRMLLayoutNode1\"  ></Selection>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Interaction\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLInteractionNode1\"    name=\"vtkMRMLInteractionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentInteractionMode=\"ViewTransform\"    lastInteractionMode=\"ViewTransform\"  ></Interaction>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Layout\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLayoutNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentViewArrangement=\"2\"    guiPanelVisibility=\"1\"    bottomPanelVisibility =\"1\"    guiPanelLR=\"0\"    collapseSliceControllers=\"0\"\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    numberOfCompareViewRows=\"1\"    numberOfCompareViewColumns=\"1\"    numberOfLightboxRows=\"1\"    numberOfLightboxColumns=\"1\"    mainPanelSize=\"400\"    secondaryPanelSize=\"400\"    selectedModule=\"Volumes\"  ></Layout>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <TGParameters\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLChangeTrackerNode1\"    name=\"vtkMRMLChangeTrackerNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    ROIMin=\"-1 -1 -1\"    ROIMax=\"-1 -1 -1\"    SegmentThresholdMin=\"-1\"    SegmentThresholdMax=\"-1\"    Analysis_Intensity_Flag=\"0\"    Analysis_Deformable_Flag=\"0\"    UseITK=\"1\"    RegistrationChoice=\"3\"    ROIRegistration=\"1\"    ResampleChoice=\"3\"    ResampleConst=\"0.5\"  ></TGParameters>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Crosshair\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCrosshairNode1\"    name=\"vtkMRMLCrosshairNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    crosshairMode=\"NoCrosshair\"    navigation=\"true\"    crosshairBehavior=\"Normal\"    crosshairThickness=\"Fine\"    crosshairRAS=\"0 0 1.42109e-14\"  ></Crosshair>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode1\"    name=\"Green\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"199 199.672 1\"    dimensions=\"296 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 0 0 0 1 0 0 1 0 0 0 0 0 1\"    layoutName=\"Green\"    orientation=\"Coronal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode1\"    name=\"vtkMRMLSliceCompositeNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Green\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode2\"    name=\"Red\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"222.49 223.998 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1\"    layoutName=\"Red\"    orientation=\"Axial\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode2\"    name=\"vtkMRMLSliceCompositeNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"0.5\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Red\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode3\"    name=\"Yellow\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"224 225.519 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"0 0 1 0 -1 0 0 0 0 1 0 0 0 0 0 1\"    layoutName=\"Yellow\"    orientation=\"Sagittal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode3\"    name=\"vtkMRMLSliceCompositeNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Yellow\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ScriptedModule\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScriptedModuleNode1\"    name=\"vtkMRMLScriptedModuleNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\" parameter0= \"label 1\"  ></ScriptedModule>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <View\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLViewNode1\"    name=\"View1\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    active=\"true\"    visibility=\"true\"    fieldOfView=\"200\"    letterSize=\"0.05\"    boxVisible=\"true\"    fiducialsVisible=\"true\"    fiducialLabelsVisible=\"true\"    axisLabelsVisible=\"true\"    backgroundColor=\"0.70196 0.70196 0.90588\"    animationMode=\"Off\"    viewAxisMode=\"LookFrom\"    spinDegrees=\"2\"    spinMs=\"5\"    spinDirection=\"YawLeft\"    rotateDegrees=\"5\"    rockLength=\"200\"    rockCount=\"0\"    stereoType=\"NoStereo\"    renderMode=\"Perspective\"  ></View>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Camera\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCameraNode1\"    name=\"Default Scene Camera\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    position=\"0 500 0\"    focalPoint=\"0 0 0\"    viewUp=\"0 0 1\"    parallelProjection=\"false\"    parallelScale=\"1\"    activetag=\"vtkMRMLViewNode1\"  ></Camera>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode1\"    name=\"vtkMRMLVolumeArchetypeStorageNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${AtlasIsoTemplate}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode1\"    name=\"vtkMRMLScalarVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode2\"    name=\"vtkMRMLScalarVolumeDisplayNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"118\"    level=\"63\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode3\"    name=\"vtkMRMLScalarVolumeDisplayNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"766.13\"    level=\"383.065\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode4\"    name=\"vtkMRMLScalarVolumeDisplayNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode5\"    name=\"vtkMRMLScalarVolumeDisplayNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode6\"    name=\"vtkMRMLVolumeArchetypeStorageNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${AtlasIsoTemplate}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode6\"    name=\"${AtlasIsoTemplate_name}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode6\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode6\"    ijkToRASDirections=\"-1   -0   0 -0   -1   -0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"99.5 112 -99.5\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode6\"    name=\"vtkMRMLScalarVolumeDisplayNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeCoolShade1\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode7\"    name=\"vtkMRMLScalarVolumeDisplayNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"26952\"    level=\"13476\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <LabelMapVolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLabelMapVolumeDisplayNode1\"    name=\"vtkMRMLLabelMapVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeFileGenericColors.txt\"   ></LabelMapVolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode8\"    name=\"vtkMRMLScalarVolumeDisplayNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"106\"    level=\"146\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode9\"    name=\"vtkMRMLScalarVolumeDisplayNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"24196\"    level=\"20593\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode11\"    name=\"vtkMRMLVolumeArchetypeStorageNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode10\"    name=\"vtkMRMLScalarVolumeDisplayNode10\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"110\"    level=\"144\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode12\"    name=\"vtkMRMLVolumeArchetypeStorageNode12\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode12\"    name=\"${OutputFileTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode12\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode11\"    ijkToRASDirections=\"-1   -0   0 -0   -1   -0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"99.5 112 -99.5\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode11\"    name=\"vtkMRMLScalarVolumeDisplayNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"110\"    level=\"144\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</SceneSnapshot>\\n')"<<std::endl;
+
+    BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"         echo ('Warping already Done!)'"<<std::endl;
+    BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
+
+    BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION: DONE!')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
   }
-  // Intensity rescaling based on tissue mean matching (Intensity Rescaler)
-  else
-  {
-    BMSAutoSegMainFile<<"         GetFilename (atlasROIFileHead ${atlasROIFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"         GetFilename (atlasROIFilePath ${atlasROIFile} PATH)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (atlasROIEMSFile ${atlasROIFilePath}/${atlasROIFileHead}${SuffixLabel}.nrrd)"<<std::endl;
-      
-    if(GetLoop())
-      BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
-    else
-      BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
+  // Registration performed via fWarp or BRAINSDemonWarp -> intensity rescaling, affine registration via BRAINSFit, then warping.
+  else 
+    {
 
-    if (IsT1LabelEMSFile)
-      BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# 7. Intensity Calibration"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+  
+    BMSAutoSegMainFile<<"set (IRescaled '-irescaled')"<<std::endl;
+
+    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
+    BMSAutoSegMainFile<<"echo (INTENSITY CALIBRATION)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList}) "<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
+    BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (StrippedCaseHead ${StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;  
+    BMSAutoSegMainFile<<"      # Output File"<<std::endl;
+    BMSAutoSegMainFile<<"      set (OutputFile ${StrippedPath}${StrippedCaseHead}${IRescaled}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (OutputFileTail ${StrippedCaseHead}${IRescaled}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${StrippedPath} ${StrippedCaseHead}${IRescaled}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
+
+    // Intensity rescaling based on histogram quantile matching (ImageMath)
+    if (GetIntensityRescalingMethod() == 1)
+    {
+	// BMSAutoSegMainFile<<"          SetApp(ImageMathCmd @ImageMath)"<<std::endl;
+      //   BMSAutoSegMainFile<<"          SetAppOption(ImageMathCmd.Input ${StrippedCase})"<<std::endl;
+      //   BMSAutoSegMainFile<<"          SetAppOption(ImageMathCmd.MatchHistogramFile ${atlasROIFile})"<<std::endl;
+      //   BMSAutoSegMainFile<<"          SetAppOption(ImageMathCmd.OutputFileName ${OutputFile})"<<std::endl;
+      //   BMSAutoSegMainFile<<"          Run (output ${ImageMathCmd})"<<std::endl;
+      BMSAutoSegMainFile<<"          Run (output '${ImageMathCmd} ${StrippedCase} -matchHistogram ${atlasROIFile} -outfile ${OutputFile}')"<<std::endl;
+    }
+    // Intensity rescaling based on tissue mean matching (Intensity Rescaler)
     else
     {
-      BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
-      BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"         GetFilename (atlasROIFileHead ${atlasROIFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"         GetFilename (atlasROIFilePath ${atlasROIFile} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<"         set (atlasROIEMSFile ${atlasROIFilePath}/${atlasROIFileHead}${SuffixLabel}.nrrd)"<<std::endl;
+
+      if(GetLoop())
+	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
+      else
+	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
+
+      if (IsT1LabelEMSFile)
+	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+      else
+      {
+	BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
+	BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+      }
+
+      BMSAutoSegMainFile<<"         set (IntRescalerParameterFile ${StrippedPath}${StrippedCaseHead}_intRescale.txt)"<<std::endl;
+      BMSAutoSegMainFile<<"         ListFileInDir(IntRescalerParameterFileList ${StrippedPath} ${StrippedCaseHead}_intRescale.txt)"<<std::endl;
+      BMSAutoSegMainFile<<"         If (${IntRescalerParameterFileList} == '')"<<std::endl;
+
+      BMSAutoSegMainFile<<"            # create Intensity Rescaler parameter file"<<std::endl;
+      BMSAutoSegMainFile<<"	           WriteFile (${IntRescalerParameterFile} '# Target image: One image which is the reference\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Target='${atlasROIFile}'\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target segmentation image: EM Segmentation of the target image\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetEMS='${atlasROIEMSFile}'\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source image: Image to be intensity rescaled base on reference image\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source segmentation image: EM Segmentation image\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Source='${StrippedCase}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceEMS='${SegmentedCase}'\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Label List: Usually 1,2 and 3 are the labels for White, Gray and CSF pattern\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=1\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=2\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=3\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target intensity windowing: Do you want to adjust min/max intensity of the target ? [ON/OFF]\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetWindowing=ON\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source intensity windowing: Do you want to adjust min/max intensity of source image ? [ON/OFF]\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceWindowing=ON\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Class matching: Do you want to iteratively adjust classes ? [ON/OFF]\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'ClassMatching=ON\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Sigma for class matching: Standard deviation for min/max adjustment\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Sigma=3\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputSuffix: Suffix for output filename\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputSuffix=${IRescaled}\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputDir: Output Directory\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputDir='${StrippedPath}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         EndIf (${IntRescalerParameterFileList})"<<std::endl;
+
+	// BMSAutoSegMainFile<<"	        SetApp(IntensityRescalerCmd @IntensityRescaler)"<<std::endl;
+	// BMSAutoSegMainFile<<"              SetAppOption(IntensityRescalerCmd.ParameterFile ${IntRescalerParameterFile})"<<std::endl;
+	// BMSAutoSegMainFile<<"              SetAppOption(IntensityRescalerCmd.Verbose 1)"<<std::endl;               
+	// BMSAutoSegMainFile<<"              Run (output ${IntensityRescalerCmd})"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output '${IntensityRescalerCmd} -i ${IntRescalerParameterFile} -v')"<<std::endl;
     }
+    BMSAutoSegMainFile<<"          If(${IsAtlasROIFileZipped} == 1)"<<std::endl;
+    BMSAutoSegMainFile<<"             Run (output 'gzip ${atlasROIFile}')"<<std::endl;
+    BMSAutoSegMainFile<<"             set (atlasROIFile ${atlasROIFile}.gz)"<<std::endl;
+    BMSAutoSegMainFile<<"          Endif(${IsAtlasROIFileZipped})"<<std::endl;
 
-    BMSAutoSegMainFile<<"         set (IntRescalerParameterFile ${StrippedPath}${StrippedCaseHead}_intRescale.txt)"<<std::endl;
-    BMSAutoSegMainFile<<"         ListFileInDir(IntRescalerParameterFileList ${StrippedPath} ${StrippedCaseHead}_intRescale.txt)"<<std::endl;
-    BMSAutoSegMainFile<<"         If (${IntRescalerParameterFileList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
-    BMSAutoSegMainFile<<"            # create Intensity Rescaler parameter file"<<std::endl;
-    BMSAutoSegMainFile<<"	           WriteFile (${IntRescalerParameterFile} '# Target image: One image which is the reference\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Target='${atlasROIFile}'\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target segmentation image: EM Segmentation of the target image\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetEMS='${atlasROIEMSFile}'\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source image: Image to be intensity rescaled base on reference image\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source segmentation image: EM Segmentation image\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Source='${StrippedCase}'\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceEMS='${SegmentedCase}'\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Label List: Usually 1,2 and 3 are the labels for White, Gray and CSF pattern\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=1\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=2\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=3\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target intensity windowing: Do you want to adjust min/max intensity of the target ? [ON/OFF]\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetWindowing=ON\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source intensity windowing: Do you want to adjust min/max intensity of source image ? [ON/OFF]\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceWindowing=ON\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Class matching: Do you want to iteratively adjust classes ? [ON/OFF]\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'ClassMatching=ON\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Sigma for class matching: Standard deviation for min/max adjustment\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Sigma=3\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputSuffix: Suffix for output filename\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputSuffix=-irescaled\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputDir: Output Directory\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputDir='${StrippedPath}'\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"         EndIf (${IntRescalerParameterFileList})"<<std::endl;
-      
-      // BMSAutoSegMainFile<<"	        SetApp(IntensityRescalerCmd @IntensityRescaler)"<<std::endl;
-      // BMSAutoSegMainFile<<"              SetAppOption(IntensityRescalerCmd.ParameterFile ${IntRescalerParameterFile})"<<std::endl;
-      // BMSAutoSegMainFile<<"              SetAppOption(IntensityRescalerCmd.Verbose 1)"<<std::endl;               
-      // BMSAutoSegMainFile<<"              Run (output ${IntensityRescalerCmd})"<<std::endl;
-    BMSAutoSegMainFile<<"              Run (output '${IntensityRescalerCmd} -i ${IntRescalerParameterFile} -v')"<<std::endl;
-  }
-  BMSAutoSegMainFile<<"          If(${IsAtlasROIFileZipped} == 1)"<<std::endl;
-  BMSAutoSegMainFile<<"             Run (output 'gzip ${atlasROIFile}')"<<std::endl;
-  BMSAutoSegMainFile<<"             set (atlasROIFile ${atlasROIFile}.gz)"<<std::endl;
-  BMSAutoSegMainFile<<"          Endif(${IsAtlasROIFileZipped})"<<std::endl;
+    BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
+    BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
 
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode8\"  name=\"stripped_irescaled\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSelectionNode1\"    name=\"vtkMRMLSelectionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    activeVolumeID=\"vtkMRMLScalarVolumeNode10\"    secondaryVolumeID=\"vtkMRMLScalarVolumeNode10\"    activeLabelVolumeID=\"vtkMRMLScalarVolumeNode8\"    activeFiducialListID=\"NULL\"    activeROIListID=\"NULL\"    activeCameraID=\"NULL\"    activeViewID=\"NULL\"    activeLayoutID=\"vtkMRMLLayoutNode1\"  ></Selection>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Interaction\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLInteractionNode1\"    name=\"vtkMRMLInteractionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentInteractionMode=\"ViewTransform\"    lastInteractionMode=\"ViewTransform\"  ></Interaction>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Layout\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLayoutNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentViewArrangement=\"2\"    guiPanelVisibility=\"1\"    bottomPanelVisibility =\"1\"    guiPanelLR=\"0\"    collapseSliceControllers=\"0\"\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    numberOfCompareViewRows=\"1\"    numberOfCompareViewColumns=\"1\"    numberOfLightboxRows=\"1\"    numberOfLightboxColumns=\"1\"    mainPanelSize=\"400\"    secondaryPanelSize=\"400\"    selectedModule=\"Volumes\"  ></Layout>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <TGParameters\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLChangeTrackerNode1\"    name=\"vtkMRMLChangeTrackerNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    ROIMin=\"-1 -1 -1\"    ROIMax=\"-1 -1 -1\"    SegmentThresholdMin=\"-1\"    SegmentThresholdMax=\"-1\"    Analysis_Intensity_Flag=\"0\"    Analysis_Deformable_Flag=\"0\"    UseITK=\"1\"    RegistrationChoice=\"3\"    ROIRegistration=\"1\"    ResampleChoice=\"3\"    ResampleConst=\"0.5\"  ></TGParameters>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Crosshair\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCrosshairNode1\"    name=\"vtkMRMLCrosshairNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    crosshairMode=\"NoCrosshair\"    navigation=\"true\"    crosshairBehavior=\"Normal\"    crosshairThickness=\"Fine\"    crosshairRAS=\"-99.5 -112 99.5\"  ></Crosshair>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode1\"    name=\"Green\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"199 199.672 1\"    dimensions=\"296 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 0 1 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Green\"    orientation=\"Coronal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode1\"    name=\"vtkMRMLSliceCompositeNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode9\"    foregroundVolumeID=\"\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Green\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode2\"    name=\"Red\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"222.49 223.998 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 1 0 -112 0 0 1 99.5 0 0 0 1\"    layoutName=\"Red\"    orientation=\"Axial\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode2\"    name=\"vtkMRMLSliceCompositeNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode9\"    foregroundVolumeID=\"\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"0.5\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Red\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode3\"    name=\"Yellow\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"224 225.519 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"0 0 1 -99.5 -1 0 0 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Yellow\"    orientation=\"Sagittal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode3\"    name=\"vtkMRMLSliceCompositeNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode9\"    foregroundVolumeID=\"\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Yellow\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ScriptedModule\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScriptedModuleNode1\"    name=\"vtkMRMLScriptedModuleNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\" parameter0= \"label 1\"  ></ScriptedModule>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <View\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLViewNode1\"    name=\"View1\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    active=\"true\"    visibility=\"true\"    fieldOfView=\"200\"    letterSize=\"0.05\"    boxVisible=\"true\"    fiducialsVisible=\"true\"    fiducialLabelsVisible=\"true\"    axisLabelsVisible=\"true\"    backgroundColor=\"0.70196 0.70196 0.90588\"    animationMode=\"Off\"    viewAxisMode=\"LookFrom\"    spinDegrees=\"2\"    spinMs=\"5\"    spinDirection=\"YawLeft\"    rotateDegrees=\"5\"    rockLength=\"200\"    rockCount=\"0\"    stereoType=\"NoStereo\"    renderMode=\"Perspective\"  ></View>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Camera\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCameraNode1\"    name=\"Default Scene Camera\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    position=\"0 500 0\"    focalPoint=\"0 0 0\"    viewUp=\"0 0 1\"    parallelProjection=\"false\"    parallelScale=\"1\"    activetag=\"vtkMRMLViewNode1\"  ></Camera>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode1\"    name=\"vtkMRMLScalarVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode2\"    name=\"vtkMRMLScalarVolumeDisplayNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"118\"    level=\"63\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode3\"    name=\"vtkMRMLScalarVolumeDisplayNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"766.13\"    level=\"383.065\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode4\"    name=\"vtkMRMLScalarVolumeDisplayNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode5\"    name=\"vtkMRMLScalarVolumeDisplayNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode6\"    name=\"vtkMRMLScalarVolumeDisplayNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeCoolShade1\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode7\"    name=\"vtkMRMLScalarVolumeDisplayNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"26952\"    level=\"13476\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <LabelMapVolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLabelMapVolumeDisplayNode1\"    name=\"vtkMRMLLabelMapVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeFileGenericColors.txt\"   ></LabelMapVolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode9\"    name=\"vtkMRMLVolumeArchetypeStorageNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"0\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode9\"    name=\"${OutputFileTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode9\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode8\"    ijkToRASDirections=\"-1   0   0 -0   -1   0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"-0 -0 -0\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode8\"    name=\"vtkMRMLScalarVolumeDisplayNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"106\"    level=\"146\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode9\"    name=\"vtkMRMLScalarVolumeDisplayNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"24196\"    level=\"20593\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</SceneSnapshot>\\n')"<<std::endl;
 
-  BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
-  BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
+    BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"          echo ('Intensity Calibration already done!')"<<std::endl;
+    BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
 
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode8\"  name=\"stripped_irescaled\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSelectionNode1\"    name=\"vtkMRMLSelectionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    activeVolumeID=\"vtkMRMLScalarVolumeNode10\"    secondaryVolumeID=\"vtkMRMLScalarVolumeNode10\"    activeLabelVolumeID=\"vtkMRMLScalarVolumeNode8\"    activeFiducialListID=\"NULL\"    activeROIListID=\"NULL\"    activeCameraID=\"NULL\"    activeViewID=\"NULL\"    activeLayoutID=\"vtkMRMLLayoutNode1\"  ></Selection>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Interaction\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLInteractionNode1\"    name=\"vtkMRMLInteractionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentInteractionMode=\"ViewTransform\"    lastInteractionMode=\"ViewTransform\"  ></Interaction>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Layout\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLayoutNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentViewArrangement=\"2\"    guiPanelVisibility=\"1\"    bottomPanelVisibility =\"1\"    guiPanelLR=\"0\"    collapseSliceControllers=\"0\"\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    numberOfCompareViewRows=\"1\"    numberOfCompareViewColumns=\"1\"    numberOfLightboxRows=\"1\"    numberOfLightboxColumns=\"1\"    mainPanelSize=\"400\"    secondaryPanelSize=\"400\"    selectedModule=\"Volumes\"  ></Layout>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <TGParameters\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLChangeTrackerNode1\"    name=\"vtkMRMLChangeTrackerNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    ROIMin=\"-1 -1 -1\"    ROIMax=\"-1 -1 -1\"    SegmentThresholdMin=\"-1\"    SegmentThresholdMax=\"-1\"    Analysis_Intensity_Flag=\"0\"    Analysis_Deformable_Flag=\"0\"    UseITK=\"1\"    RegistrationChoice=\"3\"    ROIRegistration=\"1\"    ResampleChoice=\"3\"    ResampleConst=\"0.5\"  ></TGParameters>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Crosshair\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCrosshairNode1\"    name=\"vtkMRMLCrosshairNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    crosshairMode=\"NoCrosshair\"    navigation=\"true\"    crosshairBehavior=\"Normal\"    crosshairThickness=\"Fine\"    crosshairRAS=\"-99.5 -112 99.5\"  ></Crosshair>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode1\"    name=\"Green\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"199 199.672 1\"    dimensions=\"296 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 0 1 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Green\"    orientation=\"Coronal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode1\"    name=\"vtkMRMLSliceCompositeNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode9\"    foregroundVolumeID=\"\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Green\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode2\"    name=\"Red\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"222.49 223.998 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 1 0 -112 0 0 1 99.5 0 0 0 1\"    layoutName=\"Red\"    orientation=\"Axial\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode2\"    name=\"vtkMRMLSliceCompositeNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode9\"    foregroundVolumeID=\"\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"0.5\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Red\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode3\"    name=\"Yellow\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"224 225.519 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"0 0 1 -99.5 -1 0 0 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Yellow\"    orientation=\"Sagittal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode3\"    name=\"vtkMRMLSliceCompositeNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode9\"    foregroundVolumeID=\"\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Yellow\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ScriptedModule\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScriptedModuleNode1\"    name=\"vtkMRMLScriptedModuleNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\" parameter0= \"label 1\"  ></ScriptedModule>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <View\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLViewNode1\"    name=\"View1\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    active=\"true\"    visibility=\"true\"    fieldOfView=\"200\"    letterSize=\"0.05\"    boxVisible=\"true\"    fiducialsVisible=\"true\"    fiducialLabelsVisible=\"true\"    axisLabelsVisible=\"true\"    backgroundColor=\"0.70196 0.70196 0.90588\"    animationMode=\"Off\"    viewAxisMode=\"LookFrom\"    spinDegrees=\"2\"    spinMs=\"5\"    spinDirection=\"YawLeft\"    rotateDegrees=\"5\"    rockLength=\"200\"    rockCount=\"0\"    stereoType=\"NoStereo\"    renderMode=\"Perspective\"  ></View>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Camera\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCameraNode1\"    name=\"Default Scene Camera\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    position=\"0 500 0\"    focalPoint=\"0 0 0\"    viewUp=\"0 0 1\"    parallelProjection=\"false\"    parallelScale=\"1\"    activetag=\"vtkMRMLViewNode1\"  ></Camera>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode1\"    name=\"vtkMRMLScalarVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode2\"    name=\"vtkMRMLScalarVolumeDisplayNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"118\"    level=\"63\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode3\"    name=\"vtkMRMLScalarVolumeDisplayNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"766.13\"    level=\"383.065\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode4\"    name=\"vtkMRMLScalarVolumeDisplayNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode5\"    name=\"vtkMRMLScalarVolumeDisplayNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode6\"    name=\"vtkMRMLScalarVolumeDisplayNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeCoolShade1\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode7\"    name=\"vtkMRMLScalarVolumeDisplayNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"26952\"    level=\"13476\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <LabelMapVolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLabelMapVolumeDisplayNode1\"    name=\"vtkMRMLLabelMapVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeFileGenericColors.txt\"   ></LabelMapVolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode9\"    name=\"vtkMRMLVolumeArchetypeStorageNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"0\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode9\"    name=\"${OutputFileTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode9\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode8\"    ijkToRASDirections=\"-1   0   0 -0   -1   0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"-0 -0 -0\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode8\"    name=\"vtkMRMLScalarVolumeDisplayNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"106\"    level=\"146\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode9\"    name=\"vtkMRMLScalarVolumeDisplayNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"24196\"    level=\"20593\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</SceneSnapshot>\\n')"<<std::endl;
-
-  BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-  BMSAutoSegMainFile<<"          echo ('Intensity Calibration already done!')"<<std::endl;
-  BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
-
-  BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('INTENSITY CALIBRATION DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('INTENSITY CALIBRATION DONE!')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
 
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"# 8. Affine Registration : warping the atlas to the skull stripped image"<<std::endl;
+  BMSAutoSegMainFile<<"# 8. Affine Registration : register the atlas to the skull stripped image"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -3754,9 +3970,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
   BMSAutoSegMainFile<<"      echo( )"<<std::endl;
   BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
+  BMSAutoSegMainFile<<"      echo( )"<<std::endl;
   BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
-  BMSAutoSegMainFile<<"      set (StrippedCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+  BMSAutoSegMainFile<<"      set (StrippedCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
   BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${StrippedCaseTail})"<<std::endl;
   BMSAutoSegMainFile<<"      GetFilename (StrippedCaseHead ${StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
   
@@ -3805,14 +4021,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
   BMSAutoSegMainFile<<"      echo( )"<<std::endl;      
   BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
-  BMSAutoSegMainFile<<"      set (AtlasAffRegCase ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+  BMSAutoSegMainFile<<"      set (AtlasAffRegCase ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
   BMSAutoSegMainFile<<"      GetFilename (AtlasAffRegCaseHead ${AtlasAffRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
   
-  BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+  BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
   BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
   BMSAutoSegMainFile<<"         # Creating new Files"<<std::endl;
   BMSAutoSegMainFile<<"          # Output File"<<std::endl;
-  BMSAutoSegMainFile<<"         set (OutputFileHead AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled)"<<std::endl;
+  BMSAutoSegMainFile<<"         set (OutputFileHead AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled})"<<std::endl;
   BMSAutoSegMainFile<<"         set (OutputFileTail ${OutputFileHead}.nrrd)"<<std::endl;
   BMSAutoSegMainFile<<"         set (OutputFile ${WarpROIPath}${OutputFileTail})"<<std::endl;
   BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
@@ -3820,7 +4036,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
   if (GetClassicWarpingMethod())
   {
-    BMSAutoSegMainFile<<"         ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"         ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"         If (${SkullStrippedList} != '')"<<std::endl;
     BMSAutoSegMainFile<<"            set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
     BMSAutoSegMainFile<<"         Else ()"<<std::endl;
@@ -3874,7 +4090,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   }
   else if (GetBRAINSDemonWarpMethod())
   {
-    BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
     BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
@@ -3900,22 +4116,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"    	set (command_line ${ResampleVolume2Cmd} ${atlasROIFile} ${OutputFile} --hfieldtype displacement -i bs -H ${TransformOutputFile} --Reference ${SkullStrippedFile})"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output_2 ${command_line} prog_error)"<<std::endl;
   }
-  else
+  else if (GetCoarseToFineWarpingMethod())
   {
-    BMSAutoSegMainFile<<"         set (MHDOutputFileTail ${OutputFileHead}2.mhd)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (RAWOutputFileTail ${OutputFileHead}2.raw)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (RAW0OutputFileTail ${OutputFileHead}0.raw)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (RAW1OutputFileTail ${OutputFileHead}1.raw)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (ZippedRAWOutputFileTail ${RAWOutputFileTail}.gz)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (MHDOutputFile ${WarpROIPath}${MHDOutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         set (RAWOutputFile ${WarpROIPath}${RAWOutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         set (RAW0OutputFile ${WarpROIPath}${RAW0OutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         set (RAW1OutputFile ${WarpROIPath}${RAW1OutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         set (ZippedRAWOutputFile ${WarpROIPath}${ZippedRAWOutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         ListFileInDir(MHDOutputFileList ${WarpROIPath} ${MHDOutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         If (${MHDOutputFileList} == '')"<<std::endl;
 
-    BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
     BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
@@ -3935,97 +4139,101 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            set (Scale4NbIterations "<<GetScale4NbIterations()<<")"<<std::endl;
     BMSAutoSegMainFile<<"            set (Scale2NbIterations "<<GetScale2NbIterations()<<")"<<std::endl;
     BMSAutoSegMainFile<<"            set (Scale1NbIterations "<<GetScale1NbIterations()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            Run (output '${fWarpCmd} --outputImageFilenamePrefix=${WarpROIPath}${OutputFileHead} --outputHFieldFilenamePrefix=${DofOutWarpFile} --scaleLevel=4 --numberOfIterations=${Scale4NbIterations} --scaleLevel=2 --numberOfIterations=${Scale2NbIterations} --scaleLevel=1 --numberOfIterations=${Scale1NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} ${SkullStrippedFile} ${AtlasAffRegCase}')"<<std::endl;
+    BMSAutoSegMainFile<<"            Run (output '${fWarpCmd} --outputImageFilenamePrefix=${WarpROIPath}${OutputFileHead} --outputHFieldFilenamePrefix=${DofOutWarpFile} --scaleLevel=4 --numberOfIterations=${Scale4NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=2 --numberOfIterations=${Scale2NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=1 --numberOfIterations=${Scale1NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} ${SkullStrippedFile} ${AtlasAffRegCase}')"<<std::endl;
     BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
-    BMSAutoSegMainFile<<"         EndIf (${MHDOutputFileList})"<<std::endl;
-
-    BMSAutoSegMainFile<<"         Run (output '${ImageMathCmd} ${MHDOutputFile} -constOper 2,1000 -outfile ${OutputFile}')"<<std::endl;
+    BMSAutoSegMainFile<<"           Run (output '${ImageMathCmd} ${WarpROIPath}${OutputFileHead}2.mhd -constOper 2,1000 -outfile ${OutputFile}')"<<std::endl;
+    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.mhd)"<<std::endl;
+    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.raw)"<<std::endl;
+    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}1.mhd)"<<std::endl;
+    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}1.raw)"<<std::endl;
+    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}0.mhd)"<<std::endl;
+    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}0.raw)"<<std::endl;
   }
 
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+      BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+      BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
+      BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
 
-  BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
-  BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode9\"  name=\"warp\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSelectionNode1\"    name=\"vtkMRMLSelectionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    activeVolumeID=\"vtkMRMLScalarVolumeNode12\"    secondaryVolumeID=\"vtkMRMLScalarVolumeNode12\"    activeLabelVolumeID=\"vtkMRMLScalarVolumeNode8\"    activeFiducialListID=\"NULL\"    activeROIListID=\"NULL\"    activeCameraID=\"NULL\"    activeViewID=\"NULL\"    activeLayoutID=\"vtkMRMLLayoutNode1\"  ></Selection>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Interaction\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLInteractionNode1\"    name=\"vtkMRMLInteractionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentInteractionMode=\"ViewTransform\"    lastInteractionMode=\"ViewTransform\"  ></Interaction>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Layout\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLayoutNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentViewArrangement=\"2\"    guiPanelVisibility=\"1\"    bottomPanelVisibility =\"1\"    guiPanelLR=\"0\"    collapseSliceControllers=\"0\"\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    numberOfCompareViewRows=\"1\"    numberOfCompareViewColumns=\"1\"    numberOfLightboxRows=\"1\"    numberOfLightboxColumns=\"1\"    mainPanelSize=\"400\"    secondaryPanelSize=\"400\"    selectedModule=\"Volumes\"  ></Layout>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <TGParameters\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLChangeTrackerNode1\"    name=\"vtkMRMLChangeTrackerNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    ROIMin=\"-1 -1 -1\"    ROIMax=\"-1 -1 -1\"    SegmentThresholdMin=\"-1\"    SegmentThresholdMax=\"-1\"    Analysis_Intensity_Flag=\"0\"    Analysis_Deformable_Flag=\"0\"    UseITK=\"1\"    RegistrationChoice=\"3\"    ROIRegistration=\"1\"    ResampleChoice=\"3\"    ResampleConst=\"0.5\"  ></TGParameters>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Crosshair\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCrosshairNode1\"    name=\"vtkMRMLCrosshairNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    crosshairMode=\"NoCrosshair\"    navigation=\"true\"    crosshairBehavior=\"Normal\"    crosshairThickness=\"Fine\"    crosshairRAS=\"0 0 1.42109e-14\"  ></Crosshair>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode1\"    name=\"Green\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"199 199.672 1\"    dimensions=\"296 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 0 0 0 1 0 0 1 0 0 0 0 0 1\"    layoutName=\"Green\"    orientation=\"Coronal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode1\"    name=\"vtkMRMLSliceCompositeNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Green\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode2\"    name=\"Red\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"222.49 223.998 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1\"    layoutName=\"Red\"    orientation=\"Axial\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode2\"    name=\"vtkMRMLSliceCompositeNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"0.5\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Red\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode3\"    name=\"Yellow\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"224 225.519 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"0 0 1 0 -1 0 0 0 0 1 0 0 0 0 0 1\"    layoutName=\"Yellow\"    orientation=\"Sagittal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode3\"    name=\"vtkMRMLSliceCompositeNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Yellow\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ScriptedModule\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScriptedModuleNode1\"    name=\"vtkMRMLScriptedModuleNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\" parameter0= \"label 1\"  ></ScriptedModule>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <View\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLViewNode1\"    name=\"View1\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    active=\"true\"    visibility=\"true\"    fieldOfView=\"200\"    letterSize=\"0.05\"    boxVisible=\"true\"    fiducialsVisible=\"true\"    fiducialLabelsVisible=\"true\"    axisLabelsVisible=\"true\"    backgroundColor=\"0.70196 0.70196 0.90588\"    animationMode=\"Off\"    viewAxisMode=\"LookFrom\"    spinDegrees=\"2\"    spinMs=\"5\"    spinDirection=\"YawLeft\"    rotateDegrees=\"5\"    rockLength=\"200\"    rockCount=\"0\"    stereoType=\"NoStereo\"    renderMode=\"Perspective\"  ></View>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Camera\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCameraNode1\"    name=\"Default Scene Camera\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    position=\"0 500 0\"    focalPoint=\"0 0 0\"    viewUp=\"0 0 1\"    parallelProjection=\"false\"    parallelScale=\"1\"    activetag=\"vtkMRMLViewNode1\"  ></Camera>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode1\"    name=\"vtkMRMLVolumeArchetypeStorageNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${AtlasIsoTemplate}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode1\"    name=\"vtkMRMLScalarVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode2\"    name=\"vtkMRMLScalarVolumeDisplayNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"118\"    level=\"63\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode3\"    name=\"vtkMRMLScalarVolumeDisplayNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"766.13\"    level=\"383.065\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode4\"    name=\"vtkMRMLScalarVolumeDisplayNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode5\"    name=\"vtkMRMLScalarVolumeDisplayNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode6\"    name=\"vtkMRMLVolumeArchetypeStorageNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${AtlasIsoTemplate}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode6\"    name=\"${AtlasIsoTemplate_name}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode6\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode6\"    ijkToRASDirections=\"-1   -0   0 -0   -1   -0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"99.5 112 -99.5\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode6\"    name=\"vtkMRMLScalarVolumeDisplayNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeCoolShade1\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode7\"    name=\"vtkMRMLScalarVolumeDisplayNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"26952\"    level=\"13476\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <LabelMapVolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLabelMapVolumeDisplayNode1\"    name=\"vtkMRMLLabelMapVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeFileGenericColors.txt\"   ></LabelMapVolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode8\"    name=\"vtkMRMLScalarVolumeDisplayNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"106\"    level=\"146\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode9\"    name=\"vtkMRMLScalarVolumeDisplayNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"24196\"    level=\"20593\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode11\"    name=\"vtkMRMLVolumeArchetypeStorageNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode10\"    name=\"vtkMRMLScalarVolumeDisplayNode10\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"110\"    level=\"144\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode12\"    name=\"vtkMRMLVolumeArchetypeStorageNode12\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode12\"    name=\"${OutputFileTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode12\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode11\"    ijkToRASDirections=\"-1   -0   0 -0   -1   -0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"99.5 112 -99.5\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode11\"    name=\"vtkMRMLScalarVolumeDisplayNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"110\"    level=\"144\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</SceneSnapshot>\\n')"<<std::endl;
 
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode9\"  name=\"warp\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSelectionNode1\"    name=\"vtkMRMLSelectionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    activeVolumeID=\"vtkMRMLScalarVolumeNode12\"    secondaryVolumeID=\"vtkMRMLScalarVolumeNode12\"    activeLabelVolumeID=\"vtkMRMLScalarVolumeNode8\"    activeFiducialListID=\"NULL\"    activeROIListID=\"NULL\"    activeCameraID=\"NULL\"    activeViewID=\"NULL\"    activeLayoutID=\"vtkMRMLLayoutNode1\"  ></Selection>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Interaction\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLInteractionNode1\"    name=\"vtkMRMLInteractionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentInteractionMode=\"ViewTransform\"    lastInteractionMode=\"ViewTransform\"  ></Interaction>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Layout\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLayoutNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentViewArrangement=\"2\"    guiPanelVisibility=\"1\"    bottomPanelVisibility =\"1\"    guiPanelLR=\"0\"    collapseSliceControllers=\"0\"\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    numberOfCompareViewRows=\"1\"    numberOfCompareViewColumns=\"1\"    numberOfLightboxRows=\"1\"    numberOfLightboxColumns=\"1\"    mainPanelSize=\"400\"    secondaryPanelSize=\"400\"    selectedModule=\"Volumes\"  ></Layout>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <TGParameters\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLChangeTrackerNode1\"    name=\"vtkMRMLChangeTrackerNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    ROIMin=\"-1 -1 -1\"    ROIMax=\"-1 -1 -1\"    SegmentThresholdMin=\"-1\"    SegmentThresholdMax=\"-1\"    Analysis_Intensity_Flag=\"0\"    Analysis_Deformable_Flag=\"0\"    UseITK=\"1\"    RegistrationChoice=\"3\"    ROIRegistration=\"1\"    ResampleChoice=\"3\"    ResampleConst=\"0.5\"  ></TGParameters>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Crosshair\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCrosshairNode1\"    name=\"vtkMRMLCrosshairNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    crosshairMode=\"NoCrosshair\"    navigation=\"true\"    crosshairBehavior=\"Normal\"    crosshairThickness=\"Fine\"    crosshairRAS=\"0 0 1.42109e-14\"  ></Crosshair>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode1\"    name=\"Green\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"199 199.672 1\"    dimensions=\"296 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 0 0 0 1 0 0 1 0 0 0 0 0 1\"    layoutName=\"Green\"    orientation=\"Coronal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode1\"    name=\"vtkMRMLSliceCompositeNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Green\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode2\"    name=\"Red\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"222.49 223.998 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1\"    layoutName=\"Red\"    orientation=\"Axial\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode2\"    name=\"vtkMRMLSliceCompositeNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"0.5\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Red\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode3\"    name=\"Yellow\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"224 225.519 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"0 0 1 0 -1 0 0 0 0 1 0 0 0 0 0 1\"    layoutName=\"Yellow\"    orientation=\"Sagittal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode3\"    name=\"vtkMRMLSliceCompositeNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode12\"    foregroundVolumeID=\"vtkMRMLScalarVolumeNode6\"    labelVolumeID=\"\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Yellow\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ScriptedModule\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScriptedModuleNode1\"    name=\"vtkMRMLScriptedModuleNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\" parameter0= \"label 1\"  ></ScriptedModule>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <View\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLViewNode1\"    name=\"View1\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    active=\"true\"    visibility=\"true\"    fieldOfView=\"200\"    letterSize=\"0.05\"    boxVisible=\"true\"    fiducialsVisible=\"true\"    fiducialLabelsVisible=\"true\"    axisLabelsVisible=\"true\"    backgroundColor=\"0.70196 0.70196 0.90588\"    animationMode=\"Off\"    viewAxisMode=\"LookFrom\"    spinDegrees=\"2\"    spinMs=\"5\"    spinDirection=\"YawLeft\"    rotateDegrees=\"5\"    rockLength=\"200\"    rockCount=\"0\"    stereoType=\"NoStereo\"    renderMode=\"Perspective\"  ></View>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Camera\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCameraNode1\"    name=\"Default Scene Camera\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    position=\"0 500 0\"    focalPoint=\"0 0 0\"    viewUp=\"0 0 1\"    parallelProjection=\"false\"    parallelScale=\"1\"    activetag=\"vtkMRMLViewNode1\"  ></Camera>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode1\"    name=\"vtkMRMLVolumeArchetypeStorageNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${AtlasIsoTemplate}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode1\"    name=\"vtkMRMLScalarVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode2\"    name=\"vtkMRMLScalarVolumeDisplayNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"118\"    level=\"63\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode3\"    name=\"vtkMRMLScalarVolumeDisplayNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"766.13\"    level=\"383.065\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode4\"    name=\"vtkMRMLScalarVolumeDisplayNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode5\"    name=\"vtkMRMLScalarVolumeDisplayNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode6\"    name=\"vtkMRMLVolumeArchetypeStorageNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${AtlasIsoTemplate}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode6\"    name=\"${AtlasIsoTemplate_name}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode6\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode6\"    ijkToRASDirections=\"-1   -0   0 -0   -1   -0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"99.5 112 -99.5\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode6\"    name=\"vtkMRMLScalarVolumeDisplayNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeCoolShade1\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode7\"    name=\"vtkMRMLScalarVolumeDisplayNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"26952\"    level=\"13476\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <LabelMapVolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLabelMapVolumeDisplayNode1\"    name=\"vtkMRMLLabelMapVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeFileGenericColors.txt\"   ></LabelMapVolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode8\"    name=\"vtkMRMLScalarVolumeDisplayNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"106\"    level=\"146\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode9\"    name=\"vtkMRMLScalarVolumeDisplayNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"24196\"    level=\"20593\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode11\"    name=\"vtkMRMLVolumeArchetypeStorageNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode10\"    name=\"vtkMRMLScalarVolumeDisplayNode10\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"110\"    level=\"144\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode12\"    name=\"vtkMRMLVolumeArchetypeStorageNode12\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"1\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode12\"    name=\"${OutputFileTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode12\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode11\"    ijkToRASDirections=\"-1   -0   0 -0   -1   -0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"99.5 112 -99.5\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode11\"    name=\"vtkMRMLScalarVolumeDisplayNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"110\"    level=\"144\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-  BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</SceneSnapshot>\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+      BMSAutoSegMainFile<<"         echo ('Warping already Done!)'"<<std::endl;
+      BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
 
-  BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-  BMSAutoSegMainFile<<"         echo ('Warping already Done!)'"<<std::endl;
-  BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
-
-  BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION: DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+      BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+      BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION: DONE!')"<<std::endl;
+      BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    }
 
 
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -4347,7 +4555,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
   if (GetClassicWarpingMethod())
   {
-    BMSAutoSegMainFile<<"      ListFileInDir(ZippedHFieldList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_warp.hfield.gz)"<<std::endl;
+    BMSAutoSegMainFile<<"      ListFileInDir(ZippedHFieldList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_warp.hfield.gz)"<<std::endl;
     BMSAutoSegMainFile<<"      If (${ZippedHFieldList} != '')"<<std::endl;
     BMSAutoSegMainFile<<"         set (ZippedHFieldFileTail ${ZippedHFieldList})"<<std::endl;
     BMSAutoSegMainFile<<"         set (ZippedHFieldFile ${WarpROIPath}${ZippedHFieldFileTail})"<<std::endl;
@@ -4356,26 +4564,36 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   }
   else if (GetBRAINSDemonWarpMethod())
   {
-    BMSAutoSegMainFile<<"      ListFileInDir(NrrdList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_transform.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      ListFileInDir(NrrdList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_transform.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"      If (${NrrdList} != '')"<<std::endl;
     BMSAutoSegMainFile<<"         set (NrrdFileTail ${NrrdList})"<<std::endl;
     BMSAutoSegMainFile<<"         set (NrrdFile ${WarpROIPath}${NrrdFileTail})"<<std::endl;
   }
-  else
+  else if (GetCoarseToFineWarpingMethod())
   {
-    BMSAutoSegMainFile<<"      ListFileInDir(MHDFieldList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_deformationfield.mhd)"<<std::endl;
+    BMSAutoSegMainFile<<"      ListFileInDir(MHDFieldList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_deformationfield.mhd)"<<std::endl;
     BMSAutoSegMainFile<<"      If (${MHDFieldList} != '')"<<std::endl;
     BMSAutoSegMainFile<<"         set (MHDFieldFileTail ${MHDFieldList})"<<std::endl;
     BMSAutoSegMainFile<<"         set (MHDFieldFile ${WarpROIPath}${MHDFieldFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         ListFileInDir(ZippedRAWFieldList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_deformationfield.raw.gz)"<<std::endl;
+    BMSAutoSegMainFile<<"         ListFileInDir(ZippedRAWFieldList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_deformationfield.raw.gz)"<<std::endl;
     BMSAutoSegMainFile<<"         If (${ZippedRAWFieldList} != '')"<<std::endl;
     BMSAutoSegMainFile<<"            set (IsRAWFieldFileZipped 1)"<<std::endl; 
     BMSAutoSegMainFile<<"            set (ZippedRAWFieldFile ${WarpROIPath}${ZippedRAWFieldList})"<<std::endl;
     BMSAutoSegMainFile<<"            ExtractString (RAWFieldFile ${ZippedRAWFieldFile} 3 FROMEND)"<<std::endl;
+    BMSAutoSegMainFile<<"         Else (${ZippedRAWFieldList})"<<std::endl;
+    BMSAutoSegMainFile<<"            set (RAWFieldFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_deformationfield.raw)"<<std::endl;
+    BMSAutoSegMainFile<<"            set (IsRAWFieldFileZipped 0)"<<std::endl; 
     BMSAutoSegMainFile<<"         EndIf (${ZippedRAWFieldList})"<<std::endl;
   }
+  else if (GetANTSWarpingMethod())
+    {
+      BMSAutoSegMainFile<<"      ListFileInDir(DeformationFieldList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Warp.nii.gz)"<<std::endl;
+      BMSAutoSegMainFile<<"      If (${DeformationFieldList} != '')"<<std::endl;
+      BMSAutoSegMainFile<<"         set (DeformationFieldTail ${DeformationFieldList})"<<std::endl;
+      BMSAutoSegMainFile<<"         set (DeformationField ${WarpROIPath}${DeformationFieldTail})"<<std::endl;
+    }
 
-  BMSAutoSegMainFile<<"         ListFileInDir(SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+  BMSAutoSegMainFile<<"         ListFileInDir(SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
   BMSAutoSegMainFile<<"         If (${SkullStrippedList} != '')"<<std::endl;
   BMSAutoSegMainFile<<"            set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
   BMSAutoSegMainFile<<"         EndIf (${SkullStrippedList})"<<std::endl;
@@ -4393,23 +4611,24 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"           set (StructureAffTail ${Case}--${StructureName}-AffReg.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"           set (StructureWarpTail ${Case}--${StructureName}-WarpReg.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"           set (StructureWarpHead ${Case}--${StructureName}-WarpReg)"<<std::endl;
-    BMSAutoSegMainFile<<"	          set (StructureAff ${WarpROIPath}${StructureAffTail})"<<std::endl;
-    BMSAutoSegMainFile<<"	          set (StructureWarp ${WarpROIPath}${StructureWarpTail})"<<std::endl;
+    BMSAutoSegMainFile<<"	    set (StructureAff ${WarpROIPath}${StructureAffTail})"<<std::endl;
+    BMSAutoSegMainFile<<"	    set (StructureWarp ${WarpROIPath}${StructureWarpTail})"<<std::endl;
     BMSAutoSegMainFile<<"           # Applying Affine transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(AffFileList ${WarpROIPath} ${StructureAffTail})"<<std::endl;
     BMSAutoSegMainFile<<"                echo (${AffFileList})"<<std::endl;
     BMSAutoSegMainFile<<"           If (${AffFileList} == '')"<<std::endl;
 
-    if (!GetBRAINSDemonWarpMethod())
-    {
-      BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_initializetransform.txt)"<<std::endl; 
-      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureAff} --transformationFile ${TransformInputFile} -i bs --Reference ${SkullStrippedFile})"<<std::endl;
-      BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
-    }
+    //if (!GetBRAINSDemonWarpMethod())
+    if (!GetANTSWarpingMethod())
+      {
+	BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_initializetransform.txt)"<<std::endl; 
+	BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureAff} --transformationFile ${TransformInputFile} -i bs --Reference ${SkullStrippedFile})"<<std::endl;
+	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+      }
     BMSAutoSegMainFile<<"	          Else ()"<<std::endl;
     BMSAutoSegMainFile<<"              echo ('File already exists: '${StructureAffTail})"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${AffFileList})"<<std::endl;
-    BMSAutoSegMainFile<<"	          # Applying Warping transformation"<<std::endl;
+    BMSAutoSegMainFile<<"	    # Applying Warping transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(WarpFileList ${WarpROIPath} ${StructureWarpTail})"<<std::endl;
     BMSAutoSegMainFile<<"           If (${WarpFileList} == '')"<<std::endl;
 
@@ -4431,28 +4650,31 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     else if (GetBRAINSDemonWarpMethod())
     {
       BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureWarp} -H ${NrrdFile} -i linear --hfieldtype displacement --Reference ${SkullStrippedFile})"<<std::endl;
-      BMSAutoSegMainFile<<"      	   Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"      	 Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
-    else
+    else if (GetCoarseToFineWarpingMethod())
     {
-      BMSAutoSegMainFile<<"	      ListFileInDir(MHDWarpFileList ${WarpROIPath} ${StructureWarpHead}.mhd)"<<std::endl;
-      BMSAutoSegMainFile<<"           If (${MHDWarpFileList} == '')"<<std::endl;
       BMSAutoSegMainFile<<"              If (${IsRAWFieldFileZipped} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"	             # Unzipping deformation field"<<std::endl;
       BMSAutoSegMainFile<<"                  Run (output 'gunzip ${ZippedRAWFieldFile}')"<<std::endl;
       BMSAutoSegMainFile<<"                  set(IsRAWFieldFileZipped 0)"<<std::endl;
       BMSAutoSegMainFile<<"	         EndIf (${IsRAWFieldFileZipped})"<<std::endl;
       BMSAutoSegMainFile<<"              Run (output '${txApplyCmd} -h ${MHDFieldFile} -b -i ${StructureAff} -o ${WarpROIPath}${StructureWarpHead}')"<<std::endl;
-      BMSAutoSegMainFile<<"           Else()"<<std::endl;
-      BMSAutoSegMainFile<<"	         ListFileInDir(ZippedRAWFileList ${WarpROIPath} ${StructureWarpHead}.raw.gz)"<<std::endl;
-      BMSAutoSegMainFile<<"              If (${ZippedRAWFileList} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"                  Run (output 'gunzip ${WarpROIPath}${StructureWarpHead}.raw.gz')"<<std::endl;
-      BMSAutoSegMainFile<<"	         EndIf (${ZippedRAWFileList})"<<std::endl;
-      BMSAutoSegMainFile<<"           EndIf (${MHDWarpFileList)"<<std::endl;
-      BMSAutoSegMainFile<<"           Run (output '${convCmd} ${WarpROIPath}${StructureWarpHead}.mhd ${StructureWarp}')"<<std::endl;
-      BMSAutoSegMainFile<<"           Run (output 'gzip ${WarpROIPath}${StructureWarpHead}.raw')"<<std::endl;
-	  	  
+      BMSAutoSegMainFile<<"              set (command_line ${convCmd} ${WarpROIPath}${StructureWarpHead}.mhd ${StructureWarp})"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"              DeleteFile (${WarpROIPath}${StructureWarpHead}.mhd)"<<std::endl;
+      BMSAutoSegMainFile<<"              DeleteFile (${WarpROIPath}${StructureWarpHead}.raw)"<<std::endl;
     }
+    else if (GetANTSWarpingMethod())
+      {
+	BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
+	BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Structure} ${StructureWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-BSpline)"<<std::endl;
+	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+	BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
+	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+      }
+
     BMSAutoSegMainFile<<"              set(StructureComputed 1)"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
     BMSAutoSegMainFile<<"              echo ('File already exists: '${StructureWarpTail})"<<std::endl;
@@ -4460,7 +4682,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         echo ('Registering '${StructureName}': DONE!')"<<std::endl;
     BMSAutoSegMainFile<<"         EndForEach(Structure)"<<std::endl<<std::endl;  
   }  
-
+  
   
   if (!IsLabelListEmpty)
   {
@@ -4499,9 +4721,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"           ListFileInDir(AffFileList ${WarpROIPath} ${LabelAffTail})"<<std::endl;
     BMSAutoSegMainFile<<"           If (${AffFileList} == '')"<<std::endl;
 
-    if (!GetBRAINSDemonWarpMethod())
+    //if (!GetBRAINSDemonWarpMethod())
+    if (!GetANTSWarpingMethod())
     {
-      BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled_initializetransform.txt)"<<std::endl; 
+      BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_initializetransform.txt)"<<std::endl; 
       BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${SkullStrippedFile})"<<std::endl;
       BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
@@ -4536,25 +4759,28 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelWarp} -H ${NrrdFile} -i nn --hfieldtype displacement --Reference ${SkullStrippedFile})"<<std::endl;
       BMSAutoSegMainFile<<"      	   Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
-    else
+    else if (GetCoarseToFineWarpingMethod())
     {
-      BMSAutoSegMainFile<<"	      ListFileInDir(MHDWarpFileList ${WarpROIPath} ${LabelWarpHead}.mhd)"<<std::endl;
-      BMSAutoSegMainFile<<"           If (${MHDWarpFileList} == '')"<<std::endl;
       BMSAutoSegMainFile<<"              If (${IsRAWFieldFileZipped} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"	             # Unzipping deformation field"<<std::endl;
       BMSAutoSegMainFile<<"                  Run (output 'gunzip ${ZippedRAWFieldFile}')"<<std::endl;
       BMSAutoSegMainFile<<"                  set(IsRAWFieldFileZipped 0)"<<std::endl;
       BMSAutoSegMainFile<<"	         EndIf (${IsRAWFieldFileZipped})"<<std::endl;
       BMSAutoSegMainFile<<"              Run (output '${txApplyCmd} -h ${MHDFieldFile} -b -i ${LabelAff} -o ${WarpROIPath}${LabelWarpHead} -n')"<<std::endl;
-      BMSAutoSegMainFile<<"           Else()"<<std::endl;
-      BMSAutoSegMainFile<<"	         ListFileInDir(ZippedRAWFileList ${WarpROIPath} ${LabelWarpHead}.raw.gz)"<<std::endl;
-      BMSAutoSegMainFile<<"              If (${ZippedRAWFileList} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"                  Run (output 'gunzip ${WarpROIPath}${LabelWarpHead}.raw.gz')"<<std::endl;
-      BMSAutoSegMainFile<<"	         EndIf (${ZippedRAWFileList})"<<std::endl;
-      BMSAutoSegMainFile<<"           EndIf (${MHDWarpFileList)"<<std::endl;
-      BMSAutoSegMainFile<<"           Run (output '${convCmd} ${WarpROIPath}${LabelWarpHead}.mhd ${LabelWarp}')"<<std::endl;
-      BMSAutoSegMainFile<<"           Run (output 'gzip ${WarpROIPath}${LabelWarpHead}.raw')"<<std::endl;
+      BMSAutoSegMainFile<<"           set (command_line ${convCmd} ${WarpROIPath}${LabelWarpHead}.mhd ${LabelWarp})"<<std::endl;
+      BMSAutoSegMainFile<<"           Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${LabelWarpHead}.mhd)"<<std::endl;
+      BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${LabelWarpHead}.raw)"<<std::endl;
     }
+    else if (GetANTSWarpingMethod())
+      {
+	BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
+	BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Label} ${LabelWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-NN)"<<std::endl;
+	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+	BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
+	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+      }
 
     BMSAutoSegMainFile<<"              If (${LabelNumber} > ${VentricleListLength} && ${LabelNumber} <= ${GenericROIMapLabelLimit})"<<std::endl;
     BMSAutoSegMainFile<<"                set (GenericROIMapComputed 1)"<<std::endl; 
@@ -4580,7 +4806,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
-    BMSAutoSegMainFile<<"   set (StripIrescaledTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"   set (StripIrescaledTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"   set (StripIrescaled ${T1Path}/${AutoSegDir}/Stripped/${StripIrescaledTail})"<<std::endl;
     BMSAutoSegMainFile<<"   set (Parcellation ${WarpROIPath}${ParcellationTail} )"<<std::endl;	
     BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
@@ -4666,16 +4892,22 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         echo ('Error:No Nrrd File!')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${NrrdList})"<<std::endl;
   }
-  else
+  else if (GetCoarseToFineWarpingMethod())
   {
     BMSAutoSegMainFile<<"           If (${IsRAWFieldFileZipped} == 0)"<<std::endl;  
     BMSAutoSegMainFile<<"               # Zipping deformationfield File "<<std::endl;
     BMSAutoSegMainFile<<"               Run (output 'gzip -f ${RAWFieldFile}')"<<std::endl;
-    BMSAutoSegMainFile<<"           EndIf (${IsHFieldFileZipped})"<<std::endl;
+    BMSAutoSegMainFile<<"           EndIf (${IsRAWFieldFileZipped})"<<std::endl;
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
     BMSAutoSegMainFile<<"         echo ('Error:No deformationfield file!')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${MHDFieldList})"<<std::endl;
   }
+  else if (GetANTSWarpingMethod())
+    {
+      BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+      BMSAutoSegMainFile<<"         echo ('Error:No Deformation file!')"<<std::endl;
+      BMSAutoSegMainFile<<"      EndIf (${DeformationFileList})"<<std::endl;
+    }
 
   BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
   BMSAutoSegMainFile<<"echo ( )"<<std::endl;
@@ -4971,7 +5203,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"   echo('Case Number: '${T1CaseHead})"<<std::endl;
     BMSAutoSegMainFile<<"   echo( )"<<std::endl; 	  
     BMSAutoSegMainFile<<"   set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
-    BMSAutoSegMainFile<<"   set (AllROIFileTail AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled-AllROI.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"   set (AllROIFileTail AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}-AllROI.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"   set (AllROIFile ${WarpROIPath}${AllROIFileTail})"<<std::endl;
   
     BMSAutoSegMainFile<<"      ListFileInDir(AllROIList ${WarpROIPath} ${AllROIFileTail})"<<std::endl;
@@ -5001,7 +5233,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
-    BMSAutoSegMainFile<<"   set (StripIrescaledTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"   set (StripIrescaledTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"   set (StripIrescaled ${T1Path}/${AutoSegDir}/Stripped/${StripIrescaledTail})"<<std::endl;
     BMSAutoSegMainFile<<"   set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
     BMSAutoSegMainFile<<"   set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
@@ -5303,7 +5535,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '##################################\\n')"<<std::endl;
     BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '# Tissue segmentation volume analysis:\\n')"<<std::endl;
     BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '##################################\\n\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} 'Case,Volume,WM,GM,CSF\\n')"<<std::endl;
+    if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+      BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} 'Case,Volume,MWM,WM,GM,CSF\\n')"<<std::endl;
+    else
+      BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} 'Case,Volume,WM,GM,CSF\\n')"<<std::endl;
     BMSAutoSegMainFile<<"   set (files_to_cat '')"<<std::endl;
     BMSAutoSegMainFile<<"   set (CaseNumber 0)"<<std::endl;
     BMSAutoSegMainFile<<"   ForEach (T1Case ${T1CasesList})"<<std::endl;
@@ -5362,7 +5597,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	else
 	  BMSAutoSegMainFile<<"set(List ${List} ${VentricleList})"<<std::endl;
 	IsListEmpty = false;	
-      }	      
+      }
 	  
       BMSAutoSegMainFile<<"echo ( )"<<std::endl;
       BMSAutoSegMainFile<<"echo ( )"<<std::endl;
@@ -5387,7 +5622,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
-      BMSAutoSegMainFile<<"      set (AllROIFileTail AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}-irescaled-AllROI.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"      set (AllROIFileTail AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}-AllROI.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      set (AllROIFile ${WarpROIPath}${AllROIFileTail})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (AllROIFileHead ${AllROIFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
 
@@ -5404,7 +5639,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"Else ()"<<std::endl;
       BMSAutoSegMainFile<<"   echo ('Volume File already exists!')"<<std::endl;
       BMSAutoSegMainFile<<"EndIf()"<<std::endl<<std::endl<<std::endl;
-    }  
+    }
 
     if (GetGenericROISegmentation())
     {
@@ -5470,9 +5705,16 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"ForEach(ParcellationMap ${ParcellationMapList})"<<std::endl;
       BMSAutoSegMainFile<<" GetFilename (ParcellationMapName ${ParcellationMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<" echo (Parcellation File: ${ParcellationMapName}:)"<<std::endl;
+      if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+	BMSAutoSegMainFile<<" set (VolumeFileMWM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_MWM.csv)"<<std::endl;
       BMSAutoSegMainFile<<" set (VolumeFileWM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_WM.csv)"<<std::endl;
       BMSAutoSegMainFile<<" set (VolumeFileGM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_GM.csv)"<<std::endl;
       BMSAutoSegMainFile<<" set (VolumeFileCSF ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_CSF.csv)"<<std::endl;
+      if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+	{
+	  BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileMWM} PATH)"<<std::endl;
+	  BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileMWM} NAME)"<<std::endl;
+	}
       BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileWM} PATH)"<<std::endl;
       BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileWM} NAME)"<<std::endl;
       BMSAutoSegMainFile<<" ListFileInDir(FileListWM ${Path} ${VolumeFileTail})"<<std::endl;
@@ -5482,7 +5724,24 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileCSF} PATH)"<<std::endl;
       BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileCSF} NAME)"<<std::endl;
       BMSAutoSegMainFile<<" ListFileInDir(FileListCSF ${Path} ${VolumeFileTail})"<<std::endl;
-      BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
+
+      if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+	{
+	  BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListMWM} == '' || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
+	  BMSAutoSegMainFile<<"  set (flagMWM 0)"<<std::endl;	
+
+	  BMSAutoSegMainFile<<"  If (${FileListMWM} == '')"<<std::endl;
+	  BMSAutoSegMainFile<<"   set (flagMWM 1)"<<std::endl;
+	  BMSAutoSegMainFile<<"   WriteFile(${VolumeFileMWM} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
+	  BMSAutoSegMainFile<<"   AppendFile(${VolumeFileMWM} '################################################\\n')"<<std::endl;
+	  BMSAutoSegMainFile<<"   AppendFile(${VolumeFileMWM} '# Parcellation map volume analysis: Myelinated White Matter\\n')"<<std::endl;
+	  BMSAutoSegMainFile<<"   AppendFile(${VolumeFileMWM} '################################################\\n\\n')"<<std::endl;
+	  BMSAutoSegMainFile<<"   set (files_to_cat_MWM '')"<<std::endl;
+	  BMSAutoSegMainFile<<"  EndIf (${FileListMWM})"<<std::endl;  
+	}      
+      else
+	BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
+	  
       BMSAutoSegMainFile<<"  set (flagWM 0)"<<std::endl;
       BMSAutoSegMainFile<<"  set (flagGM 0)"<<std::endl;
       BMSAutoSegMainFile<<"  set (flagCSF 0)"<<std::endl;
@@ -5540,7 +5799,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 13 FROMEND)"<<std::endl;
       else
 	BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 11 FROMEND)"<<std::endl;
-      BMSAutoSegMainFile<<"      set(LabelList 'WM' 'GM' 'CSF')"<<std::endl;
+
+      if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+	BMSAutoSegMainFile<<"      set(LabelList 'MWM' 'WM' 'GM' 'CSF')"<<std::endl;
+      else
+	BMSAutoSegMainFile<<"      set(LabelList 'WM' 'GM' 'CSF')"<<std::endl;
       BMSAutoSegMainFile<<"      set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
 
       BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
@@ -5558,15 +5821,33 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       std::string SoftTissueMap =GetSoftTissueMap();
       if (SoftTissueMap=="Soft")
       {
-	BMSAutoSegMainFile<<"              If (${Label} == 'WM' && ${flagWM} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"           set(Posterior _posterior0)"<<std::endl;
-	BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
-	BMSAutoSegMainFile<<"              If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"           set(Posterior _posterior1)"<<std::endl;
-	BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
-	BMSAutoSegMainFile<<"              If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"           set(Posterior _posterior2)"<<std::endl;
-	BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
+	if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+	  {
+	    BMSAutoSegMainFile<<"           If (${Label} == 'MWM' && ${flagMWM} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior0)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"           If (${Label} == 'WM' && ${flagWM} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior1)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"           If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior2)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"           If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior3)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	  }
+	else
+	  {
+	    BMSAutoSegMainFile<<"           If (${Label} == 'WM' && ${flagWM} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior0)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"           If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior1)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"           If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior2)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	  }
 	if(GetLoop())
 	{
 	  BMSAutoSegMainFile<<"           set(EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
@@ -5602,6 +5883,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"            Endif(${List})"<<std::endl;
 	BMSAutoSegMainFile<<"            Run(output '${ImageStatCmd} ${SkullStrippedImage} -label ${FileMasked} -volumeSummary -outbase ${WarpROIPath}${FileMaskedRoot}')"<<std::endl;
       }
+
+      if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+	{
+	  BMSAutoSegMainFile<<"              If (${Label} == 'MWM' && ${flagMWM} == 1)"<<std::endl;
+	  BMSAutoSegMainFile<<"                  set (files_to_cat_MWM ${files_to_cat_MWM} ${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
+	  BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;	  
+	}
       BMSAutoSegMainFile<<"              If (${Label} == 'WM' && ${flagWM} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"                  set (files_to_cat_WM ${files_to_cat_WM} ${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
       BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
@@ -8338,6 +8626,10 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
   float Alpha, Beta, Gamma, MaxPerturbation, NumBasis,DeformationFieldSmoothingSigma;
   int Scale4NbIterations, Scale2NbIterations, Scale1NbIterations,PyramidLevels;
   std::string RegistrationFilterType,MovingShrinkFactors,FixedShrinkFactors,IterationCountPyramidLevels;
+  // - ANTS
+  std::string ANTSIterations, ANTSRegistrationFilterType, ANTSTransformationStep;
+  float ANTSCCWeight, ANTSCCRegionRadius, ANTSMIWeight, ANTSMIBins, ANTSMSQWeight, ANTSGaussianSigma;
+  bool ANTSGaussianSmoothing;    
     // Skull Stripping
   int DeleteVessels;
     // Regional histogram
@@ -8352,9 +8644,9 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 
   bool IsParameterFileLoaded=false;
 
-  if (mode ==file)
+  if (mode == file)
   {
-    // INIT / default setting for backward comaptibility
+    // INIT / default setting for backward compatibility
     
     // Init for EMS loop
     SetLoop(0);
@@ -8365,6 +8657,8 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
     // Init for rigid registration
     SetRegistrationInitialization("useCenterOfHeadAlign");
     SetInitRegUseT1InitTransform(0);
+    // Init for atlas warping
+    SetANTSWarpingMethod(0);
   }
 
   if ((ParameterFile = fopen(_FileName,"r")) != NULL) 
@@ -8840,18 +9134,31 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  if (std::strcmp(Line+16, "Classic") == 0)
 	  {
 	    SetClassicWarpingMethod(1);
+	    SetCoarseToFineWarpingMethod(0);
 	    SetBRAINSDemonWarpMethod(0);
+	    SetANTSWarpingMethod(0);
 	  }
 	  else if (std::strcmp(Line+16, "Coarse-to-fine") == 0)
 	  {
 	    SetClassicWarpingMethod(0);
+	    SetCoarseToFineWarpingMethod(1);
 	    SetBRAINSDemonWarpMethod(0);
+	    SetANTSWarpingMethod(0);
 	  }
 	  else if (std::strcmp(Line+16, "BRAINSDemonWarp") == 0)
 	  {
 	    SetClassicWarpingMethod(0);
+	    SetCoarseToFineWarpingMethod(0);
 	    SetBRAINSDemonWarpMethod(1);
+	    SetANTSWarpingMethod(0);
 	  }
+	  else if (std::strcmp(Line+16, "ANTS") == 0)
+	  {
+	    SetClassicWarpingMethod(0);
+	    SetCoarseToFineWarpingMethod(0);
+	    SetBRAINSDemonWarpMethod(0);
+	    SetANTSWarpingMethod(1);
+	  }	  
 	  else
 	    std::cerr<<"Error while reading parameter file: warping method incorrect!"<<std::endl;
 	}
@@ -8944,6 +9251,67 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	{
 	  NumBasis = atof(Line+10);
 	  SetNumBasis(NumBasis);
+	}
+	else if ( (std::strncmp("ANTS Iterations: ", Line, 17)) == 0)
+	{
+	  ANTSIterations = Line+17;
+	  SetANTSIterations(ANTSIterations.c_str());	
+	}
+	else if ( (std::strncmp("ANTS CC weight: ", Line, 16)) == 0)
+	{
+	  ANTSCCWeight = atof(Line+16);
+	  SetANTSCCWeight(ANTSCCWeight);	
+	}
+	else if ( (std::strncmp("ANTS CC region radius: ", Line, 23)) == 0)
+	{
+	  ANTSCCRegionRadius = atof(Line+23);
+	  SetANTSCCRegionRadius(ANTSCCRegionRadius);	
+	}
+	else if ( (std::strncmp("ANTS MI weight: ", Line, 16)) == 0)
+	{
+	  ANTSMIWeight = atof(Line+16);
+	  SetANTSMIWeight(ANTSMIWeight);	
+	}
+	else if ( (std::strncmp("ANTS MI bins: ", Line, 14)) == 0)
+	{
+	  ANTSMIBins = atoi(Line+14);
+	  SetANTSMIBins(ANTSMIBins);	
+	}
+	else if ( (std::strncmp("ANTS MSQ weight: ", Line, 17)) == 0)
+	{
+	  ANTSMSQWeight = atof(Line+17);
+	  SetANTSMSQWeight(ANTSMSQWeight);	
+	}
+	else if ( (std::strncmp("ANTS Registration Type: ", Line, 24)) == 0)
+	{
+	  ANTSRegistrationFilterType = Line+24;	
+	  if (ANTSRegistrationFilterType=="GreedyDiffeomorphism"){
+	    SetANTSRegistrationFilterType("GreedyDiffeomorphism");
+	  }
+	  else if(ANTSRegistrationFilterType=="SpatiotemporalDiffeomorphism"){
+	    SetANTSRegistrationFilterType("SpatiotemporalDiffeomorphism");
+	  }
+	  else if(ANTSRegistrationFilterType=="Elastic"){
+	    SetANTSRegistrationFilterType("Elastic");
+	  }
+	  else if(ANTSRegistrationFilterType=="Exponential"){
+	    SetANTSRegistrationFilterType("Exponential");
+	  }
+	}
+	else if ( (std::strncmp("ANTS Registration Step: ", Line, 24)) == 0)
+	{
+	  ANTSTransformationStep = Line+24;
+	  SetANTSTransformationStep(ANTSTransformationStep.c_str());	
+	}
+	else if ( (std::strncmp("ANTS Gaussian Smoothing: ", Line, 25)) == 0)
+	{
+	  ANTSGaussianSmoothing = atoi(Line+25);
+	  SetANTSGaussianSmoothing(ANTSGaussianSmoothing);	
+	}
+	else if ( (std::strncmp("ANTS Gaussian Sigma: ", Line, 21)) == 0)
+	{
+	  ANTSGaussianSigma = atof(Line+21);
+	  SetANTSGaussianSigma(ANTSGaussianSigma);	
 	}
       }
       if(mode == N4biasFieldCorrection||mode == advancedParameters||mode == file)

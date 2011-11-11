@@ -231,7 +231,9 @@ class AutoSegGUIControls : public AutoSegGUI
     // Atlas Warping
     void ClassicWarpingButtonToggled();
     void CoarseToFineWarpingButtonToggled();
-    void BRAINSDemonWarpToggled();
+    void BRAINSDemonWarpButtonToggled();
+    void ANTSWarpingButtonToggled();
+    // - Fluid warping
     void SetAlphaGUI();
     void SetBetaGUI();
     void SetGammaGUI();
@@ -240,12 +242,25 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetScale4NbIterationsGUI();
     void SetScale2NbIterationsGUI();
     void SetScale1NbIterationsGUI();
+    // - BRAINSDemonWarp
     void SetPyramidLevelsGUI();
     void SetMovingShrinkFactorsGUI();
     void SetFixedShrinkFactorsGUI();
     void SetIterationCountPyramidLevelsGUI();
     void SetDeformationFieldSmoothingSigmaGUI();
     void SetRegistrationFilterTypeGUI();
+    // - ANTS warping
+    void SetANTSIterationsGUI();
+    void SetANTSCCWeightGUI();
+    void SetANTSCCRegionRadiusGUI();
+    void SetANTSMIWeightGUI();
+    void SetANTSMIBinsGUI();
+    void SetANTSMSQWeightGUI();
+    void SetANTSRegistrationFilterTypeGUI();
+    void SetANTSTransformationStepGUI();
+    void ANTSGaussianSmoothingButtonChecked();
+    void SetANTSGaussianSigmaGUI();
+    //
     void UseDefaultWarpingAdvancedParametersGUI();
     // Skull Stripping
     void DeleteVesselsButtonChecked();

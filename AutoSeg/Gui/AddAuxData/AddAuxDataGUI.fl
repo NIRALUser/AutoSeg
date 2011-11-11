@@ -12,7 +12,7 @@ class AddAuxDataGUI {open
     } {
       Fl_Button {} {
         label {Select the files:}
-        xywh {135 9 225 38} box NO_BOX
+        xywh {175 9 225 38} box NO_BOX labelfont 9
       }
       Fl_Button g_AuxT1File {
         label {...}
@@ -70,58 +70,58 @@ class AddAuxDataGUI {open
         tooltip {Set the Aux8 Image} xywh {25 489 25 25} deactivate
       }
       Fl_Output g_AuxT1FileDisp {
-        label {T1 Image} selected
-        xywh {145 66 430 24} deactivate
+        label {T1 Image}
+        xywh {145 66 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_AuxT2FileDisp {
         label {T2 Image}
-        xywh {145 108 430 24} deactivate
+        xywh {145 108 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_AuxPDFileDisp {
         label {PD Image}
-        xywh {147 149 430 24} deactivate
+        xywh {147 149 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux1FileDisp {
         label {Aux1 Image}
-        xywh {145 192 430 24} deactivate
+        xywh {145 192 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux2FileDisp {
         label {Aux2 Image}
-        xywh {145 234 430 24} deactivate
+        xywh {145 234 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux3FileDisp {
         label {Aux3 Image}
-        xywh {145 277 430 24} deactivate
+        xywh {145 277 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux4FileDisp {
         label {Aux4 Image}
-        xywh {145 319 430 24} deactivate
+        xywh {145 319 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux5FileDisp {
         label {Aux5 Image}
-        xywh {145 361 430 24} deactivate
+        xywh {145 361 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux6FileDisp {
         label {Aux6 Image}
-        xywh {145 404 430 24} deactivate
+        xywh {145 404 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux7FileDisp {
         label {Aux7 Image}
-        xywh {145 446 430 24} deactivate
+        xywh {145 446 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Output g_Aux8FileDisp {
         label {Aux8 Image}
-        xywh {145 489 430 24} deactivate
+        xywh {145 489 430 24} labelfont 8 textfont 8 deactivate
       }
       Fl_Return_Button g_OKButton {
         label OK
-        callback {OKButtonPressed();}
-        xywh {385 550 85 25}
+        callback {OKButtonPressed();} selected
+        xywh {385 550 85 25} labelfont 8
       }
       Fl_Button g_CancelButton {
         label Cancel
-        callback {CancelButtonPressed();}
-        xywh {485 550 85 25}
+        callback {CancelButtonPressed();} selected
+        xywh {485 550 85 25} labelfont 8
       }
     }
   }

@@ -2,7 +2,7 @@
 version 1.0109 
 header_name {.h} 
 code_name {.cxx}
-class AddDataGUI {open selected
+class AddDataGUI {open
 } {
   Function {AddDataGUI()} {open
   } {
@@ -12,7 +12,7 @@ class AddDataGUI {open selected
     } {
       Fl_Button {} {
         label {Select the files:}
-        xywh {135 9 225 38} box NO_BOX
+        xywh {135 9 225 38} box NO_BOX labelfont 9
       }
       Fl_Button g_T1File {
         label {...}
@@ -31,25 +31,25 @@ class AddDataGUI {open selected
       }
       Fl_Output g_T1FileDisp {
         label {T1 Image}
-        xywh {60 70 450 25} align 5
+        xywh {60 70 450 25} labelfont 8 align 5 textfont 8
       }
       Fl_Output g_T2FileDisp {
         label {T2 Image}
-        xywh {60 130 450 25} align 5 deactivate
+        xywh {60 130 450 25} labelfont 8 align 5 textfont 8 deactivate
       }
       Fl_Output g_PDFileDisp {
         label {PD Image}
-        xywh {60 190 450 25} align 5 deactivate
+        xywh {60 190 450 25} labelfont 8 align 5 textfont 8 deactivate
       }
       Fl_Return_Button g_OKButton {
         label OK
-        callback {OKButtonPressed();}
-        xywh {365 240 60 25}
+        callback {OKButtonPressed();} selected
+        xywh {365 240 60 25} labelfont 8
       }
       Fl_Button g_CancelButton {
         label Cancel
         callback {CancelButtonPressed();}
-        xywh {440 240 70 25}
+        xywh {440 240 70 25} labelfont 8
       }
     }
   }

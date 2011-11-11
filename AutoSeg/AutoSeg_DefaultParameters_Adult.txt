@@ -1,4 +1,4 @@
-//     Automatic Segmentation Parameter File
+//     Automatic Segmentation Parameter File - AutoSeg_2.6
 
 // Atlases
 Common Coordinate Image: /tools/atlas/BrainsegAtlas/adult-atlas-asym-T1-RAI/template.nrrd
@@ -72,7 +72,8 @@ Registration Initialization: useCenterOfHeadAlign
 Use T1 initial transform: 0
 
 // Atlas Warping
-Warping Method: BRAINSDemonWarp
+Warping Method: ANTS
+// - Fluid Warping parameters
 Alpha: 0.01
 Beta: 0.01
 Gamma: 0.001
@@ -81,12 +82,24 @@ NumBasis: 0.01
 Scale 4 - Number Of Iterations: 50
 Scale 2 - Number Of Iterations: 25
 Scale 1 - Number Of Iterations: 100
+// - BRAINSDemonWarp parameters
 Registration Filter Type: LogDemons
 Deformation Field Smoothing Sigma: 2.0
 Pyramid Levels: 5
 Moving Shrink Factors: 16,16,16
 Fixed Shrink Factors: 16,16,16
 Iteration Count Pyramid Levels: 300,50,30,20,15
+// - ANTS parameters
+ANTS Iterations: 100x50x25
+ANTS CC weight: 1.0
+ANTS CC region radius: 2.0
+ANTS MI weight: 0.0
+ANTS MI bins: 32
+ANTS MSQ weight: 0.0
+ANTS Registration Type: GreedyDiffeomorphism
+ANTS Registration Step: 0.25
+ANTS Gaussian Smoothing: 1
+ANTS Gaussian Sigma: 3.0
 
 // Skull Stripping
 Delete Vessels: 0

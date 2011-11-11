@@ -4,18 +4,19 @@ header_name {.h}
 code_name {.cxx}
 class TextDisplayGUI {open
 } {
-  Function {TextDisplayGUI()} {} {
+  Function {TextDisplayGUI()} {open
+  } {
     Fl_Window g_MainWindow {
-      label {AutoSeg - Text Display} selected
+      label {AutoSeg - Text Display} open selected
       xywh {715 155 760 690} type Single resizable modal visible
     } {
       Fl_Text_Display g_TextDisp {
-        xywh {10 10 740 640}
+        xywh {10 10 740 640} labelfont 8 textfont 8
       }
       Fl_Return_Button g_HideButton {
         label Hide
         callback {HideButtonPressed();}
-        xywh {347 657 65 25}
+        xywh {347 657 65 25} labelfont 8
       }
     }
   }

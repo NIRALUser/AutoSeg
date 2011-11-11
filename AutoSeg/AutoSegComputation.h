@@ -217,7 +217,10 @@ class AutoSegComputation
 
     // Warping Parameters
     void SetClassicWarpingMethod(bool _IsClassicWarpingMethod){m_IsClassicWarpingMethod = _IsClassicWarpingMethod;};
+    void SetCoarseToFineWarpingMethod(bool _IsCoarseToFineWarpingMethod){m_IsCoarseToFineWarpingMethod = _IsCoarseToFineWarpingMethod;};
     void SetBRAINSDemonWarpMethod(bool _IsBRAINSDemonWarpMethod){m_IsBRAINSDemonWarpMethod = _IsBRAINSDemonWarpMethod;};
+    void SetANTSWarpingMethod(bool _IsANTSWarpingMethod){m_IsANTSWarpingMethod = _IsANTSWarpingMethod;};
+    // - Fluid Warping
     void SetAlpha(float _Alpha){m_Alpha = _Alpha;};
     void SetBeta(float _Beta){m_Beta = _Beta;};
     void SetGamma(float _Gamma){m_Gamma = _Gamma;};
@@ -226,12 +229,24 @@ class AutoSegComputation
     void SetScale4NbIterations(int _Scale4NbIterations){m_Scale4NbIterations = _Scale4NbIterations;};
     void SetScale2NbIterations(int _Scale2NbIterations){m_Scale2NbIterations = _Scale2NbIterations;};
     void SetScale1NbIterations(int _Scale1NbIterations){m_Scale1NbIterations = _Scale1NbIterations;};
+    // - BRAINSDemonWarp
     void SetPyramidLevels(int _PyramidLevels){m_PyramidLevels = _PyramidLevels;};
     void SetMovingShrinkFactors(const char * _MovingShrinkFactors){std::strcpy(m_MovingShrinkFactors,_MovingShrinkFactors);};
     void SetFixedShrinkFactors(const char * _FixedShrinkFactors){std::strcpy(m_FixedShrinkFactors,_FixedShrinkFactors);};
     void SetIterationCountPyramidLevels(const char * _IterationCountPyramidLevels){std::strcpy(m_IterationCountPyramidLevels,_IterationCountPyramidLevels);};
     void SetDeformationFieldSmoothingSigma(float _DeformationFieldSmoothingSigma){m_DeformationFieldSmoothingSigma = _DeformationFieldSmoothingSigma;};
     void SetRegistrationFilterType(const char * _RegistrationFilterType){std::strcpy(m_RegistrationFilterType,_RegistrationFilterType);};
+    // - ANTS
+    void SetANTSIterations(const char *_ANTSIterations){std::strcpy(m_ANTSIterations,_ANTSIterations);};
+    void SetANTSCCWeight(float _ANTSCCWeight){m_ANTSCCWeight = _ANTSCCWeight;};
+    void SetANTSCCRegionRadius(float _ANTSCCRegionRadius){m_ANTSCCRegionRadius = _ANTSCCRegionRadius;};
+    void SetANTSMIWeight(float _ANTSMIWeight){m_ANTSMIWeight= _ANTSMIWeight;};
+    void SetANTSMIBins(float _ANTSMIBins){m_ANTSMIBins = _ANTSMIBins;};
+    void SetANTSMSQWeight(float _ANTSMSQWeight){m_ANTSMSQWeight = _ANTSMSQWeight;};
+    void SetANTSRegistrationFilterType(const char * _ANTSRegistrationFilterType){std::strcpy(m_ANTSRegistrationFilterType,_ANTSRegistrationFilterType);};
+    void SetANTSTransformationStep(const char * _ANTSTransformationStep){std::strcpy(m_ANTSTransformationStep,_ANTSTransformationStep);};
+    void SetANTSGaussianSmoothing(bool _IsANTSGaussianSmoothing){m_IsANTSGaussianSmoothing = _IsANTSGaussianSmoothing;};
+    void SetANTSGaussianSigma(float _ANTSGaussianSigma){m_ANTSGaussianSigma = _ANTSGaussianSigma;};
     // Skull Stripping
     void SetDeleteVessels(bool _DeleteVessels){m_DeleteVessels = _DeleteVessels;};
     // Intensity Rescaling
@@ -416,7 +431,10 @@ class AutoSegComputation
     bool GetInitRegUseT1InitTransform(){return m_InitRegUseT1InitTransform;};
     // Warping Parameters
     bool GetClassicWarpingMethod(){return m_IsClassicWarpingMethod;};
+    bool GetCoarseToFineWarpingMethod(){return m_IsCoarseToFineWarpingMethod;};
     bool GetBRAINSDemonWarpMethod(){return m_IsBRAINSDemonWarpMethod;};
+    bool GetANTSWarpingMethod(){return m_IsANTSWarpingMethod;};
+    // - Fluid Warping
     float GetAlpha(){return m_Alpha;};
     float GetBeta(){return m_Beta;};
     float GetGamma(){return m_Gamma;};
@@ -425,12 +443,25 @@ class AutoSegComputation
     int GetScale4NbIterations(){return m_Scale4NbIterations;};
     int GetScale2NbIterations(){return m_Scale2NbIterations;};
     int GetScale1NbIterations(){return m_Scale1NbIterations;};
+    // - BRAINSDemonWarp
     int GetPyramidLevels(){return m_PyramidLevels;};
     char *GetMovingShrinkFactors(){return m_MovingShrinkFactors;};
     char *GetFixedShrinkFactors(){return m_FixedShrinkFactors;};
     char *GetIterationCountPyramidLevels(){return m_IterationCountPyramidLevels;};
     float GetDeformationFieldSmoothingSigma(){return m_DeformationFieldSmoothingSigma;};
     char *GetRegistrationFilterType(){return m_RegistrationFilterType;};
+    // - ANTS
+    char *GetANTSIterations(){return m_ANTSIterations;};
+    float GetANTSCCWeight(){return m_ANTSCCWeight;};
+    float GetANTSCCRegionRadius(){return m_ANTSCCRegionRadius;};
+    float GetANTSMIWeight(){return m_ANTSMIWeight;};
+    float GetANTSMIBins(){return m_ANTSMIBins;};
+    float GetANTSMSQWeight(){return m_ANTSMSQWeight;};
+    char *GetANTSRegistrationFilterType(){return m_ANTSRegistrationFilterType;};
+    char *GetANTSTransformationStep(){return m_ANTSTransformationStep;};
+    bool GetANTSGaussianSmoothing(){return m_IsANTSGaussianSmoothing;};
+    float GetANTSGaussianSigma(){return m_ANTSGaussianSigma;};
+
     // Skull Stripping
     bool GetDeleteVessels(){return m_DeleteVessels;};
     // Intensity Rescaling
@@ -657,7 +688,10 @@ class AutoSegComputation
     bool m_InitRegUseT1InitTransform;
     // Warping Parameters
     bool m_IsClassicWarpingMethod;
+    bool m_IsCoarseToFineWarpingMethod;
     bool m_IsBRAINSDemonWarpMethod;
+    bool m_IsANTSWarpingMethod;
+    // -Fluid Warping
     float m_Alpha;
     float m_Beta;
     float m_Gamma;
@@ -666,12 +700,24 @@ class AutoSegComputation
     int m_Scale4NbIterations;
     int m_Scale2NbIterations;
     int m_Scale1NbIterations;
+    // - BRAINSDemonWarp
     int m_PyramidLevels;
     char m_MovingShrinkFactors[50];
     char m_FixedShrinkFactors[50];
     char m_IterationCountPyramidLevels[50];
     float m_DeformationFieldSmoothingSigma;
     char m_RegistrationFilterType[50];
+    // - ANTS    
+    char  m_ANTSIterations[50];
+    float m_ANTSCCWeight;
+    float m_ANTSCCRegionRadius;
+    float m_ANTSMIWeight;
+    float m_ANTSMIBins;
+    float m_ANTSMSQWeight;
+    char m_ANTSRegistrationFilterType[50];
+    char m_ANTSTransformationStep[50];
+    bool m_IsANTSGaussianSmoothing;
+    float m_ANTSGaussianSigma;
     // Skull Stripping
     bool m_DeleteVessels;
     // Intensity Rescaling
