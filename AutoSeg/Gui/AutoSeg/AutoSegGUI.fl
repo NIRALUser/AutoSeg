@@ -7,10 +7,10 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.6} open
-      xywh {149 196 910 925} type Double box UP_BOX resizable visible
+      label {AutoSeg 2.6.1} open
+      xywh {149 195 910 925} type Double box UP_BOX resizable visible
     } {
-      Fl_Menu_Bar g_MenuBar {open selected
+      Fl_Menu_Bar g_MenuBar {open
         xywh {0 0 633 25} labelfont 8 textfont 8
       } {
         Submenu {} {
@@ -82,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.6}
+          label {AutoSeg 2.6.1}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
@@ -98,7 +98,7 @@ class AutoSegGUI {open
           xywh {830 40 25 25} box NO_BOX labelfont 8 labelsize 13
         }
       }
-      Fl_Tabs {} {open
+      Fl_Tabs {} {open selected
         xywh {0 40 908 880} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
@@ -1412,7 +1412,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMIWeight {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins {
                       label {MI bins :}
@@ -1422,7 +1422,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMSQWeight {
                       label {MSQ weight :}
                       callback {SetANTSMSQWeightGUI()}
-                      tooltip {Weight for mean-square difference} xywh {650 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Weight for mean-square difference} xywh {650 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                   }
                   Fl_Group {} {

@@ -1792,7 +1792,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	    g_InitialDistributionEstimatorChoice->deactivate();
 	  }
 	  else
-	    std::cout<<"No such EM Software!"<<std::endl;	      
+	    std::cout<<"No such EM Software (itkEMS no longer supported)!"<<std::endl;	      
 	}
 	else if ( (std::strncmp("Filter Iterations: ", Line, 19)) == 0)
 	{
