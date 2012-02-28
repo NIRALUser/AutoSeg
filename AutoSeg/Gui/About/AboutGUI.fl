@@ -7,14 +7,14 @@ class AboutGUI {open
   Function {AboutGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg - About} open
+      label {AutoSeg - About} open selected
       xywh {754 463 460 360} type Single modal visible
     } {
       Fl_Button {} {
         image {AutoSeg.jpg} xywh {4 5 222 170} deactivate
       }
       Fl_Button {} {
-        label {AutoSeg 2.6.1} selected
+        label {AutoSeg 2.6.2}
         xywh {275 20 115 30} box NO_BOX labelfont 1 labelsize 18
       }
       Fl_Button {} {
