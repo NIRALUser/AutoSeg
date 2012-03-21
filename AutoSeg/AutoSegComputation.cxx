@@ -3147,8 +3147,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       }
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-WARP-FLUID-ITERATIONS>"<<GetFluidAtlasWarpIterations()<<"</ATLAS-WARP-FLUID-ITERATIONS>\\n')"<<std::endl;
       BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-WARP-FLUID-MAX-STEP>"<<GetFluidAtlasWarpMaxStep()<<"</ATLAS-WARP-FLUID-MAX-STEP>\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<ATLAS-LINEAR-MAP-TYPE>"<<GetAtlasLinearMapping()<<"</ATLAS-LINEAR-MAP-TYPE>\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<IMAGE-LINEAR-MAP-TYPE>"<<GetImageLinearMapping()<<"</IMAGE-LINEAR-MAP-TYPE>\\n')"<<std::endl;
     }
     else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
       {
