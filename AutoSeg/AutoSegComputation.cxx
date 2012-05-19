@@ -3369,19 +3369,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            set (FinalTarget ${StrippedPath}${FinalTargetTail})"<<std::endl;
     BMSAutoSegMainFile<<"            set (TmpMask ${StrippedPath}${TmpMaskTail})"<<std::endl;
     BMSAutoSegMainFile<<"            set (FinalMask ${StrippedPath}${FinalMaskTail})"<<std::endl;
-    BMSAutoSegMainFile<<"            set (FinalMaskList ${FinalMaskList}${FinalMask})"<<std::endl;
 
-    BMSAutoSegMainFile<<"            # Creating the binary mask"<<std::endl;
+    BMSAutoSegMainFile<<"            ListFileInDir (FinalMaskList ${FinalMask})"<<std::endl;
+    BMSAutoSegMainFile<<"            If (${FinalMaskList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"              # Creating the binary mask"<<std::endl;
 	// BMSAutoSegMainFile<<"            SetApp(ImageMathCmd @ImageMath)"<<std::endl;
 	//   BMSAutoSegMainFile<<"            SetAppOption(ImageMathCmd.Input ${SegmentedCase})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            SetAppOption(ImageMathCmd.ThresholdValue '1,3')"<<std::endl;
 	//   BMSAutoSegMainFile<<"            SetAppOption(ImageMathCmd.OutputFileName ${TmpMask})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            Run (output ${ImageMathCmd})"<<std::endl<<std::endl;  
     if (std::strcmp(GetEMSoftware(), "ABC") == 0)
-      BMSAutoSegMainFile<<"            Run (output '${ImageMathCmd} ${SegmentedCase} -threshold 1,3 -outfile ${TmpMask}')"<<std::endl; 
+      BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${SegmentedCase} -threshold 1,3 -outfile ${TmpMask}')"<<std::endl; 
     else
-      BMSAutoSegMainFile<<"            Run (output '${ImageMathCmd} ${SegmentedCase} -threshold 1,4 -outfile ${TmpMask}')"<<std::endl; 
-    BMSAutoSegMainFile<<"	       #In order to make sur that the binary mask is fine (without holes and smoothed)"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${SegmentedCase} -threshold 1,4 -outfile ${TmpMask}')"<<std::endl; 
+    BMSAutoSegMainFile<<"	         #In order to make sur that the binary mask is fine (without holes and smoothed)"<<std::endl;
 	
     if (GetDeleteVessels())
     {
@@ -3390,7 +3391,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	//   BMSAutoSegMainFile<<"            SetAppOption(SegPostProcessCmd.outfile.outfileName ${FinalMask})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            SetAppOption(SegPostProcessCmd.DeleteVessels 1"<<std::endl;
 	//   BMSAutoSegMainFile<<"            Run (output ${SegPostProcessCmd})"<<std::endl<<std::endl;
-      BMSAutoSegMainFile<<"            Run (output '${SegPostProcessCmd} ${TmpMask} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask} --deleteVessels')"<<std::endl;      
+      BMSAutoSegMainFile<<"              Run (output '${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask} --deleteVessels')"<<std::endl;      
     }
     else
     {
@@ -3398,17 +3399,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	//   BMSAutoSegMainFile<<"            SetAppOption(SegPostProcessCmd.filename ${TmpMask})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            SetAppOption(SegPostProcessCmd.outfile.outfileName ${FinalMask})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            Run (output ${SegPostProcessCmd})"<<std::endl<<std::endl;
-      BMSAutoSegMainFile<<"            Run (output '${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask}')"<<std::endl;
-	
+      BMSAutoSegMainFile<<"              Run (output '${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask}')"<<std::endl;	
     }
-	
-	/*	BMSAutoSegMainFile<<"	       # Masking the original case with the binary image"<<std::endl;
-	// BMSAutoSegMainFile<<"	       SetApp(ImageMathCmd @ImageMath)"<<std::endl;
-	//   BMSAutoSegMainFile<<"            SetAppOption(ImageMathCmd.Input ${CurrentCase})"<<std::endl;
-	//   BMSAutoSegMainFile<<"            SetAppOption(ImageMathCmd.MaskFile ${FinalMask})"<<std::endl;
-	//   BMSAutoSegMainFile<<"            SetAppOption(ImageMathCmd.OutputFileName ${FinalTarget})"<<std::endl;
-	//   BMSAutoSegMainFile<<"            Run (output ${ImageMathCmd})"<<std::endl<<std::endl;
-    BMSAutoSegMainFile<<"            Run (output '${ImageMathCmd} ${CurrentCase} -mask ${FinalMask} -outfile ${FinalTarget}')"<<std::endl; 	*/
+
+    BMSAutoSegMainFile<<"            Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"              echo ('Binary mask already exists!')"<<std::endl;
+    BMSAutoSegMainFile<<"            EndIf (${FinalMaskList})"<<std::endl;
 
     if (GetT2Image())
     {
