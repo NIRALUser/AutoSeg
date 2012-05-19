@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0109 
+version 1.0110 
 header_name {.h} 
 code_name {.cxx}
 class AboutGUI {open
@@ -14,7 +14,7 @@ class AboutGUI {open
         image {AutoSeg.jpg} xywh {4 5 222 170} deactivate
       }
       Fl_Button {} {
-        label {AutoSeg 2.6.2}
+        label {AutoSeg 2.7}
         xywh {275 20 115 30} box NO_BOX labelfont 1 labelsize 18
       }
       Fl_Button {} {
