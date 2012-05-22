@@ -249,6 +249,7 @@ class AutoSegComputation
     void SetANTSGaussianSigma(float _ANTSGaussianSigma){m_ANTSGaussianSigma = _ANTSGaussianSigma;};
     // Skull Stripping
     void SetDeleteVessels(bool _DeleteVessels){m_DeleteVessels = _DeleteVessels;};
+    void SetRestrictMask (bool _RestrictMask){m_RestrictMask = _RestrictMask;};
     // Intensity Rescaling
     void SetIntensityRescalingMethod(int _IntensityRescalingMethod){m_IntensityRescalingMethod = _IntensityRescalingMethod;};
     //Data
@@ -464,6 +465,7 @@ class AutoSegComputation
 
     // Skull Stripping
     bool GetDeleteVessels(){return m_DeleteVessels;};
+    bool GetRestrictMask(){return m_RestrictMask;};
     // Intensity Rescaling
     int GetIntensityRescalingMethod(){return m_IntensityRescalingMethod;};
     // Regional histogram
@@ -720,6 +722,7 @@ class AutoSegComputation
     float m_ANTSGaussianSigma;
     // Skull Stripping
     bool m_DeleteVessels;
+    bool m_RestrictMask;
     // Intensity Rescaling
     int m_IntensityRescalingMethod;
     // Regional histogram		

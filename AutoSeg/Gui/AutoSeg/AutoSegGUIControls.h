@@ -264,6 +264,7 @@ class AutoSegGUIControls : public AutoSegGUI
     void UseDefaultWarpingAdvancedParametersGUI();
     // Skull Stripping
     void DeleteVesselsButtonChecked();
+    void RestrictMaskButtonChecked();
     // Intensity Rescaling
     void HistogramQuantileButtonToggled();
     void TissueMeanMatchButtonToggled();

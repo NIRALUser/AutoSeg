@@ -106,6 +106,7 @@ ANTS Gaussian Sigma: 3.0
 
 // Skull Stripping
 Delete Vessels: 0
+Restrict mask: 1
 
 // Intensity Rescaling
 Intensity Rescaling: Histogram quantile
