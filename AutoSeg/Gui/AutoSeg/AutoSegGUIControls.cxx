@@ -1154,7 +1154,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   float ANTSCCWeight, ANTSCCRegionRadius, ANTSMIWeight, ANTSMIBins, ANTSMSQWeight, ANTSGaussianSigma;
   bool ANTSGaussianSmoothing;  
     // Skull Stripping
-  int DeleteVessels, RestrictMask;
+  int DeleteVessels;
     // Regional histogram
   float PointSpacing;
     // N4 ITK Bias Field Correction
@@ -1743,14 +1743,6 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	    g_DeleteVesselsButton->set();
 	  else
 	    g_DeleteVesselsButton->clear();
-	}
-	else if ((std::strncmp("Restrict mask: ", Line, 15)) == 0)
-	{
-	  RestrictMask = (atoi(Line+15));
-	  if (RestrictMask == 1)
-	    g_RestrictMaskButton->set();
-	  else
-	    g_RestrictMaskButton->clear();
 	}
 	else if ((std::strncmp("Intensity Rescaling: ", Line, 21)) == 0)
 	{
@@ -5970,14 +5962,6 @@ void AutoSegGUIControls::DeleteVesselsButtonChecked()
     m_Computation.SetDeleteVessels(0);    
 }
 
-void AutoSegGUIControls::RestrictMaskButtonChecked()
-{
-  if (g_RestrictMaskButton->value())
-    m_Computation.SetRestrictMask(1);
-  else
-    m_Computation.SetRestrictMask(0);    
-}
-
 void AutoSegGUIControls::HistogramQuantileButtonToggled()
 {
   g_HistogramQuantileButton->set();
@@ -6271,8 +6255,6 @@ void AutoSegGUIControls::InitializeParameters()
   // Skull Stripping parameters
   g_DeleteVesselsButton->clear();
   m_Computation.SetDeleteVessels(0);
-  g_RestrictMaskButton->set();
-  m_Computation.SetRestrictMask(1);
 
   // Intensity Rescaling parameters
   g_HistogramQuantileButton->set();

@@ -2008,7 +2008,6 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"ANTS Gaussian Sigma: "<<GetANTSGaussianSigma()<<std::endl;  
   ParameterFile<<"\n// Skull Stripping"<<std::endl;
   ParameterFile<<"Delete Vessels: "<<GetDeleteVessels()<<std::endl;
-  ParameterFile<<"Restrict mask: "<<GetRestrictMask()<<std::endl;
   ParameterFile<<"\n// Intensity Rescaling"<<std::endl;
   if (GetIntensityRescalingMethod() == 1)
     ParameterFile<<"Intensity Rescaling: Histogram quantile"<<std::endl;
@@ -2220,13 +2219,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#   - Lobar cortical thickness analysis"<<std::endl<<std::endl;  
   }
 
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"# 1. Initialization"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     
   BMSAutoSegMainFile<<"# Checking Image Image"<<std::endl;
   BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
@@ -2398,13 +2397,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"Set(ProcessExtension '')"<<std::endl;
   if (GetReorientation())
   {
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# 2. Image reorientation"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
     BMSAutoSegMainFile<<"echo ('Image reorientation...')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
@@ -2518,13 +2517,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"Set (HistogramSharpening "<<GetHistogramSharpening()<<")"<<std::endl;  
   if (GetN4ITKBiasFieldCorrection())
   {
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# 3. N4 ITK Bias Field Correction"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
     BMSAutoSegMainFile<<"echo ('N4 ITK Bias Field Correction...')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
@@ -2627,13 +2626,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   }
   if (GetRigidRegistration())
   {
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# 4. Rigid registration to an atlas"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
     BMSAutoSegMainFile<<"echo ('REGISTERING CASES TO A TEMPLATE...')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
@@ -2941,13 +2940,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
   do
   {
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# 5. Tissue Segmentation "<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
 	
     BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
     BMSAutoSegMainFile<<"echo ('TISSUE SEGMENTATION...')"<<std::endl;
@@ -3335,7 +3334,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       else	
       {
 	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ Stripped)"<<std::endl;
-	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
+	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;	
+
       }
     }
 
@@ -3402,14 +3402,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"              Run (output '${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask}')"<<std::endl;	
     }
 
+
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
     BMSAutoSegMainFile<<"              echo ('Binary mask already exists!')"<<std::endl;
     BMSAutoSegMainFile<<"            EndIf (${FinalMaskList})"<<std::endl;
-
-    if (GetLoop() && iteration==1)
-      {
-	BMSAutoSegMainFile<<"            set (InitBrainMask ${FinalMask})"<<std::endl;
-      }
 
     if (GetT2Image())
     {
@@ -3447,31 +3443,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     BMSAutoSegMainFile<<"            # Deleting temporary file"<<std::endl;
     BMSAutoSegMainFile<<"	    DeleteFile (${TmpMask})"<<std::endl;
-
-    if (GetRestrictMask() && GetLoop() && iteration==flag)
-      {
-	BMSAutoSegMainFile<<"            set (RestrictMaskSuffix '_brainmasked')"<<std::endl;
-	BMSAutoSegMainFile<<"            set (FinalBrainMaskTail ${SegmentedCaseHead}${RestrictMaskSuffix}.nrrd)"<<std::endl;
-	BMSAutoSegMainFile<<"            set (FinalBrainMask ${StrippedPath}${FinalBrainMaskTail})"<<std::endl;
-	
-	BMSAutoSegMainFile<<"            ListFileInDir (FinalBrainMaskList ${FinalBrainMask})"<<std::endl;
-	BMSAutoSegMainFile<<"            If (${FinalBrainMaskList} == '')"<<std::endl;
-	BMSAutoSegMainFile<<"              # Creating the binary Brainmask"<<std::endl;
-	BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${FinalMask} -mask ${InitBrainMask} -outfile ${FinalBrainMask}')"<<std::endl; 
-	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	BMSAutoSegMainFile<<"              echo ('Final brainmask already exists!')"<<std::endl;
-	BMSAutoSegMainFile<<"            EndIf (${FinalBrainMaskList})"<<std::endl;
-
-	BMSAutoSegMainFile<<"            set (MaskedSegmentedCase ${EMSPath}${SegmentedCaseHead}${RestrictMaskSuffix}.nrrd)"<<std::endl;
-	BMSAutoSegMainFile<<"            ListFileInDir (MaskedSegmentedCaseList ${MaskedSegmentedCase})"<<std::endl;
-	BMSAutoSegMainFile<<"            If (${MaskedSegmentedCaseList} == '')"<<std::endl;
-	BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${SegmentedCase} -mask ${FinalBrainMask} -outfile ${MaskedSegmentedCase}')"<<std::endl;
-	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	BMSAutoSegMainFile<<"              echo ('Brainmasked segmentation already exists!')"<<std::endl;
-	BMSAutoSegMainFile<<"            EndIf (${MaskedSegmentedCaseList})"<<std::endl;	
-      }
-    else
-      BMSAutoSegMainFile<<"            set (RestrictMaskSuffix '')"<<std::endl;
 
     if (GetLoop() && iteration==0)
     {
@@ -3854,12 +3825,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
 
       if (IsT1LabelEMSFile)
-	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
       else
       {
 	BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
 	BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
       }
 
       BMSAutoSegMainFile<<"         set (IntRescalerParameterFile ${StrippedPath}${StrippedCaseHead}_intRescale.txt)"<<std::endl;
@@ -5475,12 +5446,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     else
       BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
     if (IsT1LabelEMSFile)
-      BMSAutoSegMainFile<<"          set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"          set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
     else
     {
       BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"          set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"          set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
     }
     BMSAutoSegMainFile<<"      GetFilename (SegmentedCaseHead ${SegmentedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      set(WMCortThickFileHead ${SegmentedCaseHead}-DistanceMapOnWhiteAvg.nrrd)"<<std::endl;
@@ -5589,12 +5560,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
 
     if (IsT1LabelEMSFile)
-      BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
     else
     {
       BMSAutoSegMainFile<<"      GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;      
+      BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;      
     }
     BMSAutoSegMainFile<<"      GetFilename (SegmentedFileHead ${SegmentedFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      #Computing Statistics"<<std::endl;
@@ -5804,30 +5775,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       else
 	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
       if (IsT1LabelEMSFile)
-	BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
       else
       {
 	BMSAutoSegMainFile<<"      GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
 	BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-	BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}${RestrictMaskSuffix}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
       }
 
       BMSAutoSegMainFile<<"      GetFilename (SegmentedFileTail ${SegmentedFile} NAME_WITHOUT_EXTENSION)"<<std::endl; 
-
-      if (GetRestrictMask())
-	{
-	  if(GetLoop())
-	    BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 23 FROMEND)"<<std::endl;
-	  else
-	    BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 21 FROMEND)"<<std::endl;	  
-	}
+      if(GetLoop())
+	BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 13 FROMEND)"<<std::endl;
       else
-	{
-	  if(GetLoop())
-	    BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 13 FROMEND)"<<std::endl;
-	  else
-	    BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 11 FROMEND)"<<std::endl;
-	}
+	BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 11 FROMEND)"<<std::endl;
 
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
 	BMSAutoSegMainFile<<"      set(LabelList 'MWM' 'WM' 'GM')"<<std::endl;
@@ -6293,13 +6253,13 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"# 3. Applying the transformation to the others auxiliary images"<<std::endl;
   BMSAutoSegAuxFile<<"# 4. Statistic files"<<std::endl;
 
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegAuxFile<<"# 1. Converting images if necessary"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl<<std::endl;
 
   BMSAutoSegAuxFile<<"# Checking Image"<<std::endl;
   BMSAutoSegAuxFile<<"echo (*************************************************)"<<std::endl;
@@ -7154,13 +7114,13 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"      echo ('APPLYING TRANSFORMATION: DONE!')"<<std::endl;
   BMSAutoSegAuxFile<<"      echo ( )"<<std::endl<<std::endl;
 	
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegAuxFile<<"# 4. Statistic files                                                   "<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;	
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
+  BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;	
 	
   BMSAutoSegAuxFile<<"      echo (*************************************************)"<<std::endl;
   BMSAutoSegAuxFile<<"      echo ('WRITING STATISTICS FILES...')"<<std::endl;
@@ -8738,7 +8698,7 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
   float ANTSCCWeight, ANTSCCRegionRadius, ANTSMIWeight, ANTSMIBins, ANTSMSQWeight, ANTSGaussianSigma;
   bool ANTSGaussianSmoothing;    
     // Skull Stripping
-  int DeleteVessels, RestrictMask;
+  int DeleteVessels;
     // Regional histogram
   float PointSpacing;
     // N4 ITK Bias Field Correction
@@ -9059,11 +9019,6 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	{
 	  DeleteVessels = (atoi(Line+16));
 	  SetDeleteVessels(DeleteVessels);
-	}
-	else if ((std::strncmp("Restrict mask: ", Line, 15)) == 0)
-	{
-	  RestrictMask = (atoi(Line+15));
-	  SetRestrictMask(RestrictMask);
 	}
 	else if ((std::strncmp("Intensity Rescaling: ", Line, 21)) == 0)
 	{
