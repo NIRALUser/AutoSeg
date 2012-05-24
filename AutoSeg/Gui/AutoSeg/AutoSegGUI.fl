@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0109 
+version 1.0110 
 header_name {.h} 
 code_name {.cxx}
 class AutoSegGUI {open
@@ -7,7 +7,7 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.6.2} open selected
+      label {AutoSeg 2.7} open selected
       xywh {681 193 910 925} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
@@ -82,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.6.2}
+          label {AutoSeg 2.7}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
@@ -601,7 +601,7 @@ class AutoSegGUI {open
               Fl_Spinner g_LoopIteration {
                 label {\# iterations}
                 callback {SetLoopIterationGUI()}
-                xywh {810 181 45 25} labelfont 8 when 1 value 1 textfont 8
+                xywh {810 181 45 25} labelfont 8 when 1 textfont 8
               }
             }
           }
@@ -1178,7 +1178,7 @@ class AutoSegGUI {open
               Fl_Spinner g_SplineDistance {
                 label {Spline distance:}
                 callback {SetSplineDistanceGUI()}
-                xywh {710 344 75 25} type Float labelfont 8 when 1 step 0.5 value 1 textfont 8
+                xywh {710 344 75 25} type Float labelfont 8 when 1 step 0.5 textfont 8
               }
               Fl_Spinner g_ShrinkFactor {
                 label {Shrink factor:}
@@ -1208,7 +1208,7 @@ class AutoSegGUI {open
               Fl_Spinner g_BSplineAlpha {
                 label {BSpline alpha:}
                 callback {SetBSplineAlphaGUI()}
-                xywh {585 490 50 25} type Float labelfont 8 when 1 step 0.5 value 1 textfont 8
+                xywh {585 490 50 25} type Float labelfont 8 when 1 step 0.5 textfont 8
               }
               Fl_Spinner g_BSplineBeta {
                 label {BSpline beta:}
@@ -1402,7 +1402,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSCCWeight {
                       label {CC weight :}
                       callback {SetANTSCCWeightGUI()}
-                      tooltip {Similarity: cross-correlation} xywh {340 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Similarity: cross-correlation} xywh {340 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                     Fl_Spinner g_ANTSCCRegionRadius {
                       label {CC region radius :}
@@ -1412,7 +1412,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMIWeight {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins {
                       label {MI bins :}
@@ -1422,7 +1422,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMSQWeight {
                       label {MSQ weight :}
                       callback {SetANTSMSQWeightGUI()}
-                      tooltip {Weight for mean-square difference} xywh {650 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mean-square difference} xywh {650 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                   }
                   Fl_Group {} {

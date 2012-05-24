@@ -22,6 +22,8 @@ AutoSegComputation::AutoSegComputation()
 {
   m_AllocationData=0;
   m_AllocationAuxData=0;
+
+  m_StrippedN4ITKBiasFieldCorrection = 0;
 }
 
 AutoSegComputation::~AutoSegComputation()
@@ -2199,9 +2201,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   
   BMSAutoSegMainFile<<"# Pipeline "<<std::endl;
   BMSAutoSegMainFile<<"# 1. Initialization"<<std::endl;
-  BMSAutoSegMainFile<<"# 2. Optional: image reorientation (ifno rigid registration)"<<std::endl;
+  BMSAutoSegMainFile<<"# 2. Optional: image reorientation (if no rigid registration)"<<std::endl;
   BMSAutoSegMainFile<<"# 3. N4 ITK bias field correction"<<std::endl;
-  BMSAutoSegMainFile<<"# 4. Registration to commom coordinate image"<<std::endl;
+  BMSAutoSegMainFile<<"# 4. Registration to common coordinate image"<<std::endl;
   BMSAutoSegMainFile<<"# 5. Atlas-based expectation maximization tissue segmentation segmentation"<<std::endl;
   BMSAutoSegMainFile<<"# 6. Skull-stripping"<<std::endl;
   BMSAutoSegMainFile<<"# 7. Optional: Intensity calibration: histogram quantile matching or tissue mean matching - used with fWarp and BRAINSDemonWarp"<<std::endl;
@@ -2961,13 +2963,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
-    BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;  
+    BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      echo ( )"<<std::endl;
     BMSAutoSegMainFile<<"      echo ('Case Number: '${T1CaseHead})"<<std::endl;
     BMSAutoSegMainFile<<"      echo ( )"<<std::endl;
 
     SuffixIteration=iteration+1;
     SuffixIteration_2=iteration+2;
+
+    BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
 
     if (GetLoop() && iteration !=0)
     {
@@ -2980,9 +2984,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;	
       BMSAutoSegMainFile<<"      ListDirInDir (EMSList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration<<")"<<std::endl;
       BMSAutoSegMainFile<<"      set (InputPath ${EMSPath})"<<std::endl;
-      BMSAutoSegMainFile<<"      set  (SUFFIX EMS_"<<SuffixIteration<<")"<<std::endl;
+      BMSAutoSegMainFile<<"      set (SUFFIX EMS_"<<SuffixIteration<<")"<<std::endl;
       BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLocLoop})"<<std::endl;
-      BMSAutoSegMainFile<<"      set (stripEMS _stripEMS_Bias)"<<std::endl;
+      BMSAutoSegMainFile<<"      set (stripEMS _stripEMS${StrippedBias})"<<std::endl;
       if (GetLoopIteration()<9)
       {
 	nbCorrected=29;
@@ -3294,30 +3298,40 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	
     BMSAutoSegMainFile<<"      set (stripEMS _corrected_EMS-stripped)"<<std::endl;
 
+    if (GetRigidRegistration())
+      BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/atlasIso/)"<<std::endl;
+    else if (GetN4ITKBiasFieldCorrection())
+      BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/${Bias}/)"<<std::endl;
+    else if(GetReorientation())
+      BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/${OutputOrientation}/)"<<std::endl;
+    else
+      BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/)"<<std::endl;
+
     if (GetLoop() && iteration!=0)
     {
       BMSAutoSegMainFile<<"      set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
       BMSAutoSegMainFile<<"         set  (SUFFIX EMS_"<<SuffixIteration<<")"<<std::endl;
-      BMSAutoSegMainFile<<"         set (SuffixCorrected _stripEMS_Bias_corrected_${SUFFIX})"<<std::endl;
-      BMSAutoSegMainFile<<"         set (SuffixLabel _stripEMS_Bias${NEOSEG_PREFIX}_labels_${SUFFIX})"<<std::endl;
+      BMSAutoSegMainFile<<"         set (SuffixCorrected _stripEMS${StrippedBias}_corrected_${SUFFIX})"<<std::endl;
+      BMSAutoSegMainFile<<"         set (SuffixLabel _stripEMS${StrippedBias}${NEOSEG_PREFIX}_labels_${SUFFIX})"<<std::endl;
       if(iteration==flag)
       {
+	BMSAutoSegMainFile<<"      set (InputPath ${EMSPath}/)"<<std::endl;
 	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ Stripped)"<<std::endl;
 	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
 
       }
       else if (iteration>=1)
       {
-	BMSAutoSegMainFile<<"      set (stripEMS _stripEMS_Bias)"<<std::endl;
+	BMSAutoSegMainFile<<"      set (stripEMS _stripEMS${StrippedBias})"<<std::endl;
 	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration_2<<")"<<std::endl;
 	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration_2<<"/)"<<std::endl;
       }
-      else
-      {
-	BMSAutoSegMainFile<<"      set (stripEMS _stripEMS)"<<std::endl;
-	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration_2<<")"<<std::endl;
-	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration_2<<"/)"<<std::endl;
-      }
+      // else
+      //{
+      //	BMSAutoSegMainFile<<"      set (stripEMS _stripEMS)"<<std::endl;
+      //	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration_2<<")"<<std::endl;
+      //	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration_2<<"/)"<<std::endl;
+      //}
     }
     else
     {
@@ -3333,13 +3347,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       }
       else	
       {
+	BMSAutoSegMainFile<<"      set (InputPath ${EMSPath}/)"<<std::endl;
 	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ Stripped)"<<std::endl;
-	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;	
-
+	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
       }
     }
 
-    BMSAutoSegMainFile<<"      # Creating EMS Directory if necessary"<<std::endl;
+    BMSAutoSegMainFile<<"      # Creating directory if necessary"<<std::endl;
     BMSAutoSegMainFile<<"      If (${StrippedList} == '')"<<std::endl;
     BMSAutoSegMainFile<<"         MakeDirectory(${StrippedPath})"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${StrippedList})"<<std::endl;
@@ -3362,10 +3376,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     BMSAutoSegMainFile<<"            set (TmpMaskTail ${SegmentedCaseHead}tmp1.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"            set (FinalMaskTail ${SegmentedCaseHead}_mask.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"            set (CurrentCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"            set (FinalTargetTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
 
-    BMSAutoSegMainFile<<"            set (CurrentCase ${EMSPath}${CurrentCaseTail})"<<std::endl;
+    if ((GetLoop() && iteration==flag) || (!GetLoop()))
+      BMSAutoSegMainFile<<"            set (CurrentCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
+    else
+       BMSAutoSegMainFile<<"            set (CurrentCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}.nrrd)"<<std::endl;  
+
+    BMSAutoSegMainFile<<"            set (CurrentCase ${InputPath}${CurrentCaseTail})"<<std::endl;
     BMSAutoSegMainFile<<"            set (FinalTarget ${StrippedPath}${FinalTargetTail})"<<std::endl;
     BMSAutoSegMainFile<<"            set (TmpMask ${StrippedPath}${TmpMaskTail})"<<std::endl;
     BMSAutoSegMainFile<<"            set (FinalMask ${StrippedPath}${FinalMaskTail})"<<std::endl;
@@ -3411,15 +3429,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     {
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      echo('Skull stripping T2w image...')"<<std::endl;
-      BMSAutoSegMainFile<<"        GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
+      BMSAutoSegMainFile<<"      GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(T2FinalTargetList ${StrippedPath} ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${T2FinalTargetList} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"            set (T2CurrentCaseTail ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"            set (T2CurrentCase ${EMSPath}${T2CurrentCaseTail})"<<std::endl;
-      BMSAutoSegMainFile<<"            set (T2FinalTargetTail ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"            set (T2FinalTarget ${StrippedPath}${T2FinalTargetTail})"<<std::endl;
-      BMSAutoSegMainFile<<"            Run (output '${ImageMathCmd} ${T2CurrentCase} -mask ${FinalMask} -outfile ${T2FinalTarget}')"<<std::endl; 
+
+      if ((GetLoop() && iteration==flag) || (!GetLoop()))
+        BMSAutoSegMainFile<<"        set (T2CurrentCaseTail ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
+      else
+	BMSAutoSegMainFile<<"        set (T2CurrentCaseTail ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"        set (T2CurrentCase ${InputPath}${T2CurrentCaseTail})"<<std::endl;
+      BMSAutoSegMainFile<<"        set (T2FinalTargetTail ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"        set (T2FinalTarget ${StrippedPath}${T2FinalTargetTail})"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output '${ImageMathCmd} ${T2CurrentCase} -mask ${FinalMask} -outfile ${T2FinalTarget}')"<<std::endl; 
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
       BMSAutoSegMainFile<<"         echo ('Stripped Image already exists!')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${T2FinalTargetList})"<<std::endl;
@@ -3428,15 +3450,18 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     {
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      echo('Skull stripping PDw image...')"<<std::endl;
-      BMSAutoSegMainFile<<"        GetParam (PDCase ${PDCasesList} ${CaseNumber})"<<std::endl;
+      BMSAutoSegMainFile<<"      GetParam (PDCase ${PDCasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (PDCaseHead ${PDCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(PDFinalTargetList ${StrippedPath} ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${PDFinalTargetList} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"            set (PDCurrentCaseTail ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"            set (PDCurrentCase ${EMSPath}${PDCurrentCaseTail})"<<std::endl;
-      BMSAutoSegMainFile<<"            set (PDFinalTargetTail ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"            set (PDFinalTarget ${StrippedPath}${PDFinalTargetTail})"<<std::endl;
-      BMSAutoSegMainFile<<"            Run (output '${ImageMathCmd} ${PDCurrentCase} -mask ${FinalMask} -outfile ${PDFinalTarget}')"<<std::endl; 
+      if ((GetLoop() && iteration==flag) || (!GetLoop()))
+        BMSAutoSegMainFile<<"        set (PDCurrentCaseTail ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${SuffixCorrected}.nrrd)"<<std::endl;
+      else
+	BMSAutoSegMainFile<<"        set (PDCurrentCaseTail ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"        set (PDCurrentCase ${InputPath}${PDCurrentCaseTail})"<<std::endl;
+      BMSAutoSegMainFile<<"        set (PDFinalTargetTail ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"        set (PDFinalTarget ${StrippedPath}${PDFinalTargetTail})"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output '${ImageMathCmd} ${PDCurrentCase} -mask ${FinalMask} -outfile ${PDFinalTarget}')"<<std::endl; 
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
       BMSAutoSegMainFile<<"         echo ('Stripped Image already exists!')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${PDFinalTargetList})"<<std::endl;
@@ -3444,27 +3469,29 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            # Deleting temporary file"<<std::endl;
     BMSAutoSegMainFile<<"	    DeleteFile (${TmpMask})"<<std::endl;
 
-    if (GetLoop() && iteration==0)
+    // optional Bias Field correction on stripped data
+    if (GetLoop() && GetStrippedN4ITKBiasFieldCorrection())
     {
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      echo('Bias field correction...')"<<std::endl;
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      set(StrippedBias '_Bias')"<<std::endl;
 
-      BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}_Bias.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"             Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
       BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${parameters})"<<std::endl;
       BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
 	
       if (GetT2Image())
       {
-	BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}_Bias.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"             Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
 	BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${T2FinalTarget} ${parameters})"<<std::endl;
 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
       }
       if (GetPDImage())
       {
-	BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}_Bias.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"             Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
 	BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${PDFinalTarget} ${parameters})"<<std::endl;
 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
@@ -4955,9 +4982,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       {
 	BMSAutoSegMainFile<<"           set(EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
 	if (std::strcmp(GetEMSoftware(), "ABC") == 0)
-	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS_Bias${NEOSEG_PREFIX}_posterior2_${SUFFIX})"<<std::endl;
+	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS${StrippedBias}${NEOSEG_PREFIX}_posterior2_${SUFFIX})"<<std::endl;
 	else
-	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS_Bias${NEOSEG_PREFIX}_posterior3_${SUFFIX})"<<std::endl;
+	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS${StrippedBias}${NEOSEG_PREFIX}_posterior3_${SUFFIX})"<<std::endl;
       }
       else
       {
@@ -5030,9 +5057,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       {
 	BMSAutoSegMainFile<<"           set(EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
 	if (std::strcmp(GetEMSoftware(), "ABC") == 0)
-	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS_Bias${NEOSEG_PREFIX}_posterior2_${SUFFIX})"<<std::endl;
+	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS${StrippedBias}${NEOSEG_PREFIX}_posterior2_${SUFFIX})"<<std::endl;
 	else
-	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS_Bias${NEOSEG_PREFIX}_posterior3_${SUFFIX})"<<std::endl;
+	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS${StrippedBias}${NEOSEG_PREFIX}_posterior3_${SUFFIX})"<<std::endl;
       }
       else
       {
@@ -5834,7 +5861,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	if(GetLoop())
 	{
 	  BMSAutoSegMainFile<<"           set(EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
-	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS_Bias${Posterior}_${SUFFIX})"<<std::endl;
+	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS${StrippedBias}${Posterior}_${SUFFIX})"<<std::endl;
 	}
 	else
 	{
@@ -6045,11 +6072,16 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   else
     BMSAutoSegAuxFile<<"set (NEOSEG_PREFIX '_EMonly')"<<std::endl;
 
+  if (GetStrippedN4ITKBiasFieldCorrection())
+    BMSAutoSegAuxFile<<"set (StrippedBias '')"<<std::endl;
+  else
+    BMSAutoSegAuxFile<<"set (StrippedBias _Bias)"<<std::endl;
+
   if (GetLoop())
   {
     int SuffixIteration=GetLoopIteration()+1;
     BMSAutoSegAuxFile<<"set (SUFFIX EMS_"<<SuffixIteration<<")"<<std::endl;
-    BMSAutoSegAuxFile<<"set (SuffixCorrected _stripEMS_Bias_corrected_${SUFFIX})"<<std::endl;
+    BMSAutoSegAuxFile<<"set (SuffixCorrected _stripEMS${StrippedBias}_corrected_${SUFFIX})"<<std::endl;
   }
   else
   {
@@ -6999,7 +7031,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   {
     int SuffixIteration=GetLoopIteration()+1;
     BMSAutoSegAuxFile<<"      set (EMSPath ${OrigSourceCasePath}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
-    BMSAutoSegAuxFile<<"      set (stripEMS _stripEMS_Bias)"<<std::endl;
+    BMSAutoSegAuxFile<<"      set (stripEMS _stripEMS${StrippedBias})"<<std::endl;
   }
   else
   {

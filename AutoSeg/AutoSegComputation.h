@@ -193,6 +193,7 @@ class AutoSegComputation
     void SetOutputDataOrientation(const char *_OutputDataOrientation){std::strcpy(m_OutputDataOrientation, _OutputDataOrientation);};
     // N4ITKBiasFieldCorrection Parameters
     void SetN4ITKBiasFieldCorrection(bool _N4ITKBiasFieldCorrection){m_N4ITKBiasFieldCorrection=_N4ITKBiasFieldCorrection;};
+    void SetStrippedN4ITKBiasFieldCorrection(bool _StrippedN4ITKBiasFieldCorrection){m_StrippedN4ITKBiasFieldCorrection=_StrippedN4ITKBiasFieldCorrection;};
     void SetNbOfIterations (const char * _NbOfIterations){std::strcpy(m_NbOfIterations,_NbOfIterations);};
     void SetBSplineGridResolutions (const char * _BSplineGridResolutions){std::strcpy(m_BSplineGridResolutions,_BSplineGridResolutions);};
     void SetConvergenceThreshold(float _ConvergenceThreshold){m_ConvergenceThreshold=_ConvergenceThreshold;};
@@ -409,6 +410,7 @@ class AutoSegComputation
     char *GetOutputDataOrientation(){return m_OutputDataOrientation;};
     // N4ITKBiasFieldCorrection Parameters
     bool GetN4ITKBiasFieldCorrection(){return m_N4ITKBiasFieldCorrection;};
+    bool GetStrippedN4ITKBiasFieldCorrection(){return m_StrippedN4ITKBiasFieldCorrection;};
     char * GetNbOfIterations() {return m_NbOfIterations;};
     char * GetBSplineGridResolutions() {return m_BSplineGridResolutions;};
     float GetConvergenceThreshold(){return m_ConvergenceThreshold;};
@@ -666,6 +668,7 @@ class AutoSegComputation
     char m_OutputDataOrientation[4];
     // N4ITKBiasFieldCorrection Parameters
     bool m_N4ITKBiasFieldCorrection;
+    bool m_StrippedN4ITKBiasFieldCorrection;
     char m_NbOfIterations[50];
     char m_BSplineGridResolutions[50];
     float m_ConvergenceThreshold;
