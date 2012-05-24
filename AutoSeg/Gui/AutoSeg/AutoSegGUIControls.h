@@ -209,6 +209,7 @@ class AutoSegGUIControls : public AutoSegGUI
     void ReorientationButtonChecked();
     // N4ITKBiasFieldCorrection 
     void N4ITKBiasFieldCorrectionButtonChecked();
+    void StrippedN4ITKBiasFieldCorrectionButtonChecked();
     void UseDefaultN4AdvancedParametersGUI();
     void SetNbOfIterationsGUI();
     void SetBSplineGridResolutionsGUI();

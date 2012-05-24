@@ -7,8 +7,8 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.7} open selected
-      xywh {681 193 910 925} type Double box UP_BOX resizable visible
+      label {AutoSeg 2.8} open selected
+      xywh {583 182 910 925} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 0 633 25} labelfont 8 textfont 8
@@ -82,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.7}
+          label {AutoSeg 2.8}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
@@ -1198,12 +1198,12 @@ class AutoSegGUI {open
             }
             Fl_Group g_N4AdvancedParametersGroup {
               label {N4 Advanced Parameters} open
-              xywh {480 479 390 116} box DOWN_FRAME labelfont 9 align 5
+              xywh {480 479 390 82} box DOWN_FRAME labelfont 9 align 5
             } {
               Fl_Spinner g_BSplineOrder {
                 label {BSpline order:}
                 callback {SetBSplineOrderGUI()}
-                xywh {585 559 50 25} labelfont 8 when 1 value 3 textfont 8
+                xywh {585 525 50 25} labelfont 8 when 1 value 3 textfont 8
               }
               Fl_Spinner g_BSplineAlpha {
                 label {BSpline alpha:}
@@ -1213,18 +1213,23 @@ class AutoSegGUI {open
               Fl_Spinner g_BSplineBeta {
                 label {BSpline beta:}
                 callback {SetBSplineBetaGUI()}
-                xywh {585 525 50 25} type Float labelfont 8 when 1 step 0.5 value 0.5 textfont 8
+                xywh {740 490 50 25} type Float labelfont 8 when 1 step 0.5 value 0.5 textfont 8
               }
               Fl_Input g_HistogramSharpening {
                 label {Histogram sharpening:}
                 callback {SetHistogramSharpeningGUI()}
-                xywh {730 530 65 25} labelfont 8 align 1 when 1 textfont 8
+                xywh {780 525 65 25} labelfont 8 when 1 textfont 8
               }
             }
             Fl_Button g_UseDefaultN4 {
               label {Use default parameters}
               callback {UseDefaultN4AdvancedParametersGUI()}
               xywh {585 605 175 25} labelfont 8
+            }
+            Fl_Check_Button g_StrippedN4ITKBiasFieldCorrectionButton {
+              label {Bias field correction on intermediate stripped image}
+              callback {StrippedN4ITKBiasFieldCorrectionButtonChecked()}
+              tooltip {Bias field correction on intermediate skull-stripped image (when tissue loop enabled)} xywh {509 570 351 24} down_box DOWN_BOX
             }
           }
           Fl_Group {} {
@@ -1897,6 +1902,8 @@ class AutoSegGUI {open
   Function {ReorientationButtonChecked()} {return_type {virtual void}
   } {}
   Function {N4ITKBiasFieldCorrectionButtonChecked()} {return_type {virtual void}
+  } {}
+  Function {StrippedN4ITKBiasFieldCorrectionButtonChecked()} {return_type {virtual void}
   } {}
   Function {UseDefaultN4AdvancedParametersGUI()} {return_type {virtual void}
   } {}

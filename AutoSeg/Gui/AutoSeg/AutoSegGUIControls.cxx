@@ -1159,7 +1159,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   float PointSpacing;
     // N4 ITK Bias Field Correction
   std::string NbOfIterations,BSplineGridResolutions,HistogramSharpening;
-  int N4ITKBiasFieldCorrection,ShrinkFactor,BSplineOrder;
+  int N4ITKBiasFieldCorrection,StrippedN4ITKBiasFieldCorrection, ShrinkFactor,BSplineOrder;
   float ConvergenceThreshold,BSplineBeta,BSplineAlpha,SplineDistance;
   // Reorientation
   int Reorientation;
@@ -1179,6 +1179,8 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
     g_N4ITKBiasFieldCorrectionButton->clear();
     g_N4ParametersGroup->deactivate();
     g_N4AdvancedParametersGroup->deactivate();
+    g_StrippedN4ITKBiasFieldCorrectionButton->clear();
+    g_StrippedN4ITKBiasFieldCorrectionButton->deactivate();
     // Init for Reorientation
     g_ReorientationButton->clear();
     g_InputDataOrientationDisp->deactivate();
@@ -2214,6 +2216,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	    g_N4ITKBiasFieldCorrectionButton->set();
 	    g_N4ParametersGroup->activate();
 	    g_N4AdvancedParametersGroup->activate();
+	    g_StrippedN4ITKBiasFieldCorrectionButton->activate();
 	  }
 	  else
 	  {
@@ -2222,12 +2225,16 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	      g_N4ITKBiasFieldCorrectionButton->set();
 	      g_N4ParametersGroup->activate();
 	      g_N4AdvancedParametersGroup->activate();
+	      g_StrippedN4ITKBiasFieldCorrectionButton->activate();
+	      
 	    }
 	    else
 	    {
 	      g_N4ITKBiasFieldCorrectionButton->clear();
 	      g_N4ParametersGroup->deactivate();
 	      g_N4AdvancedParametersGroup->deactivate();
+	      g_StrippedN4ITKBiasFieldCorrectionButton->deactivate();
+	      g_StrippedN4ITKBiasFieldCorrectionButton->clear();
 	    }
 	  }
 					
@@ -2277,6 +2284,14 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  BSplineOrder =atoi(Line+18);
 	  g_BSplineOrder->value(BSplineOrder);	
 	}
+	else if ( (std::strncmp("Stripped N4 ITK Bias Field Correction: ", Line, 39)) == 0)
+	{
+	  StrippedN4ITKBiasFieldCorrection =atoi(Line+39);
+	  if (StrippedN4ITKBiasFieldCorrection)
+	    g_StrippedN4ITKBiasFieldCorrectionButton->set();
+	  else
+	    g_StrippedN4ITKBiasFieldCorrectionButton->clear();
+	}	
       }
     }
     fclose(ParameterFile);
@@ -5117,6 +5132,7 @@ void AutoSegGUIControls::SetN4Parameters()
   m_Computation.SetBSplineAlpha((int)g_BSplineAlpha->value());
   m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
   m_Computation.SetHistogramSharpening(g_HistogramSharpening->value());
+  m_Computation.SetStrippedN4ITKBiasFieldCorrection(g_StrippedN4ITKBiasFieldCorrectionButton->value());
 }
 
 void AutoSegGUIControls::SetGridTemplateParameters()
@@ -5881,14 +5897,25 @@ void AutoSegGUIControls::N4ITKBiasFieldCorrectionButtonChecked()
   {
     g_N4ParametersGroup->activate();
     g_N4AdvancedParametersGroup->activate();
+    g_StrippedN4ITKBiasFieldCorrectionButton->activate();
     m_Computation.SetN4ITKBiasFieldCorrection(1);
   }
   else
   {
     g_N4ParametersGroup->deactivate();
     g_N4AdvancedParametersGroup->deactivate();
+    g_StrippedN4ITKBiasFieldCorrectionButton->deactivate();
+    g_StrippedN4ITKBiasFieldCorrectionButton->clear();
     m_Computation.SetN4ITKBiasFieldCorrection(0);
   }
+}
+
+void AutoSegGUIControls::StrippedN4ITKBiasFieldCorrectionButtonChecked()
+{
+  if (g_StrippedN4ITKBiasFieldCorrectionButton->value())
+    m_Computation.SetStrippedN4ITKBiasFieldCorrection(1);
+  else
+    m_Computation.SetStrippedN4ITKBiasFieldCorrection(0);
 }
 
 void AutoSegGUIControls::ReorientationButtonChecked()
@@ -6145,6 +6172,7 @@ void AutoSegGUIControls::InitializeParameters()
   g_BSplineAlpha->value(0);
   g_BSplineBeta->value(0.5);
   g_HistogramSharpening->value("0");
+  g_StrippedN4ITKBiasFieldCorrectionButton->clear();
   m_Computation.SetN4ITKBiasFieldCorrection(1);
   m_Computation.SetNbOfIterations ("50,40,30");
   m_Computation.SetBSplineGridResolutions ("1,1,1");
@@ -6155,6 +6183,7 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetBSplineAlpha((int)g_BSplineAlpha->value());
   m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
   m_Computation.SetHistogramSharpening("0");
+  m_Computation.SetStrippedN4ITKBiasFieldCorrection(0);
 
   // Rigid Registration Parameters
   g_RigidRegistrationButton->set();

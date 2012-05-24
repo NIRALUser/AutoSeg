@@ -125,7 +125,7 @@ N4 BSpline alpha: 0
 N4 BSpline beta: 0.5
 N4 Histogram sharpening: 0
 N4 BSpline order: 3
-
+Stripped N4 ITK Bias Field Correction: 0
 
 // Reorientation
 Reorientation: 0

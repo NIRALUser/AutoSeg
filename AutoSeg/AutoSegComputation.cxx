@@ -22,8 +22,6 @@ AutoSegComputation::AutoSegComputation()
 {
   m_AllocationData=0;
   m_AllocationAuxData=0;
-
-  m_StrippedN4ITKBiasFieldCorrection = 0;
 }
 
 AutoSegComputation::~AutoSegComputation()
@@ -2031,6 +2029,7 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"N4 BSpline beta: "<<GetBSplineBeta()<<std::endl;
   ParameterFile<<"N4 Histogram sharpening: "<<GetHistogramSharpening()<<std::endl;
   ParameterFile<<"N4 BSpline order: "<<GetBSplineOrder()<<std::endl<<std::endl;
+  ParameterFile<<"Stripped N4 ITK Bias Field Correction: "<<GetStrippedN4ITKBiasFieldCorrection()<<std::endl;
 
   ParameterFile<<"\n// Reorientation"<<std::endl;
   ParameterFile<<"Reorientation: "<<GetReorientation()<<std::endl;
@@ -2971,15 +2970,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     SuffixIteration=iteration+1;
     SuffixIteration_2=iteration+2;
 
-    BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
 
     if (GetLoop() && iteration !=0)
     {
-      BMSAutoSegMainFile<<"Set(T1ImageExtension '.nrrd')"<<std::endl;
+      BMSAutoSegMainFile<<"      Set(T1ImageExtension '.nrrd')"<<std::endl;
       if (GetT2Image())
-	BMSAutoSegMainFile<<"Set(T2ImageExtension '.nrrd')"<<std::endl;
+	BMSAutoSegMainFile<<"      Set(T2ImageExtension '.nrrd')"<<std::endl;
       if (GetPDImage())
-	BMSAutoSegMainFile<<"Set(PDImageExtension '.nrrd')"<<std::endl;
+	BMSAutoSegMainFile<<"      Set(PDImageExtension '.nrrd')"<<std::endl;
 
       BMSAutoSegMainFile<<"      set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;	
       BMSAutoSegMainFile<<"      ListDirInDir (EMSList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration<<")"<<std::endl;
@@ -3019,9 +3017,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       else
 	BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/)"<<std::endl;
 
-      BMSAutoSegMainFile<<"         set  (SUFFIX EMS)"<<std::endl;
-      BMSAutoSegMainFile<<"         set (Atlas ${atlasSegLoc})"<<std::endl;
+      BMSAutoSegMainFile<<"      set  (SUFFIX EMS)"<<std::endl;
+      BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLoc})"<<std::endl;
       BMSAutoSegMainFile<<"      set (stripEMS '')"<<std::endl;
+      BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
       nbCorrected=27;
       nbLabel=24;
       nbRegistered=28;
@@ -3467,43 +3466,44 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      EndIf (${PDFinalTargetList})"<<std::endl;
     }
     BMSAutoSegMainFile<<"            # Deleting temporary file"<<std::endl;
-    BMSAutoSegMainFile<<"	    DeleteFile (${TmpMask})"<<std::endl;
+    BMSAutoSegMainFile<<"	    DeleteFile (${TmpMask})"<<std::endl<<std::endl;
 
     // optional Bias Field correction on stripped data
-    if (GetLoop() && GetStrippedN4ITKBiasFieldCorrection())
+    if (GetStrippedN4ITKBiasFieldCorrection() && GetLoop() && iteration !=flag)
     {
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      echo('Bias field correction...')"<<std::endl;
       BMSAutoSegMainFile<<"      echo( )"<<std::endl;
       BMSAutoSegMainFile<<"      set(StrippedBias '_Bias')"<<std::endl;
 
-      BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"             Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-      BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${parameters})"<<std::endl;
-      BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+      BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${parameters})"<<std::endl;
+      BMSAutoSegMainFile<<"      Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (FinalTarget ${my_output})"<<std::endl;
 	
       if (GetT2Image())
       {
-	BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"             Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-	BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${T2FinalTarget} ${parameters})"<<std::endl;
-	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+	BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+	BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${T2FinalTarget} ${parameters})"<<std::endl;
+	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;	
       }
       if (GetPDImage())
       {
-	BMSAutoSegMainFile<<"	   	Set (my_output ${StrippedPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"             Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-	BMSAutoSegMainFile<<"      	Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${PDFinalTarget} ${parameters})"<<std::endl;
-	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+	BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+	BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${PDFinalTarget} ${parameters})"<<std::endl;
+	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;
       }		
     }
 
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"   echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"   echo ('WRITING MRML FILE...')"<<std::endl;
+    BMSAutoSegMainFile<<"   echo ( )"<<std::endl;
 
-    BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
-    BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
+    BMSAutoSegMainFile<<"   set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
+    BMSAutoSegMainFile<<"   set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
 
     BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
     if (GetLoop() && iteration !=0)

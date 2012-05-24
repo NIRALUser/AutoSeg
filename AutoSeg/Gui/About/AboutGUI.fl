@@ -14,7 +14,7 @@ class AboutGUI {open
         image {AutoSeg.jpg} xywh {4 5 222 170} deactivate
       }
       Fl_Button {} {
-        label {AutoSeg 2.7}
+        label {AutoSeg 2.8}
         xywh {275 20 115 30} box NO_BOX labelfont 1 labelsize 18
       }
       Fl_Button {} {
