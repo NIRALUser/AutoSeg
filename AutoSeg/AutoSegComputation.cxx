@@ -4693,6 +4693,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
 	BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
 	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+
+  // Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
+	BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${StructureWarp} -constOper 2,1 -outfile ${StructureWarp})"<<std::endl;
+ 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+	BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
+	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
       }
 
     BMSAutoSegMainFile<<"              set(StructureComputed 1)"<<std::endl;
@@ -4794,12 +4801,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     else if (GetANTSWarpingMethod())
       {
-	BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
-	BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Label} ${LabelWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-NN)"<<std::endl;
-	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-	BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
-	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
+    BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Label} ${LabelWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-NN)"<<std::endl;
+    BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+    BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+
+    // Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
+    BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${LabelWarp} -constOper 2,1 -outfile ${LabelWarp})"<<std::endl;
+    BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+    BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
       }
 
     BMSAutoSegMainFile<<"              If (${LabelNumber} > ${VentricleListLength} && ${LabelNumber} <= ${GenericROIMapLabelLimit})"<<std::endl;
