@@ -5735,9 +5735,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<" GetFilename (ParcellationMapName ${ParcellationMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<" echo ('Parcellation File: '${ParcellationMapName})"<<std::endl;
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
-	BMSAutoSegMainFile<<" set (VolumeFileMWM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_MWM.csv)"<<std::endl;
+        BMSAutoSegMainFile<<" set (VolumeFileMWM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_MWM.csv)"<<std::endl;
       BMSAutoSegMainFile<<" set (VolumeFileWM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_WM.csv)"<<std::endl;
       BMSAutoSegMainFile<<" set (VolumeFileGM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_GM.csv)"<<std::endl;
+      BMSAutoSegMainFile<<" set (VolumeFileCSF ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_CSF.csv)"<<std::endl;
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
 	{
 	  BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileMWM} PATH)"<<std::endl;
@@ -5749,10 +5750,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileGM} PATH)"<<std::endl;
       BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileGM} NAME)"<<std::endl;
       BMSAutoSegMainFile<<" ListFileInDir(FileListGM ${Path} ${VolumeFileTail})"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(Path ${VolumeFileCSF} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<" GetFileName(VolumeFileTail ${VolumeFileCSF} NAME)"<<std::endl;
+      BMSAutoSegMainFile<<" ListFileInDir(FileListCSF ${Path} ${VolumeFileTail})"<<std::endl;
 
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
 	{
-	  BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListMWM} == '' || ${FileListWM} == '' || ${FileListGM} == '')"<<std::endl;
+	  BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListMWM} == '' || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"  set (flagMWM 0)"<<std::endl;	
 
 	  BMSAutoSegMainFile<<"  If (${FileListMWM} == '')"<<std::endl;
@@ -5765,10 +5769,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"  EndIf (${FileListMWM})"<<std::endl;  
 	}      
       else
-	BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '')"<<std::endl;
+	BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
 	  
       BMSAutoSegMainFile<<"  set (flagWM 0)"<<std::endl;
       BMSAutoSegMainFile<<"  set (flagGM 0)"<<std::endl;
+      BMSAutoSegMainFile<<"  set (flagCSF 0)"<<std::endl;
 
       BMSAutoSegMainFile<<"  If (${FileListWM} == '')"<<std::endl;
       BMSAutoSegMainFile<<"   set (flagWM 1)"<<std::endl;
@@ -5787,6 +5792,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFileGM} '################################################\\n\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   set (files_to_cat_GM '')"<<std::endl;
       BMSAutoSegMainFile<<"  EndIf (${FileListGM})"<<std::endl;
+
+      BMSAutoSegMainFile<<"  If (${FileListCSF} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"   set (flagCSF 1)"<<std::endl;
+      BMSAutoSegMainFile<<"   WriteFile(${VolumeFileCSF} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '################################################\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '# Parcellation map volume analysis: CSF\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '################################################\\n\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   set (files_to_cat_CSF '')"<<std::endl;
+      BMSAutoSegMainFile<<"  EndIf (${FileListCSF})"<<std::endl;
 
       BMSAutoSegMainFile<<"   set (CaseNumber 0)"<<std::endl;
       BMSAutoSegMainFile<<"   ForEach (T1Case ${T1CasesList})"<<std::endl;
@@ -5817,9 +5831,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 11 FROMEND)"<<std::endl;
 
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
-	BMSAutoSegMainFile<<"      set(LabelList 'MWM' 'WM' 'GM')"<<std::endl;
+	BMSAutoSegMainFile<<"      set(LabelList 'MWM' 'WM' 'GM' 'CSF')"<<std::endl;
       else
-	BMSAutoSegMainFile<<"      set(LabelList 'WM' 'GM')"<<std::endl;
+	BMSAutoSegMainFile<<"      set(LabelList 'WM' 'GM' 'CSF')"<<std::endl;
       BMSAutoSegMainFile<<"      set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
 
       BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
@@ -5848,6 +5862,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    BMSAutoSegMainFile<<"           If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
 	    BMSAutoSegMainFile<<"              set(Posterior ${NEOSEG_PREFIX}_posterior2)"<<std::endl;
 	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"           If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior ${NEOSEG_PREFIX}_posterior3)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
 	  }
 	else
 	  {
@@ -5856,6 +5873,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
 	    BMSAutoSegMainFile<<"           If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
 	    BMSAutoSegMainFile<<"              set(Posterior _posterior1)"<<std::endl;
+	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"           If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
+	    BMSAutoSegMainFile<<"              set(Posterior _posterior2)"<<std::endl;
 	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
 	  }
 	if(GetLoop())
@@ -5906,6 +5926,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"              If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"                  set (files_to_cat_GM ${files_to_cat_GM} ${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
       BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
+      BMSAutoSegMainFile<<"              If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
+      BMSAutoSegMainFile<<"                  set (files_to_cat_CSF ${files_to_cat_CSF} ${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
+      BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
       BMSAutoSegMainFile<<"            echo ( )  "<<std::endl;
       BMSAutoSegMainFile<<"           Inc(${TissueNumber} 1)"<<std::endl;
       BMSAutoSegMainFile<<"           Int(${TissueNumber})"<<std::endl;      
@@ -5930,6 +5953,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"     Run (output 'cat ${files_to_cat_GM}')"<<std::endl;	
       BMSAutoSegMainFile<<"     AppendFile(${VolumeFileGM} ${output})"<<std::endl;
       BMSAutoSegMainFile<<"   EndIf (${flagGM})"<<std::endl;
+      BMSAutoSegMainFile<<"   If (${flagCSF} == 1)"<<std::endl;
+      BMSAutoSegMainFile<<"     Run (output 'cat ${files_to_cat_CSF}')"<<std::endl;	
+      BMSAutoSegMainFile<<"     AppendFile(${VolumeFileCSF} ${output})"<<std::endl;
+      BMSAutoSegMainFile<<"   EndIf (${flagCSF})"<<std::endl;
       BMSAutoSegMainFile<<"  Else ()"<<std::endl;
       BMSAutoSegMainFile<<"   echo ('Volume file already exists!')"<<std::endl;
       BMSAutoSegMainFile<<"  EndIf(${ParcellationMapComputed})"<<std::endl;	  
@@ -6987,6 +7014,23 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (GMWarpRegCase)"<<std::endl;
+    BMSAutoSegAuxFile<<"      ListFileInDir(CSFWarpRegCasesList ${WarpROIDir} *WarpReg_CSF.nrrd)"<<std::endl;
+    BMSAutoSegAuxFile<<"      ForEach (CSFWarpRegCase ${CSFWarpRegCasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         echo('CSF WarpReg Case: '${CSFWarpRegCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         GetFilename (CSFWarpRegCaseHead ${CSFWarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${CSFWarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
+    BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
+    BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
+    BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${CSFWarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} -i nn --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
+    BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
+    BMSAutoSegAuxFile<<"      EndForEach (CSFWarpRegCase)"<<std::endl;
   }
   BMSAutoSegAuxFile<<"      ListFileInDir(HardSegCasesList ${WarpROIDir} *HardSeg.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"      ForEach (HardSegCase ${HardSegCasesList})"<<std::endl;
@@ -7064,12 +7108,14 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       {
 	BMSAutoSegAuxFile<<"      set(WMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T2RegistrationExtension}${stripEMS}_posterior0_${SUFFIX}.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"      set(GMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T2RegistrationExtension}${stripEMS}_posterior1_${SUFFIX}.nrrd)"<<std::endl;
+	BMSAutoSegAuxFile<<"      set(CSFProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T2RegistrationExtension}${stripEMS}_posterior2_${SUFFIX}.nrrd)"<<std::endl;
       }
     else
       {
 	BMSAutoSegAuxFile<<"      set(MWMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T2RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior0_${SUFFIX}.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"      set(WMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T2RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior1_${SUFFIX}.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"      set(GMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T2RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior2_${SUFFIX}.nrrd)"<<std::endl;
+	BMSAutoSegAuxFile<<"      set(CSFProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T2RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior3_${SUFFIX}.nrrd)"<<std::endl;
       }
   }
   else
@@ -7097,12 +7143,14 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       {
 	BMSAutoSegAuxFile<<"      set(WMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T1RegistrationExtension}${stripEMS}_posterior0_${SUFFIX}.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"      set(GMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T1RegistrationExtension}${stripEMS}_posterior1_${SUFFIX}.nrrd)"<<std::endl;
+	BMSAutoSegAuxFile<<"      set(CSFProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T1RegistrationExtension}${stripEMS}_posterior2_${SUFFIX}.nrrd)"<<std::endl;
       }
     else
       {
 	BMSAutoSegAuxFile<<"      set(MWMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T1RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior0_${SUFFIX}.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"      set(WMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T1RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior1_${SUFFIX}.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"      set(GMProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T1RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior2_${SUFFIX}.nrrd)"<<std::endl;
+	BMSAutoSegAuxFile<<"      set(CSFProbMap ${EMSPath}${PosteriorOrigSourceCasesHead}${Bias}${T1RegistrationExtension}${stripEMS}${NEOSEG_PREFIX}_posterior3_${SUFFIX}.nrrd)"<<std::endl;
       }
   }
 
@@ -7140,6 +7188,17 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
   BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
   BMSAutoSegAuxFile<<"         echo ('File already exists: '${OutputFileGMTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
+	
+  BMSAutoSegAuxFile<<"      GetFilename (CSFProbMapHead ${CSFProbMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
+  BMSAutoSegAuxFile<<"      set (OutputFileCSF ${AuxPath}${CSFProbMapHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
+  BMSAutoSegAuxFile<<"      GetFilename (OutputFileCSFTail ${OutputFileCSF} NAME_WITHOUT_EXTENSION)"<<std::endl;
+  BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${OutputFileCSFTail}.nrrd)"<<std::endl;
+  BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
+  BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${CSFProbMap} ${OutputFileCSF} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
+  BMSAutoSegAuxFile<<"         echo ('File already exists: '${OutputFileCSFTail})"<<std::endl;
   BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
 	
   BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
@@ -7193,14 +7252,23 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
       BMSAutoSegAuxFile<<"         echo ('File already exists: '${WarpRegCaseHead}_GM_intensitySummary.csv)"<<std::endl;
       BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
+
+      BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath}  ${WarpRegCaseHead}_CSF_intensitySummary.csv)"<<std::endl;
+      BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
+      BMSAutoSegAuxFile<<"         set(CSFProbMapTr ${OutputFileCSF})"<<std::endl;
+      BMSAutoSegAuxFile<<"         Run (output '${ImageStatCmd} ${AuxCase} -label ${AuxPath}${WarpRegCase} -intensitySummary -probabilityMap ${CSFProbMapTr} -outbase ${AuxPath}${WarpRegCaseHead}_CSF -quantile ${Quantiles}')"<<std::endl;
+      BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
+      BMSAutoSegAuxFile<<"         echo ('File already exists: '${WarpRegCaseHead}_CSF_intensitySummary.csv)"<<std::endl;
+      BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
+
       BMSAutoSegAuxFile<<"      EndForEach (WarpRegCase)"<<std::endl;
     }
     else
     {
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
-	BMSAutoSegAuxFile<<"      set(LabelList MWM WM GM)"<<std::endl;
+	BMSAutoSegAuxFile<<"      set(LabelList MWM WM GM CSF)"<<std::endl;
       else
-	BMSAutoSegAuxFile<<"      set(LabelList WM GM)"<<std::endl;
+	BMSAutoSegAuxFile<<"      set(LabelList WM GM CSF)"<<std::endl;
 
       BMSAutoSegAuxFile<<"      ForEach (Label ${LabelList})"<<std::endl;
       BMSAutoSegAuxFile<<"      ListFileInDir(WarpRegCasesList ${AuxPath} *${ParcellationMapNameHead}-WarpReg_${Label}_Reg_${AuxDir}.nrrd)"<<std::endl;
