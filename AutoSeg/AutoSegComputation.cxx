@@ -3712,6 +3712,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      	  echo('WarpImageMultiTransform Error: '${prog_error})"<<std::endl;
     BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
 
+  // Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
+	BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${WarpedAtlas} -constOper 2,1 -outfile ${WarpedAtlas})"<<std::endl;
+ 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+	BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
+	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
 
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
     BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
