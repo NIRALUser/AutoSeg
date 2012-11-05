@@ -3408,7 +3408,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	//   BMSAutoSegMainFile<<"            SetAppOption(SegPostProcessCmd.outfile.outfileName ${FinalMask})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            SetAppOption(SegPostProcessCmd.DeleteVessels 1"<<std::endl;
 	//   BMSAutoSegMainFile<<"            Run (output ${SegPostProcessCmd})"<<std::endl<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output '${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask} --deleteVessels')"<<std::endl;      
+      BMSAutoSegMainFile<<"              Run (output '${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask} --deleteVessels')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${FinalTarget} -constOper 2,1 -outfile ${FinalTarget}')"<<std::endl;
     }
     else
     {
@@ -3417,6 +3418,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	//   BMSAutoSegMainFile<<"            SetAppOption(SegPostProcessCmd.outfile.outfileName ${FinalMask})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            Run (output ${SegPostProcessCmd})"<<std::endl<<std::endl;
       BMSAutoSegMainFile<<"              Run (output '${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask}')"<<std::endl;	
+      BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${FinalTarget} -constOper 2,1 -outfile ${FinalTarget}')"<<std::endl;
     }
 
 
