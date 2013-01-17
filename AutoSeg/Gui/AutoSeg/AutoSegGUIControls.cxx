@@ -88,6 +88,49 @@ void AutoSegGUIControls::AboutButtonPressed()
   Fl::run();
 }
 
+
+
+void AutoSegGUIControls::MultiAtlasSegGUI()
+{
+  int ComputeStudy = 1;
+
+  if (m_Computation.GetIsAutoSegInProcess())
+    fl_message("Automatic Segmentation already in process...");
+	
+  else
+  {
+    UpdateParameters();
+    if (!CheckInputAutoSeg())
+    {
+      m_Computation.DesallocateDataList();
+      m_Computation.DesallocateAuxDataList();
+      InitializeData();
+      InitializeAuxData();
+      m_Computation.SetSubcorticalStructureSegmentation(m_IsSubcorticalStructureSegmentation);
+      m_Computation.SetGenericROISegmentation(m_IsGenericROISegmentation);
+      m_Computation.SetParcellationMapSegmentation(m_IsParcellationMapSegmentation);
+      if (CheckStudy())
+      {
+	if (g_RecomputeButton->value())
+	  ComputeStudy = fl_choice("A study already exists. Do you really want to recompute your dataset (and delete current results)?", "No", "Yes", NULL);
+	else
+	  ComputeStudy = fl_choice("A study already exists. Do you really want to compute this study with this set of parameters?", "No", "Yes", NULL);
+      }
+      if (ComputeStudy)
+      {
+	      
+	m_Computation.SetIsAutoSegInProcess(true);   
+	while (m_Computation.GetIsAutoSegInProcess())
+	{
+	  m_Computation.Computation();
+	  Fl::check();
+	}
+      }
+    }
+  }
+}
+
+
 void AutoSegGUIControls::ExitAutoSeg()
 {
   if (m_Computation.GetIsAutoSegInProcess())
@@ -118,6 +161,13 @@ void AutoSegGUIControls::LoadParameterFileGUI()
   if(fc.count())
     m_Computation.LoadParameterFile(fc.value());  
   UpdateParameterGUI(fc.value());
+}
+
+void AutoSegGUIControls::MultiAtlasSeg()
+{
+
+    std::cout << "mark" << std::endl;
+
 }
 
 void AutoSegGUIControls::LoadComputationFileGUI()
@@ -2267,12 +2317,12 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	else if ( (std::strncmp("N4 BSpline alpha: ", Line, 18)) == 0)
 	{
 	  BSplineAlpha = atof(Line+18);
-	  g_BSplineAlpha->value(BSplineAlpha);	
+	  //g_BSplineAlpha->value(BSplineAlpha);	
 	}
 	else if ( (std::strncmp("N4 BSpline beta: ", Line, 17)) == 0)
 	{
 	  BSplineBeta = atof(Line+17);
-	  g_BSplineBeta->value(BSplineBeta);	
+	 // g_BSplineBeta->value(BSplineBeta);	
 	}
 	else if ( (std::strncmp("N4 Histogram sharpening: ", Line, 25)) == 0)
 	{
@@ -2318,6 +2368,12 @@ void AutoSegGUIControls::SetProcessDataDirectoryGUI()
   }
 }
 
+/*
+void AutoSegGUIControls::SetProcessParameterDirectoryGUI()
+{
+
+}
+*/
 void AutoSegGUIControls::T2ButtonChecked()
 {
   if (g_T2Button->value())
@@ -5129,8 +5185,8 @@ void AutoSegGUIControls::SetN4Parameters()
   m_Computation.SetSplineDistance((int)g_SplineDistance->value());
   m_Computation.SetShrinkFactor((int)g_ShrinkFactor->value());
   m_Computation.SetBSplineOrder((int)g_BSplineOrder->value());
-  m_Computation.SetBSplineAlpha((int)g_BSplineAlpha->value());
-  m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
+  //m_Computation.SetBSplineAlpha((int)g_BSplineAlpha->value());
+ // m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
   m_Computation.SetHistogramSharpening(g_HistogramSharpening->value());
   m_Computation.SetStrippedN4ITKBiasFieldCorrection(g_StrippedN4ITKBiasFieldCorrectionButton->value());
 }
@@ -5968,12 +6024,12 @@ void AutoSegGUIControls::SetBSplineOrderGUI()
 
 void AutoSegGUIControls::SetBSplineAlphaGUI()
 {
-  m_Computation.SetBSplineAlpha((float)g_BSplineAlpha->value());
+  //m_Computation.SetBSplineAlpha((float)g_BSplineAlpha->value());
 }
 
 void AutoSegGUIControls::SetBSplineBetaGUI()
 {
-  m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
+  //m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
 }
 
 void AutoSegGUIControls::SetHistogramSharpeningGUI()
@@ -6169,8 +6225,8 @@ void AutoSegGUIControls::InitializeParameters()
   g_SplineDistance->value(0);
   g_ShrinkFactor->value(4);
   g_BSplineOrder->value(3);
-  g_BSplineAlpha->value(0);
-  g_BSplineBeta->value(0.5);
+  //g_BSplineAlpha->value(0);
+  //g_BSplineBeta->value(0.5);
   g_HistogramSharpening->value("0");
   g_StrippedN4ITKBiasFieldCorrectionButton->clear();
   m_Computation.SetN4ITKBiasFieldCorrection(1);
@@ -6180,8 +6236,8 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetSplineDistance((int)g_SplineDistance->value());
   m_Computation.SetShrinkFactor((int)g_ShrinkFactor->value());
   m_Computation.SetBSplineOrder((int)g_BSplineOrder->value());
-  m_Computation.SetBSplineAlpha((int)g_BSplineAlpha->value());
-  m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
+ // m_Computation.SetBSplineAlpha((int)g_BSplineAlpha->value());
+ // m_Computation.SetBSplineBeta((float)g_BSplineBeta->value());
   m_Computation.SetHistogramSharpening("0");
   m_Computation.SetStrippedN4ITKBiasFieldCorrection(0);
 

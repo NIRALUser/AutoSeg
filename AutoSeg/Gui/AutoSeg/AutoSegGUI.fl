@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0300 
+version 1.0109 
 header_name {.h} 
 code_name {.cxx}
 class AutoSegGUI {open
@@ -7,8 +7,8 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.9.1} open selected
-      xywh {592 251 910 925} type Double box UP_BOX resizable visible
+      label {AutoSeg 2.9.2} open
+      xywh {638 130 910 925} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 0 633 25} labelfont 8 textfont 8
@@ -82,7 +82,7 @@ class AutoSegGUI {open
           image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
         }
         Fl_Button {} {
-          label {AutoSeg 2.9.1}
+          label {AutoSeg 2.9.2}
           xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
         }
         Fl_Button {} {
@@ -99,11 +99,11 @@ class AutoSegGUI {open
         }
       }
       Fl_Tabs {} {open
-        xywh {0 40 908 880} labelfont 8
+        xywh {0 25 1150 920} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
           label Computation open
-          xywh {5 70 895 850} labelfont 8 align 69
+          xywh {5 70 895 850} labelfont 8 align 69 hide
         } {
           Fl_Group {} {
             label {Step 1 - Set the process data directory} open
@@ -601,7 +601,7 @@ class AutoSegGUI {open
               Fl_Spinner g_LoopIteration {
                 label {\# iterations}
                 callback {SetLoopIterationGUI()}
-                xywh {810 181 45 25} labelfont 8 when 1 textfont 8
+                xywh {810 181 45 25} labelfont 8 when 1 value 1 textfont 8
               }
             }
           }
@@ -902,8 +902,8 @@ class AutoSegGUI {open
           }
         }
         Fl_Group g_AdvancedParametersGroup {
-          label {Advanced parameters} open
-          xywh {10 70 890 850} labelfont 8 hide
+          label {Advanced parameters} open selected
+          xywh {10 70 890 850} labelfont 8
         } {
           Fl_Group {} {
             label {Tissue Segmentation} open
@@ -1178,7 +1178,7 @@ class AutoSegGUI {open
               Fl_Spinner g_SplineDistance {
                 label {Spline distance:}
                 callback {SetSplineDistanceGUI()}
-                xywh {710 344 75 25} type Float labelfont 8 when 1 step 0.5 textfont 8
+                xywh {710 344 75 25} type Float labelfont 8 when 1 step 0.5 value 1 textfont 8
               }
               Fl_Spinner g_ShrinkFactor {
                 label {Shrink factor:}
@@ -1203,22 +1203,12 @@ class AutoSegGUI {open
               Fl_Spinner g_BSplineOrder {
                 label {BSpline order:}
                 callback {SetBSplineOrderGUI()}
-                xywh {585 525 50 25} labelfont 8 when 1 value 3 textfont 8
-              }
-              Fl_Spinner g_BSplineAlpha {
-                label {BSpline alpha:}
-                callback {SetBSplineAlphaGUI()}
-                xywh {585 490 50 25} type Float labelfont 8 when 1 step 0.5 textfont 8
-              }
-              Fl_Spinner g_BSplineBeta {
-                label {BSpline beta:}
-                callback {SetBSplineBetaGUI()}
-                xywh {740 490 50 25} type Float labelfont 8 when 1 step 0.5 value 0.5 textfont 8
+                xywh {585 505 50 25} labelfont 8 when 1 value 3 textfont 8
               }
               Fl_Input g_HistogramSharpening {
                 label {Histogram sharpening:}
                 callback {SetHistogramSharpeningGUI()}
-                xywh {780 525 65 25} labelfont 8 when 1 textfont 8
+                xywh {780 505 65 25} labelfont 8 when 1 textfont 8
               }
             }
             Fl_Button g_UseDefaultN4 {
@@ -1407,7 +1397,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSCCWeight {
                       label {CC weight :}
                       callback {SetANTSCCWeightGUI()}
-                      tooltip {Similarity: cross-correlation} xywh {340 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Similarity: cross-correlation} xywh {340 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSCCRegionRadius {
                       label {CC region radius :}
@@ -1417,7 +1407,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMIWeight {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins {
                       label {MI bins :}
@@ -1427,7 +1417,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMSQWeight {
                       label {MSQ weight :}
                       callback {SetANTSMSQWeightGUI()}
-                      tooltip {Weight for mean-square difference} xywh {650 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Weight for mean-square difference} xywh {650 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                   }
                   Fl_Group {} {
@@ -1970,5 +1960,7 @@ class AutoSegGUI {open
   Function {ANTSGaussianSmoothingButtonChecked()} {open return_type {virtual void}
   } {}
   Function {SetANTSGaussianSigmaGUI()} {open return_type {virtual void}
+  } {}
+  Function {MultiAtlasSeg()} {open return_type {virtual void}
   } {}
 } 

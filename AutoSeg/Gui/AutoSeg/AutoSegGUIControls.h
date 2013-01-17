@@ -65,6 +65,7 @@ class AutoSegGUIControls : public AutoSegGUI
   
     // Tab Computation
     void SetProcessDataDirectoryGUI();
+  //  void SetProcessParameterDirectoryGUI();
     // Data Selection
     void T2ButtonChecked();
     void PDButtonChecked();  
@@ -95,6 +96,7 @@ class AutoSegGUIControls : public AutoSegGUI
     void ClearAuxDataGUI();
     // Automatic Segmentation Computation
     void ComputeGUI();
+    void MultiAtlasSegGUI();
     // Computation Parameters
     void ComputeVolumeButtonChecked();
     void ComputeCorticalThicknessButtonChecked();
@@ -270,6 +272,8 @@ class AutoSegGUIControls : public AutoSegGUI
     void TissueMeanMatchButtonToggled();
     // Regional histogram
     void SetPointSpacingGUI();
+    // Multi-Atlas Segmentation
+    void MultiAtlasSeg();
     
   private:
 

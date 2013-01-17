@@ -2561,7 +2561,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"  ListFileInDir(OutputFileN4List ${BiasPath} ${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"  If (${OutputFileN4List} == '')"<<std::endl;
     BMSAutoSegMainFile<<"    Set (my_output ${BiasPath}${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+    //BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+    BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
     BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${CaseN4} ${parameters})"<<std::endl;
     BMSAutoSegMainFile<<"    Run (prog_output ${command_line} ${parameters} prog_error)"<<std::endl;
 
@@ -2721,6 +2722,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            If (${TxtInitFileList} == '')"<<std::endl;  
     BMSAutoSegMainFile<<"               echo ('Computing rigid transformation...')"<<std::endl;
     BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+//    BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --${RegistrationInitialization} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
     BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
@@ -2874,7 +2876,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (!GetInitRegUseT1InitTransform())
       {
 	BMSAutoSegMainFile<<"               echo ('Computing rigid transformation...')"<<std::endl;
-	BMSAutoSegMainFile<<"    	    set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+	//BMSAutoSegMainFile<<"    	    set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+	BMSAutoSegMainFile<<"    	    set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --useRigid --${RegistrationInitialization} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
 	BMSAutoSegMainFile<<"      	    Run (output ${command_line} prog_error)"<<std::endl;
 	BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;    
       }
@@ -3479,7 +3482,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set(StrippedBias '_Bias')"<<std::endl;
 
       BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      //BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      //BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
       BMSAutoSegMainFile<<"      Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${parameters})"<<std::endl;
       BMSAutoSegMainFile<<"      Run (prog_output ${command_line} prog_error)"<<std::endl;
       BMSAutoSegMainFile<<"      Set (FinalTarget ${my_output})"<<std::endl;
@@ -3487,14 +3493,16 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       if (GetT2Image())
       {
 	BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      //BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
 	BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${T2FinalTarget} ${parameters})"<<std::endl;
 	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;	
       }
       if (GetPDImage())
       {
 	BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      //BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
 	BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${PDFinalTarget} ${parameters})"<<std::endl;
 	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;
       }		
@@ -4020,7 +4028,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"         set (OutputFile ${WarpROIPath}${OutputFileTail})"<<std::endl;
 
   BMSAutoSegMainFile<<"            set (TransformInputFile ${WarpROIPath}${OutputFileHead}_initializetransform.txt)"<<std::endl;
-  BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${StrippedCase} --movingVolume ${atlasROIFile} --useRigid --useAffine --initializeTransformMode useCenterOfHeadAlign --outputVolume ${OutputFile} --outputTransform ${TransformInputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+  //BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${StrippedCase} --movingVolume ${atlasROIFile} --useRigid --useAffine --initializeTransformMode useCenterOfHeadAlign --outputVolume ${OutputFile} --outputTransform ${TransformInputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+  BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${StrippedCase} --movingVolume ${atlasROIFile} --useRigid --useAffine --useCenterOfHeadAlign --outputVolume ${OutputFile} --outputTransform ${TransformInputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
   BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
   BMSAutoSegMainFile<<"      Else ()"<<std::endl;
   BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
@@ -6565,7 +6574,8 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"      # Computing Transformation"<<std::endl;
     BMSAutoSegAuxFile<<"      echo ('Computing rigid registration...')"<<std::endl;
     BMSAutoSegAuxFile<<"     If (${TxtinitFileList} == '')"<<std::endl;
-    BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtRegFile})"<<std::endl;
+    //BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtRegFile})"<<std::endl;
+    BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --useCenterOfHeadAlign --outputTransform ${TxtRegFile})"<<std::endl;
     BMSAutoSegAuxFile<<"     Else ()"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --outputTransform ${TxtRegFile} --initialTransform ${RegPath}/${TxtinitFileTail})"<<std::endl;
     BMSAutoSegAuxFile<<"     EndIf (${TxtinitFileList})"<<std::endl;
@@ -6585,7 +6595,8 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"      # Computing Transformation"<<std::endl;
     BMSAutoSegAuxFile<<"      echo ('Computing affine registration...')"<<std::endl;
     BMSAutoSegAuxFile<<"     If (${TxtinitFileList} == '')"<<std::endl;
-    BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useAffine --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtRegFile})"<<std::endl;
+    //BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useAffine --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtRegFile})"<<std::endl;
+    BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useAffine --useCenterOfHeadAlign --outputTransform ${TxtRegFile})"<<std::endl;
     BMSAutoSegAuxFile<<"     Else ()"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useAffine --outputTransform ${TxtRegFile} --initialTransform ${RegPath}/${TxtinitFileTail})"<<std::endl;
     BMSAutoSegAuxFile<<"     EndIf (${TxtinitFileList})"<<std::endl;
@@ -6606,7 +6617,8 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"      echo ('Computing affine registration...')"<<std::endl;
     BMSAutoSegAuxFile<<"      # Parameter File"<<std::endl;
     BMSAutoSegAuxFile<<"     If (${TxtinitFileList} == '')"<<std::endl;
-    BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --useAffine --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtRegFile} --interpolationMode BSpline)"<<std::endl;
+    //BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --useAffine --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtRegFile} --interpolationMode BSpline)"<<std::endl;
+    BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --useAffine --useCenterOfHeadAlign --outputTransform ${TxtRegFile} --interpolationMode BSpline)"<<std::endl;
     BMSAutoSegAuxFile<<"     Else ()"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --useAffine --outputTransform ${TxtRegFile} --interpolationMode BSpline --initialTransform ${RegPath}/${TxtinitFileTail})"<<std::endl;
     BMSAutoSegAuxFile<<"     EndIf (${TxtinitFileList})"<<std::endl;

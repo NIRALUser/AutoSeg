@@ -5,7 +5,10 @@
   Language:  C++
   Date:      $Date: 2010/06/30 13:19:06 $
   Version:   $Revision: 1.5 $
-  Author:    Clement Vachet
+             $Revision: 1.6: 1. Remove the setting of alpha and beta on gui for N4 (11-20-2012)$
+             $               2. Revised thd BRAINSFit option --initializeTransformMode in AutoSegComputation.cxx (11-21-2012) / this revision is not true for the new version of BRAINSFit (12-04-2012) $
+             $               2. Excluded lines 2028, 2029 in AutoSegComputation.cxx (11-26-2012)$
+  Author:    Clement Vachet, Jiahui Wang
 
   Copyright (c) 2004 NeuroImaging Lab @ UNC. All rights reserved.
   See NeuroLibCopyright.txt for details.
@@ -22,7 +25,7 @@
 #include "AutoSegGUIControls.h"
 #include "AutoSegComputation.h"
 
-#define AUTOSEG_VERSION "2.9.1"
+#define AUTOSEG_VERSION "2.9.2"
 
 void PrintHelp(char* progname)
 {
@@ -41,9 +44,7 @@ int main(int argc, char *argv[])
   {
     std::cout << "AutoSeg "<<AUTOSEG_VERSION<<" - Compiled on: " << __DATE__ << " - "<< __TIME__ <<std::endl;
     std::cout << " performs automatic brain tissue classification and structural segmentation" << std::endl;
-    std::cout << "usage: AutoSeg [-computationFile computationFile] [-parameterFile parameterFile]"<< std::endl;
-    std::cout << std::endl;
-    std::cout << "-computationFile	computation file" << std::endl;
+    std::cout << "usage: AutoSeg [-computationFile computationFile] [-parameterFile parameterFile]"<< std::endl; std::cout << std::endl; std::cout << "-computationFile	computation file" << std::endl;
     std::cout << "-parameterFile	parameter file" << std::endl;
     std::cout << "-gui	open AutoSeg interface" << std::endl;
     std::cout << std::endl << std::endl;
