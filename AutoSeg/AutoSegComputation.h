@@ -25,12 +25,17 @@
 #include <vector>
 #include <itksys/Glob.hxx>
 #include <cstdlib>
+#include <dirent.h>
+#include <unistd.h>
+#include <string>
+#include <algorithm>
 
 #include "TextDisplayGUIControls.h"
 
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Display.H>
 #include <FL/fl_ask.H>
+#define FILE_LIST_LENGTH 128
 
 enum Mode
 {
@@ -59,10 +64,13 @@ class AutoSegComputation
     bool GetIsAutoSegInProcess(){return m_IsAutoSegInProcess;};  
   // Tab Computation
     void SetProcessDataDirectory(const char *_ProcessDataDirectory){std::strcpy(m_ProcessDataDirectory,_ProcessDataDirectory);};
+    void SetMultiAtlasDirectory(const char *_MultiAtlasDirectory){std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);};
+    void SetMultiAtlasTargetFile(const char *_MultiAtlasTargetFile){std::strcpy(m_MultiAtlasTargetFile,_MultiAtlasTargetFile);};
 
-		
     void SetT2Image(bool _IsT2Image){m_IsT2Image = _IsT2Image;};
     void SetPDImage(bool _IsPDImage){m_IsPDImage = _IsPDImage;};
+
+    void SetROIT2Atlas(bool _IsROIT2Atlas){m_IsROIT2Atlas = _IsROIT2Atlas;};
 		
     void SetAuxT1Image(bool _IsAuxT1Image){m_IsAuxT1Image = _IsAuxT1Image;};
     void SetAuxT2Image(bool _IsAuxT2Image){m_IsAuxT2Image = _IsAuxT2Image;};
@@ -108,6 +116,11 @@ class AutoSegComputation
   // Computation Options
     void SetComputeVolume(bool _ComputeVolume){m_ComputeVolume = _ComputeVolume;};
     void SetComputeCorticalThickness(bool _ComputeCorticalThickness){m_ComputeCorticalThickness = _ComputeCorticalThickness;};
+    void SetMultiAtlasAtlasRegistration(bool _ComputeMultiAtlasAtlasRegistration){m_ComputeMultiAtlasAtlasRegistration = _ComputeMultiAtlasAtlasRegistration;};
+    void SetMultiAtlasSegmentation(bool _MultiAtlasSegmentation){m_MultiAtlasSegmentation = _MultiAtlasSegmentation;};
+    void SetRecalculateAtlasTargetMultiAtlasEnergy(bool _RecalculateAtlasTargetMultiAtlasEnergy){m_RecalculateAtlasTargetMultiAtlasEnergy = _RecalculateAtlasTargetMultiAtlasEnergy;};
+    void SetRecalculateAtlasAtlasMultiAtlasEnergy(bool _RecalculateAtlasAtlasMultiAtlasEnergy){m_RecalculateAtlasAtlasMultiAtlasEnergy = _RecalculateAtlasAtlasMultiAtlasEnergy;};
+    void SetMultiModalitySegmentation(bool _MultiModalitySegmentation){m_MultiModalitySegmentation = _MultiModalitySegmentation;};
     void SetRecompute(bool _Recompute){m_Recompute = _Recompute;};
     void SetUseCondor(bool _UseCondor){m_UseCondor = _UseCondor;};
 		
@@ -127,6 +140,7 @@ class AutoSegComputation
     void SetCommonCoordinateImage(const char *_CommonCoordinateImage){std::strcpy(m_CommonCoordinateImage,_CommonCoordinateImage);};
     void SetTissueSegmentationAtlasDirectory(const char *_TissueSegmentationAtlasDirectory){std::strcpy(m_TissueSegmentationAtlasDirectory,_TissueSegmentationAtlasDirectory);};
     void SetROIAtlasFile(const char *_ROIAtlasFile){std::strcpy(m_ROIAtlasFile,_ROIAtlasFile);};
+    void SetROIT2AtlasFile(const char *_ROIAtlasFile){std::strcpy(m_ROIT2AtlasFile,_ROIAtlasFile);};
     void SetTissueSegmentationAtlasType(const char *_TissueSegmentationAtlasType){std::strcpy(m_TissueSegmentationAtlasType, _TissueSegmentationAtlasType);};
     void SetCommonCoordinateImageType(const char *_CommonCoordinateImageType){std::strcpy(m_CommonCoordinateImageType, _CommonCoordinateImageType);};
     // Probabilistic Subcortical Structures Parameters
@@ -177,6 +191,7 @@ class AutoSegComputation
     void SetFluidAtlasWarp(bool _FluidAtlasWarp){m_FluidAtlasWarp = _FluidAtlasWarp;};
     void SetFluidAtlasAffine(bool _FluidAtlasAffine){m_FluidAtlasAffine = _FluidAtlasAffine;};
     void SetFluidAtlasFATW(bool _FluidAtlasFATW){m_FluidAtlasFATW = _FluidAtlasFATW;};
+    void SetANTSAtlasABC(bool _ANTSAtlasABC){m_ANTSAtlasABC = _ANTSAtlasABC;};
     void SetFluidAtlasWarpIterations(int _FluidAtlasWarpIterations){m_FluidAtlasWarpIterations = _FluidAtlasWarpIterations;};
     void SetFluidAtlasWarpMaxStep(float _FluidAtlasWarpMaxStep){m_FluidAtlasWarpMaxStep = _FluidAtlasWarpMaxStep;};
     void SetAtlasLinearMapping(const char *_AtlasLinearMapping){std::strcpy(m_AtlasLinearMapping,_AtlasLinearMapping);};
@@ -203,6 +218,9 @@ class AutoSegComputation
     void SetBSplineAlpha(float _BSplineAlpha){m_BSplineAlpha=_BSplineAlpha;};
     void SetBSplineBeta(float _BSplineBeta){m_BSplineBeta=_BSplineBeta;};
     void SetHistogramSharpening(const char *  _HistogramSharpening){std::strcpy(m_HistogramSharpening,_HistogramSharpening);};
+    void SetWeightIntensityEnergy(float _weightIntensityEnergy){m_WeightIntensityEnergy=_weightIntensityEnergy;};
+    void SetWeightHarmonicEnergy(float _weightHarmonicEnergy){m_WeightHarmonicEnergy=_weightHarmonicEnergy;};
+    void SetWeightShapeEnergy(float _weightShapeEnergy){m_WeightShapeEnergy=_weightShapeEnergy;};
 
     // Rigid Registration Parameters
     void SetRigidRegistration(bool _RigidRegistration){m_RigidRegistration = _RigidRegistration;};
@@ -244,6 +262,13 @@ class AutoSegComputation
     void SetANTSMIWeight(float _ANTSMIWeight){m_ANTSMIWeight= _ANTSMIWeight;};
     void SetANTSMIBins(float _ANTSMIBins){m_ANTSMIBins = _ANTSMIBins;};
     void SetANTSMSQWeight(float _ANTSMSQWeight){m_ANTSMSQWeight = _ANTSMSQWeight;};
+
+    void SetANTSCCWeight2nd(float _ANTSCCWeight){m_ANTSCCWeight2nd = _ANTSCCWeight;};
+    void SetANTSCCRegionRadius2nd(float _ANTSCCRegionRadius){m_ANTSCCRegionRadius2nd = _ANTSCCRegionRadius;};
+    void SetANTSMIWeight2nd(float _ANTSMIWeight){m_ANTSMIWeight2nd = _ANTSMIWeight;};
+    void SetANTSMIBins2nd(float _ANTSMIBins){m_ANTSMIBins2nd = _ANTSMIBins;};
+    void SetANTSMSQWeight2nd(float _ANTSMSQWeight){m_ANTSMSQWeight2nd = _ANTSMSQWeight;};
+
     void SetANTSRegistrationFilterType(const char * _ANTSRegistrationFilterType){std::strcpy(m_ANTSRegistrationFilterType,_ANTSRegistrationFilterType);};
     void SetANTSTransformationStep(const char * _ANTSTransformationStep){std::strcpy(m_ANTSTransformationStep,_ANTSTransformationStep);};
     void SetANTSGaussianSmoothing(bool _IsANTSGaussianSmoothing){m_IsANTSGaussianSmoothing = _IsANTSGaussianSmoothing;};
@@ -254,12 +279,31 @@ class AutoSegComputation
     void SetIntensityRescalingMethod(int _IntensityRescalingMethod){m_IntensityRescalingMethod = _IntensityRescalingMethod;};
     //Data
     void SetNbData(int _NbData){m_NbData = _NbData;};
+    void SetNbAtlas(int _NbAtlas){m_NbAtlas = _NbAtlas; m_AtlasList = new char *[m_NbAtlas];};
+    void SetNb2ndAtlas(int _NbAtlas){m_Nb2ndAtlas = _NbAtlas; m_2ndAtlasList = new char *[m_Nb2ndAtlas];};
+    void SetNbAtlasLabel(int _NbAtlasLabel){m_NbAtlasLabel = _NbAtlasLabel; m_AtlasLabelList = new char *[m_NbAtlasLabel];};
+    void SetNbWarpedAtlas(int _NbWarpedAtlas){m_NbWarpedAtlas = _NbWarpedAtlas; m_WarpedAtlasList = new char *[m_NbWarpedAtlas];};
+    void SetNbWarpedAtlasTrainToTrain(int _NbWarpedAtlasTrainToTrain){m_NbWarpedAtlasTrainToTrain = _NbWarpedAtlasTrainToTrain; m_WarpedAtlasTrainToTrainList = new char *[m_NbWarpedAtlasTrainToTrain];};
+    void SetNbWarpedLabel(int _NbWarpedLabel){m_NbWarpedLabel = _NbWarpedLabel; m_WarpedLabelList = new char *[m_NbWarpedLabel];};
+    void SetNbDeformationField(int _NbDeformationField){m_NbDeformationField = _NbDeformationField; m_DeformationFieldList = new char *[m_NbDeformationField];};
+    void SetNbDeformationFieldTrainToTrain(int _NbDeformationFieldTrainToTrain){m_NbDeformationFieldTrainToTrain = _NbDeformationFieldTrainToTrain; m_DeformationFieldTrainToTrainList = new char *[m_NbDeformationFieldTrainToTrain];};
     void SetNbAuxData(int _NbAuxData){m_NbAuxData = _NbAuxData;};
     void AllocateDataList();
     void AllocateAuxDataList();
     void DesallocateDataList();
     void DesallocateAuxDataList();
     void SetDataList(const char *_Data, int _DataNumber, bool _GUIMode);
+//    void SetMultiAtlasDataList(const char *_Data, int _DataNumber, bool _GUIMode);
+    void SetAtlasList(const char *_Data, int _DataNumber);
+    void Set2ndAtlasList(const char *_Data, int _DataNumber);
+    void SetAtlasLabelList(const char *_Data, int _DataNumber);
+    void SetTargetList(const char *_Data, int _DataNumber);
+//    void SetProcessedList(const char *_Directory);
+    void SetWarpedAtlasList(const char *_Directory);
+    void SetWarpedAtlasTrainToTrainList(const char *_Directory);
+    void SetWarpedLabelList(const char *_Directory);
+    void SetDeformationFieldList(const char *_Directory);
+    void SetDeformationFieldTrainToTrainList(const char *_Directory);
     void SetAuxDataList(const char *_Data, int _DataNumber);
    // Regional histogram
     void SetQuantiles(const char *_Quantiles){std::strcpy(m_Quantiles, _Quantiles);};
@@ -276,17 +320,45 @@ class AutoSegComputation
     bool LoadParameterFile(const char *_FileName, enum Mode mode=file);
     void LoadComputationFile(const char *_FileName);
     void LoadAuxComputationFile(const char *_FileName);
+    void SortStringList(char **strList, int size);
+    int GetNbData(){return m_NbData;};
+    int GetNbAtlas(){return m_NbAtlas;};
+    int GetNb2ndAtlas(){return m_Nb2ndAtlas;};
+    int GetNbAtlasLabel(){return m_NbAtlasLabel;};
+    int GetNbWarpedAtlas(){return m_NbWarpedAtlas;};
+    int GetNbWarpedAtlasTrainToTrain(){return m_NbWarpedAtlasTrainToTrain;};
+    int GetNbWarpedLabel(){return m_NbWarpedLabel;};
+    int GetNbDeformationField(){return m_NbDeformationField;};
+    int GetNbDeformationFieldTrainToTrain(){return m_NbDeformationFieldTrainToTrain;};
+    int GetNbAuxData(){return m_NbAuxData;};
+
+    float GetIntensityEnergyWeight(){return m_WeightIntensityEnergy;};
+    float GetHarmonicEnergyWeight(){return m_WeightHarmonicEnergy;};
+    float GetShapeEnergyWeight(){return m_WeightShapeEnergy;};
+    //static bool stringCompare( const std::string &left, const std::string &right );
+    // Set Multi-Atlas Segmentation 
+    void SetLabelFusionAlgorithm(const char *_LabelFusionAlgorithm){std::strcpy(m_LabelFusionAlgorithm, _LabelFusionAlgorithm);};
+    void SetSlicerVersion(const float _SlicerVersion){m_SlicerVersion = _SlicerVersion;};
+    char *GetLabelFusionAlgorithm(){return m_LabelFusionAlgorithm;};
+    float GetSlicerVersion(){return m_SlicerVersion;};
+    //void SetABCANTSWarpButtonChecked(){m_ABCANTSWarpChecked = 1;};
+   // int GetABCANTSWarpButtonChecked(){return m_ABCANTSWarpChecked;};
+
   private:
 
     char m_AutoSegPath[512];
   
   // Tab Computation
     char *GetProcessDataDirectory(){return m_ProcessDataDirectory;};
+    char *GetMultiAtlasDirectory(){return m_MultiAtlasDirectory;};
+    char *GetMultiAtlasTargetFile(){return m_MultiAtlasTargetFile;};
      // Get T2Image: if T2image is computed, m_IsT2Image = 1 else 0
     bool GetT2Image(){return m_IsT2Image;};
      // Get PDImage: if PDfile, m_IsPDImage = 1 else 0
     bool GetPDImage(){return m_IsPDImage;};
-		
+
+    bool GetROIT2Atlas(){return m_IsROIT2Atlas;};		
+
     bool GetAuxT1Image(){return m_IsAuxT1Image;};
     bool GetAuxT2Image(){return m_IsAuxT2Image;};
     bool GetAuxPDImage(){return m_IsAuxPDImage;};
@@ -327,6 +399,11 @@ class AutoSegComputation
     // Computation Options
     bool GetComputeVolume(){return m_ComputeVolume;};
     bool GetComputeCorticalThickness(){return m_ComputeCorticalThickness;};
+    bool GetMultiAtlasSegmentation(){return m_MultiAtlasSegmentation;};
+    bool GetRecalculateAtlasTargetMultiAtlasEnergy(){return m_RecalculateAtlasTargetMultiAtlasEnergy;};
+    bool GetRecalculateAtlasAtlasMultiAtlasEnergy(){return m_RecalculateAtlasAtlasMultiAtlasEnergy;};
+    bool GetMultiModalitySegmentation(){return m_MultiModalitySegmentation;};
+    bool GetMultiAtlasAtlasRegistration(){return m_ComputeMultiAtlasAtlasRegistration;};
     bool GetRecompute(){return m_Recompute;};
     bool GetUseCondor(){return m_UseCondor;};
 		
@@ -344,6 +421,7 @@ class AutoSegComputation
     char *GetCommonCoordinateImage(){return m_CommonCoordinateImage;};
     char *GetTissueSegmentationAtlasDirectory(){return m_TissueSegmentationAtlasDirectory;};
     char *GetROIAtlasFile(){return m_ROIAtlasFile;};
+    char *GetROIT2AtlasFile(){return m_ROIT2AtlasFile;};
     char *GetTissueSegmentationAtlasType(){return m_TissueSegmentationAtlasType;};
     char *GetCommonCoordinateImageType(){return m_CommonCoordinateImageType;};
     // Probabilistic Subcortical Structures Parameters
@@ -394,6 +472,7 @@ class AutoSegComputation
     bool GetFluidAtlasWarp(){return m_FluidAtlasWarp;};
     bool GetFluidAtlasAffine(){return m_FluidAtlasAffine;};
     bool GetFluidAtlasFATW(){return m_FluidAtlasFATW;};
+    bool GetANTSAtlasABC(){return m_ANTSAtlasABC;};
     int GetFluidAtlasWarpIterations(){return m_FluidAtlasWarpIterations;};
     float GetFluidAtlasWarpMaxStep(){return m_FluidAtlasWarpMaxStep;};
     char *GetAtlasLinearMapping(){return m_AtlasLinearMapping;};
@@ -459,6 +538,13 @@ class AutoSegComputation
     float GetANTSMIWeight(){return m_ANTSMIWeight;};
     float GetANTSMIBins(){return m_ANTSMIBins;};
     float GetANTSMSQWeight(){return m_ANTSMSQWeight;};
+
+    float GetANTSCCWeight2nd(){return m_ANTSCCWeight2nd;};
+    float GetANTSCCRegionRadius2nd(){return m_ANTSCCRegionRadius2nd;};
+    float GetANTSMIWeight2nd(){return m_ANTSMIWeight2nd;};
+    float GetANTSMIBins2nd(){return m_ANTSMIBins2nd;};
+    float GetANTSMSQWeight2nd(){return m_ANTSMSQWeight2nd;};
+
     char *GetANTSRegistrationFilterType(){return m_ANTSRegistrationFilterType;};
     char *GetANTSTransformationStep(){return m_ANTSTransformationStep;};
     bool GetANTSGaussianSmoothing(){return m_IsANTSGaussianSmoothing;};
@@ -512,8 +598,6 @@ class AutoSegComputation
     void SetAuxData(const char *_Data, char *_T1, char *_Aux1, char *_Aux2, char *_Aux3, char *_Aux4, char *_Aux5, char *_Aux6);
     void SetAuxData(const char *_Data, char *_T1, char *_Aux1, char *_Aux2, char *_Aux3, char *_Aux4, char *_Aux5, char *_Aux6, char *_Aux7);
     void SetAuxData(const char *_Data, char *_T1, char *_Aux1, char *_Aux2, char *_Aux3, char *_Aux4, char *_Aux5, char *_Aux6, char *_Aux7, char *_Aux8);
-    int GetNbData(){return m_NbData;};
-    int GetNbAuxData(){return m_NbAuxData;};
     void DeleteSpaces(char *_Label);
 		
   // Write BatchMake Files  
@@ -554,6 +638,8 @@ class AutoSegComputation
 
   //Tab Computation
     char m_ProcessDataDirectory[512];
+    char m_MultiAtlasDirectory[512];
+    char m_MultiAtlasTargetFile[512];
     // Data AutoSeg Directory
     char m_DataAutoSegDirectory[100];
     // Automatic Data Selection
@@ -582,6 +668,11 @@ class AutoSegComputation
     // Computation Options
     bool m_ComputeVolume;
     bool m_ComputeCorticalThickness;
+    bool m_ComputeMultiAtlasAtlasRegistration;
+    bool m_MultiAtlasSegmentation;
+    bool m_RecalculateAtlasTargetMultiAtlasEnergy;
+    bool m_RecalculateAtlasAtlasMultiAtlasEnergy;
+    bool m_MultiModalitySegmentation;
     bool m_Recompute; // Recompute all
     bool m_UseCondor;
 
@@ -602,6 +693,7 @@ class AutoSegComputation
     char m_CommonCoordinateImage[512];
     char m_TissueSegmentationAtlasDirectory[512];
     char m_ROIAtlasFile[512];
+    char m_ROIT2AtlasFile[512];
     char m_TissueSegmentationAtlasType[3];
     char m_CommonCoordinateImageType[3];
     // Probabilistic Subcortical Structures
@@ -635,6 +727,8 @@ class AutoSegComputation
   //Tab Advanced Parameters
     // Tissue Segmentation Parameters
     char m_EMSoftware[20];
+    char m_LabelFusionAlgorithm[64];
+    float m_SlicerVersion;
     int m_FilterIterations;
     float m_FilterTimeStep;
     char m_FilterMethod[50];
@@ -654,6 +748,7 @@ class AutoSegComputation
     bool m_FluidAtlasFATW;
     int m_FluidAtlasWarpIterations;
     float m_FluidAtlasWarpMaxStep;
+    bool m_ANTSAtlasABC;
     char m_AtlasLinearMapping[50];
     char m_ImageLinearMapping[50];
     char m_AtlasLoop[512];
@@ -717,6 +812,11 @@ class AutoSegComputation
     float m_ANTSMIWeight;
     float m_ANTSMIBins;
     float m_ANTSMSQWeight;
+    float m_ANTSCCWeight2nd;
+    float m_ANTSCCRegionRadius2nd;
+    float m_ANTSMIWeight2nd;
+    float m_ANTSMIBins2nd;
+    float m_ANTSMSQWeight2nd;
     char m_ANTSRegistrationFilterType[50];
     char m_ANTSTransformationStep[50];
     bool m_IsANTSGaussianSmoothing;
@@ -728,9 +828,24 @@ class AutoSegComputation
     // Regional histogram		
     float m_PointSpacing;
     char m_Quantiles[100];
+    //weighting factor for intensity energy
+    float m_WeightIntensityEnergy;
+    //weighting factor for harmonic energy
+    float m_WeightHarmonicEnergy;
+    //weighting factor for shape energy
+    float m_WeightShapeEnergy;
+
   // Data to be computed
    // Number of data
     int m_NbData;
+    int m_NbAtlas;
+    int m_Nb2ndAtlas;
+    int m_NbAtlasLabel;
+    int m_NbWarpedAtlas;
+    int m_NbWarpedAtlasTrainToTrain;
+    int m_NbWarpedLabel;
+    int m_NbDeformationField;
+    int m_NbDeformationFieldTrainToTrain;
     int m_NbAuxData;
    // Allocation of data
     int m_AllocationData;
@@ -739,6 +854,8 @@ class AutoSegComputation
     bool m_IsT2Image;
    // 1 if PD Images are computed
     bool m_IsPDImage;
+   // 1 if T2 ROI Atlas are computed
+    bool m_IsROIT2Atlas;
 		
     bool m_IsAuxT1Image;
     bool m_IsAuxT2Image;
@@ -758,6 +875,17 @@ class AutoSegComputation
     char **m_T2List;
    // PD Data List: contains all the PD files 
     char **m_PDList;
+    char **m_MultiAtlasList;
+   // Multi Atlas List: contains all the Multi Atlases 
+    char **m_AtlasList;
+    char **m_2ndAtlasList;
+    char **m_AtlasLabelList;
+    char **m_TargetList;
+    char **m_WarpedLabelList;
+    char **m_WarpedAtlasList;
+    char **m_WarpedAtlasTrainToTrainList;
+    char **m_DeformationFieldList;
+    char **m_DeformationFieldTrainToTrainList;
 		
     char **m_AuxT1List;
     char **m_AuxT2List;

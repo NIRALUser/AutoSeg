@@ -7,11 +7,11 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 2.9.2} open
-      xywh {638 130 910 925} type Double box UP_BOX resizable visible
+      label {AutoSeg 3.0.0} open
+      xywh {170 176 1020 945} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
-        xywh {0 0 633 25} labelfont 8 textfont 8
+        xywh {0 10 633 15} labelfont 8 textfont 8
       } {
         Submenu {} {
           label File open
@@ -75,873 +75,872 @@ class AutoSegGUI {open
           }
         }
       }
-      Fl_Group {} {open
-        xywh {675 -5 235 70} box PLASTIC_UP_BOX align 0
-      } {
-        Fl_Button {} {
-          image {AutoSeg.jpg} xywh {676 -4 94 67} box NO_BOX align 64 when 2 deactivate
-        }
-        Fl_Button {} {
-          label {AutoSeg 2.9.2}
-          xywh {784 0 119 22} box NO_BOX labelfont 1 labelsize 17
-        }
-        Fl_Button {} {
-          label {Clement Vachet}
-          xywh {787 17 110 20} box NO_BOX labelfont 8 labelsize 13
-        }
-        Fl_Button {} {
-          label {Emilie Perrot}
-          xywh {785 30 110 20} box NO_BOX labelfont 8 labelsize 13
-        }
-        Fl_Button {} {
-          label {Clementine Ouziel}
-          xywh {830 40 25 25} box NO_BOX labelfont 8 labelsize 13
-        }
-      }
       Fl_Tabs {} {open
-        xywh {0 25 1150 920} labelfont 8
+        xywh {0 30 1210 920} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
-          label Computation open
-          xywh {5 70 895 850} labelfont 8 align 69 hide
+          label Computation open selected
+          xywh {5 75 895 860} labelfont 8 align 69
         } {
           Fl_Group {} {
             label {Step 1 - Set the process data directory} open
-            xywh {15 80 875 70} box UP_BOX labelfont 9 align 21
+            xywh {15 85 875 70} box UP_BOX labelfont 9 align 21
           } {
             Fl_Button g_ProcessDataDirectory {
               label {...}
               callback {SetProcessDataDirectoryGUI()}
-              tooltip {Set the process data directory} xywh {30 111 23 23}
+              tooltip {Set the process data directory} xywh {30 116 23 23}
             }
             Fl_Output g_ProcessDataDirectoryDisp {
-              xywh {60 111 775 23} labelfont 8 textfont 8
+              xywh {60 116 775 23} labelfont 8 textfont 8
             }
           }
           Fl_Group {} {
             label {Step 2 - Set dataset information} open
-            xywh {15 160 550 60} box UP_BOX labelfont 9 align 21
+            xywh {15 165 550 60} box UP_BOX labelfont 9 align 21
           } {
             Fl_Button {} {
               label {- Images : }
-              xywh {30 185 80 25} box NO_BOX labelfont 8
+              xywh {30 190 80 25} box NO_BOX labelfont 8
             }
             Fl_Button {} {
               label {T1-weighted, }
-              xywh {110 185 85 25} box NO_BOX labelfont 8
+              xywh {110 190 85 25} box NO_BOX labelfont 8
             }
             Fl_Check_Button g_T2Button {
               label {T2-weighted,}
               callback {T2ButtonChecked()}
-              xywh {200 185 100 25} down_box DOWN_BOX labelfont 8
+              xywh {200 190 100 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_PDButton {
               label {PD-weighted}
               callback {PDButtonChecked()}
-              xywh {305 185 100 25} down_box DOWN_BOX labelfont 8
+              xywh {305 190 100 25} down_box DOWN_BOX labelfont 8
             }
           }
           Fl_Group {} {
             label {Step 3 - Set the output data directory} open
-            xywh {574 160 315 60} box UP_BOX labelfont 9 align 21
+            xywh {574 165 315 60} box UP_BOX labelfont 9 align 21
           } {
             Fl_Input g_DataAutoSegDirectoryDisp {
-              tooltip {Directory created under each input data directory (default: AutoSeg)} xywh {584 185 255 25} labelfont 8 textfont 8
+              tooltip {Directory created under each input data directory (default: AutoSeg)} xywh {584 190 255 25} labelfont 8 textfont 8
             }
           }
           Fl_Group {} {
             label {Step 4 - Set dataset} open
-            xywh {15 230 875 605} box UP_BOX labelfont 9 align 21
+            xywh {15 235 875 605} box UP_BOX labelfont 9 align 21
           } {
             Fl_Group g_AutoDataSelectionGroup {
               label { - Automatic data selection} open
-              xywh {37 256 840 103} box THIN_UP_BOX labelfont 9 align 17
+              xywh {37 261 840 103} box THIN_UP_BOX labelfont 9 align 17
             } {
               Fl_Button g_DataDirectory {
                 label {...}
                 callback {SetDataDirectoryGUI()}
-                tooltip {Set the data directory} xywh {152 285 23 23}
+                tooltip {Set the data directory} xywh {152 290 23 23}
               }
               Fl_Button g_ComputeData {
                 label {Refresh filelist}
                 callback {ComputeDataGUI()}
-                tooltip {Compute data automatically} xywh {747 319 110 25} labelfont 8
+                tooltip {Compute data automatically} xywh {747 324 110 25} labelfont 8
               }
               Fl_Input g_T1Disp {
                 label {T1 filter:}
-                tooltip {Filter for T1 files (e.g T1*/*T1.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {111 319 150 25} labelfont 8 textfont 8
+                tooltip {Filter for T1 files (e.g T1*/*T1.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {111 324 150 25} labelfont 8 textfont 8
               }
               Fl_Input g_T2Disp {
                 label {T2 filter:}
-                tooltip {Filter for T2 files: path relative to T1 path (../T2/*T2.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {332 319 150 25} labelfont 8 textfont 8 deactivate
+                tooltip {Filter for T2 files: path relative to T1 path (../T2/*T2.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {332 324 150 25} labelfont 8 textfont 8 deactivate
               }
               Fl_Input g_PDDisp {
                 label {PD filter: }
-                tooltip {Filter for PD files: path  relative to T1 path (../PD/*PD.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {565 319 150 25} labelfont 8 textfont 8 deactivate
+                tooltip {Filter for PD files: path  relative to T1 path (../PD/*PD.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {565 324 150 25} labelfont 8 textfont 8 deactivate
               }
               Fl_Output g_DataDirectoryDisp {
-                xywh {182 285 675 23} labelfont 8 align 5 textfont 8
+                xywh {182 290 675 23} labelfont 8 align 5 textfont 8
               }
               Fl_Button {} {
                 label {Data directory:}
-                xywh {52 286 100 25} box NO_BOX labelfont 8
+                xywh {52 291 100 25} box NO_BOX labelfont 8
               }
             }
             Fl_Group g_ManualDataSelectionGroup {
               label { - Manual data selection} open
-              xywh {38 366 838 458} box THIN_UP_BOX labelfont 9 align 17
+              xywh {38 371 838 458} box THIN_UP_BOX labelfont 9 align 17
             } {
               Fl_Browser g_DataBrowser {
-                xywh {53 388 805 392} textfont 8
+                xywh {53 393 805 392} textfont 8
                 code0 {\#include "ResizeBrowser.h"}
                 class ResizeBrowser
               }
               Fl_Button g_AddData {
                 label Add
                 callback {AddDataGUI();}
-                tooltip {Add data manually} xywh {368 788 60 25} labelfont 8
+                tooltip {Add data manually} xywh {368 793 60 25} labelfont 8
                 code0 {g_AddData->shortcut(FL_Insert);}
               }
               Fl_Button g_RemoveData {
                 label Remove
                 callback {RemoveDataGUI();}
-                tooltip {Remove selected data} xywh {438 788 60 25} labelfont 8
+                tooltip {Remove selected data} xywh {438 793 60 25} labelfont 8
                 code0 {g_RemoveData->shortcut(FL_Delete);}
               }
               Fl_Button g_ClearData {
                 label Clear
                 callback {ClearDataGUI();}
-                tooltip {Clear browser} xywh {508 788 60 25} labelfont 8
+                tooltip {Clear browser} xywh {508 793 60 25} labelfont 8
               }
             }
           }
           Fl_Check_Button g_RecomputeButton {
             label {Recompute all}
             callback {RecomputeButtonChecked()}
-            tooltip {Recompute all data} xywh {230 845 130 25} box UP_BOX down_box DOWN_BOX labelfont 8
+            tooltip {Recompute all data} xywh {230 850 130 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
           Fl_Check_Button g_UseCondorButton {
             label {Use condor}
             callback {UseCondorButtonChecked()}
-            tooltip {Dataset is run in a distributed environment via Condor} xywh {230 874 130 25} box UP_BOX down_box DOWN_BOX labelfont 8 deactivate
+            tooltip {Dataset is run in a distributed environment via Condor} xywh {230 878 130 25} box UP_BOX down_box DOWN_BOX labelfont 8 deactivate
           }
           Fl_Return_Button g_ReturnButton {
             label {Compute AutoSeg}
             callback {ComputeGUI()}
-            tooltip {Compute the automatic segmentation} xywh {370 845 180 55} labelfont 8
+            tooltip {Compute the automatic segmentation} xywh {370 850 180 50} labelfont 8
           }
           Fl_Button g_ShowDisplayButton {
             label {Show process status}
             callback {ShowDisplayButtonPressed();}
-            tooltip {Display the process} xywh {640 845 140 25} labelfont 8
+            tooltip {Display the process} xywh {640 850 140 25} labelfont 8
           }
           Fl_Button g_ExitButton {
             label Exit
             callback {ExitAutoSeg();}
-            tooltip {Exit AutoSeg} xywh {790 845 75 55} labelfont 8
+            tooltip {Exit AutoSeg} xywh {790 850 75 55} labelfont 8
           }
           Fl_Check_Button g_ComputeVolumeButton {
             label {Compute volume analysis}
             callback {ComputeVolumeButtonChecked();}
-            tooltip {Volume analysis} xywh {20 845 205 25} box UP_BOX down_box DOWN_BOX value 1 labelfont 8
+            tooltip {Volume analysis} xywh {20 850 205 25} box UP_BOX down_box DOWN_BOX value 1 labelfont 8
           }
           Fl_Button g_StopButton {
             label Stop
             callback {StopAutoSeg();}
-            tooltip {Stop the automatic segmentation} xywh {560 845 70 55} labelfont 8
+            tooltip {Stop the automatic segmentation} xywh {560 850 70 50} labelfont 8
           }
           Fl_Button g_ShowMRMLScene {
             label {Show MRML Scene}
             callback {ShowMRMLSceneButtonPressed();}
-            tooltip {Display quality control images} xywh {640 875 140 25} labelfont 8
+            tooltip {Display quality control images} xywh {640 880 140 25} labelfont 8
           }
           Fl_Check_Button g_ComputeCorticalThicknessButton {
             label {Compute cortical thickness}
             callback {ComputeCorticalThicknessButtonChecked();}
-            tooltip {Cortical thickness analysis} xywh {20 873 205 25} box UP_BOX down_box DOWN_BOX labelfont 8
+            tooltip {Cortical thickness analysis} xywh {20 878 205 25} box UP_BOX down_box DOWN_BOX labelfont 8
+          }
+          Fl_Check_Button g_MultiAtlasSegButton {
+            label {Conduct Multi-Atlas Segmentation}
+            callback {MultiAtlasSegmentationButtonChecked();}
+            xywh {20 905 340 25} box UP_BOX down_box DOWN_BOX
+          }
+          Fl_Check_Button g_MultiModalitySegButton {
+            label {Conduct Multi-Modality Segmentation}
+            callback {MultiModalitySegmentationButtonChecked();}
+            xywh {370 905 260 25} box UP_BOX down_box DOWN_BOX
           }
         }
         Fl_Group g_AuxComputationGroup {
           label {Regional histogram} open
-          xywh {10 70 890 850} labelfont 8 hide
+          xywh {10 75 890 850} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Auxiliary data information} open
-            xywh {15 188 865 122} box UP_BOX labelfont 9 align 21
+            xywh {15 193 865 122} box UP_BOX labelfont 9 align 21
           } {
             Fl_Check_Button g_Aux1Button {
               label Aux1
               callback {Aux1ButtonChecked()}
-              xywh {56 235 64 25} down_box DOWN_BOX
+              xywh {56 240 64 25} down_box DOWN_BOX
             }
             Fl_Check_Button g_Aux2Button {
               label Aux2
               callback {Aux2ButtonChecked()}
-              xywh {251 235 64 25} down_box DOWN_BOX deactivate
+              xywh {251 240 64 25} down_box DOWN_BOX deactivate
             }
             Fl_Check_Button g_Aux3Button {
               label Aux3
               callback {Aux3ButtonChecked()}
-              xywh {446 235 64 25} down_box DOWN_BOX deactivate
+              xywh {446 240 64 25} down_box DOWN_BOX deactivate
             }
             Fl_Check_Button g_Aux4Button {
               label Aux4
               callback {Aux4ButtonChecked()}
-              xywh {641 235 64 25} down_box DOWN_BOX deactivate
+              xywh {641 240 64 25} down_box DOWN_BOX deactivate
             }
             Fl_Check_Button g_Aux5Button {
               label Aux5
               callback {Aux5ButtonChecked()}
-              xywh {56 274 64 25} down_box DOWN_BOX deactivate
+              xywh {56 279 64 25} down_box DOWN_BOX deactivate
             }
             Fl_Check_Button g_Aux6Button {
               label Aux6
               callback {Aux6ButtonChecked()}
-              xywh {251 274 64 25} down_box DOWN_BOX deactivate
+              xywh {251 279 64 25} down_box DOWN_BOX deactivate
             }
             Fl_Check_Button g_Aux7Button {
               label Aux7
               callback {Aux7ButtonChecked()}
-              xywh {446 274 64 25} down_box DOWN_BOX deactivate
+              xywh {446 279 64 25} down_box DOWN_BOX deactivate
             }
             Fl_Check_Button g_Aux8Button {
               label Aux8
               callback {Aux8ButtonChecked()}
-              xywh {641 274 64 25} down_box DOWN_BOX deactivate
+              xywh {641 279 64 25} down_box DOWN_BOX deactivate
             }
             Fl_Input g_Aux1LabelDisp {
-              xywh {121 235 95 25} labelfont 8 textfont 8
+              xywh {121 240 95 25} labelfont 8 textfont 8
             }
             Fl_Input g_Aux2LabelDisp {
-              xywh {316 235 95 25} textfont 8 deactivate
+              xywh {316 240 95 25} textfont 8 deactivate
             }
             Fl_Input g_Aux3LabelDisp {
-              xywh {511 235 95 25} textfont 8 deactivate
+              xywh {511 240 95 25} textfont 8 deactivate
             }
             Fl_Input g_Aux4LabelDisp {
-              xywh {706 235 95 25} textfont 8 deactivate
+              xywh {706 240 95 25} textfont 8 deactivate
             }
             Fl_Input g_Aux5LabelDisp {
-              xywh {121 274 95 25} textfont 8 deactivate
+              xywh {121 279 95 25} textfont 8 deactivate
             }
             Fl_Input g_Aux6LabelDisp {
-              xywh {316 274 95 25} textfont 8 deactivate
+              xywh {316 279 95 25} textfont 8 deactivate
             }
             Fl_Input g_Aux7LabelDisp {
-              xywh {511 274 95 25} textfont 8 deactivate
+              xywh {511 279 95 25} textfont 8 deactivate
             }
             Fl_Input g_Aux8LabelDisp {
-              xywh {706 274 95 25} textfont 8 deactivate
+              xywh {706 279 95 25} textfont 8 deactivate
             }
             Fl_Button {} {
               label {Only first auxiliary images are registered to source images}
-              xywh {445 200 374 24} box NO_BOX labelfont 8
+              xywh {445 205 374 24} box NO_BOX labelfont 8
             }
           }
           Fl_Group {} {
             label {Auxiliary data selection} open
-            xywh {15 323 865 585} box UP_BOX labelfont 9 align 21
+            xywh {15 328 865 585} box UP_BOX labelfont 9 align 21
           } {
             Fl_Group g_AutoAuxDataSelectionGroup {
               label { - Automatic auxiliary data selection} open
-              xywh {37 350 820 160} box THIN_UP_BOX labelfont 9 align 17
+              xywh {37 355 820 160} box THIN_UP_BOX labelfont 9 align 17
             } {
               Fl_Button g_Aux1Title {
                 label Aux1
-                xywh {52 397 64 25} box NO_BOX labelfont 8 deactivate
+                xywh {52 402 64 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Button g_Aux2Title {
                 label Aux2
-                xywh {245 397 64 25} box NO_BOX labelfont 8 deactivate
+                xywh {245 402 64 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Button g_Aux3Title {
                 label Aux3
-                xywh {438 397 64 25} box NO_BOX labelfont 8 deactivate
+                xywh {438 402 64 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Button g_Aux4Title {
                 label Aux4
-                xywh {632 397 64 25} box NO_BOX labelfont 8 deactivate
+                xywh {632 402 64 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Button g_Aux5Title {
                 label Aux5
-                xywh {52 437 64 25} box NO_BOX labelfont 8 deactivate
+                xywh {52 442 64 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Button g_Aux6Title {
                 label Aux6
-                xywh {245 437 60 25} box NO_BOX labelfont 8 deactivate
+                xywh {245 442 60 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Button g_Aux7Title {
                 label Aux7
-                xywh {438 437 64 25} box NO_BOX labelfont 8 deactivate
+                xywh {438 442 64 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Button g_Aux8Title {
                 label Aux8
-                xywh {632 437 64 25} box NO_BOX labelfont 8 deactivate
+                xywh {632 442 64 25} box NO_BOX labelfont 8 deactivate
               }
               Fl_Input g_Aux1Disp {
-                tooltip {Aux1 Files (Aux1*/*Aux1.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {117 395 95 25} textfont 8 deactivate
+                tooltip {Aux1 Files (Aux1*/*Aux1.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {117 400 95 25} textfont 8 deactivate
               }
               Fl_Input g_Aux2Disp {
-                tooltip {Aux2 Files (Aux2*/*Aux2.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {312 395 95 25} textfont 8 deactivate
+                tooltip {Aux2 Files (Aux2*/*Aux2.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {312 400 95 25} textfont 8 deactivate
               }
               Fl_Input g_Aux3Disp {
-                tooltip {Aux3 Files (Aux3*/*Aux3.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {507 395 95 25} textfont 8 deactivate
+                tooltip {Aux3 Files (Aux3*/*Aux3.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {507 400 95 25} textfont 8 deactivate
               }
               Fl_Input g_Aux4Disp {
-                tooltip {Aux4 Files (Aux4*/*Aux4.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {702 395 95 25} textfont 8 deactivate
+                tooltip {Aux4 Files (Aux4*/*Aux4.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {702 400 95 25} textfont 8 deactivate
               }
               Fl_Input g_Aux5Disp {
-                tooltip {Aux5 Files (Aux5*/*Aux5.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {117 435 95 25} textfont 8 deactivate
+                tooltip {Aux5 Files (Aux5*/*Aux5.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {117 440 95 25} textfont 8 deactivate
               }
               Fl_Input g_Aux6Disp {
-                tooltip {Aux6 Files (Aux6*/*Aux6.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {312 435 95 25} textfont 8 deactivate
+                tooltip {Aux6 Files (Aux6*/*Aux6.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {312 440 95 25} textfont 8 deactivate
               }
               Fl_Input g_Aux7Disp {
-                tooltip {Aux7 Files (Aux7*/*Aux7.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {507 435 95 25} textfont 8 deactivate
+                tooltip {Aux7 Files (Aux7*/*Aux7.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {507 440 95 25} textfont 8 deactivate
               }
               Fl_Input g_Aux8Disp {
-                tooltip {Aux8 Files (Aux8*/*Aux8.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {702 435 95 25} textfont 8 deactivate
+                tooltip {Aux8 Files (Aux8*/*Aux8.{gipl,gipl.gz,mhd,mha,hdr,nhdr})} xywh {702 440 95 25} textfont 8 deactivate
               }
               Fl_Button g_ComputeAuxData {
                 label {Refresh filelist}
                 callback {ComputeAuxDataGUI()}
-                xywh {703 473 95 25} labelfont 8
+                xywh {703 478 95 25} labelfont 8
               }
               Fl_Button {} {
                 label {Please set the filters relative to the source images (files located in data directory)}
-                xywh {60 477 475 18} box NO_BOX labelfont 8
+                xywh {60 482 475 18} box NO_BOX labelfont 8
               }
             }
             Fl_Group g_ManualAuxDataSelectionGroup {
               label { - Manual auxiliary data selection} open
-              xywh {37 516 820 380} box THIN_UP_BOX labelfont 9 align 17
+              xywh {37 521 820 380} box THIN_UP_BOX labelfont 9 align 17
             } {
               Fl_Browser g_AuxDataBrowser {
-                xywh {47 543 800 310} textfont 8
+                xywh {47 548 800 310} textfont 8
                 code0 {\#include "ResizeBrowser.h"}
                 class ResizeBrowser
               }
               Fl_Button g_AddAuxData {
                 label Add
                 callback {AddAuxDataGUI();}
-                tooltip {Add auxiliary data manually} xywh {347 860 60 25} labelfont 8
+                tooltip {Add auxiliary data manually} xywh {347 865 60 25} labelfont 8
                 code0 {g_AddAuxData->shortcut(FL_Insert);}
               }
               Fl_Button g_RemoveAuxData {
                 label Remove
                 callback {RemoveAuxDataGUI();}
-                tooltip {Remove selected auxiliary data} xywh {417 860 60 25} labelfont 8
+                tooltip {Remove selected auxiliary data} xywh {417 865 60 25} labelfont 8
                 code0 {g_RemoveAuxData->shortcut(FL_Delete);}
               }
               Fl_Button g_ClearAuxData {
                 label Clear
                 callback {ClearAuxDataGUI();}
-                tooltip {Clear browser} xywh {487 860 60 25} labelfont 8
+                tooltip {Clear browser} xywh {487 865 60 25} labelfont 8
               }
             }
           }
           Fl_Group {} {
-            label {Source selection} open
-            xywh {15 79 470 100} box UP_BOX labelfont 9 align 21
+            label {Source selection}
+            xywh {15 84 470 100} box UP_BOX labelfont 9 align 21
           } {
             Fl_Group {} {open
-              xywh {40 139 430 30} box DOWN_FRAME
+              xywh {40 144 430 30} box DOWN_FRAME
             } {
               Fl_Check_Button g_AtlasSpaceButton {
                 label {Atlas Space}
                 callback {AtlasSpaceButtonChecked()}
-                xywh {55 144 105 23} type Radio down_box DOWN_BOX labelfont 8
+                xywh {55 149 105 23} type Radio down_box DOWN_BOX labelfont 8
               }
               Fl_Check_Button g_StrippedButton {
                 label {Skull-stripped}
                 callback {StrippedButtonChecked()}
-                xywh {350 144 110 23} type Radio down_box DOWN_BOX labelfont 8
+                xywh {350 149 110 23} type Radio down_box DOWN_BOX labelfont 8
               }
               Fl_Check_Button g_BiasCorrectedButton {
                 label {Bias corrected}
                 callback {BiasCorrectedButtonChecked()}
-                xywh {197 144 118 23} type Radio down_box DOWN_BOX labelfont 8
+                xywh {197 149 118 23} type Radio down_box DOWN_BOX labelfont 8
               }
             }
             Fl_Group {} {open
-              xywh {40 105 430 29} box DOWN_FRAME
+              xywh {40 110 430 29} box DOWN_FRAME
             } {
               Fl_Check_Button g_AuxT1Button {
                 label {T1 Image}
                 callback {AuxT1ButtonChecked()}
-                xywh {55 105 415 29} type Radio down_box DOWN_BOX labelfont 8
+                xywh {55 110 415 29} type Radio down_box DOWN_BOX labelfont 8
               }
               Fl_Check_Button g_AuxT2Button {
                 label {T2 Image}
                 callback {AuxT2ButtonChecked()}
-                xywh {197 105 95 29} type Radio down_box DOWN_BOX labelfont 8
+                xywh {197 110 95 29} type Radio down_box DOWN_BOX labelfont 8
               }
               Fl_Check_Button g_AuxPDButton {
                 label {PD Image}
                 callback {AuxPDButtonChecked()}
-                xywh {350 105 85 29} type Radio down_box DOWN_BOX labelfont 8
+                xywh {350 110 85 29} type Radio down_box DOWN_BOX labelfont 8
               }
             }
           }
           Fl_Group {} {
             label {Transformation selection} open
-            xywh {495 79 245 100} box UP_BOX labelfont 9 align 21
+            xywh {495 84 245 100} box UP_BOX labelfont 9 align 21
           } {
             Fl_Check_Button g_RigidTransformationButton {
               label Rigid
               callback {RigidTransformationButtonChecked()}
-              xywh {515 120 61 29} type Radio down_box DOWN_BOX labelfont 8
+              xywh {515 125 61 29} type Radio down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_AffineTransformationButton {
               label Affine
               callback {AffineTransformationButtonChecked()}
-              xywh {581 120 62 29} type Radio down_box DOWN_BOX labelfont 8
+              xywh {581 125 62 29} type Radio down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_BsplineTransformationButton {
               label Bspline
               callback {BsplineTransformationButtonChecked()}
-              xywh {649 120 76 29} type Radio down_box DOWN_BOX labelfont 8
+              xywh {649 125 76 29} type Radio down_box DOWN_BOX labelfont 8
             }
           }
         }
         Fl_Group g_ParametersGroup {
           label {Atlas Parameters} open
-          xywh {10 70 890 850} labelfont 8 hide
+          xywh {10 75 890 865} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Atlases - Grayscale images} open
-            xywh {25 80 860 185} box UP_BOX labelfont 9 align 17
+            xywh {25 85 860 210} box UP_BOX labelfont 9 align 17
           } {
             Fl_Button g_CommonCoordinateImage {
               label {...}
               callback {SetCommonCoordinateImageGUI()}
-              tooltip {Set the common coordinate image} xywh {235 107 23 23}
+              tooltip {Set the common coordinate image} xywh {235 112 23 23}
             }
             Fl_Button g_ROIAtlasFile {
               label {...}
               callback {SetROIAtlasFileGUI();}
-              tooltip {Set the tissue segmentation atlas directory ( the atlas being 'template.nrrd')} xywh {235 227 23 23}
+              tooltip {Set the tissue segmentation atlas directory ( the atlas being 'template.nrrd')} xywh {235 232 23 23}
             }
             Fl_Output g_CommonCoordinateImageDisp {
-              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr,nrrd} xywh {265 107 455 23} align 0 textfont 8
+              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr,nrrd} xywh {265 112 455 23} align 0 textfont 8
             }
             Fl_Output g_ROIAtlasFileDisp {
-              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr,nrrd} xywh {265 227 455 23} align 0 textfont 8
+              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr,nrrd} xywh {265 232 455 23} align 0 textfont 8
             }
             Fl_Group {} {
               label {Type :} open
-              xywh {765 104 105 26} box DOWN_FRAME labelfont 8 align 4
+              xywh {765 109 105 26} box DOWN_FRAME labelfont 8 align 4
             } {
               Fl_Round_Button g_CommonCoordinateImageT1Button {
                 label T1
                 callback {CommonCoordinateImageT1ButtonToggled();}
-                xywh {770 106 45 22} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                xywh {770 111 45 22} down_box ROUND_DOWN_BOX value 1 labelfont 8
               }
               Fl_Round_Button g_CommonCoordinateImageT2Button {
                 label T2
                 callback {CommonCoordinateImageT2ButtonToggled();}
-                xywh {820 106 45 22} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {820 111 45 22} down_box ROUND_DOWN_BOX labelfont 8
               }
             }
             Fl_Button {} {
               label {Tissue seg atlas directory :}
-              tooltip {Tissue segmentation  atlas directory} xywh {30 137 215 23} box NO_BOX labelfont 8
+              tooltip {Tissue segmentation  atlas directory} xywh {30 142 215 23} box NO_BOX labelfont 8
             }
             Fl_Button g_TissueSegmentationAtlas {
               label {...}
               callback {SetTissueSegmentationAtlasDirectoryGUI()}
-              tooltip {Set the tissue segmentation atlas directory (atlas being 'template.mha' for ABC)} xywh {235 137 23 23}
+              tooltip {Set the tissue segmentation atlas directory (atlas being 'template.mha' for ABC)} xywh {235 142 23 23}
             }
             Fl_Output g_TissueSegmentationAtlasDirectoryDisp {
-              xywh {265 137 455 23} align 5 textfont 8
+              xywh {265 142 455 23} align 5 textfont 8
             }
             Fl_Group {} {
               label {Type :} open
-              xywh {765 134 105 26} box DOWN_FRAME labelfont 8 align 4
+              xywh {765 139 105 26} box DOWN_FRAME labelfont 8 align 4
             } {
               Fl_Round_Button g_TissueSegmentationAtlasT1Button {
                 label T1
                 callback {TissueSegmentationAtlasT1ButtonToggled();}
-                xywh {771 135 39 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                xywh {771 140 39 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
               }
               Fl_Round_Button g_TissueSegmentationAtlasT2Button {
                 label T2
                 callback {TissueSegmentationAtlasT2ButtonToggled();}
-                xywh {820 135 40 24} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {820 140 40 24} down_box ROUND_DOWN_BOX labelfont 8
               }
             }
             Fl_Button {} {
               label {Common coordinate image :}
-              xywh {45 107 185 23} box NO_BOX labelfont 8
+              xywh {45 112 185 23} box NO_BOX labelfont 8
             }
             Fl_Button {} {
-              label {Region of Interest (ROI) atlas :}
-              xywh {40 227 180 23} box NO_BOX labelfont 8
+              label {Region of Interest (ROI) T1 atlas :}
+              xywh {40 232 180 23} box NO_BOX labelfont 8
             }
             Fl_Check_Button g_LoopButton {
               label {Tissue seg loop}
               callback {LoopButtonChecked()}
-              xywh {35 181 125 25} down_box DOWN_BOX value 1 labelfont 8
+              xywh {35 186 125 25} down_box DOWN_BOX value 1 labelfont 8
             }
             Fl_Group g_AtlasLoopGroup {open
-              xywh {165 171 707 45} box DOWN_FRAME
+              xywh {165 176 707 45} box DOWN_FRAME
             } {
               Fl_Button g_Loop {
                 label {...}
                 callback {SetLoopGUI()}
-                tooltip {Set the stripped tissue segmentation atlas directory} xywh {295 181 23 23}
+                tooltip {Set the stripped tissue segmentation atlas directory} xywh {295 186 23 23}
               }
               Fl_Output g_AtlasLoopDisp {
-                tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr} xywh {325 181 395 23} textfont 8
+                tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr} xywh {325 186 395 23} textfont 8
               }
               Fl_Button {} {
                 label {Stripped atlas dir :}
-                tooltip {Tissue segmentation stripped atlas directory} xywh {170 182 115 23} box NO_BOX labelfont 8
+                tooltip {Tissue segmentation stripped atlas directory} xywh {170 187 115 23} box NO_BOX labelfont 8
               }
               Fl_Spinner g_LoopIteration {
                 label {\# iterations}
                 callback {SetLoopIterationGUI()}
-                xywh {810 181 45 25} labelfont 8 when 1 value 1 textfont 8
+                xywh {810 186 45 25} labelfont 8 when 1 value 1 textfont 8
               }
+            }
+            Fl_Button {} {
+              label {Region of Interest (ROI) T2 atlas :}
+              xywh {40 262 180 23} box NO_BOX labelfont 8
+            }
+            Fl_Button g_ROIT2AtlasFile {
+              label {...}
+              callback {SetT2ROIAtlasFileGUI();}
+              tooltip {Set the tissue segmentation atlas directory ( the atlas being 'template.nrrd')} xywh {235 262 23 23}
+            }
+            Fl_Output g_ROIT2AtlasFileDisp {
+              tooltip {Formats: .gipl,.gipl.gz,.mhd,.mha,.hdr,.nhdr,nrrd} xywh {265 262 455 23} align 0 textfont 8
             }
           }
           Fl_Group g_StructuresGroup {
-            label {ROI Atlas - Probabilistic subcortical structures}
-            xywh {25 395 860 340} box UP_BOX labelfont 9 align 17
+            label {ROI Atlas - Probabilistic subcortical structures} open
+            xywh {25 425 860 340} box UP_BOX labelfont 9 align 17
           } {
             Fl_Check_Button g_AllStructuresButton {
               label All
               callback {AllStructuresButtonChecked();}
-              xywh {35 403 70 25} down_box DOWN_BOX labelfont 8
+              xywh {35 433 70 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_AmygdalaLeftButton {
               label {Amygdala left :}
               callback {AmygdalaLeftButtonChecked();}
-              xywh {45 426 119 25} down_box DOWN_BOX labelfont 8
+              xywh {45 456 119 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_AmygdalaRightButton {
               label {Amygdala right :}
               callback {AmygdalaRightButtonChecked();}
-              xywh {45 451 130 25} down_box DOWN_BOX labelfont 8
+              xywh {45 481 130 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_CaudateLeftButton {
               label {Caudate left :}
               callback {CaudateLeftButtonChecked();}
-              xywh {45 476 135 25} down_box DOWN_BOX labelfont 8
+              xywh {45 506 135 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_CaudateRightButton {
               label {Caudate right :}
               callback {CaudateRightButtonChecked();}
-              xywh {45 501 125 25} down_box DOWN_BOX labelfont 8
+              xywh {45 531 125 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_HippocampusLeftButton {
               label {Hippocampus left :}
               callback {HippocampusLeftButtonChecked();}
-              xywh {45 526 140 25} down_box DOWN_BOX labelfont 8
+              xywh {45 556 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_HippocampusRightButton {
               label {Hippocampus right :}
               callback {HippocampusRightButtonChecked();}
-              xywh {45 551 150 25} down_box DOWN_BOX labelfont 8
+              xywh {45 581 150 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_PallidusLeftButton {
               label {Pallidus left :}
               callback {PallidusLeftButtonChecked();}
-              xywh {45 576 150 25} down_box DOWN_BOX labelfont 8
+              xywh {45 606 150 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_PallidusRightButton {
               label {Pallidus right :}
               callback {PallidusRightButtonChecked();}
-              xywh {45 601 150 25} down_box DOWN_BOX labelfont 8
+              xywh {45 631 150 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_PutamenLeftButton {
               label {Putamen left :}
               callback {PutamenLeftButtonChecked();}
-              xywh {45 626 150 25} down_box DOWN_BOX labelfont 8
+              xywh {45 656 150 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_PutamenRightButton {
               label {Putamen right :}
               callback {PutamenRightButtonChecked();}
-              xywh {45 651 150 25} down_box DOWN_BOX labelfont 8
+              xywh {45 681 150 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_LateralVentricleLeftButton {
               label {Lateral ventricle left :}
               callback {LateralVentricleLeftButtonChecked();}
-              xywh {45 676 170 25} down_box DOWN_BOX labelfont 8
+              xywh {45 706 170 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_LateralVentricleRightButton {
               label {Lateral ventricle right :}
               callback {LateralVentricleRightButtonChecked();}
-              xywh {45 701 170 25} down_box DOWN_BOX labelfont 8
+              xywh {45 731 170 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Button g_AmygdalaLeft {
               label {...}
               callback {SetAmygdalaLeftGUI();}
-              xywh {225 426 23 23}
+              xywh {225 456 23 23}
             }
             Fl_Button g_AmygdalaRight {
               label {...}
               callback {SetAmygdalaRightGUI();}
-              xywh {225 451 23 23}
+              xywh {225 481 23 23}
             }
             Fl_Button g_CaudateLeft {
               label {...}
               callback {SetCaudateLeftGUI();}
-              xywh {225 476 23 23}
+              xywh {225 506 23 23}
             }
             Fl_Button g_CaudateRight {
               label {...}
               callback {SetCaudateRightGUI();}
-              xywh {225 501 23 23}
+              xywh {225 531 23 23}
             }
             Fl_Button g_HippocampusLeft {
               label {...}
               callback {SetHippocampusLeftGUI();}
-              xywh {225 526 23 23}
+              xywh {225 556 23 23}
             }
             Fl_Button g_HippocampusRight {
               label {...}
               callback {SetHippocampusRightGUI();}
-              xywh {225 551 23 23}
+              xywh {225 581 23 23}
             }
             Fl_Button g_PallidusLeft {
               label {...}
               callback {SetPallidusLeftGUI();}
-              xywh {225 576 23 23}
+              xywh {225 606 23 23}
             }
             Fl_Button g_PallidusRight {
               label {...}
               callback {SetPallidusRightGUI();}
-              xywh {225 601 23 23}
+              xywh {225 631 23 23}
             }
             Fl_Button g_PutamenLeft {
               label {...}
               callback {SetPutamenLeftGUI();}
-              xywh {225 626 23 23}
+              xywh {225 656 23 23}
             }
             Fl_Button g_PutamenRight {
               label {...}
               callback {SetPutamenRightGUI();}
-              xywh {225 651 23 23}
+              xywh {225 681 23 23}
             }
             Fl_Button g_LateralVentricleLeft {
               label {...}
               callback {SetLateralVentricleLeftGUI();}
-              xywh {225 676 23 23}
+              xywh {225 706 23 23}
             }
             Fl_Button g_LateralVentricleRight {
               label {...}
               callback {SetLateralVentricleRightGUI()}
-              xywh {225 701 23 23}
+              xywh {225 731 23 23}
             }
             Fl_Output g_AmygdalaLeftDisp {
-              xywh {255 425 570 23} textfont 8 deactivate
+              xywh {255 455 570 23} textfont 8 deactivate
             }
             Fl_Output g_AmygdalaRightDisp {
-              xywh {255 450 570 23} textfont 8 deactivate
+              xywh {255 480 570 23} textfont 8 deactivate
             }
             Fl_Output g_CaudateLeftDisp {
-              xywh {255 475 570 23} textfont 8 deactivate
+              xywh {255 505 570 23} textfont 8 deactivate
             }
             Fl_Output g_CaudateRightDisp {
-              xywh {255 500 570 23} textfont 8 deactivate
+              xywh {255 530 570 23} textfont 8 deactivate
             }
             Fl_Output g_HippocampusLeftDisp {
-              xywh {255 525 570 23} textfont 8 deactivate
+              xywh {255 555 570 23} textfont 8 deactivate
             }
             Fl_Output g_HippocampusRightDisp {
-              xywh {255 550 570 23} textfont 8 deactivate
+              xywh {255 580 570 23} textfont 8 deactivate
             }
             Fl_Output g_PallidusLeftDisp {
-              xywh {255 575 570 23} textfont 8 deactivate
+              xywh {255 605 570 23} textfont 8 deactivate
             }
             Fl_Output g_PallidusRightDisp {
-              xywh {255 600 570 23} textfont 8 deactivate
+              xywh {255 630 570 23} textfont 8 deactivate
             }
             Fl_Output g_PutamenLeftDisp {
-              xywh {255 625 570 23} textfont 8 deactivate
+              xywh {255 655 570 23} textfont 8 deactivate
             }
             Fl_Output g_PutamenRightDisp {
-              xywh {255 650 570 23} textfont 8 deactivate
+              xywh {255 680 570 23} textfont 8 deactivate
             }
             Fl_Output g_LateralVentricleLeftDisp {
-              xywh {255 675 570 23} textfont 8 deactivate
+              xywh {255 705 570 23} textfont 8 deactivate
             }
             Fl_Output g_LateralVentricleRightDisp {
-              xywh {255 700 570 23} textfont 8 deactivate
+              xywh {255 730 570 23} textfont 8 deactivate
             }
           }
           Fl_Group g_GenericROIMapsGroup {
             label {ROI Atlas - Generic ROI maps} open
-            xywh {25 747 860 160} box UP_BOX labelfont 9 align 17
+            xywh {25 770 860 160} box UP_BOX labelfont 9 align 17
           } {
             Fl_Check_Button g_ROIFile1Button {
               label {Custom ROI file 1 :}
               callback {ROIFile1ButtonChecked();}
-              xywh {45 772 155 25} down_box DOWN_BOX labelfont 8
+              xywh {45 795 155 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_ROIFile2Button {
               label {Custom ROI file 2 :}
               callback {ROIFile2ButtonChecked();}
-              xywh {45 797 140 25} down_box DOWN_BOX labelfont 8
+              xywh {45 820 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_ROIFile3Button {
               label {Custom ROI file 3 :}
               callback {ROIFile3ButtonChecked();}
-              xywh {45 822 140 25} down_box DOWN_BOX labelfont 8
+              xywh {45 845 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_ROIFile4Button {
               label {Custom ROI file 4 :}
               callback {ROIFile4ButtonChecked();}
-              xywh {45 847 140 25} down_box DOWN_BOX labelfont 8
+              xywh {45 870 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_ROIFile5Button {
               label {Custom ROI file 5 :}
               callback {ROIFile5ButtonChecked();}
-              xywh {45 872 140 25} down_box DOWN_BOX labelfont 8
+              xywh {45 895 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Button g_ROIFile1 {
               label {...}
               callback {SetROIFile1GUI();}
-              xywh {225 772 23 23}
+              xywh {225 795 23 23}
             }
             Fl_Button g_ROIFile2 {
               label {...}
               callback {SetROIFile2GUI();}
-              xywh {225 797 23 23}
+              xywh {225 820 23 23}
             }
             Fl_Button g_ROIFile3 {
               label {...}
               callback {SetROIFile3GUI();}
-              xywh {225 822 23 23}
+              xywh {225 845 23 23}
             }
             Fl_Button g_ROIFile4 {
               label {...}
               callback {SetROIFile4GUI();}
-              xywh {225 847 23 23}
+              xywh {225 870 23 23}
             }
             Fl_Button g_ROIFile5 {
               label {...}
               callback {SetROIFile5GUI();}
-              xywh {225 872 23 23}
+              xywh {225 895 23 23}
             }
             Fl_Output g_ROIFile1Disp {
-              xywh {255 773 570 23} textfont 8 deactivate
+              xywh {255 796 570 23} textfont 8 deactivate
             }
             Fl_Output g_ROIFile2Disp {
-              xywh {255 798 570 23} textfont 8 deactivate
+              xywh {255 821 570 23} textfont 8 deactivate
             }
             Fl_Output g_ROIFile3Disp {
-              xywh {255 823 570 23} textfont 8 deactivate
+              xywh {255 846 570 23} textfont 8 deactivate
             }
             Fl_Output g_ROIFile4Disp {
-              xywh {255 848 570 23} textfont 8 deactivate
+              xywh {255 871 570 23} textfont 8 deactivate
             }
             Fl_Output g_ROIFile5Disp {
-              xywh {255 873 570 23} textfont 8 deactivate
+              xywh {255 896 570 23} textfont 8 deactivate
             }
           }
           Fl_Group {} {
             label {ROI Atlas - Parcellation maps} open
-            xywh {25 275 860 110} box UP_BOX labelfont 9 align 17
+            xywh {25 305 860 110} box UP_BOX labelfont 9 align 17
           } {
             Fl_Check_Button g_ParcellationFile1Button {
               label {Parcellation file 1 :}
               callback {ParcellationFile1ButtonChecked();}
-              xywh {150 300 140 25} down_box DOWN_BOX labelfont 8
+              xywh {150 330 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Button g_ParcellationFile1 {
               label {...}
               callback {SetParcellationFile1GUI();}
-              xywh {300 300 23 23}
+              xywh {300 330 23 23}
             }
             Fl_Output g_ParcellationFile1Disp {
-              xywh {329 300 496 23} textfont 8 deactivate
+              xywh {329 330 496 23} textfont 8 deactivate
             }
             Fl_Button g_ParcellationFile2 {
               label {...}
               callback {SetParcellationFile2GUI();}
-              xywh {300 325 23 23}
+              xywh {300 355 23 23}
             }
             Fl_Button g_ParcellationFile3 {
               label {...}
               callback {SetParcellationFile3GUI();}
-              xywh {300 350 23 23}
+              xywh {300 380 23 23}
             }
             Fl_Output g_ParcellationFile2Disp {
-              xywh {329 325 496 23} textfont 8 deactivate
+              xywh {329 355 496 23} textfont 8 deactivate
             }
             Fl_Output g_ParcellationFile3Disp {
-              xywh {329 350 496 23} textfont 8 deactivate
+              xywh {329 380 496 23} textfont 8 deactivate
             }
             Fl_Check_Button g_ParcellationFile2Button {
               label {Parcellation file 2 :}
               callback {ParcellationFile2ButtonChecked();}
-              xywh {150 325 140 25} down_box DOWN_BOX labelfont 8
+              xywh {150 355 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Check_Button g_ParcellationFile3Button {
               label {Parcellation file 3 :}
               callback {ParcellationFile3ButtonChecked();}
-              xywh {150 350 140 25} down_box DOWN_BOX labelfont 8
+              xywh {150 380 140 25} down_box DOWN_BOX labelfont 8
             }
             Fl_Group {} {
               label {Tissue Map} open
-              xywh {35 305 100 70} box DOWN_FRAME labelfont 9 align 5
+              xywh {35 335 100 70} box DOWN_FRAME labelfont 9 align 5
             } {
               Fl_Round_Button g_SoftTissueMapButton {
                 label Soft
                 callback {SoftTissueMapButtonToggled();}
-                xywh {55 320 64 20} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {55 350 64 20} down_box ROUND_DOWN_BOX labelfont 8
               }
               Fl_Round_Button g_HardTissueMapButton {
                 label Hard
                 callback {HardTissueMapButtonToggled();}
-                xywh {55 345 64 20} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                xywh {55 375 64 20} down_box ROUND_DOWN_BOX value 1 labelfont 8
               }
             }
           }
         }
         Fl_Group g_AdvancedParametersGroup {
-          label {Advanced parameters} open selected
-          xywh {10 70 890 850} labelfont 8
+          label {Advanced parameters} open
+          xywh {10 75 890 850} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Tissue Segmentation} open
-            xywh {20 80 420 827} box UP_BOX labelfont 9 align 17
+            xywh {20 85 420 827} box UP_BOX labelfont 9 align 17
           } {
             Fl_Group {} {
               label {Software : } open
-              xywh {140 113 195 37} box DOWN_FRAME labelfont 9 align 4
+              xywh {140 118 195 37} box DOWN_FRAME labelfont 9 align 4
             } {
               Fl_Round_Button g_ABCButton {
                 label ABC
                 callback {ABCButtonToggled();}
-                tooltip {Atlas Brain Classification} xywh {175 118 40 26} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                tooltip {Atlas Brain Classification} xywh {175 123 40 26} down_box ROUND_DOWN_BOX value 1 labelfont 8
               }
               Fl_Round_Button g_NeosegButton {
                 label neoseg
                 callback {NeosegButtonToggled();}
-                tooltip {Neoseg: application used for human neonate brain tissue segmentation} xywh {240 118 70 26} down_box ROUND_DOWN_BOX labelfont 8
+                tooltip {Neoseg: application used for human neonate brain tissue segmentation} xywh {240 123 70 26} down_box ROUND_DOWN_BOX labelfont 8
               }
             }
             Fl_Group {} {
               label {Filtering parameters} open
-              xywh {35 176 380 106} box DOWN_FRAME labelfont 9 align 5
+              xywh {35 181 380 106} box DOWN_FRAME labelfont 9 align 5
             } {
               Fl_Counter g_FilterTimeStep {
                 label {Filter time step : }
                 callback {SetFilterTimeStepGUI()}
-                xywh {240 218 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 step 0.01 value 0.01 textfont 8
+                xywh {240 223 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 step 0.01 value 0.01 textfont 8
               }
               Fl_Counter g_FilterIterations {
                 label {Filter iterations : }
                 callback {SetFilterIterationsGUI()}
-                xywh {240 188 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 1 value 10 textfont 8
+                xywh {240 193 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 1 value 10 textfont 8
               }
               Fl_Choice g_FilterMethodChoice {
                 label {Filter method : }
                 callback {SetFilterMethodChoiceGUI()} open
-                xywh {205 246 155 22} down_box BORDER_BOX labelfont 8 textfont 8
+                xywh {205 251 155 22} down_box BORDER_BOX labelfont 8 textfont 8
               } {
                 MenuItem {} {
                   label {Grad aniso diffusion}
@@ -955,78 +954,83 @@ class AutoSegGUI {open
             }
             Fl_Group {} {
               label {Global class priors} open
-              xywh {35 375 385 95} box DOWN_FRAME labelfont 9 align 5
+              xywh {35 380 385 95} box DOWN_FRAME labelfont 9 align 5
             } {
               Fl_Counter g_Prior3 {
                 label {Prior 3 : }
                 callback {SetPrior3GUI()}
-                tooltip {Prior 3 (CSF)} xywh {105 440 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 0.7 textfont 8
+                tooltip {Prior 3 (CSF)} xywh {105 445 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 0.7 textfont 8
               }
               Fl_Counter g_Prior4 {
                 label {Prior 4 : }
                 callback {SetPrior4GUI()}
-                tooltip {Prior 4 (other)} xywh {255 390 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+                tooltip {Prior 4 (other)} xywh {255 395 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
               }
               Fl_Counter g_Prior2 {
                 label {Prior 2 : }
                 callback {SetPrior2GUI()}
-                tooltip {Prior 2 (Gray matter)} xywh {105 415 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+                tooltip {Prior 2 (Gray matter)} xywh {105 420 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
               }
               Fl_Counter g_Prior1 {
                 label {Prior 1 : }
                 callback {SetPrior1GUI()}
-                tooltip {Prior 1 (White matter)} xywh {105 390 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1.3 textfont 8
+                tooltip {Prior 1 (White matter)} xywh {105 395 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1.3 textfont 8
               }
               Fl_Counter g_Prior5 {
                 label {Prior 5 : }
                 callback {SetPrior5GUI()}
-                tooltip {Prior 4 (other)} xywh {255 415 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+                tooltip {Prior 4 (other)} xywh {255 420 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
               }
             }
             Fl_Counter g_MaxBiasDegree {
               label {Max bias degree : }
               callback {SetMaxBiasDegreeGUI()}
-              tooltip {Maximum Degree of the bias field polynomial} xywh {245 297 80 20} type Simple labelfont 8 align 4 minimum 1 maximum 4 step 1 value 4 textfont 8
+              tooltip {Maximum Degree of the bias field polynomial} xywh {245 302 80 20} type Simple labelfont 8 align 4 minimum 1 maximum 4 step 1 value 4 textfont 8
             }
             Fl_Button g_UseDefaultEMS {
               label {Use default parameters}
               callback {UseDefaultEMSAdvancedParametersGUI()}
-              tooltip {Use default tissue segmentation parameters} xywh {140 864 180 25} labelfont 8
+              tooltip {Use default tissue segmentation parameters} xywh {140 869 180 25} labelfont 8
             }
             Fl_Group g_FluidAtlasWarpGroup {
               label {Fluid atlas warping} open
-              xywh {35 578 385 67} box DOWN_FRAME labelfont 8 align 5
+              xywh {35 583 385 70} box DOWN_FRAME labelfont 8 align 5
             } {
               Fl_Counter g_FluidAtlasWarpIterations {
                 label {Iterations : }
                 callback {SetFluidAtlasWarpIterationsGUI();}
-                tooltip {Atlas fluid warping iterations} xywh {125 612 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 500 step 1 value 50 textfont 8
+                tooltip {Atlas fluid warping iterations} xywh {125 617 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 500 step 1 value 50 textfont 8
               }
               Fl_Counter g_FluidAtlasWarpMaxStep {
                 label {Max step : }
                 callback {SetFluidAtlasWarpMaxStepGUI();}
-                tooltip {Maximum step size for fluid gradient descent} xywh {305 612 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 2 step 0.005 value 0.1 textfont 8
+                tooltip {Maximum step size for fluid gradient descent} xywh {305 617 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 2 step 0.005 value 0.1 textfont 8
               }
               Fl_Round_Button g_FluidAtlasAffineButton {
                 label Affine
                 callback {FluidAtlasAffineButtonChecked()}
-                xywh {55 581 40 25} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {35 586 40 25} down_box ROUND_DOWN_BOX labelfont 8
               }
               Fl_Round_Button g_FluidAtlasWarpButton {
                 label Warp
                 callback {FluidAtlasWarpButtonChecked()}
-                xywh {145 581 40 25} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                xywh {95 586 40 25} down_box ROUND_DOWN_BOX value 1 labelfont 8
               }
               Fl_Round_Button g_FluidAtlasFATWButton {
                 label {first Affine, then Warp}
                 callback {FluidAtlasFATWButtonChecked()}
-                xywh {235 581 40 25} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {145 586 40 25} down_box ROUND_DOWN_BOX labelfont 8
+              }
+              Fl_Round_Button g_ABCANTSWarpButton {
+                label {Warp with ANTS}
+                callback {ABCANTSWarpButtonChecked()}
+                xywh {295 585 40 25} down_box ROUND_DOWN_BOX labelfont 8
               }
             }
             Fl_Choice g_InitialDistributionEstimatorChoice {
               label {Initial distribution estimator:}
               callback {SetInitialDistributionEstimatorChoiceGUI()} open
-              xywh {255 329 95 21} down_box BORDER_BOX labelfont 8 textfont 8
+              xywh {255 334 95 21} down_box BORDER_BOX labelfont 8 textfont 8
             } {
               MenuItem {} {
                 label standard
@@ -1040,7 +1044,7 @@ class AutoSegGUI {open
             Fl_Choice g_ImageLinearMappingChoice {
               label {Image linear mapping : }
               callback {SetImageLinearMappingChoiceGUI();} open
-              xywh {90 678 75 22} down_box BORDER_BOX labelfont 8 align 1
+              xywh {90 683 75 22} down_box BORDER_BOX labelfont 8 align 1
             } {
               MenuItem {} {
                 label id
@@ -1058,7 +1062,7 @@ class AutoSegGUI {open
             Fl_Choice g_AtlasLinearMappingChoice {
               label {Atlas linear mapping : }
               callback {SetAtlasLinearMappingChoiceGUI();} open
-              xywh {265 678 80 22} down_box BORDER_BOX labelfont 8 align 1
+              xywh {265 683 80 22} down_box BORDER_BOX labelfont 8 align 1
             } {
               MenuItem {} {
                 label affine
@@ -1075,359 +1079,379 @@ class AutoSegGUI {open
             }
             Fl_Group g_BSplineAtlasWarpGroup {
               label {BSpline Atlas Warping} open
-              xywh {35 495 385 55} box DOWN_FRAME labelfont 9 align 5 deactivate
+              xywh {35 500 385 55} box DOWN_FRAME labelfont 9 align 5 deactivate
             } {
               Fl_Check_Button g_BSplineAtlasWarpButton {
                 label Warping
                 callback {BSplineAtlasWarpButtonChecked()}
-                tooltip {BSpline atlas warping} xywh {40 512 77 23} down_box DOWN_BOX labelfont 8
+                tooltip {BSpline atlas warping} xywh {40 517 77 23} down_box DOWN_BOX labelfont 8
               }
               Fl_Counter g_BSplineAtlasWarpGridX {
                 label {Grid X : }
                 callback {SetBSplineAtlasWarpGridXGUI()}
-                tooltip {Grid X} xywh {135 520 80 20} type Simple labelfont 8 align 1 minimum 0 maximum 10 value 5 textfont 8
+                tooltip {Grid X} xywh {135 525 80 20} type Simple labelfont 8 align 1 minimum 0 maximum 10 value 5 textfont 8
               }
               Fl_Counter g_BSplineAtlasWarpGridY {
                 label {Grid Y : }
                 callback {SetBSplineAtlasWarpGridYGUI()}
-                tooltip {Grid Y} xywh {230 520 80 20} type Simple labelfont 8 align 1 minimum 0 maximum 10 value 5 textfont 8
+                tooltip {Grid Y} xywh {230 525 80 20} type Simple labelfont 8 align 1 minimum 0 maximum 10 value 5 textfont 8
               }
               Fl_Counter g_BSplineAtlasWarpGridZ {
                 label {Grid Z : }
                 callback {SetBSplineAtlasWarpGridZGUI()}
-                tooltip {Grid Z} xywh {325 520 80 20} type Simple labelfont 8 align 1 minimum 0 maximum 10 value 5 textfont 8
+                tooltip {Grid Z} xywh {325 525 80 20} type Simple labelfont 8 align 1 minimum 0 maximum 10 value 5 textfont 8
               }
             }
             Fl_Group g_NeosegParamGroup {
               label {Neoseg specific parameters} open
-              xywh {35 733 380 105} box DOWN_FRAME labelfont 9 align 5 deactivate
+              xywh {35 738 380 105} box DOWN_FRAME labelfont 9 align 5 deactivate
             } {
               Fl_Counter g_NeosegPriorThreshold {
                 label {Prior Threshold : }
                 callback {SetNeosegPriorThresholdGUI()}
-                tooltip {Prior threshold} xywh {230 743 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 0.8 textfont 8
+                tooltip {Prior threshold} xywh {230 748 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 0.8 textfont 8
               }
               Fl_Counter g_NeosegMahalanobisThreshold {
                 label {Mahalonobis Threshold : }
                 callback {SetNeosegMahalanobisThresholdGUI()}
-                tooltip {Mahalonobis Threshold} xywh {230 803 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 2 textfont 8
+                tooltip {Mahalonobis Threshold} xywh {230 808 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 2 textfont 8
               }
               Fl_Counter g_NeosegParzenKernel {
                 label {Parzen Kernel width : }
                 callback {SetNeosegParzenKernelGUI();}
-                tooltip {Initial Parzen kernel width (stddev)} xywh {225 773 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 2 step 0.005 value 0.05 textfont 8
+                tooltip {Initial Parzen kernel width (stddev)} xywh {225 778 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 2 step 0.005 value 0.05 textfont 8
               }
             }
           }
           Fl_Group {} {
             label {Skull Stripping} open
-            xywh {465 660 420 60} box UP_BOX labelfont 9 align 17
+            xywh {465 680 420 60} box UP_BOX labelfont 9 align 17
           } {
             Fl_Check_Button g_DeleteVesselsButton {
               label {Delete Vessels}
               callback {DeleteVesselsButtonChecked();}
-              xywh {610 687 65 24} down_box DOWN_BOX labelfont 8
+              xywh {610 707 65 24} down_box DOWN_BOX labelfont 8
             }
           }
           Fl_Group {} {
             label {Intensity Rescaling} open
-            xywh {465 735 420 65} box UP_BOX labelfont 9 align 17
+            xywh {465 745 420 65} box UP_BOX labelfont 9 align 17
           } {
             Fl_Round_Button g_HistogramQuantileButton {
               label {Histogram quantile matching}
               callback {HistogramQuantileButtonToggled()}
-              xywh {480 764 86 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
+              xywh {480 774 86 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
             }
             Fl_Round_Button g_TissueMeanMatchButton {
               label {Tissue mean matching}
               callback {TissueMeanMatchButtonToggled()}
-              xywh {700 764 66 24} down_box ROUND_DOWN_BOX labelfont 8
+              xywh {700 774 66 24} down_box ROUND_DOWN_BOX labelfont 8
             }
           }
           Fl_Group {} {
             label {Regional histogram} open
-            xywh {465 811 420 99} box UP_BOX labelfont 9 align 17
+            xywh {465 816 420 99} box UP_BOX labelfont 9 align 17
           } {
             Fl_Input g_QuantilesDisp {
               label {Quantiles (coma separated list):}
-              xywh {679 842 196 25} labelfont 8 textfont 8
+              xywh {679 847 196 25} labelfont 8 textfont 8
             }
             Fl_Value_Input g_PointSpacingDisp {
               label {Point spacing (mm):}
-              xywh {680 874 30 25} labelfont 8 maximum 1000 step 1 value 10 textfont 8
+              xywh {680 879 30 25} labelfont 8 maximum 1000 step 1 value 10 textfont 8
             }
           }
           Fl_Group {} {
             label {N4 ITK Bias Field Correction} open
-            xywh {465 194 420 451} box UP_BOX labelfont 9 align 17
+            xywh {465 189 420 413} box UP_BOX labelfont 9 align 17
           } {
             Fl_Check_Button g_N4ITKBiasFieldCorrectionButton {
               label {N4 ITK Bias Field Correction}
               callback {N4ITKBiasFieldCorrectionButtonChecked()}
-              xywh {480 220 95 25} down_box DOWN_BOX value 1 labelfont 8
+              xywh {480 215 95 25} down_box DOWN_BOX value 1 labelfont 8
             }
             Fl_Group g_N4ParametersGroup {
               label {N4 Parameters} open
-              xywh {480 269 390 180} box DOWN_FRAME labelfont 9 align 5
+              xywh {480 255 390 180} box DOWN_FRAME labelfont 9 align 5
             } {
               Fl_Spinner g_ConvergenceThreshold {
                 label {Convergence threshold:}
                 callback {SetConvergenceThresholdGUI()}
-                xywh {710 414 75 25} type Float labelfont 8 when 1 step 0.0001 value 0.0001 textfont 8
+                xywh {710 400 75 25} type Float labelfont 8 when 1 step 0.0001 value 0.0001 textfont 8
               }
               Fl_Spinner g_SplineDistance {
                 label {Spline distance:}
                 callback {SetSplineDistanceGUI()}
-                xywh {710 344 75 25} type Float labelfont 8 when 1 step 0.5 value 1 textfont 8
+                xywh {710 330 75 25} type Float labelfont 8 when 1 step 0.5 value 1 textfont 8
               }
               Fl_Spinner g_ShrinkFactor {
                 label {Shrink factor:}
                 callback {SetShrinkFactorGUI()}
-                xywh {710 379 75 25} labelfont 8 when 1 value 4 textfont 8
+                xywh {710 365 75 25} labelfont 8 when 1 value 4 textfont 8
               }
               Fl_Input g_NbOfIterations {
                 label {\# iterations}
                 callback {SetNbOfIterationsGUI()}
-                xywh {645 274 140 25} labelfont 8 when 1 textfont 8
+                xywh {645 260 140 25} labelfont 8 when 1 textfont 8
               }
               Fl_Input g_BSplineGridResolutions {
                 label {BSpline Grid Resolutions}
                 callback {SetBSplineGridResolutionsGUI()}
-                xywh {690 309 95 25} labelfont 8 when 1 textfont 8
+                xywh {690 295 95 25} labelfont 8 when 1 textfont 8
               }
             }
             Fl_Group g_N4AdvancedParametersGroup {
               label {N4 Advanced Parameters} open
-              xywh {480 479 390 82} box DOWN_FRAME labelfont 9 align 5
+              xywh {480 458 390 82} box DOWN_FRAME labelfont 9 align 5
             } {
               Fl_Spinner g_BSplineOrder {
                 label {BSpline order:}
                 callback {SetBSplineOrderGUI()}
-                xywh {585 505 50 25} labelfont 8 when 1 value 3 textfont 8
+                xywh {585 484 50 25} labelfont 8 when 1 value 3 textfont 8
               }
               Fl_Input g_HistogramSharpening {
                 label {Histogram sharpening:}
                 callback {SetHistogramSharpeningGUI()}
-                xywh {780 505 65 25} labelfont 8 when 1 textfont 8
+                xywh {780 484 65 25} labelfont 8 when 1 textfont 8
               }
             }
             Fl_Button g_UseDefaultN4 {
               label {Use default parameters}
               callback {UseDefaultN4AdvancedParametersGUI()}
-              xywh {585 605 175 25} labelfont 8
+              xywh {585 570 175 25} labelfont 8
             }
             Fl_Check_Button g_StrippedN4ITKBiasFieldCorrectionButton {
               label {Bias field correction on intermediate stripped image}
               callback {StrippedN4ITKBiasFieldCorrectionButtonChecked()}
-              tooltip {Bias field correction on intermediate skull-stripped image (when tissue loop enabled)} xywh {509 570 351 24} down_box DOWN_BOX
+              tooltip {Bias field correction on intermediate skull-stripped image (when tissue loop enabled)} xywh {480 546 351 24} down_box DOWN_BOX
             }
           }
           Fl_Group {} {
             label Reorientation open
-            xywh {465 80 420 100} box UP_BOX labelfont 9 align 17
+            xywh {465 85 420 100} box UP_BOX labelfont 9 align 17
           } {
             Fl_Input g_InputDataOrientationDisp {
               label {Input orientation: }
-              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 111 40 24} labelfont 8 textfont 8 deactivate
+              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 116 40 24} labelfont 8 textfont 8 deactivate
             }
             Fl_Input g_OutputDataOrientationDisp {
               label {Output orientation: }
-              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 141 40 24} labelfont 8 textfont 8 deactivate
+              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 146 40 24} labelfont 8 textfont 8 deactivate
             }
             Fl_Check_Button g_ReorientationButton {
               label Reorientation
               callback {ReorientationButtonChecked()}
-              xywh {515 125 105 26} down_box DOWN_BOX labelfont 8
+              xywh {515 130 105 26} down_box DOWN_BOX labelfont 8
+            }
+          }
+          Fl_Group {} {
+            label {3D Slicer Ver.} open
+            xywh {465 610 420 60} box UP_BOX labelfont 9 align 17
+          } {
+            Fl_Round_Button g_Slicer4dot3Button {
+              label {Slicer 4.3 or Higher}
+              callback {Slicer4dot3ButtonChecked();}
+              xywh {480 630 150 25} down_box ROUND_DOWN_BOX value 1 labelfont 8
+            }
+            Fl_Round_Button g_Slicer4Button {
+              label {Slicer 4 (Lower than 4.3)}
+              callback {Slicer4ButtonChecked();}
+              xywh {615 630 150 25} down_box ROUND_DOWN_BOX labelfont 8
+            }
+            Fl_Round_Button g_Slicer3Button {
+              label {Slicer 3}
+              callback {Slicer3ButtonChecked();}
+              xywh {780 630 85 25} down_box ROUND_DOWN_BOX labelfont 8
             }
           }
         }
         Fl_Group g_RegistrationParametersGroup {
           label {Registration Parameters} open
-          xywh {10 70 890 827} labelfont 8 hide
+          xywh {10 75 890 865} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Rigid registration} open
-            xywh {30 80 830 250} box UP_BOX labelfont 9 align 17
+            xywh {30 85 830 250} box UP_BOX labelfont 9 align 17
           } {
             Fl_Check_Button g_RigidRegistrationButton {
               label {Rigid registration}
               callback {RigidRegistrationButtonChecked()}
-              xywh {45 101 150 24} down_box DOWN_BOX value 1 labelfont 8
+              xywh {45 106 150 24} down_box DOWN_BOX value 1 labelfont 8
             }
             Fl_Group g_RegridingRegistrationGroup {
               label {Re-griding after registration} open
-              xywh {41 135 384 181} box THIN_UP_BOX labelfont 9 align 17
+              xywh {41 140 384 181} box THIN_UP_BOX labelfont 9 align 17
             } {
               Fl_Round_Button g_GridTemplateAtlasButton {
                 label {Use Region of Interest Atlas as grid template}
                 callback {GridTemplateAtlasButtonToggled();}
-                xywh {51 172 345 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                xywh {51 177 345 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
               }
               Fl_Round_Button g_GridTemplateManualButton {
                 label {Set grid template information}
                 callback {GridTemplateManualButtonToggled();}
-                xywh {51 202 240 24} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {51 207 240 24} down_box ROUND_DOWN_BOX labelfont 8
               }
               Fl_Group g_GridParametersGroup {open
-                xywh {51 236 360 65} box DOWN_FRAME deactivate
+                xywh {51 241 360 65} box DOWN_FRAME deactivate
               } {
                 Fl_Button {} {
                   label {Image Size: }
-                  xywh {66 241 90 25} box NO_BOX labelfont 8
+                  xywh {66 246 90 25} box NO_BOX labelfont 8
                 }
                 Fl_Button {} {
                   label {Image Spacing: }
-                  xywh {66 271 115 25} box NO_BOX labelfont 8
+                  xywh {66 276 115 25} box NO_BOX labelfont 8
                 }
                 Fl_Value_Input g_GridTemplateSizeX {
                   label {X:}
-                  xywh {221 242 30 24} labelfont 8 textfont 8
+                  xywh {221 247 30 24} labelfont 8 textfont 8
                 }
                 Fl_Value_Input g_GridTemplateSizeY {
                   label {Y:}
-                  xywh {291 242 30 24} labelfont 8 textfont 8
+                  xywh {291 247 30 24} labelfont 8 textfont 8
                 }
                 Fl_Value_Input g_GridTemplateSizeZ {
                   label {Z:}
-                  xywh {361 242 30 24} labelfont 8 textfont 8
+                  xywh {361 247 30 24} labelfont 8 textfont 8
                 }
                 Fl_Value_Input g_GridTemplateSpacingX {
                   label {X:}
-                  xywh {221 272 30 24} labelfont 8 textfont 8
+                  xywh {221 277 30 24} labelfont 8 textfont 8
                 }
                 Fl_Value_Input g_GridTemplateSpacingY {
                   label {Y:}
-                  xywh {291 272 30 24} labelfont 8 textfont 8
+                  xywh {291 277 30 24} labelfont 8 textfont 8
                 }
                 Fl_Value_Input g_GridTemplateSpacingZ {
                   label {Z:}
-                  xywh {362 272 30 24} labelfont 8 textfont 8
+                  xywh {362 277 30 24} labelfont 8 textfont 8
                 }
               }
             }
             Fl_Group g_RegistrationInitializationGroup {
               label {Registration initialization} open
-              xywh {440 135 410 181} box THIN_UP_BOX labelfont 9 align 17
+              xywh {440 140 410 181} box THIN_UP_BOX labelfont 9 align 17
             } {
               Fl_Group {} {
                 label {T2/PD initial transform} open
-                xywh {450 268 235 40} box DOWN_FRAME labelfont 9 align 5
+                xywh {450 273 235 40} box DOWN_FRAME labelfont 9 align 5
               } {
                 Fl_Check_Button g_InitRegUseT1InitTransformButton {
                   label {Use T1 initial transform file}
                   callback {InitRegUseT1InitTransformButtonChecked();}
-                  xywh {465 276 64 24} down_box DOWN_BOX labelfont 8
+                  xywh {465 281 64 24} down_box DOWN_BOX labelfont 8
                 }
               }
               Fl_Group {} {
                 label {Initial transform mode} open
-                xywh {450 172 390 73} box DOWN_FRAME labelfont 9 align 5
+                xywh {450 177 390 73} box DOWN_FRAME labelfont 9 align 5
               } {
                 Fl_Round_Button g_InitRegCenterOfHeadButton {
                   label useCenterOfHeadAlign
                   callback {InitRegCenterOfHeadButtonToggled();}
-                  xywh {465 185 49 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                  xywh {465 190 49 24} down_box ROUND_DOWN_BOX value 1 labelfont 8
                 }
                 Fl_Round_Button g_InitRegMomentsButton {
                   label useMomentsAlign
                   callback {InitRegMomentsButtonToggled();}
-                  xywh {465 214 49 24} down_box ROUND_DOWN_BOX labelfont 8
+                  xywh {465 219 49 24} down_box ROUND_DOWN_BOX labelfont 8
                 }
                 Fl_Round_Button g_InitRegGeometryButton {
                   label useGeometryAlign
                   callback {InitRegGeometryButtonToggled();}
-                  xywh {665 185 64 24} down_box ROUND_DOWN_BOX labelfont 8
+                  xywh {665 190 64 24} down_box ROUND_DOWN_BOX labelfont 8
                 }
                 Fl_Round_Button g_InitRegOffButton {
                   label Off
                   callback {InitRegOffButtonToggled();}
-                  xywh {665 214 64 24} down_box ROUND_DOWN_BOX labelfont 8
+                  xywh {665 219 64 24} down_box ROUND_DOWN_BOX labelfont 8
                 }
               }
             }
           }
           Fl_Group {} {
             label Warping open
-            xywh {29 350 831 500} box UP_BOX labelfont 9 align 17
+            xywh {29 355 831 585} box UP_BOX labelfont 9 align 17
           } {
             Fl_Group g_WarpingMethod {
               label {Method:} open
-              xywh {175 388 600 27} box DOWN_FRAME labelfont 8 align 4
+              xywh {175 393 600 27} box DOWN_FRAME labelfont 8 align 4
             } {
               Fl_Round_Button g_ClassicWarpingButton {
                 label {Classic fluid}
                 callback {ClassicWarpingButtonToggled();}
-                xywh {490 389 90 26} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {490 394 90 26} down_box ROUND_DOWN_BOX labelfont 8
               }
               Fl_Round_Button g_CoarseToFineWarpingButton {
                 label {Coarse-to-fine fluid}
                 callback {CoarseToFineWarpingButtonToggled();}
-                xywh {605 389 135 26} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {605 394 135 26} down_box ROUND_DOWN_BOX labelfont 8
               }
               Fl_Round_Button g_BRAINSDemonWarpButton {
                 label BRAINSDemonWarp
                 callback {BRAINSDemonWarpButtonToggled()}
-                xywh {305 389 150 26} down_box ROUND_DOWN_BOX labelfont 8
+                xywh {305 394 150 26} down_box ROUND_DOWN_BOX labelfont 8
               }
               Fl_Round_Button g_ANTSWarpingButton {
                 label ANTS
                 callback {ANTSWarpingButtonToggled();}
-                xywh {207 389 64 26} down_box ROUND_DOWN_BOX value 1 labelfont 8
+                xywh {207 394 64 26} down_box ROUND_DOWN_BOX value 1 labelfont 8
               }
             }
             Fl_Button g_UseDefaultWarping {
               label {Use default parameters}
               callback {UseDefaultWarpingAdvancedParametersGUI()}
-              tooltip {Use default warping parameters} xywh {375 810 180 25} labelfont 8
+              tooltip {Use default warping parameters} xywh {375 905 180 25} labelfont 8
             }
             Fl_Tabs g_WarpTab {open
-              xywh {174 430 601 370} align 2
+              xywh {174 435 601 450} align 2
             } {
               Fl_Group g_ANTSWarpingGroup {
                 label {ANTS Warping} open
-                xywh {174 460 601 340} labelfont 8 align 10
+                xywh {174 465 601 420} labelfont 8 align 10
               } {
                 Fl_Group g_ANTS {open
-                  xywh {210 482 565 318}
+                  xywh {210 487 565 398}
                 } {
                   Fl_Group {} {
-                    label Metric open
-                    xywh {220 558 510 75} box DOWN_FRAME labelfont 9 align 5
+                    label {Metric for 1st Modality (Default)} open
+                    xywh {220 555 510 75} box DOWN_FRAME labelfont 9 align 5
                   } {
                     Fl_Spinner g_ANTSCCWeight {
                       label {CC weight :}
                       callback {SetANTSCCWeightGUI()}
-                      tooltip {Similarity: cross-correlation} xywh {340 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Similarity: cross-correlation} xywh {340 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSCCRegionRadius {
                       label {CC region radius :}
                       callback {SetANTSCCRegionRadiusGUI()}
-                      tooltip {Cross-correlation region radius} xywh {340 601 45 23} type Float labelfont 8 minimum 0 step 0.1 value 2 textfont 8
+                      tooltip {Cross-correlation region radius} xywh {340 598 45 23} type Float labelfont 8 minimum 0 step 0.1 value 2 textfont 8
                     }
                     Fl_Spinner g_ANTSMIWeight {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins {
                       label {MI bins :}
                       callback {SetANTSMIBinsGUI()}
-                      tooltip {Number of histogram bins} xywh {480 601 45 23} labelfont 8 value 32 textfont 8
+                      tooltip {Number of histogram bins} xywh {480 598 45 23} labelfont 8 value 32 textfont 8
                     }
                     Fl_Spinner g_ANTSMSQWeight {
                       label {MSQ weight :}
                       callback {SetANTSMSQWeightGUI()}
-                      tooltip {Weight for mean-square difference} xywh {650 571 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mean-square difference} xywh {650 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                   }
                   Fl_Group {} {
                     label Transformation open
-                    xywh {220 662 510 45} box DOWN_FRAME labelfont 9 align 5
+                    xywh {220 744 510 45} box DOWN_FRAME labelfont 9 align 5
                   } {
                     Fl_Choice g_ANTSRegistrationFilterType {
                       label {Registration Type:}
                       callback {SetANTSRegistrationFilterTypeGUI();} open
-                      xywh {340 673 210 25} down_box BORDER_BOX labelfont 8 textfont 8
+                      xywh {340 755 210 25} down_box BORDER_BOX labelfont 8 textfont 8
                     } {
                       MenuItem {} {
                         label GreedyDiffeomorphism
@@ -1449,67 +1473,97 @@ class AutoSegGUI {open
                     Fl_Input g_ANTSTransformationStep {
                       label {Step:}
                       callback {SetANTSTransformationStepGUI()}
-                      tooltip {Step (comma separated, if needed)} xywh {605 673 95 24} labelfont 8 textfont 8
+                      tooltip {Step (comma separated, if needed)} xywh {605 755 95 24} labelfont 8 textfont 8
                     }
                   }
                   Fl_Group {} {
                     label Regularization open
-                    xywh {220 738 510 45} box DOWN_FRAME labelfont 9 align 5
+                    xywh {220 820 510 45} box DOWN_FRAME labelfont 9 align 5
                   } {
                     Fl_Spinner g_ANTSGaussianSigma {
                       label {Gaussian sigma :}
                       callback {SetANTSGaussianSigmaGUI()}
-                      tooltip {Sigma for gaussian smoothing} xywh {570 750 45 23} type Float labelfont 8 step 0.1 value 3 textfont 8
+                      tooltip {Sigma for gaussian smoothing} xywh {570 832 45 23} type Float labelfont 8 step 0.1 value 3 textfont 8
                     }
                     Fl_Check_Button g_ANTSGaussianSmoothingButton {
                       label {Gaussian smoothing}
                       callback {ANTSGaussianSmoothingButtonChecked()}
-                      xywh {240 749 140 23} down_box DOWN_BOX value 1 labelfont 8
+                      xywh {240 831 140 23} down_box DOWN_BOX value 1 labelfont 8
                     }
                   }
                   Fl_Group {} {
                     label Iterations open
-                    xywh {220 490 510 38} box DOWN_FRAME labelfont 9 align 5
+                    xywh {220 495 510 38} box DOWN_FRAME labelfont 9 align 5
                   } {
                     Fl_Input g_ANTSIterations {
                       label {Number of iterations : }
                       callback {SetANTSIterationsGUI()}
-                      tooltip {Number of iterations - x separated (e.g 100x100x10)} xywh {369 497 110 24} labelfont 8 textfont 8
+                      tooltip {Number of iterations - x separated (e.g 100x100x10)} xywh {369 502 110 24} labelfont 8 textfont 8
+                    }
+                  }
+                  Fl_Group {} {
+                    label {Metric for 2nd Modality} open
+                    xywh {220 650 510 75} box DOWN_FRAME labelfont 9 align 5
+                  } {
+                    Fl_Spinner g_ANTSCCWeight2nd {
+                      label {CC weight :}
+                      callback {SetANTSCCWeightGUI2nd()}
+                      tooltip {Similarity: cross-correlation} xywh {340 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                    }
+                    Fl_Spinner g_ANTSCCRegionRadius2nd {
+                      label {CC region radius :}
+                      callback {SetANTSCCRegionRadiusGUI2nd()}
+                      tooltip {Cross-correlation region radius} xywh {340 693 45 23} type Float labelfont 8 minimum 0 step 0.1 value 2 textfont 8
+                    }
+                    Fl_Spinner g_ANTSMIWeight2nd {
+                      label {MI weight :}
+                      callback {SetANTSMIWeightGUI2nd()}
+                      tooltip {Weight for mutual-information similarity} xywh {480 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                    }
+                    Fl_Spinner g_ANTSMIBins2nd {
+                      label {MI bins :}
+                      callback {SetANTSMIBinsGUI2nd()}
+                      tooltip {Number of histogram bins} xywh {480 693 45 23} labelfont 8 value 32 textfont 8
+                    }
+                    Fl_Spinner g_ANTSMSQWeight2nd {
+                      label {MSQ weight :}
+                      callback {SetANTSMSQWeightGUI2nd()}
+                      tooltip {Weight for mean-square difference} xywh {650 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                   }
                 }
               }
               Fl_Group g_BRAINSDemonWarpGroup {
                 label BRAINSDemonWarp open
-                xywh {180 460 590 320} labelfont 8 hide
+                xywh {180 465 590 320} labelfont 8 hide
               } {
                 Fl_Group {} {open
-                  xywh {240 467 395 305}
+                  xywh {240 472 395 305}
                 } {
                   Fl_Spinner g_DeformationFieldSmoothingSigma {
                     label {Deformation Field Smoothing Sigma:}
                     callback {SetDeformationFieldSmoothingSigmaGUI()}
-                    xywh {515 542 65 25} type Float labelfont 8 step 0.1 value 2 textfont 8
+                    xywh {515 547 65 25} type Float labelfont 8 step 0.1 value 2 textfont 8
                   }
                   Fl_Spinner g_PyramidLevels {
                     label {Pyramid Levels:}
                     callback {SetPyramidLevelsGUI()}
-                    xywh {540 593 40 24} labelfont 8 value 5 textfont 8
+                    xywh {540 598 40 24} labelfont 8 value 5 textfont 8
                   }
                   Fl_Input g_MovingShrinkFactors {
                     label {Moving Shrink Factors:}
                     callback {SetMovingShrinkFactorsGUI()}
-                    xywh {465 683 115 24} labelfont 8 textfont 8
+                    xywh {465 688 115 24} labelfont 8 textfont 8
                   }
                   Fl_Input g_IterationCountPyramidLevels {
                     label {The iteration count for each pyramid level:}
                     callback {SetIterationCountPyramidLevelsGUI()}
-                    xywh {465 728 115 24} labelfont 8 textfont 8
+                    xywh {465 733 115 24} labelfont 8 textfont 8
                   }
                   Fl_Choice g_RegistrationFilterType {
                     label {Registration Filter Type:}
                     callback {SetRegistrationFilterTypeGUI();} open
-                    xywh {425 492 180 25} down_box BORDER_BOX labelfont 8 textfont 8
+                    xywh {425 497 180 25} down_box BORDER_BOX labelfont 8 textfont 8
                   } {
                     MenuItem {} {
                       label Demons
@@ -1535,66 +1589,169 @@ class AutoSegGUI {open
                   Fl_Input g_FixedShrinkFactors {
                     label {Fixed Shrink Factors:}
                     callback {SetFixedShrinkFactorsGUI()}
-                    xywh {465 638 115 24} labelfont 8 textfont 8
+                    xywh {465 643 115 24} labelfont 8 textfont 8
                   }
                 }
               }
               Fl_Group g_FluidWarpingGroup {
                 label {Fluid Warping} open
-                xywh {180 460 590 335} labelfont 8 hide
+                xywh {180 465 590 335} labelfont 8 hide
               } {
                 Fl_Group {} {open
-                  xywh {260 475 385 320}
+                  xywh {260 480 385 320}
                 } {
                   Fl_Counter g_Alpha {
                     label {Alpha : }
                     callback {SetAlphaGUI()}
-                    xywh {445 500 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 step 0.001 value 0.01 textfont 8
+                    xywh {445 505 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 step 0.001 value 0.01 textfont 8
                   }
                   Fl_Counter g_Beta {
                     label {Beta : }
                     callback {SetBetaGUI()}
-                    xywh {445 535 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 step 0.001 value 0.01 textfont 8
+                    xywh {445 540 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 step 0.001 value 0.01 textfont 8
                   }
                   Fl_Counter g_Gamma {
                     label {Gamma : }
                     callback {SetGammaGUI()}
-                    xywh {445 570 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 1 step 0.001 value 0.001 textfont 8
+                    xywh {445 575 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 1 step 0.001 value 0.001 textfont 8
                   }
                   Fl_Counter g_MaxPerturbation {
                     label {Max Perturbation : }
                     callback {SetMaxPerturbationGUI()}
-                    xywh {445 605 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 value 0.5 textfont 8
+                    xywh {445 610 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 value 0.5 textfont 8
                   }
                   Fl_Counter g_NumBasis {
                     label {NumBasis : }
                     callback {SetNumBasisGUI()}
-                    xywh {445 640 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 3000 step 0.01 value 0.01 textfont 8
+                    xywh {445 645 90 20} type Simple labelfont 8 align 4 minimum 0 maximum 3000 step 0.01 value 0.01 textfont 8
                   }
                   Fl_Group {} {
                     label {Number of Iterations:} open
-                    xywh {280 689 355 64} box ENGRAVED_FRAME labelfont 9 align 5
+                    xywh {280 694 355 64} box ENGRAVED_FRAME labelfont 9 align 5
                   } {
                     Fl_Counter g_Scale4NbIterations {
                       label {Scale 4 : }
                       callback {SetScale4NbIterationsGUI()}
-                      xywh {290 718 90 20} type Simple labelfont 8 align 1 step 1 value 50 textfont 8
+                      xywh {290 723 90 20} type Simple labelfont 8 align 1 step 1 value 50 textfont 8
                     }
                     Fl_Counter g_Scale2NbIterations {
                       label {Scale 2 : }
                       callback {SetScale2NbIterationsGUI()}
-                      xywh {405 718 90 20} type Simple labelfont 8 align 1 step 1 value 25 textfont 8
+                      xywh {405 723 90 20} type Simple labelfont 8 align 1 step 1 value 25 textfont 8
                     }
                     Fl_Counter g_Scale1NbIterations {
                       label {Scale 1 : }
                       callback {SetScale1NbIterationsGUI()}
-                      xywh {520 718 90 20} type Simple labelfont 8 align 1 step 1 value 100 textfont 8
+                      xywh {520 723 90 20} type Simple labelfont 8 align 1 step 1 value 100 textfont 8
                     }
                   }
                 }
               }
             }
           }
+        }
+        Fl_Group g_MultiAtlasSegGroup {
+          label {Multiple Atlas Segmentation} open
+          xywh {0 80 1210 860} labelfont 8 align 69 hide
+        } {
+          Fl_Group g_MultiAtlasSegParametersGroup {
+            label {Multi-Atlas Segmentation  Parameters} open
+            xywh {30 101 555 262} box DOWN_FRAME labelfont 9 align 5
+          } {
+            Fl_Counter g_IntensityEnergyWeight {
+              label {Intensity Energy Weight:   }
+              callback {SetIntensityEnergyGUI();}
+              tooltip {Prior 1 (White matter)} xywh {195 147 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
+            }
+            Fl_Counter g_HarmonicEnergyWeight {
+              label {Harmonic Energy Weight: }
+              callback {SetHarmonicEnergyGUI();}
+              tooltip {Prior 1 (White matter)} xywh {195 179 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
+            }
+            Fl_Counter g_ShapeEnergyWeight {
+              label {Shape Energy Weight:        }
+              callback {SetShapeEnergyGUI();}
+              tooltip {Prior 1 (White matter)} xywh {195 214 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
+            }
+            Fl_Check_Button g_RecalculateAtlasTargetEnergyButton {
+              label {Re-Calculate Atlas-Target Energy}
+              callback {RecalculateAtlasTargetEnergyButtonChecked();}
+              xywh {340 290 240 25} box UP_BOX down_box DOWN_BOX
+            }
+            Fl_Check_Button g_RecalculateAtlasAtlasEnergyButton {
+              label {Re-Calculate Atlas-Atlas Energy}
+              callback {RecalculateAtlasAtlasEnergyButtonChecked();}
+              xywh {340 320 240 25} box UP_BOX down_box DOWN_BOX
+            }
+          }
+          Fl_Group {} {
+            label {Label Fusion : } open
+            xywh {150 258 185 91} box DOWN_FRAME labelfont 9 align 4
+          } {
+            Fl_Round_Button g_MajorityVotingButton {
+              label {Majority Voting}
+              callback {MajorityVotingButtonToggled();}
+              tooltip {Atlas Brain Classification} xywh {160 258 170 27} down_box ROUND_DOWN_BOX labelfont 8
+            }
+            Fl_Round_Button g_WeightedMajorityVotingButton {
+              label {Weighted Majority Voting}
+              callback {WeightedMajorityVotingButtonToggled();}
+              tooltip {Neoseg: application used for human neonate brain tissue segmentation} xywh {160 284 170 26} down_box ROUND_DOWN_BOX value 1 labelfont 8
+            }
+            Fl_Round_Button g_StapleButton {
+              label STAPLE
+              callback {StapleButtonToggled();}
+              xywh {160 310 170 25} down_box ROUND_DOWN_BOX
+            }
+          }
+          Fl_Group {} {
+            label {Atlas directory} open
+            xywh {20 380 880 70} box UP_BOX labelfont 9 align 21
+          } {
+            Fl_Button g_MultiAtlasDirectory {
+              label {...}
+              callback {SetMultiAtlasDirectoryGUI()}
+              tooltip {Set the process data directory} xywh {35 411 23 23}
+            }
+            Fl_Output g_MultiAtlasDirectoryDisp {
+              xywh {65 411 775 23} labelfont 8 textfont 8
+            }
+          }
+          Fl_Check_Button g_AtlasAtlasRegButton {
+            label {Conduct Atlas-Atlas Registration}
+            callback {MultiAtlasAtlasRegistrationButtonChecked();}
+            xywh {340 260 240 25} box UP_BOX down_box DOWN_BOX
+          }
+          Fl_Button {} {
+            label {1. Currently can only process nifty images (*.nii)}
+            xywh {35 467 320 28} box NO_BOX labelfont 8
+          }
+          Fl_Button {} {
+            label {3. Name the atlas images with a prefix of "atlas_"; save these images in "atlas/atlas_image/"}
+            xywh {44 519 550 26} box NO_BOX labelfont 8
+          }
+          Fl_Button {} {
+            label {4. Name the atlas labels with a prefix of "label_";save these images in "atlas/atlas_image/"}
+            xywh {40 544 545 26} box NO_BOX labelfont 8
+          }
+          Fl_Button {} {
+            label {2. Create a folder of "atlas_image".under "atlas"}
+            xywh {50 492 290 28} box NO_BOX labelfont 8
+          }
+        }
+        Fl_Round_Button {} {
+          xywh {25 55 25 25} down_box ROUND_DOWN_BOX hide
+        }
+      }
+      Fl_Group {} {open
+        xywh {795 0 210 65} box PLASTIC_UP_BOX align 0
+      } {
+        Fl_Button {} {
+          image {AutoSeg.jpg} xywh {805 8 80 52} box NO_BOX align 64 when 2 deactivate
+        }
+        Fl_Button {} {
+          label {AutoSeg 3.0.0}
+          xywh {885 23 120 22} box NO_BOX labelfont 1 labelsize 17
         }
       }
     }
@@ -1961,6 +2118,50 @@ class AutoSegGUI {open
   } {}
   Function {SetANTSGaussianSigmaGUI()} {open return_type {virtual void}
   } {}
-  Function {MultiAtlasSeg()} {open return_type {virtual void}
+  Function {MajorityVotingButtonToggled()} {open return_type {virtual void}
+  } {}
+  Function {WeightedMajorityVotingButtonToggled()} {open return_type {virtual void}
+  } {}
+  Function {StapleButtonToggled()} {open return_type {virtual void}
+  } {}
+  Function {make_window()} {open
+  } {}
+  Function {MultiAtlasSegmentationButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {SetMultiAtlasDirectoryGUI()} {open return_type {virtual void}
+  } {}
+  Function {MultiAtlasAtlasRegistrationButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {SetIntensityEnergyGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetHarmonicEnergyGUI()} {open return_type {virtual void}
+  } {}
+  Function {SetShapeEnergyGUI()} {open return_type virtual
+  } {}
+  Function {MultiModalitySegmentationButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {SetANTSCCWeightGUI2nd()} {open return_type {virtual void}
+  } {}
+  Function {SetANTSMIWeightGUI2nd()} {open return_type {virtual void}
+  } {}
+  Function {SetANTSMSQWeightGUI2nd()} {open return_type {virtual void}
+  } {}
+  Function {SetANTSMIBinsGUI2nd()} {open return_type {virtual void}
+  } {}
+  Function {SetANTSCCRegionRadiusGUI2nd()} {open return_type {virtual void}
+  } {}
+  Function {SetT2ROIAtlasFileGUI()} {open return_type {virtual void}
+  } {}
+  Function {RecalculateAtlasTargetEnergyButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {ABCANTSWarpButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {RecalculateAtlasAtlasEnergyButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {Slicer4dot3ButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {Slicer4ButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {Slicer3ButtonChecked()} {open return_type {virtual void}
   } {}
 } 

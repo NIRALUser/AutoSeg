@@ -19,6 +19,155 @@
 #include "AutoSegGUIControls.h"
 #include <itksys/SystemTools.hxx>
 
+//char *AtlasDirectory = NULL;
+//char *TargetDirectory = NULL;
+
+float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDirectory, const std::string filename)
+{
+    typedef   unsigned char  PixelType;
+    typedef itk::Image< PixelType, 3 >   ImageType;
+    typedef itk::MeanSquaresImageToImageMetric< ImageType, ImageType >  MSMMetricType;
+    typedef itk::NormalizedCorrelationImageToImageMetric< ImageType, ImageType >  NCCMetricType;
+    typedef itk::MutualInformationImageToImageMetric< ImageType, ImageType >  MIMetricType;
+    typedef itk::NormalizedMutualInformationHistogramImageToImageMetric< ImageType, ImageType > NMIMetricType;
+    typedef itk::RescaleIntensityImageFilter< ImageType, ImageType > RescaleFilterType;
+    typedef itk::ImageFileReader< ImageType >  ReaderType;
+    
+    ReaderType::Pointer fixedReader  = ReaderType::New();
+    ReaderType::Pointer movingReader = ReaderType::New();
+    MSMMetricType::Pointer MSMmetric = MSMMetricType::New();
+    NCCMetricType::Pointer NCCmetric = NCCMetricType::New();
+    MIMetricType::Pointer MImetric = MIMetricType::New();
+    NMIMetricType::Pointer NMImetric = NMIMetricType::New();
+
+    RescaleFilterType::Pointer rescaleFixFilter = RescaleFilterType::New();
+    RescaleFilterType::Pointer rescaleMoveFilter = RescaleFilterType::New();
+    typedef itk::TranslationTransform< double, 3 >  TransformType;
+    TransformType::Pointer translatetransform = TransformType::New( );
+    typedef itk::AffineTransform<double,3> AffineTransformType;
+    typedef AffineTransformType::ParametersType affineParametersType;
+    AffineTransformType::Pointer transform = AffineTransformType::New();
+    typedef itk::NearestNeighborInterpolateImageFunction< ImageType, double >  NNInterpolatorType;
+    typedef itk::LinearInterpolateImageFunction< ImageType > LinearInterpolatorType;
+    NNInterpolatorType::Pointer interpolator = NNInterpolatorType::New();
+    transform->SetIdentity();
+
+    fixedReader->SetFileName( fixedDirectory );
+    movingReader->SetFileName( movingDirectory );
+
+    rescaleFixFilter->SetInput( fixedReader->GetOutput() );
+    rescaleFixFilter->SetOutputMinimum( 0 );
+    rescaleFixFilter->SetOutputMaximum( 1023 );
+    rescaleFixFilter->Update();
+
+    rescaleMoveFilter->SetInput( movingReader->GetOutput() );
+    rescaleMoveFilter->SetOutputMinimum( 0 );
+    rescaleMoveFilter->SetOutputMaximum( 1023 );
+    rescaleMoveFilter->Update();
+
+    ImageType::ConstPointer fixedImage  = rescaleFixFilter->GetOutput();
+    ImageType::ConstPointer movingImage = rescaleMoveFilter->GetOutput();
+
+    // mean square metric
+    MSMmetric->SetTransform( transform );
+    MSMmetric->SetInterpolator( interpolator );
+    MSMmetric->SetFixedImage(  fixedImage  );
+    MSMmetric->SetMovingImage( movingImage );
+    // normalized cross correlation
+    NCCmetric->SetTransform( transform );
+    NCCmetric->SetInterpolator( interpolator );
+    NCCmetric->SetFixedImage(  fixedImage  );
+    NCCmetric->SetMovingImage( movingImage );
+    // mutual information
+    MImetric->SetTransform( transform );
+    MImetric->SetInterpolator( interpolator );
+    MImetric->SetFixedImage(  fixedImage  );
+    MImetric->SetMovingImage( movingImage );
+    // normalized mutual information
+    NMImetric->SetTransform( transform );
+    NMImetric->SetInterpolator( interpolator );
+    NMImetric->SetFixedImage(  fixedImage  );
+    NMImetric->SetMovingImage( movingImage );
+    // Software Guide : EndCodeSnippet
+    MSMmetric->SetFixedImageRegion( fixedImage->GetLargestPossibleRegion( ) );
+    //NCCmetric->SetFixedImageRegion( fixedImage->GetLargestPossibleRegion( ) );
+    //MImetric->SetFixedImageRegion( fixedImage->GetLargestPossibleRegion( ) );
+    //NMImetric->SetFixedImageRegion( fixedImage->GetLargestPossibleRegion( ) );
+    try {
+        MSMmetric->Initialize();
+    //NCCmetric->Initialize();
+    //MImetric->Initialize();
+    //NMImetric->Initialize();
+    }
+    catch( itk::ExceptionObject & excep ){
+        std::cerr << "Exception catched !" << std::endl;
+        std::cerr << excep << std::endl;
+    //    return EXIT_FAILURE;
+        exit(0);
+    }
+    float msm = MSMmetric->GetValue( transform->GetParameters( ) );
+   // float ncc = NCCmetric->GetValue( transform->GetParameters( ) );
+   // float mi = MImetric->GetValue( transform->GetParameters( ) );
+   // float nmi = NMImetric->GetValue( transform->GetParameters( ) );
+//    std::string filename;
+    std::ostringstream strFixCase;
+//    strFixCase << argv[5];
+//    strFixCase << fixedCase;
+ //   filename = "intensityEnergyMICCAI_target.txt";
+    std::ofstream efile( filename.c_str() , std::ios::app );
+    efile << msm << "\n";
+    efile.close();
+    std::cout << "mean square metric value:            " << msm << std::endl;
+    //std::cout << "normalized cross correlation value:  " << ncc << std::endl;
+    //std::cout << "mutual information value:            " << mi << std::endl;
+    //std::cout << "normalized mutual information value: " << nmi << std::endl;
+}
+
+float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::string filename)
+{
+    typedef itk::OrientedImage< float, 3 >          OrientedImageType;
+    typedef itk::ImageFileReader<OrientedImageType> OrientedReaderType;
+    typedef itk::ImageFileWriter<OrientedImageType> OrientedWriterType;
+    OrientedReaderType::Pointer                     orientedreader = OrientedReaderType::New();
+    OrientedImageType::Pointer                      deformationField; 
+    OrientedImageType::IndexType                    index;
+    OrientedImageType::SizeType                     size;
+    float                                           HE = 0;
+//    std::string                                     filename;
+ //   std::ostringstream                              strFixCase;
+
+   // strFixCase << argv[3];
+//    strFixCase << fixedCase;
+
+    orientedreader->SetFileName( deformedFieldDirectory );
+    try {
+        orientedreader->Update();
+        deformationField = orientedreader->GetOutput();
+        size = deformationField->GetLargestPossibleRegion().GetSize();
+    }
+    catch( itk::ExceptionObject & err ) {
+        std::cerr << "ExceptionObject caught !" << std::endl;
+        std::cerr << err << std::endl;
+        exit(0);
+        //return EXIT_FAILURE;
+    }
+    for(index[2] = 0; index[2] < (int)size[2]; index[2]++) {
+        for(index[1] = 0; index[1] < (int)size[1]; index[1]++) {
+            for(index[0] = 0; index[0] < (int)size[0]; index[0]++) {
+                // calculate harmonic energy
+                float tmpHE = 0;
+                tmpHE += pow(deformationField->GetPixel(index), 2);
+                HE += sqrt(tmpHE);
+            }
+        }
+    }
+    std::cout << "harmonic energy: " << HE << std::endl;
+//    filename = "harmonicEnergyMICCAI_target.txt";
+    std::ofstream hefile( filename.c_str() , std::ios::app );
+    hefile << HE << "\n";
+    hefile.close();
+}
+
 AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
   : AutoSegGUI()
 {
@@ -57,8 +206,11 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
   m_Computation.SetComputeCorticalThickness(g_ComputeCorticalThicknessButton->value());
   m_Computation.SetRecompute(g_RecomputeButton->value());
   m_Computation.SetUseCondor(g_UseCondorButton->value());
-  
+  m_Computation.SetMultiModalitySegmentation(g_MultiModalitySegButton->value());
+   
   m_Computation.SetIsAutoSegInProcess(false);
+  m_Computation.SetSlicerVersion(4.3);
+  
 
   // Initialization Default Parameter Files
   std::strcpy(DefaultParameterFile, m_Computation.GetAutoSegPath());
@@ -87,9 +239,42 @@ void AutoSegGUIControls::AboutButtonPressed()
   About.g_MainWindow->show();
   Fl::run();
 }
+/*
+void AutoSegGUIControls::AtlasRegistrationGUI()
+{
+    //int index = g_AtlasBrowser->value();
+    
+    std::cout << g_NumAtlas->value() << std::endl;
+    std::cout << AtlasDirectory << std::endl;
+    std::cout << g_TargetDirectoryDisp->value() << std::endl;
+    
+    for (int i = 1; i <= (int) g_NumAtlas->value(); i++){
+  //      std::cout << g_AtlasBrowser->text(i) << std::endl;
+    }
 
+    //std::cout << g_AtlasBrowser->text(3) << std::endl;
+    std::string command;
+    command = "ANTS 3 -m CC\[" ;
+    command += AtlasDirectory;
+    command += g_AtlasBrowser->text(3);  
+    command += ",";
+    command += AtlasDirectory;
+    command += g_AtlasBrowser->text(4);  
+    command += "\] -i 30x20x10 -o deformationField_1007fto1113.nii -t SyN\[1.00\] -r Gauss\[3,0\]";
+    std::cout << command << std::endl;
 
+    command.clear();
 
+    command = "ANTS 3 -m CC\[" ;
+    command += AtlasDirectory;
+    command += g_AtlasBrowser->text(3);  
+    command += ",";
+    command += g_TargetDirectoryDisp->value();
+    command += "\] -i 30x20x10 -o deformationField_1007fto1113.nii -t SyN\[1.00\] -r Gauss\[3,0\]";
+    std::cout << command << std::endl;
+}
+*/
+/*
 void AutoSegGUIControls::MultiAtlasSegGUI()
 {
   int ComputeStudy = 1;
@@ -129,7 +314,7 @@ void AutoSegGUIControls::MultiAtlasSegGUI()
     }
   }
 }
-
+*/
 
 void AutoSegGUIControls::ExitAutoSeg()
 {
@@ -152,26 +337,381 @@ void AutoSegGUIControls::ExitAutoSeg()
 
 void AutoSegGUIControls::LoadParameterFileGUI()
 {
-  Fl_File_Chooser fc(".","*.txt",Fl_File_Chooser::SINGLE,"Load a Parameter File");
+  const char *initialDirectory = m_CurrentDirectory;
+  Fl_File_Chooser fc(initialDirectory,"*.txt",Fl_File_Chooser::SINGLE,"Load a Parameter File");
   fc.show();
-  while(fc.shown())
+  while(fc.shown()){
     Fl::wait();
+  }
 
   //if a name has been set
   if(fc.count())
     m_Computation.LoadParameterFile(fc.value());  
   UpdateParameterGUI(fc.value());
 }
+/*
+void AutoSegGUIControls::MultiAtlasSeg()tlasSeg();
+{
+    float graph[NUMBER_OF_CASE][NUMBER_OF_CASE][2], circularity[NUMBER_OF_CASE]; //include deformation from two directions
+    float intensityE, harmonicE, shapeE, tmpHE = 0, maxDistance = 0, minDistance = 100000;
+    float alpha = 0.5, beta = 0.5, gama = 0;
+    int startNode, endNode, floydRoute[NUMBER_OF_CASE];
+    std::ostringstream strFixCase;
+    std::string filename;
+    strFixCase << (int)g_FixedCase->value();
+    //startNode = (int)g_StartCase->value();
+    //endNode = (int)g_EndCase->value();
+    startNode = 0;
+    endNode = g_NumAtlas->value();
+   // std::cout << startNode << "  " << endNode << "  " << g_FixedCase->value() << " finished!!!" << std::endl;
+    //filename = g_IntensityEnergyDirectoryDisp->value();
+    std::cout << filename << std::endl;
+    std::ifstream efile( filename.c_str() );
+   // filename = g_HarmonicEnergyDirectoryDisp->value();
+    std::cout << filename << std::endl;
+    std::ifstream iefile( filename.c_str() );
+    //filename = g_SelectedTemplateDirectoryDisp->value();
+ //   filename = "test/templateForSegMICCAI_" + strFixCase.str() + ".txt";
+    std::cout << filename << std::endl;
+    std::string commandLine;
+    std::ofstream templatefile(filename.c_str(), std::ios::app );
+    int cases[25] = {39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 54, 55, 56, 57, 58, 59, 69, 71, 73, 88, 95, 107}, caseUsed[NUMBER_OF_CASE]; 
+    int graphHistogram[120] = {0};
 
-void AutoSegGUIControls::MultiAtlasSeg()
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        floydRoute[i] = MAX_NODE;
+        caseUsed[i] = 0;
+    }
+    
+    int m = 0;
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        for (int j = 0; j < NUMBER_OF_CASE; j++){
+            graph[i][j][0] = -1;
+            graph[i][j][1] = -1;
+        }
+    }
+
+    for (int i = 0; i < NUMBER_OF_ATLAS; i++){ //start on the route
+        for (int j = 0; j < NUMBER_OF_ATLAS; j++){ // end on the route
+        if(i == j){
+            graph[i][j][0] = -1;
+            graph[i][j][1] = -1;
+        }
+        else {
+            m++;
+            efile >> harmonicE;
+            iefile >> intensityE;
+            graph[j][i][0] = alpha * harmonicE;
+            graph[j][i][0] += beta * intensityE;
+            if(graph[j][i][0] < minDistance)
+            minDistance = graph[j][i][0];
+            if(graph[j][i][0] > maxDistance)
+            maxDistance = graph[j][i][0];
+            int tmp = round(graph[j][i][0] * 100); 
+            if((tmp - 1) < 0)
+            graphHistogram[0]++;
+            else if ((tmp - 1) >= 120)
+            graphHistogram[119]++;
+            else
+            graphHistogram[tmp - 1]++;
+         //       invefile >> tmpHE;
+           //     graph[i][j][1] = tmpHE;
+            }
+        }
+    }
+    for (int i = NUMBER_OF_ATLAS; i < NUMBER_OF_CASE; i++){
+        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
+            m++;
+            efile >> harmonicE;
+            iefile >> intensityE;
+            graph[j][i][0] = alpha * harmonicE;
+            graph[j][i][0] += beta * intensityE;
+        //    graph[j][i][0] += gama * fabs(circularity[i] - circularity[j]) + ENERGY_CONST;
+            if(graph[j][i][0] < minDistance)
+            minDistance = graph[j][i][0];
+            if(graph[j][i][0] > maxDistance)
+            maxDistance = graph[j][i][0];
+            int tmp = round(graph[j][i][0] * 100); 
+            if((tmp - 1) < 0)
+            graphHistogram[0]++;
+            else if ((tmp - 1) >= 120)
+            graphHistogram[119]++;
+            else
+            graphHistogram[tmp - 1]++;
+        }
+    }
+    //normalize the distance
+    for (int i = 0; i < NUMBER_OF_ATLAS; i++){
+        minDistance = 1000000;
+        maxDistance = 0;
+        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
+        if(i == j){
+        }
+        else {
+            if(graph[j][i][0] < minDistance)
+            minDistance = graph[j][i][0];
+            if(graph[j][i][0] > maxDistance)
+            maxDistance = graph[j][i][0];
+        }
+        }
+        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
+        if(i == j){
+        }
+        else {
+            graph[j][i][0] = (graph[j][i][0] - minDistance) / (maxDistance - minDistance);
+        }
+        }
+    }
+    for (int i = NUMBER_OF_ATLAS; i < NUMBER_OF_CASE; i++){
+        minDistance = 1000000;
+        maxDistance = 0;
+        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
+        if(graph[j][i][0] < minDistance)
+            minDistance = graph[j][i][0];
+        if(graph[j][i][0] > maxDistance)
+            maxDistance = graph[j][i][0];
+        }
+        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
+        graph[j][i][0] = (graph[j][i][0] - minDistance) / (maxDistance - minDistance);
+        }
+    }
+    
+    //end of normalization
+    efile.close();
+//    invefile.close();
+    iefile.close();
+
+    //search shortest route from startNode to endNode using Floyd algorithm
+    //startNode = atoi(argv[2]); endNode = atoi(argv[3]);
+    startNode = 0;
+    endNode = (int)g_NumAtlas->value();
+    int floydNode = startNode, lengthPathFloyd = 0;
+    bool changes = 1;
+    float directDistance = graph[startNode][endNode][0], currentDistance = graph[startNode][endNode][0], cumDistance = 0;
+    int k = 0;
+    floydRoute[k] = startNode;
+    while (changes == 1) {
+        changes = 0;
+        float tmpCumDistance =  directDistance;
+        for (int i = 0; i < NUMBER_OF_CASE; i++){
+            currentDistance = cumDistance + graph[startNode][i][0] + graph[i][endNode][0];  
+            if (tmpCumDistance > currentDistance && startNode != i && endNode != i && caseUsed[i] == 0) {
+                changes = 1; 
+                floydNode = i;
+                tmpCumDistance = currentDistance - graph[i][endNode][0];
+            }
+        }
+        if(changes == 1) {
+            cumDistance = tmpCumDistance;
+            startNode = floydNode;
+            k++;
+            floydRoute[k] = startNode;
+            caseUsed[floydNode] = 1;
+            lengthPathFloyd++;
+        }
+    }
+    k++;
+    floydRoute[k] = endNode;
+    //end of Floyd algorithm
+    k = 0;
+    //std::cout << argv[2] << "  " << argv[3] << ": ";
+    while(floydRoute[k] != MAX_NODE){
+        std::cout << floydRoute[k] << "  ";
+        k++;
+    } 
+    std::cout << "\n";
+    templatefile << floydRoute[k - 2];
+    templatefile << "\n";
+    templatefile.close();
+}
+*/
+void MajorityVotingLabelFusion(std::string segmentationfilename, std::string datadirectory )
 {
 
-    std::cout << "mark" << std::endl;
 
+}
+
+void AutoSegGUIControls::WeightedMajorityVotingLabelFusionGUI(std::string segmentationfilename, std::string intfilename, std::string harmonicfilename, std::string selectedtemplatefilename, std::string datadirectory )
+{
+/*
+    //run weighted majority voting
+    std::ostringstream strFixCase;
+ //   strFixCase << (int)g_FixedCase->value();
+   // std::string filename;
+
+    //filename = g_IntensityEnergyDirectoryDisp->value();
+     
+    std::ifstream efile( intfilename.c_str() );
+   // filename = g_HarmonicEnergyDirectoryDisp->value();
+    std::ifstream iefile( harmonicfilename.c_str() );
+    //filename = g_SelectedTemplateDirectoryDisp->value();
+    std::ifstream templatefile( selectedtemplatefilename.c_str());
+    std::string commandLine;
+    float harmonicE, intensityE, shapeE, weightFactor[NUMBER_OF_CASE * (NUMBER_OF_CASE - 1)], circularity[NUMBER_OF_CASE];
+    int cases[NUMBER_OF_CASE] = {1000, 1001, 1002, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1017, 1036, 1003};
+
+    float alpha = 0.5, beta = 0.5, gama = 0;
+
+    bool caseFlag[NUMBER_OF_CASE] = {0};
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        int temp;
+        templatefile >> temp;
+        caseFlag[temp] = 1;
+    }
+    templatefile.close();
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        if (i != (NUMBER_OF_CASE - 1) && caseFlag[i] == 0) 
+            cases[i] = 0;
+    } 
+    int m = 0;
+
+    float minDistance = 1000000, maxDistance = 0;
+    for ( int i = 0; i < (NUMBER_OF_ATLAS * (NUMBER_OF_ATLAS - 1) + NUMBER_OF_ATLAS); i++){
+        efile >> harmonicE;
+        iefile >> intensityE;
+        if( i >= (NUMBER_OF_ATLAS * (NUMBER_OF_ATLAS - 1)) ){
+            weightFactor[m] = alpha * harmonicE + beta * intensityE; //+ gama * fabs(circularity[i] - circularity[j]);
+            if(weightFactor[m] < minDistance)
+                minDistance = weightFactor[m];
+            if(weightFactor[m] > maxDistance)
+                maxDistance = weightFactor[m];
+    //        std::cout << harmonicE << "  " << intensityE << "  " << 1 - weightFactor[m] << std::endl;
+            m++;
+        }
+    }
+    for (int i = 0; i < NUMBER_OF_ATLAS; i++){
+        weightFactor[i] = (weightFactor[i] - minDistance) / (maxDistance - minDistance);
+    }
+    efile.close();
+    iefile.close();
+    //for conventional majority voting
+    std::ostringstream strTarget;
+    strTarget << (int)g_FixedCase->value();
+    if((int)g_FixedCase->value() == cases[0]) {
+        std::ostringstream strSourceTmp;
+        strSourceTmp << cases[1];
+        commandLine = "~/work/NeuroLib/ImageMath_build/ImageMath ~/work/MICCAI_2012_MultiAtlas_Challenge/registration/Testing/deformedImage_" + strSourceTmp.str() + "to" + strTarget.str() + "_seg.nii.gz -weightedMajorityVoting ";
+    }
+    else {
+        std::ostringstream strSourceTmp;
+        strSourceTmp << cases[0];
+        commandLine = "~/work/NeuroLib/ImageMath_build/ImageMath ~/work/MICCAI_2012_MultiAtlas_Challenge/registration/Testing/deformedImage_1000to" + strTarget.str() + "_seg.nii.gz -weightedMajorityVoting ";
+    }
+    int z = 0;
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        if (cases[i] != (int)g_FixedCase->value() && cases[i] != 0) {
+//         std::cout << cases[i] << ",  " << atoi(argv[2]) * (NUMBER_OF_CASE - 1) + z << ":  " << weightFactor[atoi(argv[2]) * (NUMBER_OF_CASE - 1) + z] << std::endl;
+            z++;
+        }
+    }
+    int k = 0;
+    //for (int i = 0; i < NUMBER_OF_CASE; i++){
+    for (int i = 0; i < NUMBER_OF_ATLAS; i++){
+        std::ostringstream strSource;
+        strSource << cases[i];
+        if (i < 30) {
+            if (cases[i] != (int)g_FixedCase->value() && cases[i] != 0) {
+                commandLine += "~/work/MICCAI_2012_MultiAtlas_Challenge/registration/Testing/deformedImage_" + strSource.str() + "to" + strTarget.str() + "_seg.nii.gz ";
+            }
+        }
+        else {
+            if (cases[i] != (int)g_FixedCase->value() && cases[i] != 0) {
+                commandLine += "~/work/MICCAI_2012_MultiAtlas_Challenge/registration/Testing/deformedImage_" + strSource.str() + "fto" + strTarget.str() + "_seg.nii.gz ";
+            }
+        }
+        if (cases[i] != (int)g_FixedCase->value()) 
+            k++;
+    }     
+    commandLine += "-weights ";
+    bool firstWeightFlag = 0;
+    k = 0;
+   // for (int i = 0; i < NUMBER_OF_CASE; i++){
+    for (int i = 0; i < NUMBER_OF_ATLAS; i++){
+        std::ostringstream strWFactor;
+        if(cases[i] != (int)g_FixedCase->value() && cases[i] != 0) {
+            //if (firstWeightFlag == 1 && weightFactor[atoi(argv[2]) * (NUMBER_OF_CASE - 1) + k - 1] <= WEIGHT_THRESHOLD && k > 0){
+            if (firstWeightFlag == 1 && k > 0){
+                commandLine += ",";
+            }
+            strWFactor << 1 - weightFactor[k];
+    //        if(weightFactor[atoi(argv[2]) * (NUMBER_OF_CASE - 1) + k] <= WEIGHT_THRESHOLD) {
+            commandLine += strWFactor.str();
+            firstWeightFlag = 1;
+     //           std::cout << atoi(argv[2]) * (NUMBER_OF_CASE - 1) + k << ": " << strWFactor.str() << std::endl;
+      //      }
+        }
+        if (cases[i] != (int)g_FixedCase->value())
+            k++;
+    }
+     
+    std::ostringstream strSource;
+    strSource << (int)g_FixedCase->value();
+    commandLine += " -outfile WeightedMVOutput_seg_" + strSource.str() + ".nii";
+    std::cout << commandLine.c_str() << std::endl;
+    system(commandLine.c_str());
+*/
+}
+
+void AutoSegGUIControls::STAPLELabelFusionGUI()
+{
+/*
+    int DATASET_SIZE = 25;
+    std::string filename;
+    int usedCase[25] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1, 1, 1}; 
+    int cases[NUMBER_OF_CASE] = {1000, 1001, 1002, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1017, 1036, 1003};
+    int segLabel =(int)g_Label->value(), fixCase = (int)g_FixedCase->value(), numIteration = 1, numCaseUsed = DATASET_SIZE, numCaseWillUse = DATASET_SIZE;
+    bool terminateCriteria = 1;
+    char *quotationMark = "\"";
+
+    //filename = g_SelectedTemplateDirectoryDisp->value();
+    std::ifstream templatefile( filename.c_str() );
+    bool caseFlag[NUMBER_OF_CASE] = {0};
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        int temp;
+        templatefile >> temp;
+        caseFlag[temp] = 1;
+    }
+    templatefile.close();
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        if (i != (NUMBER_OF_CASE - 1) && caseFlag[i] == 0) 
+            cases[i] = 0;
+    }
+    
+    std::string commandLine;
+    std::string strTarget;
+    std::ifstream readParameter;
+    std::ostringstream strFixCase;
+    strFixCase << fixCase;
+    std::ostringstream numIter;
+    numCaseUsed = numCaseWillUse;
+    numCaseWillUse = 0;
+    numIter << numIteration;
+    //exclude target image
+    for (int i = 0; i < DATASET_SIZE; i++){
+        if (cases[i] == fixCase)
+            usedCase[i] = 0;
+    }  
+    commandLine = "crlSTAPLE ";
+    for (int i = 0; i < NUMBER_OF_CASE; i++){
+        std::ostringstream strTarget;
+        std::ostringstream strSource;
+        strSource << cases[i];
+        strTarget << (int)g_FixedCase->value();
+        if (cases[i] != (int)g_FixedCase->value() && cases[i] != 0) {
+            commandLine += "~/work/MICCAI_2012_MultiAtlas_Challenge/registration/Testing/deformedImage_" + strSource.str() + "to" + strTarget.str() + "_seg.nii.gz ";
+        }
+    }
+    commandLine = commandLine + "--compressOutput --outputImage seg_0" + strFixCase.str() + "_fromAllScans_syn_100x50x25_AllMuscle.nrrd";
+    std::cout << commandLine << std::endl;
+    getchar();
+    system(commandLine.c_str());//run STAPLE
+    std::cout << "STAPLE finished!" << std::endl; 
+*/
 }
 
 void AutoSegGUIControls::LoadComputationFileGUI()
 {
+
   Fl_File_Chooser fc(".","*.txt",Fl_File_Chooser::SINGLE,"Load a Computation File");
   fc.show();  
   while(fc.shown())
@@ -184,6 +724,7 @@ void AutoSegGUIControls::LoadComputationFileGUI()
 	m_Computation.LoadComputationFile(fc.value());
 	UpdateComputationGUI(fc.value());
       }
+  m_CurrentDirectory = fc.directory();
 }
 
 void AutoSegGUIControls::SaveParameterFileGUI()
@@ -255,7 +796,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
   int Length;
   // Computation Options
   int IsT2Image, IsPDImage;
-  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor;  
+  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas, ComputeAtlasAtlasReg;  
 
   if ((ComputationFile = fopen(_FileName,"r")) != NULL) 
   {
@@ -402,6 +943,54 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       {
 	RightJustifyData(Line+6, Data);
 	g_DataBrowser->add(Data);
+      }
+      else if ( (std::strncmp("Compute Multi-modality Segmentation: ", Line, 37)) == 0)
+      {
+        ComputeMultiModality = atoi(Line + 37);
+	if (ComputeMultiModality == 1) {
+            g_MultiModalitySegButton->set();
+        }
+        else
+            g_MultiModalitySegButton->clear();
+      }
+      else if ( (std::strncmp("Compute Multi-atlas Segmentation: ", Line, 34)) == 0)
+      {
+        ComputeMultiAtlas = atoi(Line + 34);
+	if (ComputeMultiAtlas == 1) {
+            g_MultiAtlasSegButton->set();
+            MultiAtlasSegmentationButtonChecked();
+        }
+        else
+            g_MultiAtlasSegButton->clear();
+      }
+      else if ( (std::strncmp("Conduct Atlas-Atlas Registration: ", Line, 34)) == 0)
+      {
+	if (atoi(Line + 34) == 1) {
+            g_AtlasAtlasRegButton->set();
+        }
+        else
+            g_AtlasAtlasRegButton->clear();
+      }
+      else if ( (std::strncmp("Recalculate Atlas-Target Energy: ", Line, 33)) == 0)
+      {
+	if (atoi(Line + 33) == 1) {
+            g_RecalculateAtlasTargetEnergyButton->set();
+        }
+        else
+            g_RecalculateAtlasTargetEnergyButton->clear();
+      }
+      else if ( (std::strncmp("Recalculate Atlas-Atlas Energy: ", Line, 32)) == 0)
+      {
+	if (atoi(Line + 32) == 1) {
+            g_RecalculateAtlasAtlasEnergyButton->set();
+        }
+        else
+            g_RecalculateAtlasAtlasEnergyButton->clear();
+      }
+      else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
+      {
+	g_MultiAtlasDirectoryDisp->value(Line+23);
+        SetMultiAtlasDirectoryInitialize(Line+23);
       }
     }
     fclose(ComputationFile);
@@ -1210,7 +1799,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
     // N4 ITK Bias Field Correction
   std::string NbOfIterations,BSplineGridResolutions,HistogramSharpening;
   int N4ITKBiasFieldCorrection,StrippedN4ITKBiasFieldCorrection, ShrinkFactor,BSplineOrder;
-  float ConvergenceThreshold,BSplineBeta,BSplineAlpha,SplineDistance;
+  float ConvergenceThreshold,BSplineBeta,BSplineAlpha,SplineDistance, SlicerVersion;
   // Reorientation
   int Reorientation;
   std::string InputDataOrientation, OutputDataOrientation;
@@ -1310,6 +1899,18 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  else
 	  {
 	    g_ROIAtlasFileDisp->value(NULL);
+	  }
+	}
+        else if ( (std::strncmp("ROI Second Atlas File: ", Line, 23)) == 0)
+	{
+	  if (std::strlen(Line+23) != 0)
+	  {
+	    g_ROIT2AtlasFileDisp->value(Line+23);
+	    g_ROIT2AtlasFileDisp->position(g_ROIAtlasFileDisp->size());
+	  }
+	  else
+	  {
+	    g_ROIT2AtlasFileDisp->value(NULL);
 	  }
 	}
 	else if ( (std::strncmp("Amygdala Left: ", Line, 15)) == 0)
@@ -1931,6 +2532,12 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	    g_FluidAtlasWarpButton->set();
 	    g_FluidAtlasAffineButton->clear();
 	    g_FluidAtlasFATWButton->clear();
+            g_ABCANTSWarpButton->clear();
+
+            m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
+            m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
+            m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+            m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
 	  }
 	  else
 	  {
@@ -1945,6 +2552,12 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	    g_FluidAtlasAffineButton->set();
 	    g_FluidAtlasWarpButton->clear();
 	    g_FluidAtlasFATWButton->clear();
+            g_ABCANTSWarpButton->clear();
+
+            m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
+            m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
+            m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+            m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
 	  }
 	  else
 	  {
@@ -1959,10 +2572,35 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	    g_FluidAtlasFATWButton->set();
 	    g_FluidAtlasWarpButton->clear();
 	    g_FluidAtlasAffineButton->clear();
+            g_ABCANTSWarpButton->clear();
+
+            m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
+            m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
+            m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+            m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
 	  }
 	  else
 	  {
 	    g_FluidAtlasFATWButton->clear();
+	  }	    
+	}
+        else if ( (std::strncmp("ANTS Warp for ABC: ", Line, 19)) == 0)
+	{
+	  if (atoi(Line+19) == 1)
+	  {
+	    g_FluidAtlasFATWButton->clear();
+	    g_FluidAtlasWarpButton->clear();
+	    g_FluidAtlasAffineButton->clear();
+            g_ABCANTSWarpButton->set();
+
+            m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
+            m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
+            m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+            m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
+	  }
+	  else
+	  {
+            g_ABCANTSWarpButton->clear();
 	  }	    
 	}
 	else if ( (std::strncmp("Fluid Atlas Warp Iterations: ", Line, 29)) == 0)
@@ -1979,7 +2617,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	{
 	  if (std::strcmp(Line+22, "affine") == 0)
 	    g_AtlasLinearMappingChoice->value(0);
-	  else if (std::strcmp(Line+22, "affine") == 0)
+	  else if (std::strcmp(Line+22, "id") == 0)
 	    g_AtlasLinearMappingChoice->value(1);
 	  else
 	    g_AtlasLinearMappingChoice->value(2);
@@ -2334,6 +2972,26 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  BSplineOrder =atoi(Line+18);
 	  g_BSplineOrder->value(BSplineOrder);	
 	}
+        else if ( (std::strncmp("The Version of Slicer Used: ", Line, 27)) == 0)
+	{
+	    SlicerVersion =atof(Line+27);
+            if (SlicerVersion == 3.0){
+                g_Slicer4dot3Button->clear();
+                g_Slicer4Button->clear();
+                g_Slicer3Button->set();
+            }
+            if (SlicerVersion == 4.0){
+                g_Slicer4dot3Button->clear();
+                g_Slicer4Button->set();
+                g_Slicer3Button->clear();
+            }
+            if (SlicerVersion == 4.3){
+                g_Slicer4dot3Button->set();
+                g_Slicer4Button->clear();
+                g_Slicer3Button->clear();
+              //  Slicer4dot3ButtonChecked();
+            }
+	}
 	else if ( (std::strncmp("Stripped N4 ITK Bias Field Correction: ", Line, 39)) == 0)
 	{
 	  StrippedN4ITKBiasFieldCorrection =atoi(Line+39);
@@ -2342,6 +3000,39 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  else
 	    g_StrippedN4ITKBiasFieldCorrectionButton->clear();
 	}	
+        else if ( (std::strncmp("Label Fusion Algorithm: ", Line, 24)) == 0)
+	{
+          if (std::strcmp(Line+24,"Majority Voting") == 0)
+          {
+            g_MajorityVotingButton->set();
+            g_WeightedMajorityVotingButton->clear();
+            g_StapleButton->clear();
+          }
+          if (std::strcmp(Line+24,"Weighted Majority Voting") == 0)
+          {
+            g_MajorityVotingButton->clear();
+            g_WeightedMajorityVotingButton->set();
+            g_StapleButton->clear();
+          }
+          if (std::strcmp(Line+24,"STAPLE") == 0)
+          {
+            g_MajorityVotingButton->clear();
+            g_WeightedMajorityVotingButton->clear();
+            g_StapleButton->set();
+          }
+	}
+        else if ( (std::strncmp("Intensity Energy Weight: ", Line, 25)) == 0)
+	{
+            g_IntensityEnergyWeight->value(atof(Line + 25));
+	}
+        else if ( (std::strncmp("Harmonic Energy Weight: ", Line, 24)) == 0)
+	{
+            g_HarmonicEnergyWeight->value(atof(Line + 24));
+	}
+        else if ( (std::strncmp("Shape Energy Weight: ", Line, 21)) == 0)
+	{
+            g_ShapeEnergyWeight->value(atof(Line + 21));
+	}
       }
     }
     fclose(ParameterFile);
@@ -2356,24 +3047,280 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 
 void AutoSegGUIControls::SetProcessDataDirectoryGUI()
 {
-  char *ProcessDataDirectory = NULL;
+//  char *ProcessDataDirectory = NULL;
   
-  ProcessDataDirectory = fl_dir_chooser("Set the Process Data Directory", NULL);
-  if(ProcessDataDirectory != NULL)
+//  m_ProcessDataDirectory = new char[512];
+  m_ProcessDataDirectory = fl_dir_chooser("Set the Process Data Directory", NULL);
+  if(m_ProcessDataDirectory != NULL)
   {
-    CheckDirectoryName(ProcessDataDirectory);
-    m_Computation.SetProcessDataDirectory(ProcessDataDirectory);
-    g_ProcessDataDirectoryDisp->value(ProcessDataDirectory); 
+    CheckDirectoryName(m_ProcessDataDirectory);
+  //  m_Computation.SetProcessDataDirectory(ProcessDataDirectory);
+    g_ProcessDataDirectoryDisp->value(m_ProcessDataDirectory); 
     g_ProcessDataDirectoryDisp->position(g_ProcessDataDirectoryDisp->size());
   }
 }
 
-/*
-void AutoSegGUIControls::SetProcessParameterDirectoryGUI()
+void AutoSegGUIControls::SetMultiAtlasDirectoryGUI()
 {
+    std::string tmp;
+    tmp = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
+    char MultiAtlasDirectory[256], MultiAtlasDirectoryDisp[256];
+    char WarpedMultiAtlasAtlasImageDirectory[256];
+    char MultiAtlasAtlasDisplacementDirectory[256];
+    bool needWarpAtlasAtlas = 0, needAtlasAtlasDisplacement = 0;
+  
+  //  MultiAtlasDirectory = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
+//    tmp = MultiAtlasDirectory;
+    strcpy(MultiAtlasDirectoryDisp, tmp.c_str());
+    strcpy(MultiAtlasDirectory, tmp.c_str());
+    strcat(MultiAtlasDirectory, "atlas_image/");
+    strncpy(WarpedMultiAtlasAtlasImageDirectory, MultiAtlasDirectory, tmp.length() - 12);
+    strcat(WarpedMultiAtlasAtlasImageDirectory, "warped-atlas-atlas-images/");
+    strncpy(MultiAtlasAtlasDisplacementDirectory, MultiAtlasDirectory, tmp.length() - 12) ;
+    strcat(MultiAtlasAtlasDisplacementDirectory, "displacement_field_atlas_to_atlas/");
+    
+    if(MultiAtlasDirectory != NULL)
+    {
+        CheckDirectoryName(MultiAtlasDirectory);
+        m_Computation.SetMultiAtlasDirectory(MultiAtlasDirectoryDisp);
+        g_MultiAtlasDirectoryDisp->value(MultiAtlasDirectoryDisp); 
+        g_MultiAtlasDirectoryDisp->position(g_MultiAtlasDirectoryDisp->size());
+    }
+    
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
+        std::string filename;
+        int i = 0, j = 0, k = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                if (!filename.find("atlas")) {
+                    if (filename.find("t1w") != std::string::npos) {
+                        i++;
+                    }
+                    else if (filename.find("t2w") != std::string::npos) {
+                        k++;
+                    }
+                    else {
+                        i++;
+                    }
+                }
+                if (!filename.find("label"))
+                    j++;
+            }
+        }
+        m_Computation.SetNbAtlas(i);
+        m_Computation.SetNb2ndAtlas(k);
+        m_Computation.SetNbAtlasLabel(j);
+    }
+    closedir (dir);
 
+    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
+        std::string filename;
+        int i = 0, j = 0, k = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                if (!filename.find("atlas")) {
+                    if (filename.find("t1w") != std::string::npos) {
+                        m_Computation.SetAtlasList(filename.c_str(), i);
+                        i++;
+                    }
+                    else if (filename.find("t2w") != std::string::npos) {
+                        m_Computation.Set2ndAtlasList(filename.c_str(), k);
+                        k++;
+                    }
+                    else {
+                        m_Computation.SetAtlasList(filename.c_str(), i);
+                        i++;
+                    }
+                }
+                if (!filename.find("label")) {
+                    m_Computation.SetAtlasLabelList(filename.c_str(), j);
+                    j++;
+                }
+            }
+        }
+    }
+    closedir (dir);
+   
+    int numberOfWarpedAtlasAtlasImage = 0;
+    if ((dir = opendir (WarpedMultiAtlasAtlasImageDirectory)) != NULL) {
+        std::string filename;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                numberOfWarpedAtlasAtlasImage++;
+            }
+        }
+    }
+    closedir (dir);
+
+    if( numberOfWarpedAtlasAtlasImage < (m_Computation.GetNbAtlas() * (m_Computation.GetNbAtlas() - 1)) ) {
+        needWarpAtlasAtlas = 1;
+    }
+
+    int numberOfAtlasAtlasDisplacement = 0;
+    if ((dir = opendir (MultiAtlasAtlasDisplacementDirectory)) != NULL) {
+        std::string filename;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                numberOfAtlasAtlasDisplacement++;
+            }
+        }
+    }
+    closedir (dir);
+    if( numberOfAtlasAtlasDisplacement < (m_Computation.GetNbAtlas() * (m_Computation.GetNbAtlas() - 1)) ) {
+        needAtlasAtlasDisplacement = 1;
+    }
+
+    if(needAtlasAtlasDisplacement || needWarpAtlasAtlas)
+        fl_message("Please, conduct the atlas to atlas registration");
+        
 }
-*/
+
+void AutoSegGUIControls::SetMultiAtlasDirectoryInitialize(char* _AtlasDirectory)
+{
+    std::string tmp;
+    //tmp = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
+    tmp = _AtlasDirectory;
+    char MultiAtlasDirectory[256], MultiAtlasDirectoryDisp[256];
+    char WarpedMultiAtlasAtlasImageDirectory[256];
+    char MultiAtlasAtlasDisplacementDirectory[256];
+    bool needWarpAtlasAtlas = 0, needAtlasAtlasDisplacement = 0;
+  
+  //  MultiAtlasDirectory = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
+//    tmp = MultiAtlasDirectory;
+    strcpy(MultiAtlasDirectoryDisp, tmp.c_str());
+    strcpy(MultiAtlasDirectory, tmp.c_str());
+    strcat(MultiAtlasDirectory, "atlas_image/");
+    strncpy(WarpedMultiAtlasAtlasImageDirectory, MultiAtlasDirectory, tmp.length() - 12);
+    strcat(WarpedMultiAtlasAtlasImageDirectory, "warped-atlas-atlas-images/");
+    strncpy(MultiAtlasAtlasDisplacementDirectory, MultiAtlasDirectory, tmp.length() - 12) ;
+    strcat(MultiAtlasAtlasDisplacementDirectory, "displacement_field_atlas_to_atlas/");
+    
+    if(MultiAtlasDirectory != NULL)
+    {
+        CheckDirectoryName(MultiAtlasDirectory);
+        m_Computation.SetMultiAtlasDirectory(MultiAtlasDirectoryDisp);
+        g_MultiAtlasDirectoryDisp->value(MultiAtlasDirectoryDisp); 
+        g_MultiAtlasDirectoryDisp->position(g_MultiAtlasDirectoryDisp->size());
+    }
+    
+    DIR *dir;
+    struct dirent *ent;
+
+  //  std::cout << "atlas directory: " << MultiAtlasDirectory << std::endl;
+    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
+        std::string filename;
+        int i = 0, j = 0, k = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                if (!filename.find("atlas")) {
+                    if (filename.find("t1w") != std::string::npos) {
+                        i++;
+                    }
+                    else if (filename.find("t2w") != std::string::npos) {
+                        k++;
+                    }
+                    else {
+                        i++;
+                    }
+                }
+                if (!filename.find("label"))
+                    j++;
+            }
+        }
+        m_Computation.SetNbAtlas(i);
+        m_Computation.SetNb2ndAtlas(k);
+        m_Computation.SetNbAtlasLabel(j);
+    }
+    closedir (dir);
+
+    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
+        std::string filename;
+        int i = 0, j = 0, k = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                if (!filename.find("atlas")) {
+                    if (filename.find("t1w") != std::string::npos) {
+                        m_Computation.SetAtlasList(filename.c_str(), i);
+                        i++;
+                    }
+                    else if (filename.find("t2w") != std::string::npos) {
+                        m_Computation.Set2ndAtlasList(filename.c_str(), k);
+                        k++;
+                    }
+                    else {
+                        m_Computation.SetAtlasList(filename.c_str(), i);
+                        i++;
+                    }
+                }
+                if (!filename.find("label")) {
+                    m_Computation.SetAtlasLabelList(filename.c_str(), j);
+                    j++;
+                }
+            }
+        }
+    }
+    closedir (dir);
+   
+    int numberOfWarpedAtlasAtlasImage = 0;
+    if ((dir = opendir (WarpedMultiAtlasAtlasImageDirectory)) != NULL) {
+        std::string filename;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                numberOfWarpedAtlasAtlasImage++;
+            }
+        }
+    }
+    closedir (dir);
+
+    if( numberOfWarpedAtlasAtlasImage < (m_Computation.GetNbAtlas() * (m_Computation.GetNbAtlas() - 1)) ) {
+        needWarpAtlasAtlas = 1;
+    }
+
+    int numberOfAtlasAtlasDisplacement = 0;
+    if ((dir = opendir (MultiAtlasAtlasDisplacementDirectory)) != NULL) {
+        std::string filename;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                numberOfAtlasAtlasDisplacement++;
+            }
+        }
+    }
+    closedir (dir);
+    if( numberOfAtlasAtlasDisplacement < (m_Computation.GetNbAtlas() * (m_Computation.GetNbAtlas() - 1)) ) {
+        needAtlasAtlasDisplacement = 1;
+    }
+
+    if(needAtlasAtlasDisplacement || needWarpAtlasAtlas)
+        fl_message("Please, conduct the atlas to atlas registration");
+        
+}
+
 void AutoSegGUIControls::T2ButtonChecked()
 {
   if (g_T2Button->value())
@@ -3018,20 +3965,21 @@ void AutoSegGUIControls::Aux8ButtonChecked()
 
 void AutoSegGUIControls::SetDataDirectoryGUI()
 {
-  char *DataDirectory = NULL;
+  //char *DataDirectory = NULL;
   
-  DataDirectory = fl_dir_chooser("Set the Data Directory", NULL);
-  if(DataDirectory != NULL)
+//  m_DataDirectory = new char[512];
+  m_DataDirectory = fl_dir_chooser("Set the Data Directory", NULL);
+  if(m_DataDirectory != NULL)
   {
-    CheckDirectoryName(DataDirectory);
-    m_Computation.SetDataDirectory(DataDirectory);
-    g_DataDirectoryDisp->value(DataDirectory);
+    CheckDirectoryName(m_DataDirectory);
+//    m_Computation.SetDataDirectory(DataDirectory);
+    g_DataDirectoryDisp->value(m_DataDirectory);
     g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
   }
 }
 
 // Automatic Data Computation
-    void AutoSegGUIControls::ComputeDataGUI()
+void AutoSegGUIControls::ComputeDataGUI()
 {
   bool InputChecked;
   InputChecked = CheckInputAutoDataSelection();
@@ -3894,8 +4842,13 @@ void AutoSegGUIControls::AddDataGUI()
 
   if (g_DataBrowser->size() < 2)
     InitBrowser();  
-  if (std::strlen(Line) != 0)
-    g_DataBrowser->add(Line);	
+    if (std::strlen(Line) != 0)
+        g_DataBrowser->add(Line);	
+//  SetMultiAtlasTargetFileGUI();
+    m_Computation.SetMultiAtlasTargetFile(g_DataBrowser->text(2));
+//    for (int i = 2; i <= g_DataBrowser->size(); i++) {
+ //       std::cout << "line " << i << ": " << g_DataBrowser->text(i) << std::endl;
+  //  }
 }
 
 // Add data manually to Auxbrowser
@@ -4079,7 +5032,7 @@ void AutoSegGUIControls::SetCommonCoordinateImageGUI()
 {
   char *CommonCoordinateImage = NULL;
 
-  CommonCoordinateImage = fl_file_chooser("Set the Common Coordinate Image","Images (*.{gipl,gipl.gz,mhd,mha,hdr,nhdr,nrrd})",NULL);
+  CommonCoordinateImage = fl_file_chooser("Set the Common Coordinate Image","Images (*.{gipl,gipl.gz,nii,nii.gz,mhd,mha,hdr,nhdr,nrrd})",NULL);
   if(CommonCoordinateImage != NULL)
   {
     m_Computation.SetCommonCoordinateImage(CommonCoordinateImage);
@@ -4106,13 +5059,31 @@ void AutoSegGUIControls::SetROIAtlasFileGUI()
 {
   char *ROIAtlasFile = NULL;
 
-  ROIAtlasFile = fl_file_chooser("Set the ROI Atlas File", "Images (*.{gipl,gipl.gz,mhd,mha,hdr,nhdr,nrrd})",NULL);
+  ROIAtlasFile = fl_file_chooser("Set the ROI Atlas File", "Images (*.{gipl,gipl.gz,nii,nii.gz,mhd,mha,hdr,nhdr,nrrd})",NULL);
   if(ROIAtlasFile != NULL)
   {
     m_Computation.SetROIAtlasFile(ROIAtlasFile);
     g_ROIAtlasFileDisp->value(ROIAtlasFile);
     g_ROIAtlasFileDisp->position(g_ROIAtlasFileDisp->size());
   }
+}
+
+void AutoSegGUIControls::SetT2ROIAtlasFileGUI()
+{
+  char *ROIAtlasFile = NULL;
+
+  ROIAtlasFile = fl_file_chooser("Set the ROI Atlas File", "Images (*.{gipl,gipl.gz,nii,nii.gz,mhd,mha,hdr,nhdr,nrrd})",NULL);
+  if(ROIAtlasFile != NULL)
+  {
+      m_Computation.SetROIT2AtlasFile(ROIAtlasFile);
+      g_ROIT2AtlasFileDisp->value(ROIAtlasFile);
+      g_ROIT2AtlasFileDisp->position(g_ROIAtlasFileDisp->size());
+      m_Computation.SetROIT2Atlas(1);
+  }
+  else {
+      m_Computation.SetROIT2Atlas(0);
+  }
+
 }
 
 void AutoSegGUIControls::SetLoopGUI()
@@ -4672,6 +5643,65 @@ void AutoSegGUIControls::ComputeCorticalThicknessButtonChecked()
     m_Computation.SetComputeCorticalThickness(0);    
 }
 
+void AutoSegGUIControls::MultiModalitySegmentationButtonChecked()
+{
+    if (g_MultiModalitySegButton->value()) {
+        m_Computation.SetMultiModalitySegmentation(1);
+    }
+    else {
+        m_Computation.SetMultiModalitySegmentation(0);    
+    }
+}
+
+void AutoSegGUIControls::MultiAtlasSegmentationButtonChecked()
+{
+    if (g_MultiAtlasSegButton->value()) {
+        m_Computation.SetMultiAtlasSegmentation(1);
+        if (g_MajorityVotingButton->value())
+            m_Computation.SetLabelFusionAlgorithm("Majority Voting");
+        if (g_WeightedMajorityVotingButton->value())
+            m_Computation.SetLabelFusionAlgorithm("Weighted Majority Voting");
+        if (g_StapleButton->value())
+            m_Computation.SetLabelFusionAlgorithm("STAPLE");
+        m_Computation.SetWeightIntensityEnergy(g_IntensityEnergyWeight->value());
+        m_Computation.SetWeightHarmonicEnergy(g_HarmonicEnergyWeight->value());
+        m_Computation.SetWeightShapeEnergy(g_ShapeEnergyWeight->value());
+    }
+    else {
+        m_Computation.SetMultiAtlasSegmentation(0);    
+    }
+}
+
+void AutoSegGUIControls::RecalculateAtlasTargetEnergyButtonChecked()
+{
+    if (g_RecalculateAtlasTargetEnergyButton->value()) {
+        m_Computation.SetRecalculateAtlasTargetMultiAtlasEnergy(1);    
+    }
+    else {
+        m_Computation.SetRecalculateAtlasTargetMultiAtlasEnergy(0);    
+    }
+}
+
+void AutoSegGUIControls::RecalculateAtlasAtlasEnergyButtonChecked()
+{
+    if (g_RecalculateAtlasAtlasEnergyButton->value()) {
+        m_Computation.SetRecalculateAtlasAtlasMultiAtlasEnergy(1);    
+    }
+    else {
+        m_Computation.SetRecalculateAtlasAtlasMultiAtlasEnergy(0);    
+    }
+}
+
+void AutoSegGUIControls::MultiAtlasAtlasRegistrationButtonChecked()
+{
+  if (g_AtlasAtlasRegButton->value()){
+    m_Computation.SetMultiAtlasAtlasRegistration(1);
+  }
+  else{
+    m_Computation.SetMultiAtlasAtlasRegistration(0);
+  }
+}
+
 void AutoSegGUIControls::RecomputeButtonChecked()
 {
   if (g_RecomputeButton->value())
@@ -4829,6 +5859,13 @@ void AutoSegGUIControls::ComputeGUI()
       m_Computation.SetSubcorticalStructureSegmentation(m_IsSubcorticalStructureSegmentation);
       m_Computation.SetGenericROISegmentation(m_IsGenericROISegmentation);
       m_Computation.SetParcellationMapSegmentation(m_IsParcellationMapSegmentation);
+      m_Computation.SetMultiAtlasTargetFile(g_DataBrowser->text(2));
+      m_Computation.SetMultiModalitySegmentation(g_MultiModalitySegButton->value());
+      m_Computation.SetDataDirectory(g_DataDirectoryDisp->value());
+      m_Computation.SetProcessDataDirectory(g_ProcessDataDirectoryDisp->value());
+      m_Computation.SetWeightIntensityEnergy(g_IntensityEnergyWeight->value());
+      m_Computation.SetWeightHarmonicEnergy(g_HarmonicEnergyWeight->value());
+      m_Computation.SetWeightShapeEnergy(g_ShapeEnergyWeight->value());
       if (CheckStudy())
       {
 	if (g_RecomputeButton->value())
@@ -4838,7 +5875,6 @@ void AutoSegGUIControls::ComputeGUI()
       }
       if (ComputeStudy)
       {
-	      
 	m_Computation.SetIsAutoSegInProcess(true);   
 	while (m_Computation.GetIsAutoSegInProcess())
 	{
@@ -4864,16 +5900,20 @@ int AutoSegGUIControls::CheckStudy()
 
 void AutoSegGUIControls::InitializeData()
 {
-  int Line;
+    int Line;
 
-  if (g_DataBrowser->size() >= 2)
-  {
-    m_Computation.SetNbData(g_DataBrowser->size()-1);
-    m_Computation.AllocateDataList();
+    std::cout << "size of data: " << g_DataBrowser->size() << std::endl;
+    std::cout << "size of data: " << g_DataBrowser->text(2) << std::endl;
+    if (g_DataBrowser->size() >= 2)
+    {
+         m_Computation.SetNbData(g_DataBrowser->size()-1);
+         m_Computation.AllocateDataList();
       
-    for (Line = 2; Line <= g_DataBrowser->size(); Line++)
-      m_Computation.SetDataList(g_DataBrowser->text(Line), Line-2,1); 
-  }
+         for (Line = 2; Line <= g_DataBrowser->size(); Line++) {
+             m_Computation.SetDataList(g_DataBrowser->text(Line), Line-2,1); 
+   //   m_Computation.SetMultiAtlasDataList(g_DataBrowser->text(Line), Line-2,1); 
+         }
+    }
 }
 
 void AutoSegGUIControls::InitializeAuxData()
@@ -5376,6 +6416,7 @@ void AutoSegGUIControls::ABCButtonToggled()
   m_Computation.SetFluidAtlasWarp(1);
   m_Computation.SetFluidAtlasAffine(0);
   m_Computation.SetFluidAtlasFATW(0);
+  m_Computation.SetANTSAtlasABC(0);
   m_Computation.SetFluidAtlasWarpIterations((int)g_FluidAtlasWarpIterations->value());
   m_Computation.SetFluidAtlasWarpMaxStep((float)g_FluidAtlasWarpMaxStep->value());
   m_Computation.SetAtlasLinearMapping("affine");
@@ -5542,9 +6583,23 @@ void AutoSegGUIControls::FluidAtlasWarpButtonChecked()
   g_FluidAtlasWarpButton->set();
   g_FluidAtlasAffineButton->clear();
   g_FluidAtlasFATWButton->clear();
+  g_ABCANTSWarpButton->clear();
   m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
   m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
   m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+  m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
+}
+
+void AutoSegGUIControls::ABCANTSWarpButtonChecked()
+{
+  g_FluidAtlasWarpButton->clear();
+  g_FluidAtlasAffineButton->clear();
+  g_FluidAtlasFATWButton->clear();
+  g_ABCANTSWarpButton->set();
+  m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
+  m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
+  m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+  m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
 }
 
 void AutoSegGUIControls::FluidAtlasAffineButtonChecked()
@@ -5552,9 +6607,11 @@ void AutoSegGUIControls::FluidAtlasAffineButtonChecked()
   g_FluidAtlasWarpButton->clear();
   g_FluidAtlasAffineButton->set();
   g_FluidAtlasFATWButton->clear();
+  g_ABCANTSWarpButton->clear();
   m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
   m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
   m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+  m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
 }
 
 void AutoSegGUIControls::FluidAtlasFATWButtonChecked()
@@ -5562,9 +6619,11 @@ void AutoSegGUIControls::FluidAtlasFATWButtonChecked()
   g_FluidAtlasWarpButton->clear();
   g_FluidAtlasAffineButton->clear();
   g_FluidAtlasFATWButton->set();
+  g_ABCANTSWarpButton->clear();
   m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
   m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
   m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
+  m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
 }
 
 void AutoSegGUIControls::SetFluidAtlasWarpIterationsGUI()
@@ -5882,6 +6941,31 @@ void AutoSegGUIControls::SetANTSMSQWeightGUI()
 {
   m_Computation.SetANTSMSQWeight(g_ANTSMSQWeight->value());
 }
+//for 2nd modality
+void AutoSegGUIControls::SetANTSCCWeightGUI2nd()
+{
+  m_Computation.SetANTSCCWeight2nd(g_ANTSCCWeight2nd->value());
+}
+
+void AutoSegGUIControls::SetANTSCCRegionRadiusGUI2nd()
+{
+  m_Computation.SetANTSCCRegionRadius2nd(g_ANTSCCRegionRadius2nd->value());
+}
+
+void AutoSegGUIControls::SetANTSMIWeightGUI2nd()
+{
+  m_Computation.SetANTSMIWeight2nd(g_ANTSMIWeight2nd->value());
+}
+
+void AutoSegGUIControls::SetANTSMIBinsGUI2nd()
+{
+  m_Computation.SetANTSMIBins2nd(g_ANTSMIBins2nd->value());
+}
+
+void AutoSegGUIControls::SetANTSMSQWeightGUI2nd()
+{
+  m_Computation.SetANTSMSQWeight2nd(g_ANTSMSQWeight2nd->value());
+}
 
 void AutoSegGUIControls::SetANTSRegistrationFilterTypeGUI()
 {
@@ -6173,6 +7257,7 @@ void AutoSegGUIControls::InitializeParameters()
   g_FluidAtlasWarpButton->set();
   g_FluidAtlasAffineButton->clear();
   g_FluidAtlasFATWButton->clear();
+  g_ABCANTSWarpButton->clear();
   g_FluidAtlasWarpIterations->value(50);
   g_FluidAtlasWarpMaxStep->value(0.1);
   g_AtlasLinearMappingChoice->value(0);
@@ -6333,6 +7418,11 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetANTSMIWeight(0.0);
   m_Computation.SetANTSMIBins(32);
   m_Computation.SetANTSMSQWeight(0.0);
+  m_Computation.SetANTSCCWeight2nd(1.0);
+  m_Computation.SetANTSCCRegionRadius2nd(2.0);
+  m_Computation.SetANTSMIWeight2nd(0.0);
+  m_Computation.SetANTSMIBins2nd(32);
+  m_Computation.SetANTSMSQWeight2nd(0.0);
   m_Computation.SetANTSRegistrationFilterType("GreedyDiffeomorphism");
   m_Computation.SetANTSGaussianSmoothing(1);
   m_Computation.SetANTSGaussianSigma(3.0);
@@ -6349,6 +7439,14 @@ void AutoSegGUIControls::InitializeParameters()
   // Regional histogram	
   g_QuantilesDisp->value("1,5,33,50,66,95,99");
   m_Computation.SetQuantiles("1,5,33,50,66,95,99");
+
+  // Multi-Atlas Segmentation
+  g_WeightedMajorityVotingButton->set();
+  m_Computation.SetLabelFusionAlgorithm("Weighted Majority Voting");
+  m_Computation.SetWeightIntensityEnergy(g_IntensityEnergyWeight->value());
+  m_Computation.SetWeightHarmonicEnergy(g_HarmonicEnergyWeight->value());
+  m_Computation.SetWeightShapeEnergy(g_ShapeEnergyWeight->value());
+
 }
 
 void AutoSegGUIControls::UpdateParameters()
@@ -6405,6 +7503,69 @@ void AutoSegGUIControls::RightJustifyData(const char *_Input, char *_Output)
     std::strncat(_Output, _Input, Char1);      
     std::strcat(_Output,_Input+Char1);
   }
+}
+
+void AutoSegGUIControls::MajorityVotingButtonToggled()
+{
+    m_Computation.SetLabelFusionAlgorithm("Majority Voting");
+    g_MajorityVotingButton->set();
+    g_WeightedMajorityVotingButton->clear();
+    g_StapleButton->clear();
+}
+
+void AutoSegGUIControls::WeightedMajorityVotingButtonToggled()
+{
+    m_Computation.SetLabelFusionAlgorithm("Weighted Majority Voting");
+    g_MajorityVotingButton->clear();
+    g_WeightedMajorityVotingButton->set();
+    g_StapleButton->clear();
+}
+
+void AutoSegGUIControls::StapleButtonToggled()
+{
+    m_Computation.SetLabelFusionAlgorithm("STAPLE");
+    g_MajorityVotingButton->clear();
+    g_WeightedMajorityVotingButton->clear();
+    g_StapleButton->set();
+}
+
+void AutoSegGUIControls::Slicer4dot3ButtonChecked()
+{
+    m_Computation.SetSlicerVersion(4.3);
+    g_Slicer4dot3Button->set();
+    g_Slicer4Button->clear();
+    g_Slicer3Button->clear();
+}
+
+void AutoSegGUIControls::Slicer4ButtonChecked()
+{
+    m_Computation.SetSlicerVersion(4.0);
+    g_Slicer4dot3Button->clear();
+    g_Slicer4Button->set();
+    g_Slicer3Button->clear();
+}
+
+void AutoSegGUIControls::Slicer3ButtonChecked()
+{
+    m_Computation.SetSlicerVersion(3.0);
+    g_Slicer4dot3Button->clear();
+    g_Slicer4Button->clear();
+    g_Slicer3Button->set();
+}
+
+void AutoSegGUIControls::SetIntensityEnergyGUI()
+{
+    m_Computation.SetWeightIntensityEnergy(g_IntensityEnergyWeight->value());
+}
+
+void AutoSegGUIControls::SetHarmonicEnergyGUI()
+{
+    m_Computation.SetWeightHarmonicEnergy(g_HarmonicEnergyWeight->value());
+}
+
+void AutoSegGUIControls::SetShapeEnergyGUI()
+{
+    m_Computation.SetWeightShapeEnergy(g_ShapeEnergyWeight->value());
 }
 
 void AutoSegGUIControls::RightJustifyAuxData(const char *_Input, char *_Output)

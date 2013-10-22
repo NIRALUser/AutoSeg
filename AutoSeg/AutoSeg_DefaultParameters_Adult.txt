@@ -128,3 +128,9 @@ Stripped N4 ITK Bias Field Correction: 0
 Reorientation: 0
 Input Orientation: 
 Output Orientation: 
+
+// Multi-Atlas Segmentation
+Label Fusion Algorithm: Majority Voting
+Intensity Energy Weight: 0.8
+Harmonic Energy Weight: 0.3 
+Shape Energy Weight: 0.4 

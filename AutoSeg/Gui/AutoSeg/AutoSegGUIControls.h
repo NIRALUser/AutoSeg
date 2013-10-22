@@ -19,8 +19,27 @@
 #define AUTOSEGGUICONTROLS_H
 
 #include <iostream>
+#include <fstream>
 #include <cstdio>
 #include <cstdlib>
+#include <math.h>
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sstream>
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkOrientedImage.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkMeanSquaresImageToImageMetric.h"
+#include "itkNormalizedCorrelationImageToImageMetric.h"
+#include "itkMutualInformationImageToImageMetric.h"
+#include "itkNormalizedMutualInformationHistogramImageToImageMetric.h"
+#include "itkTranslationTransform.h"
+#include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkLinearInterpolateImageFunction.h"
+
 
 #include "AutoSegGUI.h"
 #include "AddDataGUIControls.h"
@@ -40,6 +59,11 @@
 
 //ITK Libraries
 #include <itksys/Process.h>
+
+#define NUMBER_OF_CASE 16
+#define NUMBER_OF_ATLAS 15
+#define MAX_NODE -1
+#define NUMBER_OF_MUSCLE 6
 
 class AutoSegGUIControls : public AutoSegGUI
 {
@@ -65,6 +89,9 @@ class AutoSegGUIControls : public AutoSegGUI
   
     // Tab Computation
     void SetProcessDataDirectoryGUI();
+    void SetMultiAtlasDirectoryGUI();
+    void SetMultiAtlasDirectoryInitialize(char* _AtlasDirectory);
+    void SetMultiAtlasTargetFileGUI();
   //  void SetProcessParameterDirectoryGUI();
     // Data Selection
     void T2ButtonChecked();
@@ -96,12 +123,16 @@ class AutoSegGUIControls : public AutoSegGUI
     void ClearAuxDataGUI();
     // Automatic Segmentation Computation
     void ComputeGUI();
-    void MultiAtlasSegGUI();
+    //void MultiAtlasSegGUI();
     // Computation Parameters
     void ComputeVolumeButtonChecked();
     void ComputeCorticalThicknessButtonChecked();
+    void MultiAtlasAtlasRegistrationButtonChecked();
     void RecomputeButtonChecked();
     void UseCondorButtonChecked();
+    void SetIntensityEnergyGUI();
+    void SetHarmonicEnergyGUI();
+    void SetShapeEnergyGUI();
 		
     //Regional Histogram Parameters
     void AtlasSpaceButtonChecked();
@@ -124,6 +155,7 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetCommonCoordinateImageGUI();
     void SetTissueSegmentationAtlasDirectoryGUI();
     void SetROIAtlasFileGUI();
+    void SetT2ROIAtlasFileGUI();
     void TissueSegmentationAtlasT1ButtonToggled();
     void TissueSegmentationAtlasT2ButtonToggled();
     void CommonCoordinateImageT1ButtonToggled();
@@ -142,6 +174,8 @@ class AutoSegGUIControls : public AutoSegGUI
     void PutamenRightButtonChecked();
     void LateralVentricleLeftButtonChecked();
     void LateralVentricleRightButtonChecked();
+    void RecalculateAtlasTargetEnergyButtonChecked();
+    void RecalculateAtlasAtlasEnergyButtonChecked();
     void SetAmygdalaLeftGUI();
     void SetAmygdalaRightGUI();
     void SetCaudateLeftGUI();
@@ -259,6 +293,11 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetANTSMIWeightGUI();
     void SetANTSMIBinsGUI();
     void SetANTSMSQWeightGUI();
+    void SetANTSCCWeightGUI2nd();
+    void SetANTSCCRegionRadiusGUI2nd();
+    void SetANTSMIWeightGUI2nd();
+    void SetANTSMIBinsGUI2nd();
+    void SetANTSMSQWeightGUI2nd();
     void SetANTSRegistrationFilterTypeGUI();
     void SetANTSTransformationStepGUI();
     void ANTSGaussianSmoothingButtonChecked();
@@ -273,7 +312,21 @@ class AutoSegGUIControls : public AutoSegGUI
     // Regional histogram
     void SetPointSpacingGUI();
     // Multi-Atlas Segmentation
-    void MultiAtlasSeg();
+//    void SetIntensityEnergyDirectoryGUI();
+//    void SetHarmonicEnergyDirectoryGUI();
+//    void SetShapeEnergyDirectoryGUI();
+//    void SetSelectedTemplateDirectoryGUI();
+    void WeightedMajorityVotingLabelFusionGUI(std::string segmentationfilename, std::string intfilename, std::string harmonicfilename, std::string selectedtemplatefilename, std::string datadirectory);
+    void STAPLELabelFusionGUI();
+  //  void AtlasRegistrationGUI();
+    void MultiAtlasSegmentationButtonChecked();
+    void MultiModalitySegmentationButtonChecked();
+    
+    char *AtlasDirectory ;
+    char *TargetDirectory ;     
+    char *OutputDirectory ;     
+    std::string DeformationFieldDirectory;
+    std::string WarpedAtlasDirectory;
     
   private:
 
@@ -321,6 +374,13 @@ class AutoSegGUIControls : public AutoSegGUI
     void InitializeAuxData();
     void InitializeParameters();
     void UpdateParameters();
+    void MajorityVotingButtonToggled();
+    void WeightedMajorityVotingButtonToggled();
+    void StapleButtonToggled();
+    void ABCANTSWarpButtonChecked();
+    void Slicer3ButtonChecked();
+    void Slicer4ButtonChecked();
+    void Slicer4dot3ButtonChecked();
  
   // Computation
     int CheckStudy();
@@ -337,6 +397,9 @@ class AutoSegGUIControls : public AutoSegGUI
   
   // Default Parameter Files
     char m_DefaultParameterFile[512];
+    char *m_ProcessDataDirectory;
+    char *m_DataDirectory;
+    char *m_CurrentDirectory;
 };
 
 #endif
