@@ -2862,6 +2862,31 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  ANTSMSQWeight = atof(Line+17);
 	  g_ANTSMSQWeight->value(ANTSMSQWeight);	
 	}
+        else if ( (std::strncmp("ANTS CC weight for 2nd modality: ", Line, 33)) == 0)
+	{
+	  ANTSCCWeight = atof(Line+33);
+	  g_ANTSCCWeight2nd->value(ANTSCCWeight);	
+	}
+	else if ( (std::strncmp("ANTS CC region radius for 2nd modality: ", Line, 40)) == 0)
+	{
+	  ANTSCCRegionRadius = atof(Line+40);
+	  g_ANTSCCRegionRadius2nd->value(ANTSCCRegionRadius);	
+	}
+	else if ( (std::strncmp("ANTS MI weight for 2nd modality: ", Line, 33)) == 0)
+	{
+	  ANTSMIWeight = atof(Line+33);
+	  g_ANTSMIWeight2nd->value(ANTSMIWeight);	
+	}
+	else if ( (std::strncmp("ANTS MI bins for 2nd modality: ", Line, 31)) == 0)
+	{
+	  ANTSMIBins = atoi(Line+31);
+	  g_ANTSMIBins2nd->value(ANTSMIBins);	
+	}
+	else if ( (std::strncmp("ANTS MSQ weight for 2nd modality: ", Line, 34)) == 0)
+	{
+	  ANTSMSQWeight = atof(Line+34);
+	  g_ANTSMSQWeight2nd->value(ANTSMSQWeight);	
+	}
 	else if ( (std::strncmp("ANTS Registration Type: ", Line, 24)) == 0)
 	{
 	  ANTSRegistrationFilterType = Line+24;	
@@ -3033,6 +3058,14 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	{
             g_ShapeEnergyWeight->value(atof(Line + 21));
 	}
+        else if ( (std::strncmp("ANTS with brainmask: ", Line, 21)) == 0)
+	{
+            g_ANTSWithBrainmaskButton->value(atof(Line + 21));
+	}
+        else if ( (std::strncmp("Use Initital Affine Transform: ", Line, 31)) == 0)
+	{
+            g_UseInitialAffineButton->value(atof(Line + 31));
+	}
       }
     }
     fclose(ParameterFile);
@@ -3054,7 +3087,7 @@ void AutoSegGUIControls::SetProcessDataDirectoryGUI()
   if(m_ProcessDataDirectory != NULL)
   {
     CheckDirectoryName(m_ProcessDataDirectory);
-  //  m_Computation.SetProcessDataDirectory(ProcessDataDirectory);
+    m_Computation.SetProcessDataDirectory(m_ProcessDataDirectory);
     g_ProcessDataDirectoryDisp->value(m_ProcessDataDirectory); 
     g_ProcessDataDirectoryDisp->position(g_ProcessDataDirectoryDisp->size());
   }
@@ -3972,7 +4005,7 @@ void AutoSegGUIControls::SetDataDirectoryGUI()
   if(m_DataDirectory != NULL)
   {
     CheckDirectoryName(m_DataDirectory);
-//    m_Computation.SetDataDirectory(DataDirectory);
+    m_Computation.SetDataDirectory(m_DataDirectory);
     g_DataDirectoryDisp->value(m_DataDirectory);
     g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
   }
@@ -5866,6 +5899,7 @@ void AutoSegGUIControls::ComputeGUI()
       m_Computation.SetWeightIntensityEnergy(g_IntensityEnergyWeight->value());
       m_Computation.SetWeightHarmonicEnergy(g_HarmonicEnergyWeight->value());
       m_Computation.SetWeightShapeEnergy(g_ShapeEnergyWeight->value());
+      m_Computation.SetANTSWithBrainmask(g_ANTSWithBrainmaskButton->value());
       if (CheckStudy())
       {
 	if (g_RecomputeButton->value())
@@ -7392,6 +7426,11 @@ void AutoSegGUIControls::InitializeParameters()
   g_ANTSMIWeight->value(0.0);
   g_ANTSMIBins->value(32);
   g_ANTSMSQWeight->value(0.0);
+  g_ANTSCCWeight2nd->value(1.0);
+  g_ANTSCCRegionRadius2nd->value(2.0);
+  g_ANTSMIWeight2nd->value(0.0);
+  g_ANTSMIBins2nd->value(32);
+  g_ANTSMSQWeight2nd->value(0.0);
   g_ANTSRegistrationFilterType->value(0);
   g_ANTSGaussianSmoothingButton->set();
   g_ANTSGaussianSigma->value(3.0);
@@ -7553,6 +7592,15 @@ void AutoSegGUIControls::Slicer3ButtonChecked()
     g_Slicer3Button->set();
 }
 
+void AutoSegGUIControls::ANTSWithBrainmaskButtonChecked()
+{
+    m_Computation.SetANTSWithBrainmask(g_ANTSWithBrainmaskButton->value());
+}
+
+void AutoSegGUIControls::UseInitialAffineButtonChecked()
+{
+    m_Computation.SetUseInitialAffine(g_UseInitialAffineButton->value());
+}
 void AutoSegGUIControls::SetIntensityEnergyGUI()
 {
     m_Computation.SetWeightIntensityEnergy(g_IntensityEnergyWeight->value());

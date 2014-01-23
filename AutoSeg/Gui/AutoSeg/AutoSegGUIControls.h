@@ -381,6 +381,8 @@ class AutoSegGUIControls : public AutoSegGUI
     void Slicer3ButtonChecked();
     void Slicer4ButtonChecked();
     void Slicer4dot3ButtonChecked();
+    void ANTSWithBrainmaskButtonChecked();
+    void UseInitialAffineButtonChecked();
  
   // Computation
     int CheckStudy();

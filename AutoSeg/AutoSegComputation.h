@@ -64,7 +64,17 @@ class AutoSegComputation
     bool GetIsAutoSegInProcess(){return m_IsAutoSegInProcess;};  
   // Tab Computation
     void SetProcessDataDirectory(const char *_ProcessDataDirectory){std::strcpy(m_ProcessDataDirectory,_ProcessDataDirectory);};
-    void SetMultiAtlasDirectory(const char *_MultiAtlasDirectory){std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);};
+    void SetMultiAtlasDirectory(const char *_MultiAtlasDirectory){
+        int c ='/'; 
+        int l = std::strlen(std::strrchr(_MultiAtlasDirectory, c)); 
+        if(l == 1) {
+            std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);
+        } 
+        else {
+            std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);
+            std::strcat(m_MultiAtlasDirectory,"/");
+        }
+    };
     void SetMultiAtlasTargetFile(const char *_MultiAtlasTargetFile){std::strcpy(m_MultiAtlasTargetFile,_MultiAtlasTargetFile);};
 
     void SetT2Image(bool _IsT2Image){m_IsT2Image = _IsT2Image;};
@@ -221,6 +231,8 @@ class AutoSegComputation
     void SetWeightIntensityEnergy(float _weightIntensityEnergy){m_WeightIntensityEnergy=_weightIntensityEnergy;};
     void SetWeightHarmonicEnergy(float _weightHarmonicEnergy){m_WeightHarmonicEnergy=_weightHarmonicEnergy;};
     void SetWeightShapeEnergy(float _weightShapeEnergy){m_WeightShapeEnergy=_weightShapeEnergy;};
+    void SetANTSWithBrainmask(int _ANTSWithBrainmask){m_ANTSWithBrainmask = _ANTSWithBrainmask;};
+    void SetUseInitialAffine(int _UseInitialAffine){m_UseInitialAffine = _UseInitialAffine;};
 
     // Rigid Registration Parameters
     void SetRigidRegistration(bool _RigidRegistration){m_RigidRegistration = _RigidRegistration;};
@@ -341,6 +353,8 @@ class AutoSegComputation
     void SetSlicerVersion(const float _SlicerVersion){m_SlicerVersion = _SlicerVersion;};
     char *GetLabelFusionAlgorithm(){return m_LabelFusionAlgorithm;};
     float GetSlicerVersion(){return m_SlicerVersion;};
+    int GetANTSWithBrainmask(){return m_ANTSWithBrainmask;};
+    int GetUseInitialAffine(){return m_UseInitialAffine;};
     //void SetABCANTSWarpButtonChecked(){m_ABCANTSWarpChecked = 1;};
    // int GetABCANTSWarpButtonChecked(){return m_ABCANTSWarpChecked;};
 
@@ -834,6 +848,8 @@ class AutoSegComputation
     float m_WeightHarmonicEnergy;
     //weighting factor for shape energy
     float m_WeightShapeEnergy;
+    int m_ANTSWithBrainmask;
+    int m_UseInitialAffine;
 
   // Data to be computed
    // Number of data
@@ -875,7 +891,8 @@ class AutoSegComputation
     char **m_T2List;
    // PD Data List: contains all the PD files 
     char **m_PDList;
-    char **m_MultiAtlasList;
+    char **m_MultiAtlasT1List;
+    char **m_MultiAtlasT2List;
    // Multi Atlas List: contains all the Multi Atlases 
     char **m_AtlasList;
     char **m_2ndAtlasList;

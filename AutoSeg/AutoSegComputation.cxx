@@ -7,6 +7,22 @@
   Version:   $Revision: 1.45 $
   Author:    Clement Vachet
 
+  Updates:   1. Set ${ANTSIteration} earlier (10-30-2013)
+             2. Modified the ANTS registration for TissueSegAtlas with additonal options of --initial-affine <transform from BRAINSFit> and --continue-affine false (10-30-2013)
+             3. Fixed the fixed image of ANTS for multi-atlas seg (10-30-2013)  
+             4. Fixed the ABC Affine registration issue (11-01-2013)  
+             5. Recalculate atlas-atlas registration, atlas-atlas energy, atlas-target energy modified (11-01-2013)  
+             6. Fixed the identification of skull stripped t1 and t2 images (11-05-2013)  
+             7. Changed the -threshold option of ImageMath for skull stripping to 1,10000 from 1,3 (11-22-2013)  
+             8. Modified the size of m_MultiAtlasList. So it can present the data corrctly when process multiple cases (11-26-2013)  
+             9. Added an option to use/unuse brainmask for the tisssue segmentation (11-27-2013)  
+            10. Second loop of the tisssue segmentation will not use brainmask and continueaffine (11-27-2013)  
+            11. Replaced m_MultiAtlasList with m_MultiAtlasT1List and m_MultiAtlasT2List. (12-2-2013)  
+            12. Modified the identification of skull stripped t1 and t2 cases. (12-4-2013)  
+            13. Modified the name of multi-modality atlases images in computing energies. (1-15-2014)  
+            14. ANTS parameters for the 2nd modality. (1-22-2014)  
+
+
   Copyright (c) 2004 NeuroImaging Lab @ UNC. All rights reserved.
   See NeuroLibCopyright.txt for details.
 
@@ -125,44 +141,185 @@ void AutoSegComputation::SetLogFile()
 
 void AutoSegComputation::AllocateDataList()
 {
-  int DataNumber;
+    int DataNumber;
 
-  m_T1List = new char *[GetNbData()];
-  for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
-  {
-    m_T1List[DataNumber] = new char[512];
-    std::strcpy(m_T1List[DataNumber], "");
-  }
-  if (GetT2Image())
-  {
-    m_T2List = new char *[GetNbData()];
-    for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
-    {
-      m_T2List[DataNumber] = new char[512];  
-      std::strcpy(m_T2List[DataNumber], "");
-    }
-  }
-  else
-    m_T2List=NULL;
-  if (GetPDImage())
-  {
-    m_PDList = new char *[GetNbData()];
-    for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
-    {
-      m_PDList[DataNumber] = new char[512];
-      std::strcpy(m_PDList[DataNumber], "");
-    }
-  }
-  else
-    m_PDList=NULL;
-  m_AllocationData=1;
+    if ( !GetT2Image() && !GetPDImage()) {
+        m_T1List = new char *[GetNbData()];
+        for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
+        {
+            m_T1List[DataNumber] = new char[512];
+            std::strcpy(m_T1List[DataNumber], "");
+        }
+        if (GetT2Image())
+        {
+            m_T2List = new char *[GetNbData()];
+            for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
+            {
+              m_T2List[DataNumber] = new char[512];  
+              std::strcpy(m_T2List[DataNumber], "");
+            }
+        }
+        else
+            m_T2List=NULL;
+        if (GetPDImage())
+        {
+            m_PDList = new char *[GetNbData()];
+            for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
+            {
+                m_PDList[DataNumber] = new char[512];
+                std::strcpy(m_PDList[DataNumber], "");
+            }
+        }
+        else
+            m_PDList=NULL;
+        m_AllocationData=1;
 
-  m_MultiAtlasList = new char *[GetNbData() * 2];
-  for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
-  {
-    m_MultiAtlasList[DataNumber] = new char[512];
-    std::strcpy(m_MultiAtlasList[DataNumber], "");
-  }
+        m_MultiAtlasT1List = new char *[GetNbData()];
+        for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
+        {
+            m_MultiAtlasT1List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT1List[DataNumber], "");
+        }
+        m_MultiAtlasT2List = new char *[GetNbData()];
+        for (DataNumber = 0; DataNumber < GetNbData(); DataNumber++)
+        {
+            m_MultiAtlasT2List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT2List[DataNumber], "");
+        }
+    }
+    else if (GetT2Image() && GetPDImage())  {
+        m_T1List = new char *[GetNbData() * 3];
+        for (DataNumber = 0; DataNumber < GetNbData() * 3; DataNumber++)
+        {
+            m_T1List[DataNumber] = new char[512];
+            std::strcpy(m_T1List[DataNumber], "");
+        }
+        if (GetT2Image())
+        {
+            m_T2List = new char *[GetNbData() * 3];
+            for (DataNumber = 0; DataNumber < GetNbData() * 3; DataNumber++)
+            {
+                m_T2List[DataNumber] = new char[512];  
+                std::strcpy(m_T2List[DataNumber], "");
+            }
+        }
+        else
+            m_T2List=NULL;
+        if (GetPDImage())
+        {
+            m_PDList = new char *[GetNbData() * 3];
+            for (DataNumber = 0; DataNumber < GetNbData() * 3; DataNumber++)
+            {
+                m_PDList[DataNumber] = new char[512];
+                std::strcpy(m_PDList[DataNumber], "");
+            }
+        }
+        else
+            m_PDList=NULL;
+        m_AllocationData=1;
+
+        m_MultiAtlasT1List = new char *[GetNbData() * 3];
+        for (DataNumber = 0; DataNumber < GetNbData() * 3; DataNumber++)
+        {
+            m_MultiAtlasT1List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT1List[DataNumber], "");
+        }
+        m_MultiAtlasT2List = new char *[GetNbData() * 3];
+        for (DataNumber = 0; DataNumber < GetNbData() * 3; DataNumber++)
+        {
+            m_MultiAtlasT2List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT2List[DataNumber], "");
+        }
+    }  
+    else if (GetT2Image()) {
+        m_T1List = new char *[GetNbData() * 2];
+        for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+        {
+            m_T1List[DataNumber] = new char[512];
+            std::strcpy(m_T1List[DataNumber], "");
+        }
+        if (GetT2Image())
+        {
+            m_T2List = new char *[GetNbData() * 2];
+            for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+            {
+                m_T2List[DataNumber] = new char[512];  
+                std::strcpy(m_T2List[DataNumber], "");
+            }
+        }
+        else
+            m_T2List=NULL;
+        if (GetPDImage())
+        {
+            m_PDList = new char *[GetNbData() * 2];
+            for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+            {
+                m_PDList[DataNumber] = new char[512];
+                std::strcpy(m_PDList[DataNumber], "");
+            }
+        }
+        else
+            m_PDList=NULL;
+        m_AllocationData=1;
+
+        m_MultiAtlasT1List = new char *[GetNbData() * 2];
+        for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+        {
+            m_MultiAtlasT1List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT1List[DataNumber], "");
+        }
+        m_MultiAtlasT2List = new char *[GetNbData() * 2];
+        for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+        {
+            m_MultiAtlasT2List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT2List[DataNumber], "");
+        }
+    }
+    else {
+        m_T1List = new char *[GetNbData() * 2];
+        for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+        {
+            m_T1List[DataNumber] = new char[512];
+            std::strcpy(m_T1List[DataNumber], "");
+        }
+        if (GetT2Image())
+        {
+            m_T2List = new char *[GetNbData() * 2];
+            for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+            {
+                m_T2List[DataNumber] = new char[512];  
+                std::strcpy(m_T2List[DataNumber], "");
+            }
+        }
+        else
+            m_T2List=NULL;
+        if (GetPDImage())
+        {
+            m_PDList = new char *[GetNbData() * 2];
+            for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+            {
+                m_PDList[DataNumber] = new char[512];
+                std::strcpy(m_PDList[DataNumber], "");
+            }
+        }
+        else
+            m_PDList=NULL;
+        m_AllocationData=1;
+
+        m_MultiAtlasT1List = new char *[GetNbData() * 2];
+        for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+        {
+            m_MultiAtlasT1List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT1List[DataNumber], "");
+        }
+        m_MultiAtlasT2List = new char *[GetNbData() * 2];
+        for (DataNumber = 0; DataNumber < GetNbData() * 2; DataNumber++)
+        {
+            m_MultiAtlasT2List[DataNumber] = new char[512];
+            std::strcpy(m_MultiAtlasT2List[DataNumber], "");
+        }
+    }
+
 }
 
 void AutoSegComputation::AllocateAuxDataList()
@@ -404,14 +561,15 @@ void AutoSegComputation::SetDataList(const char *_Data, int _DataNumber, bool _G
     {
         if ( !GetT2Image() && !GetPDImage()) {
             SetData(_Data, m_T1List[_DataNumber]);
-            SetData(_Data, m_MultiAtlasList[_DataNumber]);
+            SetData(_Data, m_MultiAtlasT1List[_DataNumber]);
         }
         else if (GetT2Image() && GetPDImage()) 
             SetData(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber], m_PDList[_DataNumber]);
         else if (GetT2Image()) {
+            //SetData(_Data, m_T1List[_DataNumber * 2], m_T2List[_DataNumber * 2 + 1]);
             SetData(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber]);
-            SetData(_Data, m_MultiAtlasList[_DataNumber], m_MultiAtlasList[_DataNumber + 1]);
-            std::cout << "T1 data " << _DataNumber << " : " << m_MultiAtlasList[_DataNumber] << "  T2 data: " << m_MultiAtlasList[_DataNumber + 1] << std::endl;
+            SetData(_Data, m_MultiAtlasT1List[_DataNumber], m_MultiAtlasT2List[_DataNumber]);
+            std::cout << "T1 data " << _DataNumber << " : " << m_MultiAtlasT1List[_DataNumber] << "  T2 data: " << m_MultiAtlasT2List[_DataNumber] << std::endl;
         }
         else
             SetData(_Data, m_T1List[_DataNumber], m_PDList[_DataNumber]);
@@ -1533,7 +1691,6 @@ void AutoSegComputation::Computation()
   std::cout << GetBMSAutoSegFile() << std::endl;
   ExecuteBatchMake(GetBMSAutoSegFile(),1);
   std::cout << "finished!!!" << std::endl;
-  
 }
 
 // Compute Automatic Segmentation
@@ -2234,6 +2391,8 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
     ParameterFile<<"ANTS Warp for ABC: "<<GetANTSAtlasABC()<<std::endl;
     ParameterFile<<"Fluid Atlas Warp Iterations: "<<GetFluidAtlasWarpIterations()<<std::endl;
     ParameterFile<<"Fluid Atlas Warp Max Step: "<<GetFluidAtlasWarpMaxStep()<<std::endl;
+    ParameterFile<<"ANTS with brainmask: "<<GetANTSWithBrainmask()<<std::endl;
+    ParameterFile<<"Use Initital Affine Transform: "<<GetUseInitialAffine()<<std::endl;
   }
   else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
     {
@@ -2447,8 +2606,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     
   BMSAutoSegMainFile<<"# ROI Atlas File"<<std::endl;
   BMSAutoSegMainFile<<"set (atlasROIFile "<<GetROIAtlasFile()<<")"<<std::endl;
-  BMSAutoSegMainFile<<"# ROI T2 Atlas File"<<std::endl;
-  BMSAutoSegMainFile<<"set (atlasROIT2File "<<GetROIT2AtlasFile()<<")"<<std::endl;
+  if (GetANTSWarpingMethod() && !GetMultiAtlasSegmentation()) {
+      BMSAutoSegMainFile<<"# ROI T2 Atlas File"<<std::endl;
+      BMSAutoSegMainFile<<"set (atlasROIT2File "<<GetROIT2AtlasFile()<<")"<<std::endl;
+  }
 
   BMSAutoSegMainFile<<"# Stripped Atlas Directory"<<std::endl;
   BMSAutoSegMainFile<<"set (atlasSegLocLoop "<<GetAtlasLoop()<<")"<<std::endl;
@@ -2476,9 +2637,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"set (ResampleVolume2Cmd ResampleVolume2)"<<std::endl;
   BMSAutoSegMainFile<<"set (BRAINSDemonWarpCmd BRAINSDemonWarp)"<<std::endl;
   BMSAutoSegMainFile<<"set (BRAINSFitCmd BRAINSFit)"<<std::endl;
-  BMSAutoSegMainFile<<"set (ModelMakerCmd ModelMaker)"<<std::endl;
   BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
   BMSAutoSegMainFile<<"set (WarpImageMultiTransformCmd WarpImageMultiTransform)"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSIterations "<<GetANTSIterations()<<")"<<std::endl;
   
   BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
   BMSAutoSegMainFile<<"echo ('CHECKING FILES...')"<<std::endl;
@@ -3255,11 +3416,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	
     BMSAutoSegMainFile<<"set (EMSComputed 0)"<<std::endl;
     BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl;
-    BMSAutoSegMainFile<<"      set (TissueSegAtlas ${OrigFirstCasePath}/${AutoSegDir}/TissueSegAtlas/)"<<std::endl;
-    BMSAutoSegMainFile<<"      set (StrippedTissueSegAtlas ${OrigFirstCasePath}/${AutoSegDir}/StrippedTissueSegAtlas/)"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (TissueSegAtlas ${T1Path}/${AutoSegDir}/TissueSegAtlas/)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedTissueSegAtlas ${T1Path}/${AutoSegDir}/StrippedTissueSegAtlas/)"<<std::endl;
     BMSAutoSegMainFile<<"      echo ( )"<<std::endl;
     BMSAutoSegMainFile<<"      echo ('Case Number: '${T1CaseHead})"<<std::endl;
     BMSAutoSegMainFile<<"      echo ( )"<<std::endl;
@@ -3280,10 +3441,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      ListDirInDir (EMSList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration<<")"<<std::endl;
       BMSAutoSegMainFile<<"      set (InputPath ${EMSPath})"<<std::endl;
       BMSAutoSegMainFile<<"      set (SUFFIX EMS_"<<SuffixIteration<<")"<<std::endl;
-      if (GetFluidAtlasWarp()) 
-          BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLocLoop})"<<std::endl;
-      else
+      if (GetANTSAtlasABC()) 
           BMSAutoSegMainFile<<"      set (Atlas ${StrippedTissueSegAtlas})"<<std::endl;
+      else
+          BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLocLoop})"<<std::endl;
 
       BMSAutoSegMainFile<<"      echo ('The Atlas is '${Atlas})"<<std::endl;
       std::cout << "fluid atlas used: " << GetFluidAtlasWarp() << std::endl; 
@@ -3321,11 +3482,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/)"<<std::endl;
 
       BMSAutoSegMainFile<<"      set  (SUFFIX EMS)"<<std::endl;
-      if (GetFluidAtlasWarp()) 
-          BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLoc})"<<std::endl;
-      else {
+      if (GetANTSAtlasABC()) 
           BMSAutoSegMainFile<<"      set (Atlas ${TissueSegAtlas})"<<std::endl;
-      }
+      else
+          BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLoc})"<<std::endl;
+      
 
       BMSAutoSegMainFile<<"      set (stripEMS '')"<<std::endl;
       BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
@@ -3466,7 +3627,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             if (GetLoop() && iteration != 0) {
                 BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasBrainMaskList} == '')" << std::endl; //if don't have brainmask in stripped tissue seg atlas
                     BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasTemplateList} == '')" << std::endl;
-                        BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i 10x2 -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
+                        BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i ${ANTSIterations} -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
                         BMSAutoSegMainFile<<"          Run (output '${ANTSRegStrippedTissueSegAtals}')"<<std::endl;
 
                         BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
@@ -3478,7 +3639,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
                 BMSAutoSegMainFile<<"      If (   ${StrippedTissueSegAtlasBrainMaskList} != '')" << std::endl; //if brainmask is in stripped tissue seg atlas
                     BMSAutoSegMainFile<<"      If (   ${StrippedTissueSegAtlasTemplateList} == '')" << std::endl;
-                        BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i 10x2 -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${StrippedTissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0])"<<std::endl;
+                        //BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i ${ANTSIterations} -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${StrippedTissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
+                        BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i ${ANTSIterations} -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
                         BMSAutoSegMainFile<<"          Run (output '${ANTSRegStrippedTissueSegAtals}')"<<std::endl;
                         BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
                             BMSAutoSegMainFile<<"          set (WarpStrippedTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLocLoop}${TissueSegAtlasImage} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${StrippedTissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${StrippedTissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
@@ -3490,20 +3652,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             else 
             {
                 // prepare the Tissue Seg Atlas
-                BMSAutoSegMainFile<<"      ListDirInDir (TissueSegAtlasList ${OrigFirstCasePath}/${AutoSegDir}/ TissuSegAtlas)"<<std::endl;
+                BMSAutoSegMainFile<<"      ListDirInDir (TissueSegAtlasList ${T1Path}/${AutoSegDir}/ TissuSegAtlas)"<<std::endl;
                 BMSAutoSegMainFile<<"      If (${TissueSegAtlasList} == '')"<<std::endl;
                 BMSAutoSegMainFile<<"          MakeDirectory (${TissueSegAtlas})"<<std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasList})"<<std::endl;
 
                 // prepare the Stripped Tissue Seg Atlas
-                BMSAutoSegMainFile<<"      ListDirInDir (StrippedTissueSegAtlasList ${OrigFirstCasePath}/${AutoSegDir}/ StrippedTissuSegAtlas)"<<std::endl;
+                BMSAutoSegMainFile<<"      ListDirInDir (StrippedTissueSegAtlasList ${T1Path}/${AutoSegDir}/ StrippedTissuSegAtlas)"<<std::endl;
                 BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasList} == '')"<<std::endl;
                 BMSAutoSegMainFile<<"          MakeDirectory (${StrippedTissueSegAtlas})"<<std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${StrippedTissueSegAtlasList})"<<std::endl;
 
                 BMSAutoSegMainFile<<"      If (${TissueSegAtlasBrainMaskList} == '')" << std::endl;     //if don't have brainmask in tissue seg atlas
                     BMSAutoSegMainFile<<"      If (${TissueSegAtlasTemplateList} == '')" << std::endl;  //if tissue seg atlas template doesn't exist
-                        BMSAutoSegMainFile<<"      set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i 10x2 -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
+                        BMSAutoSegMainFile<<"      set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
                         BMSAutoSegMainFile<<"      Run (output '${ANTSRegTissueSegAtals}')"<<std::endl;
                         BMSAutoSegMainFile<<"      ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
                             BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
@@ -3524,7 +3686,18 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                     BMSAutoSegMainFile<<"      EndIf (${AffineBrainMaskList})" << std::endl;
  
                     BMSAutoSegMainFile<<"      If (   ${TissueSegAtlasTemplateList} == '')" << std::endl;
-                        BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i 10x2 -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0])"<<std::endl;
+                        if (GetANTSWithBrainmask())  {
+                            if (GetUseInitialAffine())  
+                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
+                            else
+                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
+                        }
+                        else  {
+                            if (GetUseInitialAffine())  
+                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
+                            else
+                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
+                        }
                         BMSAutoSegMainFile<<"          Run (output '${ANTSRegTissueSegAtals}')"<<std::endl;
                         BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
                             BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
@@ -3574,82 +3747,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       std::cout<<"Error EM Software (itkEMS is no longer supported)!"<<std::endl;
       exit(-2);
     }   
-
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-
-    BMSAutoSegMainFile<<"set (OutputFile ${EMSPath}${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;
+	// next lines are kept for historic reasons MRML settings 
     BMSAutoSegMainFile<<"set (OutputFileTail ${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"set (LabelFile ${EMSPath}${T1InputCaseHead}${SuffixLabel}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"set (LabelTail ${T1InputCaseHead}${SuffixLabel}.nrrd)"<<std::endl;
-
     BMSAutoSegMainFile<<"set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
     BMSAutoSegMainFile<<"set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
 
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
-    if (GetLoop() && iteration !=0)
-    {
-      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode6\"  name=\"ems_"<<SuffixIteration<<"\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
-    }
-    else
-    {
-      BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode4\"  name=\"ems\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
-    }
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSelectionNode1\"    name=\"vtkMRMLSelectionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    activeVolumeID=\"vtkMRMLScalarVolumeNode7\"    secondaryVolumeID=\"vtkMRMLScalarVolumeNode7\"    activeLabelVolumeID=\"vtkMRMLScalarVolumeNode8\"    activeFiducialListID=\"NULL\"    activeROIListID=\"NULL\"    activeCameraID=\"NULL\"    activeViewID=\"NULL\"    activeLayoutID=\"vtkMRMLLayoutNode1\"  ></Selection>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Interaction\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLInteractionNode1\"    name=\"vtkMRMLInteractionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentInteractionMode=\"ViewTransform\"    lastInteractionMode=\"ViewTransform\"  ></Interaction>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Layout\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLayoutNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentViewArrangement=\"2\"    guiPanelVisibility=\"1\"    bottomPanelVisibility =\"1\"    guiPanelLR=\"0\"    collapseSliceControllers=\"0\"\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    numberOfCompareViewRows=\"1\"    numberOfCompareViewColumns=\"1\"    numberOfLightboxRows=\"1\"    numberOfLightboxColumns=\"1\"    mainPanelSize=\"400\"    secondaryPanelSize=\"400\"    selectedModule=\"Volumes\"  ></Layout>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <TGParameters\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLChangeTrackerNode1\"    name=\"vtkMRMLChangeTrackerNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    ROIMin=\"-1 -1 -1\"    ROIMax=\"-1 -1 -1\"    SegmentThresholdMin=\"-1\"    SegmentThresholdMax=\"-1\"    Analysis_Intensity_Flag=\"0\"    Analysis_Deformable_Flag=\"0\"    UseITK=\"1\"    RegistrationChoice=\"3\"    ROIRegistration=\"1\"    ResampleChoice=\"3\"    ResampleConst=\"0.5\"  ></TGParameters>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Crosshair\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCrosshairNode1\"    name=\"vtkMRMLCrosshairNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    crosshairMode=\"NoCrosshair\"    navigation=\"true\"    crosshairBehavior=\"Normal\"    crosshairThickness=\"Fine\"    crosshairRAS=\"-99.5 -112 99.5\"  ></Crosshair>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode1\"    name=\"Green\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"199 199.672 1\"    dimensions=\"296 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 0 1 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Green\"    orientation=\"Coronal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode1\"    name=\"vtkMRMLSliceCompositeNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode7\"    foregroundVolumeID=\"\"    labelVolumeID=\"vtkMRMLScalarVolumeNode8\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"0\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Green\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode2\"    name=\"Red\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"222.49 223.998 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 1 0 -112 0 0 1 99.5 0 0 0 1\"    layoutName=\"Red\"    orientation=\"Axial\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode2\"    name=\"vtkMRMLSliceCompositeNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode7\"    foregroundVolumeID=\"\"    labelVolumeID=\"vtkMRMLScalarVolumeNode8\"    compositing=\"0\"    labelOpacity=\"0.5\"    linkedControl=\"0\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Red\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode3\"    name=\"Yellow\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"224 225.519 1\"    dimensions=\"295 297 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"0 0 1 -99.5 -1 0 0 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Yellow\"    orientation=\"Sagittal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode3\"    name=\"vtkMRMLSliceCompositeNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode7\"    foregroundVolumeID=\"\"    labelVolumeID=\"vtkMRMLScalarVolumeNode8\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"0\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Yellow\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ScriptedModule\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScriptedModuleNode1\"    name=\"vtkMRMLScriptedModuleNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\" parameter0= \"label 1\"  ></ScriptedModule>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <View\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLViewNode1\"    name=\"View1\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    active=\"true\"    visibility=\"true\"    fieldOfView=\"200\"    letterSize=\"0.05\"    boxVisible=\"true\"    fiducialsVisible=\"true\"    fiducialLabelsVisible=\"true\"    axisLabelsVisible=\"true\"    backgroundColor=\"0.70196 0.70196 0.90588\"    animationMode=\"Off\"    viewAxisMode=\"LookFrom\"    spinDegrees=\"2\"    spinMs=\"5\"    spinDirection=\"YawLeft\"    rotateDegrees=\"5\"    rockLength=\"200\"    rockCount=\"0\"    stereoType=\"NoStereo\"    renderMode=\"Perspective\"  ></View>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Camera\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCameraNode1\"    name=\"Default Scene Camera\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    position=\"0 500 0\"    focalPoint=\"0 0 0\"    viewUp=\"0 0 1\"    parallelProjection=\"false\"    parallelScale=\"1\"    activetag=\"vtkMRMLViewNode1\"  ></Camera>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode1\"    name=\"vtkMRMLScalarVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode2\"    name=\"vtkMRMLScalarVolumeDisplayNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"118\"    level=\"63\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode3\"    name=\"vtkMRMLScalarVolumeDisplayNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"766.13\"    level=\"383.065\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode4\"    name=\"vtkMRMLScalarVolumeDisplayNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode5\"    name=\"vtkMRMLScalarVolumeDisplayNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeWarmShade1\"     window=\"794.457\"    level=\"379.982\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode6\"    name=\"vtkMRMLScalarVolumeDisplayNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeCoolShade1\"     window=\"904\"    level=\"532\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode7\"    name=\"vtkMRMLVolumeArchetypeStorageNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${OutputFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"0\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode7\"    name=\"${OutputFileTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode7\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode7\"    ijkToRASDirections=\"-1   0   0 -0   -1   0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"-0 -0 -0\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode7\"    name=\"vtkMRMLScalarVolumeDisplayNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"26952\"    level=\"13476\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode8\"    name=\"vtkMRMLVolumeArchetypeStorageNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${LabelFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"0\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode8\"    name=\"${LabelTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode8\"    userTags=\"\"    displayNodeRef=\"vtkMRMLLabelMapVolumeDisplayNode1\"    ijkToRASDirections=\"-1   0   0 -0   -1   0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"-0 -0 -0\"    labelMap=\"1\"  ></Volume>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <LabelMapVolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLabelMapVolumeDisplayNode1\"    name=\"vtkMRMLLabelMapVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeFileGenericColors.txt\"   ></LabelMapVolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</SceneSnapshot>\\n')"<<std::endl;
-	
     BMSAutoSegMainFile<<"         Else ()"<<std::endl;
     BMSAutoSegMainFile<<"            echo ('EMS Segmentation already Done!')"<<std::endl;
     BMSAutoSegMainFile<<"         EndIf (${EMSfileList})"<<std::endl;
@@ -3782,7 +3886,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	//   BMSAutoSegMainFile<<"            SetAppOption(ImageMathCmd.OutputFileName ${TmpMask})"<<std::endl;
 	//   BMSAutoSegMainFile<<"            Run (output ${ImageMathCmd})"<<std::endl<<std::endl;  
     if (std::strcmp(GetEMSoftware(), "ABC") == 0)
-      BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${SegmentedCase} -threshold 1,3 -outfile ${TmpMask}')"<<std::endl; 
+      BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${SegmentedCase} -threshold 1,10000 -outfile ${TmpMask}')"<<std::endl; 
     else
       BMSAutoSegMainFile<<"              Run (output '${ImageMathCmd} ${SegmentedCase} -threshold 1,4 -outfile ${TmpMask}')"<<std::endl; 
     BMSAutoSegMainFile<<"	         #In order to make sur that the binary mask is fine (without holes and smoothed)"<<std::endl;
@@ -4026,7 +4130,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 
   // Warping performed via ANTS: no intensity rescaling needed.
-  if (GetANTSWarpingMethod())
+  if (GetANTSWarpingMethod() && !GetMultiAtlasSegmentation())
   {    
 
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -4039,14 +4143,22 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   
     BMSAutoSegMainFile<<"set (IRescaled '')"<<std::endl;
 
-    BMSAutoSegMainFile<<"set (ANTSIterations "<<GetANTSIterations()<<")"<<std::endl;
+    //BMSAutoSegMainFile<<"set (ANTSIterations "<<GetANTSIterations()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (ANTSCCWeight "<<GetANTSCCWeight()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (ANTSCCRegionRadius "<<GetANTSCCRegionRadius()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (ANTSMIWeight "<<GetANTSMIWeight()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (ANTSMIBins "<<GetANTSMIBins()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (ANTSMSQWeight "<<GetANTSMSQWeight()<<")"<<std::endl;
+
+    BMSAutoSegMainFile<<"set (ANTSCCWeight2nd "<<GetANTSCCWeight2nd()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSCCRegionRadius2nd "<<GetANTSCCRegionRadius2nd()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSMIWeight2nd "<<GetANTSMIWeight2nd()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSMIBins2nd "<<GetANTSMIBins2nd()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (ANTSMSQWeight2nd "<<GetANTSMSQWeight2nd()<<")"<<std::endl;
+
     BMSAutoSegMainFile<<"set (ANTSTransformationStep "<<GetANTSTransformationStep()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (ANTSGaussianSigma "<<GetANTSGaussianSigma()<<")"<<std::endl;
+    BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl;
 
     BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
     BMSAutoSegMainFile<<"echo ('ATLAS WARPING...')"<<std::endl;
@@ -4071,7 +4183,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      EndIf (${WarpROIList})"<<std::endl;
     
     // for T2
-    BMSAutoSegMainFile<<"      GetFilename (T2Path ${T1Case} PATH)"<<std::endl;
+    BMSAutoSegMainFile<<"      GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T2Path ${T2Case} PATH)"<<std::endl;
+    BMSAutoSegMainFile<<"Inc(${CaseNumber} 1)"<<std::endl;
+
     BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      echo( )"<<std::endl;
     BMSAutoSegMainFile<<"      echo('Case Number: '${T2CaseHead})"<<std::endl;
@@ -4085,24 +4200,32 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      ListFileInDir(DeformationFieldList ${WarpROIPath} AtlasWarpReg-${StrippedCaseHead}_Warp.nii.gz)"<<std::endl;
     BMSAutoSegMainFile<<"      If (${DeformationFieldList} == '')"<<std::endl;        
     BMSAutoSegMainFile<<"         echo ('Computing deformation field...')"<<std::endl;  
-    if (GetROIT2Atlas()) {
-        BMSAutoSegMainFile<<"    	set (command_line ${ANTSCmd} 3 -m CC[${StrippedCase},${atlasROIFile},${ANTSCCWeight},${ANTSCCRegionRadius}] -m CC[${T2StrippedCase},${atlasROIT2File},${ANTSCCWeight},${ANTSCCRegionRadius}] -i ${ANTSIterations} -o ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_ )"<<std::endl;
+    //if (GetROIT2Atlas()) {
+    if (GetMultiModalitySegmentation()) {
+        BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3"<<std::endl;
+        if (GetANTSCCWeight() > 0.01)
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${StrippedCase},${atlasROIFile},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
+        if (GetANTSCCWeight2nd() > 0.01)
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${T2StrippedCase},${atlasROIT2File},${ANTSCCWeight2nd},${ANTSCCRegionRadius2nd}])"<<std::endl;
         if (GetANTSMIWeight() > 0.01)
-            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${StrippedCase},${atlasROIFile},${ANTSMIWeight},${ANTSMIBins}] -m MI[${T2StrippedCase},${atlasROIT2File},${ANTSMIWeighth},${ANTSMIBins}])"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${StrippedCase},${atlasROIFile},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
+        if (GetANTSMIWeight2nd() > 0.01)
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${T2StrippedCase},${atlasROIT2File},${ANTSMIWeighth2nd},${ANTSMIBins2nd}])"<<std::endl;
         if (GetANTSMSQWeight() > 0.01)
-            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${StrippedCase},${atlasROIFile},${ANTSMSQWeight},0.01] -m MSQ[${T2StrippedCase},${atlasROIT2File},${ANTSMSQWeight},0.01])"<<std::endl;
-        if (GetANTSMIWeight() > 0.01 || GetANTSMSQWeight() > 0.01)
-            BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${StrippedCase},${atlasROIFile},${ANTSMSQWeight},0.01])"<<std::endl;
+        if (GetANTSMSQWeight2nd() > 0.01)
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${T2StrippedCase},${atlasROIT2File},${ANTSMSQWeight2nd},0.01])"<<std::endl;
     }
     else {
-        BMSAutoSegMainFile<<"    	set (command_line ${ANTSCmd} 3 -m CC[${StrippedCase},${atlasROIFile},${ANTSCCWeight},${ANTSCCRegionRadius}] -i ${ANTSIterations} -o ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_ )"<<std::endl;
+        BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3"<<std::endl;
+        if (GetANTSCCWeight() > 0.01)
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${StrippedCase},${atlasROIFile},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
         if (GetANTSMIWeight() > 0.01)
             BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${StrippedCase},${atlasROIFile},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
         if (GetANTSMSQWeight() > 0.01)
             BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${StrippedCase},${atlasROIFile},${ANTSMSQWeight},0.01])"<<std::endl;
-        if (GetANTSMIWeight() > 0.01 || GetANTSMSQWeight() > 0.01)
-            BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
     }
+    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -i ${ANTSIterations} -o ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_)"<<std::endl;
     if (std::strcmp(GetANTSRegistrationFilterType(), "GreedyDiffeomorphism") == 0)
       {
 	BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t SyN[${ANTSTransformationStep}])"<<std::endl;
@@ -4127,6 +4250,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	if (GetANTSGaussianSmoothing())
 	  BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
       }
+    BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
     BMSAutoSegMainFile<<"      	set(ANTSLogFile ${WarpROIPath}AtlasWarpReg-${WarpROIPath}${StrippedCaseHead}_ANTS.log)"<<std::endl;
     BMSAutoSegMainFile<<"      	WriteFile(${ANTSLogFile} ${prog_output})"<<std::endl;
@@ -5721,177 +5845,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            EndForEach (ROIFile)"<<std::endl;
     BMSAutoSegMainFile<<"         EndIf (${ROIList})"<<std::endl;
 
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('WRITING MRML FILE...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-
     BMSAutoSegMainFile<<"   set (StripIrescaledTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"   set (StripIrescaled ${T1Path}/${AutoSegDir}/Stripped/${StripIrescaledTail})"<<std::endl;
     BMSAutoSegMainFile<<"   set (MRMLPath ${T1Path}/${AutoSegDir}/MRMLScene/${T1CaseHead}_MRMLScene/)"<<std::endl;
     BMSAutoSegMainFile<<"   set (MRMLScene ${MRMLPath}${T1CaseHead}_MRMLScene.mrml)"<<std::endl;
 
-    BMSAutoSegMainFile<<"	Set(tmpMRMLFile ${MRMLPath}/tmp.mrml)"<<std::endl;
-    BMSAutoSegMainFile<<"	WriteFile(${tmpMRMLFile} '<MRML >\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"	AppendFile(${tmpMRMLFile} '</MRML>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   Set (command_line ${ModelMakerCmd} ${AllROIFile} --generateAll --modelSceneFile ${tmpMRMLFile})"<<std::endl;
-    BMSAutoSegMainFile<<"   Run (prog_output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"	DeleteFile(${tmpMRMLFile})"<<std::endl;
-
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} ' <SceneSnapshot\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  id=\"vtkMRMLSceneSnapshotNode11\"  name=\"warp_ROI\"  hideFromEditors=\"true\"  selectable=\"true\"  selected=\"false\" >  <Selection\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSelectionNode1\"    name=\"vtkMRMLSelectionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    activeVolumeID=\"vtkMRMLScalarVolumeNode1\"    secondaryVolumeID=\"vtkMRMLScalarVolumeNode1\"    activeLabelVolumeID=\"vtkMRMLScalarVolumeNode2\"    activeFiducialListID=\"NULL\"    activeROIListID=\"NULL\"    activeCameraID=\"NULL\"    activeViewID=\"NULL\"    activeLayoutID=\"vtkMRMLLayoutNode1\"  ></Selection>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Interaction\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLInteractionNode1\"    name=\"vtkMRMLInteractionNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentInteractionMode=\"ViewTransform\"    lastInteractionMode=\"ViewTransform\"  ></Interaction>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Layout\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLayoutNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    currentViewArrangement=\"2\"    guiPanelVisibility=\"1\"    bottomPanelVisibility =\"1\"    guiPanelLR=\"0\"    collapseSliceControllers=\"0\"\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    numberOfCompareViewRows=\"1\"    numberOfCompareViewColumns=\"1\"    numberOfLightboxRows=\"1\"    numberOfLightboxColumns=\"1\"    mainPanelSize=\"400\"    secondaryPanelSize=\"400\"    selectedModule=\"Models\"  ></Layout>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <TGParameters\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLChangeTrackerNode1\"    name=\"vtkMRMLChangeTrackerNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    ROIMin=\"-1 -1 -1\"    ROIMax=\"-1 -1 -1\"    SegmentThresholdMin=\"-1\"    SegmentThresholdMax=\"-1\"    Analysis_Intensity_Flag=\"0\"    Analysis_Deformable_Flag=\"0\"    UseITK=\"1\"    RegistrationChoice=\"3\"    ROIRegistration=\"1\"    ResampleChoice=\"3\"    ResampleConst=\"0.5\"  ></TGParameters>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Crosshair\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCrosshairNode1\"    name=\"vtkMRMLCrosshairNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    crosshairMode=\"NoCrosshair\"    navigation=\"true\"    crosshairBehavior=\"Normal\"    crosshairThickness=\"Fine\"    crosshairRAS=\"-99.5 -112 99.5\"  ></Crosshair>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode1\"    name=\"Green\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"199 204.103 1\"    dimensions=\"312 320 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 0 1 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Green\"    orientation=\"Coronal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode1\"    name=\"vtkMRMLSliceCompositeNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode1\"    foregroundVolumeID=\"\"    labelVolumeID=\"vtkMRMLScalarVolumeNode2\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Green\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode2\"    name=\"Red\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"218.4 224 1\"    dimensions=\"312 320 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"-1 0 0 -99.5 0 1 0 -112 0 0 1 99.5 0 0 0 1\"    layoutName=\"Red\"    orientation=\"Axial\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode2\"    name=\"vtkMRMLSliceCompositeNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode1\"    foregroundVolumeID=\"\"    labelVolumeID=\"vtkMRMLScalarVolumeNode2\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Red\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Slice\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceNode3\"    name=\"Yellow\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fieldOfView=\"224 229.744 1\"    dimensions=\"312 320 1\"    activeSlice=\"0\"    layoutGridRows=\"1\"    layoutGridColumns=\"1\"    sliceToRAS=\"0 0 1 -99.5 -1 0 0 -112 0 1 0 99.5 0 0 0 1\"    layoutName=\"Yellow\"    orientation=\"Sagittal\"    jumpMode=\"1\"    sliceVisibility=\"true\"    widgetVisibility=\"false\"    useLabelOutline=\"false\"    sliceSpacingMode=\"0\"    prescribedSliceSpacing=\"1 1 1\"  ></Slice>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <SliceComposite\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLSliceCompositeNode3\"    name=\"vtkMRMLSliceCompositeNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    backgroundVolumeID=\"vtkMRMLScalarVolumeNode1\"    foregroundVolumeID=\"\"    labelVolumeID=\"vtkMRMLScalarVolumeNode2\"    compositing=\"0\"    labelOpacity=\"1\"    linkedControl=\"1\"    foregroundGrid=\"0\"    backgroundGrid=\"0\"    labelGrid=\"1\"    fiducialVisibility=\"1\"    fiducialLabelVisibility=\"1\"    sliceIntersectionVisibility=\"0\"    layoutName=\"Yellow\"    annotationMode=\"All\"    doPropagateVolumeSelection=\"1\"  ></SliceComposite>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ClipModels\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLClipModelsNode1\"    name=\"vtkMRMLClipModelsNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    clipType=\"0\"    redSliceClipState=\"0\"    yellowSliceClipState=\"0\"    greenSliceClipState=\"0\"  ></ClipModels>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ScriptedModule\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScriptedModuleNode1\"    name=\"vtkMRMLScriptedModuleNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\" parameter0= \"label 1\"  ></ScriptedModule>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode1\"    name=\"vtkMRMLModelHierarchyNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    displayNodeRef=\"vtkMRMLModelDisplayNode1\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode1\"    name=\"vtkMRMLModelDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.392157 0.392157 0.509804\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeLabels\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode1\"    name=\"vtkMRMLModelStorageNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_1.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode2\"    name=\"vtkMRMLModelDisplayNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.501961 0.682353 0.501961\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode1\"    name=\"Model_1\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode1\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode2\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode2\"    name=\"vtkMRMLModelHierarchyNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode1\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode2\"    name=\"vtkMRMLModelStorageNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_2.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode3\"    name=\"vtkMRMLModelDisplayNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.945098 0.839216 0.568627\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode2\"    name=\"Model_2\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode2\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode3\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode3\"    name=\"vtkMRMLModelHierarchyNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode2\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode3\"    name=\"vtkMRMLModelStorageNode3\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_3.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode4\"    name=\"vtkMRMLModelDisplayNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.694118 0.478431 0.396078\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode3\"    name=\"Model_3\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode3\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode4\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode4\"    name=\"vtkMRMLModelHierarchyNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode3\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode4\"    name=\"vtkMRMLModelStorageNode4\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_4.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode5\"    name=\"vtkMRMLModelDisplayNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.435294 0.721569 0.823529\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode4\"    name=\"Model_4\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode4\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode5\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode5\"    name=\"vtkMRMLModelHierarchyNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode4\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode5\"    name=\"vtkMRMLModelStorageNode5\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_5.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode6\"    name=\"vtkMRMLModelDisplayNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.847059 0.396078 0.309804\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode5\"    name=\"Model_5\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode5\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode6\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode6\"    name=\"vtkMRMLModelHierarchyNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode5\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode6\"    name=\"vtkMRMLModelStorageNode6\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_6.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode7\"    name=\"vtkMRMLModelDisplayNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.866667 0.509804 0.396078\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode6\"    name=\"Model_6\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode6\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode7\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode7\"    name=\"vtkMRMLModelHierarchyNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode6\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode7\"    name=\"vtkMRMLModelStorageNode7\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_7.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode8\"    name=\"vtkMRMLModelDisplayNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.564706 0.933333 0.564706\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode7\"    name=\"Model_7\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode7\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode8\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode8\"    name=\"vtkMRMLModelHierarchyNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode7\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode8\"    name=\"vtkMRMLModelStorageNode8\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_8.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode9\"    name=\"vtkMRMLModelDisplayNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.752941 0.407843 0.345098\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode8\"    name=\"Model_8\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode8\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode9\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode9\"    name=\"vtkMRMLModelHierarchyNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode8\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode9\"    name=\"vtkMRMLModelStorageNode9\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_9.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode10\"    name=\"vtkMRMLModelDisplayNode10\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.862745 0.960784 0.0784314\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode9\"    name=\"Model_9\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode9\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode10\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode10\"    name=\"vtkMRMLModelHierarchyNode10\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode9\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode10\"    name=\"vtkMRMLModelStorageNode10\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_10.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode11\"    name=\"vtkMRMLModelDisplayNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.305882 0.247059 0\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode10\"    name=\"Model_10\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode10\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode11\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode11\"    name=\"vtkMRMLModelHierarchyNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode10\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode11\"    name=\"vtkMRMLModelStorageNode11\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_11.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode12\"    name=\"vtkMRMLModelDisplayNode12\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"1 0.980392 0.862745\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode11\"    name=\"Model_11\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode11\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode12\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode12\"    name=\"vtkMRMLModelHierarchyNode12\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode11\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelStorageNode12\"    name=\"vtkMRMLModelStorageNode12\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"Model_12.vtk\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"  ></ModelStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelDisplayNode13\"    name=\"vtkMRMLModelDisplayNode13\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.392157 0.392157 0.509804\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    activeScalarName=\"\"   ></ModelDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Model\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelNode12\"    name=\"Model_12\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLModelStorageNode12\"    userTags=\"\"    displayNodeRef=\"vtkMRMLModelDisplayNode13\"  ></Model>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <ModelHierarchy\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLModelHierarchyNode13\"    name=\"vtkMRMLModelHierarchyNode13\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    parentNodeRef=\"vtkMRMLModelHierarchyNode1\"    modelNodeRef=\"vtkMRMLModelNode12\"    expanded=\"true\"  ></ModelHierarchy>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <View\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLViewNode1\"    name=\"View2\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    active=\"true\"    visibility=\"true\"    fieldOfView=\"200\"    letterSize=\"0.05\"    boxVisible=\"true\"    fiducialsVisible=\"true\"    fiducialLabelsVisible=\"true\"    axisLabelsVisible=\"true\"    backgroundColor=\"0.70196 0.70196 0.90588\"    animationMode=\"Off\"    viewAxisMode=\"LookFrom\"    spinDegrees=\"2\"    spinMs=\"5\"    spinDirection=\"YawLeft\"    rotateDegrees=\"5\"    rockLength=\"200\"    rockCount=\"0\"    stereoType=\"NoStereo\"    renderMode=\"Perspective\"  ></View>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Camera\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLCameraNode1\"    name=\"Default Scene Camera\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    position=\"0 500 0\"    focalPoint=\"0 0 0\"    viewUp=\"0 0 1\"    parallelProjection=\"false\"    parallelScale=\"1\"    activetag=\"vtkMRMLViewNode1\"  ></Camera>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode1\"    name=\"vtkMRMLVolumeArchetypeStorageNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${StripIrescaled}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"0\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode1\"    name=\"${StripIrescaledTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode1\"    userTags=\"\"    displayNodeRef=\"vtkMRMLScalarVolumeDisplayNode1\"    ijkToRASDirections=\"-1   0   0 -0   -1   0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"-0 -0 -0\"    labelMap=\"0\"  ></Volume>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeDisplayNode1\"    name=\"vtkMRMLScalarVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeGrey\"     window=\"108\"    level=\"145\"    upperThreshold=\"32767\"    lowerThreshold=\"-32768\"    interpolate=\"1\"    autoWindowLevel=\"1\"    applyThreshold=\"0\"    autoThreshold=\"0\"  ></VolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <VolumeArchetypeStorage\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLVolumeArchetypeStorageNode2\"    name=\"vtkMRMLVolumeArchetypeStorageNode2\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    fileName=\"${AllROIFile}\"    useCompression=\"1\"    readState=\"0\"    writeState=\"0\"    centerImage=\"0\"    singleFile=\"0\"    UseOrientationFromFile=\"1\"  ></VolumeArchetypeStorage>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <Volume\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLScalarVolumeNode2\"    name=\"${AllROIFileTail}\"    hideFromEditors=\"false\"    selectable=\"true\"    selected=\"false\"    storageNodeRef=\"vtkMRMLVolumeArchetypeStorageNode2\"    userTags=\"\"    displayNodeRef=\"vtkMRMLLabelMapVolumeDisplayNode1\"    ijkToRASDirections=\"-1   0   0 -0   -1   0 0 -0 1 \"    spacing=\"1 1 1\"    origin=\"-0 -0 -0\"    labelMap=\"1\"  ></Volume>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '  <LabelMapVolumeDisplay\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '    id=\"vtkMRMLLabelMapVolumeDisplayNode1\"    name=\"vtkMRMLLabelMapVolumeDisplayNode1\"    hideFromEditors=\"true\"    selectable=\"true\"    selected=\"false\"    color=\"0.5 0.5 0.5\"    selectedColor=\"1 0 0\"    selectedAmbient=\"0.4\"    ambient=\"0\"    diffuse=\"1\"    selectedSpecular=\"0.5\"    specular=\"0\"    power=\"1\"    opacity=\"1\"    visibility=\"true\"    clipping=\"false\"    sliceIntersectionVisibility=\"false\"    backfaceCulling=\"true\"    scalarVisibility=\"false\"    vectorVisibility=\"false\"    tensorVisibility=\"false\"    autoScalarRange=\"true\"    scalarRange=\"0 100\"    colorNodeRef=\"vtkMRMLColorTableNodeFileGenericColors.txt\"   ></LabelMapVolumeDisplay>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</SceneSnapshot>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"   AppendFile(${MRMLScene} '</MRML>\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('WRITING STRUCTURE MRML FILE: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;	
-    BMSAutoSegMainFile<<"      ListDirInDir (MRMLList ${ProcessingDir} AutoSeg_MRML)"<<std::endl;
-    BMSAutoSegMainFile<<"      If (${MRMLList} == '')"<<std::endl;
-    BMSAutoSegMainFile<<"         MakeDirectory( ${ProcessingDir}AutoSeg_MRML)"<<std::endl;
-    BMSAutoSegMainFile<<"      EndIf (${MRMLList})"<<std::endl;
-    BMSAutoSegMainFile<<"   Set (command_line cp ${MRMLPath}${T1CaseHead}_MRMLScene.mrml ${ProcessingDir}AutoSeg_MRML/)"<<std::endl;
-    BMSAutoSegMainFile<<"   Run (prog_output ${command_line} prog_error)"<<std::endl;
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
     BMSAutoSegMainFile<<"         echo ('File already exists: '${AllROIFileTail})"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${AllROIList})"<<std::endl;
@@ -6009,22 +5967,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
  
         int NUMBER_OF_CASE = 0;
 
+        for (int i = 0; i < GetNbData(); i++){
+            std::cout << "data list  : " << m_MultiAtlasT1List[i] << " " << m_MultiAtlasT2List[i] << std::endl;
+        }
+
         while (NUMBER_OF_CASE < GetNbData()) { 
-
-        std::string targetDirectory;// targetT2Directory;
-
-        if (GetMultiModalitySegmentation()) { 
-            targetDirectory = m_MultiAtlasList[2 * NUMBER_OF_CASE];
-     //       targetT2Directory = m_MultiAtlasList[1];
-            NUMBER_OF_CASE++;
-        }
-        else {
-            targetDirectory = m_MultiAtlasList[NUMBER_OF_CASE];
-            NUMBER_OF_CASE++;
-        }
+            std::string targetDirectory;// targetT2Directory; 
+            if (GetMultiModalitySegmentation()) { 
+                targetDirectory = m_MultiAtlasT1List[NUMBER_OF_CASE];
+                NUMBER_OF_CASE++;
+            }
+            else {
+                targetDirectory = m_MultiAtlasT1List[NUMBER_OF_CASE];
+                NUMBER_OF_CASE++;
+            }
          
-        std::cout << "multi atlas " << NUMBER_OF_CASE << ": " << targetDirectory << std::endl;
-
         short foundSlash = targetDirectory.find_last_of("\/");
         targetDirectory = targetDirectory.substr(0, foundSlash + 1);
         std::cout << "T1 target directory: " << targetDirectory << std::endl;
@@ -6037,21 +5994,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
         BMSAutoSegMainFile<<"      set (MultiAtlasDir "<<GetMultiAtlasDirectory()<<")"<<std::endl;
         BMSAutoSegMainFile<<"      set (ProcessDir "<<GetDataDirectory()<<"process/)"<<std::endl;
-        BMSAutoSegMainFile<<"      set (MultiAtlasSegCmd '/NIRAL/work/jiahuiw/Applications/DMDMultiAtlas/exec/DMDMultiAtlas')"<<std::endl;
+        //BMSAutoSegMainFile<<"      set (MultiAtlasSegCmd '/NIRAL/work/jiahuiw/Applications/DMDMultiAtlas/exec/DMDMultiAtlas')"<<std::endl;
+        BMSAutoSegMainFile<<"      set (MultiAtlasSegCmd 'MultiAtlasSeg')"<<std::endl;
         if (GetMultiModalitySegmentation()) { 
-            BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasList[NUMBER_OF_CASE - 1]<<")"<<std::endl;
-            BMSAutoSegMainFile<<"      set (TargetT2CaseFile "<<m_MultiAtlasList[NUMBER_OF_CASE]<<")"<<std::endl;
+            BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
+            BMSAutoSegMainFile<<"      set (TargetT2CaseFile "<<m_MultiAtlasT2List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
         }
         else {
-            BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasList[NUMBER_OF_CASE - 1]<<")"<<std::endl;
+            BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
         }
 
         if (GetMultiModalitySegmentation()) { 
-            std::cout << "target file of first modality: " << m_MultiAtlasList[NUMBER_OF_CASE - 1] << std::endl;
-            std::cout << "target file of second modality: " << m_MultiAtlasList[NUMBER_OF_CASE] << std::endl;
-        }
+            std::cout << "target file of first modality: " << m_MultiAtlasT1List[NUMBER_OF_CASE - 1] << std::endl;
+            std::cout << "target file of second modality: " << m_MultiAtlasT2List[NUMBER_OF_CASE - 1] << std::endl; }
         else {
-            std::cout << "target file: " << m_MultiAtlasList[NUMBER_OF_CASE] << std::endl;
+            std::cout << "target file: " << m_MultiAtlasT1List[NUMBER_OF_CASE - 1] << std::endl;
         }
 
         BMSAutoSegMainFile<<"      set (WeightIntensityEnergy "<<GetIntensityEnergyWeight()<<")"<<std::endl;
@@ -6062,14 +6019,37 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       //  BMSAutoSegMainFile<<"   GetFilename (TargetCaseParentPath ${MultiAtlasTargetFileTest} PARENT_PATH)"<<std::endl;
       //  BMSAutoSegMainFile<<"   echo('Target Case Parent Path: '${TargetCaseParentPath})"<<std::endl;
 
-        BMSAutoSegMainFile<<"      set (TargetPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
-        BMSAutoSegMainFile<<"   echo('Target Case Path: '${TargetCasePath} )"<<std::endl;
-        BMSAutoSegMainFile<<"      ListFileInDir(MultiAtlasTargetList ${TargetPath} *Bias_regAtlas_corrected_EMS-stripped*)"<<std::endl;
-        BMSAutoSegMainFile<<"      set (MultiAtlasTargetFile ${MultiAtlasTargetList})"<<std::endl;
+   //     BMSAutoSegMainFile<<"      set (TargetPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
+        BMSAutoSegMainFile<<"      set (TargetPath "<< targetDirectory.c_str()<<"${AutoSegDir}/Stripped/)"<<std::endl;
+        BMSAutoSegMainFile<<"      echo('Target Case Path: '${TargetCasePath} )"<<std::endl;
+//        BMSAutoSegMainFile<<"      echo('Suffix Corrected: '${SuffixCorrected} )"<<std::endl;
+        BMSAutoSegMainFile<<"set (SuffixStrippedNRRD -stripped.nrrd)"<<std::endl;
+        if (GetMultiModalitySegmentation()) { 
+            BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${TargetCaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
+            BMSAutoSegMainFile<<"   GetFilename (T2CaseHead ${TargetT2CaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
+
+            BMSAutoSegMainFile<<"      ListFileInDir(MultiAtlasTargetList ${TargetPath} ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
+            BMSAutoSegMainFile<<"      set (MultiAtlasTargetFile ${MultiAtlasTargetList})"<<std::endl;
+            BMSAutoSegMainFile<<"      ListFileInDir(MultiAtlasT2TargetList ${TargetPath} ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
+            BMSAutoSegMainFile<<"      set (MultiAtlasT2TargetFile ${MultiAtlasT2TargetList})"<<std::endl;
+            BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${TargetPath}${MultiAtlasTargetFile} -rescale 0,32767 -outfile ${TargetPath}${MultiAtlasTargetFile}')"<<std::endl; 
+            BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${TargetPath}${MultiAtlasT2TargetFile} -rescale 0,32767 -outfile ${TargetPath}${MultiAtlasT2TargetFile}')"<<std::endl; 
+            //BMSAutoSegMainFile<<"      echo('T1 Final Target File: ' ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
+            //BMSAutoSegMainFile<<"      echo('T1 Final Target: ' ${MultiAtlasTargetFile} )"<<std::endl;
+            //BMSAutoSegMainFile<<"      echo('T2 Final Target File: ' ${T2CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
+            //BMSAutoSegMainFile<<"      echo('T2 Final Target: ' ${MultiAtlasT2TargetFile} )"<<std::endl;
+            
+        }
+        else {
+            BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${TargetCaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
+            BMSAutoSegMainFile<<"      ListFileInDir(MultiAtlasTargetList ${TargetPath} ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
+            BMSAutoSegMainFile<<"      set (MultiAtlasTargetFile ${MultiAtlasTargetList})"<<std::endl;
+            BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${TargetPath}${MultiAtlasTargetFile} -rescale 0,32767 -outfile ${TargetPath}${MultiAtlasTargetFile}')"<<std::endl; 
+        }
 
         BMSAutoSegMainFile<<"      MakeDirectory ("<<targetDirectory.c_str()<<"${AutoSegDir}/displacement_field/)"<<std::endl;
         BMSAutoSegMainFile<<"      set (DeformationFieldDir "<<targetDirectory.c_str()<<"${AutoSegDir}/displacement_field/)"<<std::endl;
-        BMSAutoSegMainFile<<"   echo('Deformation Case Path: '${DeformationFieldDir} )"<<std::endl;
+        BMSAutoSegMainFile<<"      echo('Deformation Case Path: '${DeformationFieldDir} )"<<std::endl;
       
         BMSAutoSegMainFile<<"      MakeDirectory ("<<targetDirectory.c_str()<<"${AutoSegDir}/warped-atlas-images/)"<<std::endl;
         BMSAutoSegMainFile<<"      set (WarpedAtlasDir "<<targetDirectory.c_str()<<"${AutoSegDir}/warped-atlas-images/)"<<std::endl;
@@ -6110,6 +6090,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         }
         SortStringList(m_AtlasLabelList, GetNbAtlasLabel());
         //set up atlas case ID list 
+        BMSAutoSegMainFile<<"Set(AtlasHead 'atlas_')"<<std::endl;
+        BMSAutoSegMainFile<<"   echo('atlas head: ' ${AtlasHead})"<<std::endl; 	  
         std::string   strTmp = m_AtlasList[0];
         strTmp = strTmp.substr(6);
         int sizeOfFilename = strTmp.length();
@@ -6126,7 +6108,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             tmpAtlasCaseExtension = strTmp.substr((sizeOfFilename - (sizeOfFilename - foundFilenameExtension)), sizeOfFilename);
         }
         BMSAutoSegMainFile<<"set (AtlasCaseIDList "<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
-        BMSAutoSegMainFile<<"set (AtlasCaseExtension "<<tmpAtlasCaseExtension.c_str()<<")"<<std::endl;
+        BMSAutoSegMainFile<<"set (AtlasList "<< "atlas_" <<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
+        BMSAutoSegMainFile<<"set (AtlasCaseExtension "<< "." << tmpAtlasCaseExtension.c_str()<<")"<<std::endl;
         for (int DataNumber = 1; DataNumber < GetNbAtlas(); DataNumber++){       // set up warped atlas list
             strTmp = m_AtlasList[DataNumber];
             strTmp = strTmp.substr(6);
@@ -6137,28 +6120,45 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         else
             tmpAtlasCaseIDFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
             BMSAutoSegMainFile<<"set (AtlasCaseIDList ${AtlasCaseIDList} "<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
+         //   BMSAutoSegMainFile<<"set (AtlasList "<< "atlas_" <<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
+            BMSAutoSegMainFile<<"set (AtlasList ${AtlasList} "<< "atlas_"<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
         }
 
         //set up gray-level atlas image list
+//        BMSAutoSegMainFile<<"  ListFileInDir(AtlasList ${MultiAtlasDir}atlas_image/atlas_*)"<<std::endl;
+         
+        //BMSAutoSegMainFile<<"set (AtlasList atlas_${AtlasCaseIDList})"<<std::endl;
+        BMSAutoSegMainFile<<"   echo('atlas directory: ' ${MultiAtlasDir})"<<std::endl; 	  
+        BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
+        BMSAutoSegMainFile<<"   echo('atlas extensioin: ' ${AtlasCaseExtension})"<<std::endl; 	  
+        BMSAutoSegMainFile<<"   echo('atlas case ID list: ' ${AtlasCaseIDList})"<<std::endl; 	  
+        /*
         strTmp = m_AtlasList[0];
         sizeOfFilename = strTmp.length();
         foundFilenameExtension = strTmp.find_last_of(".") + 1;
         std::string tmpAtlasFilename;
         std::string tmpAtlasFilenameExtension;
-        tmpAtlasFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
-        tmpAtlasFilenameExtension = strTmp.substr(sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1), (sizeOfFilename -  1));
+   //     tmpAtlasFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
+    //    tmpAtlasFilenameExtension = strTmp.substr(sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1), (sizeOfFilename -  1));
         //std::cout << strTmp << "  " << tmpAtlasFilename << "  " << sizeOfFilename << "  " << foundFilenameExtension<< std::endl;
        // std::cout << tmpAtlasFilename << std::endl;
         BMSAutoSegMainFile<<"set (AtlasList "<<tmpAtlasFilename.c_str()<<")"<<std::endl;
-        BMSAutoSegMainFile<<"set (AtlasCaseExtension "<<tmpAtlasFilenameExtension.c_str()<<")"<<std::endl;
+        //BMSAutoSegMainFile<<"set (AtlasCaseExtension "<<tmpAtlasFilenameExtension.c_str()<<")"<<std::endl;
+        BMSAutoSegMainFile<<"GetFilename( AtlasList ${AtlasList} NAME_WITHOUT_EXTENSION)"<<std::endl;
+        BMSAutoSegMainFile<<"GetFilename( AtlasCaseExtension ${AtlasList} NAME_WITHOUT_EXTENSION)"<<std::endl;
+        BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
         for (int DataNumber = 1; DataNumber < GetNbAtlas(); DataNumber++){       // set up warped atlas list
             strTmp = m_AtlasList[DataNumber];
             sizeOfFilename = strTmp.length();
-            foundFilenameExtension = strTmp.find_first_of(".") + 1;
-            tmpAtlasFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
+           // foundFilenameExtension = strTmp.find_first_of(".") + 1;
+          //  tmpAtlasFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
+            BMSAutoSegMainFile<<"set (AtlasListTmp "<<tmpAtlasFilename.c_str()<<")"<<std::endl;
+            BMSAutoSegMainFile<<"GetFilename( AtlasListTmp ${AtlasListTmp} NAME_WITHOUT_EXTENSION)"<<std::endl;
           //  std::cout << tmpAtlasFilename << std::endl;
-            BMSAutoSegMainFile<<"set (AtlasList ${AtlasList} "<<tmpAtlasFilename.c_str()<<")"<<std::endl;
+            BMSAutoSegMainFile<<"set (AtlasList ${AtlasListTmp} "<<tmpAtlasFilename.c_str()<<")"<<std::endl;
+            BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
         }
+        */
 
         //set up atlas label list
         strTmp = m_AtlasLabelList[0];
@@ -6178,9 +6178,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             tmpAtlasLabelFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
             BMSAutoSegMainFile<<"set (AtlasLabelList ${AtlasLabelList} "<<tmpAtlasLabelFilename.c_str()<<")"<<std::endl;
         }
+        BMSAutoSegMainFile<<"   echo('label list: ' ${AtlaslabelList})"<<std::endl; 	  
 
         //set up target list 
-        strTmp = m_MultiAtlasTargetFile;
+     //   strTmp = m_MultiAtlasTargetFile;
+        strTmp = m_MultiAtlasT1List[NUMBER_OF_CASE - 1];
         sizeOfFilename = strTmp.length();
         int found = strTmp.find_last_of("\/") + 1; 
         foundFilenameExtension = strTmp.find_first_of(".") + 1;
@@ -6198,7 +6200,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"set (TargetList "<<tmpTargetFilename.c_str()<<")"<<std::endl;
 
         //set up target case ID list
-        strTmp = m_MultiAtlasTargetFile;
+        //strTmp = m_MultiAtlasTargetFile;
+        strTmp = m_MultiAtlasT1List[NUMBER_OF_CASE - 1];
         sizeOfFilename = strTmp.length();
         foundFilenameExtension = strTmp.find_first_of(".") + 1;
         std::string tmpTargetCaseIDFilename ;
@@ -6245,144 +6248,186 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"set (DisplacementFieldDirectory "<< DeformationFieldDirectory.c_str() << ")" << std::endl;
 
         if (GetMultiAtlasAtlasRegistration()){
-            // ANTS registration atlas-atlas
-            BMSAutoSegMainFile<<"set (Path ${DeformationFieldTrainToTrainDir})"<<std::endl;
-            BMSAutoSegMainFile<<"   echo('atlas-atlas displacement directory; ' ${Path})"<<std::endl; 	  
-            BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
-            BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
-            BMSAutoSegMainFile<<"ForEach (WarpedCaseForTarget ${AtlasList}) "<<std::endl;
-                BMSAutoSegMainFile<<"ForEach (WarpedCase ${AtlasList}) "<<std::endl;
-                    BMSAutoSegMainFile<<"      If (${WarpedCase} != ${WarpedCaseForTarget})"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (outputfilenameForCheck ${WarpedCaseForTarget}x${WarpedCase}TotalWarp.nii.gz)"<<std::endl;
-                         /*
-                        BMSAutoSegMainFile<<"ForEach (FilenameInList ${ANTSOutputDisplacementFieldList}) "<<std::endl;
-                            BMSAutoSegMainFile<<"      If (${FilenameInList} == ${outputfilenameForCheck})"<<std::endl;
-                                BMSAutoSegMainFile<<"    	set (FileExistFlag 1)"<<std::endl;
-                            BMSAutoSegMainFile<<"      EndIf (${FilenameInList})"<<std::endl;
-                        BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
-                        */
-                        BMSAutoSegMainFile<<"   echo('atlas-atlas displacement file; ' ${outputfilenameForCheck})"<<std::endl; 	  
-                        BMSAutoSegMainFile<<"ListFileInDir(DisplacementExistList ${Path} ${outputfilenameForCheck})"<<std::endl;
-                        BMSAutoSegMainFile<<"If (${DisplacementExistList} == '')"<<std::endl;
-                        //BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
-                            if (GetMultiModalitySegmentation()) 
-                                BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3 -m CC[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},1,2] -m CC[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t2w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t2w${AtlasCaseExtension},1,2] -i 5x3 -o ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
-                            else
-                                BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3 -m CC[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}${AtlasCaseExtension},1,2] -i 5x3 -o ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
-                            BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
-                        //BMSAutoSegMainFile<<"      EndIf (${FileExistFlag})"<<std::endl;
-                        BMSAutoSegMainFile<<"      EndIf (${DisplacementExistList})"<<std::endl;
+            BMSAutoSegMainFile<<"       set (command_line rm ${DeformationFieldTrainToTrainDir}*.*)"<<std::endl;
+            BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
 
-                        BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasExistList ${WarpedAtlasTrainToTrainDir} ${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl;
-                        BMSAutoSegMainFile<<"If (${WarpedAtlasExistList} == '')"<<std::endl;
-                        if (GetMultiModalitySegmentation()) 
-                            BMSAutoSegMainFile<<"Run (output 'WarpImageMultiTransform 3 ${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -R ${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension} ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalAffine.txt --use-BSpline')"<<std::endl; 
-                        else
-                            BMSAutoSegMainFile<<"Run (output 'WarpImageMultiTransform 3 ${MultiAtlasDir}atlas_image/${WarpedCase}${AtlasCaseExtension} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -R ${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}${AtlasCaseExtension} ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalAffine.txt --use-BSpline')"<<std::endl; 
-                        BMSAutoSegMainFile<<"      EndIf (${WarpedAtlasExistList})"<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${WarpedCase})"<<std::endl;
-                BMSAutoSegMainFile<<"EndForEach (WarpedCase)"<<std::endl;
-            BMSAutoSegMainFile<<"EndForEach (WarpedCaseForTarget)"<<std::endl;
+            BMSAutoSegMainFile<<"       set (command_line rm ${WarpedAtlasTrainToTrainDir}*.*)"<<std::endl;
+            BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
         }
+        // ANTS registration atlas-atlas
+        BMSAutoSegMainFile<<"set (Path ${DeformationFieldTrainToTrainDir})"<<std::endl;
+        BMSAutoSegMainFile<<"   echo('atlas-atlas displacement directory; ' ${Path})"<<std::endl; 	  
+        BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
+        BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
+        BMSAutoSegMainFile<<"ForEach (WarpedCaseForTarget ${AtlasList}) "<<std::endl;
+            BMSAutoSegMainFile<<"ForEach (WarpedCase ${AtlasList}) "<<std::endl;
+                BMSAutoSegMainFile<<"      If (${WarpedCase} != ${WarpedCaseForTarget})"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (outputfilenameForCheck ${WarpedCaseForTarget}x${WarpedCase}TotalWarp.nii.gz)"<<std::endl;
+           //         BMSAutoSegMainFile<<"   echo('atlas-atlas displacement file; ' ${outputfilenameForCheck})"<<std::endl; 	  
+                    BMSAutoSegMainFile<<"ListFileInDir(DisplacementExistList ${Path} ${outputfilenameForCheck})"<<std::endl;
+                    BMSAutoSegMainFile<<"If (${DisplacementExistList} == '')"<<std::endl;
+                        if (GetMultiModalitySegmentation()) {
+                            BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3"<<std::endl;
+                            if (GetANTSCCWeight() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m CC[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
+                            if (GetANTSCCWeight2nd() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m CC[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t2w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t2w${AtlasCaseExtension},${ANTSCCWeight2nd},${ANTSCCRegionRadius2nd}])"<<std::endl;
+                            if (GetANTSMIWeight() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m MI[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
+                            if (GetANTSMIWeight2nd() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m MI[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t2w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t2w${AtlasCaseExtension},${ANTSMIWeight2nd},${ANTSMIBins2nd}])"<<std::endl;
+                            if (GetANTSMSQWeight() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m MSQ[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},${ANTSMSQWeight},0.01])"<<std::endl;
+                            if (GetANTSMSQWeight2nd() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m MSQ[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t2w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t2w${AtlasCaseExtension},${ANTSMSQWeight2nd},0.01])"<<std::endl;
+                        }
+                        else{
+                            BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3"<<std::endl;
+                            if (GetANTSCCWeight() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m CC[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
+                            if (GetANTSMIWeight() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m MI[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
+                            if (GetANTSMSQWeight() > 0.01)
+                                BMSAutoSegMainFile<<"    set (command_line ${command_line} -m MSQ[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},${ANTSMSQWeight},0.01])"<<std::endl;
+                        }
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -i ${ANTSIterations} -o ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Total.nii.gz)"<<std::endl;
+                        if (std::strcmp(GetANTSRegistrationFilterType(), "GreedyDiffeomorphism") == 0)
+                        {
+                            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t SyN[${ANTSTransformationStep}])"<<std::endl;
+                            if (GetANTSGaussianSmoothing())
+                              BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[${ANTSGaussianSigma},0])"<<std::endl;      
+                        }
+                        else if (std::strcmp(GetANTSRegistrationFilterType(), "SpatiotemporalDiffeomorphism") == 0)
+                        {
+                            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t SyN[${ANTSTransformationStep}])"<<std::endl;
+                            if (GetANTSGaussianSmoothing())
+                              BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[${ANTSGaussianSigma},0.5])"<<std::endl;      
+                        }
+                        else if (std::strcmp(GetANTSRegistrationFilterType(), "Elastic") == 0)
+                        {
+                            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t Elast[${ANTSTransformationStep}])"<<std::endl;
+                            if (GetANTSGaussianSmoothing())
+                              BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
+                        }
+                        else if (std::strcmp(GetANTSRegistrationFilterType(), "Exponential") == 0)
+                        {
+                            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t Exp[${ANTSTransformationStep}])"<<std::endl;
+                            if (GetANTSGaussianSmoothing())
+                              BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
+                        }
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
+                        BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+                    BMSAutoSegMainFile<<"      EndIf (${DisplacementExistList})"<<std::endl;
 
-//   if (GetMultiAtlasAtlasRegistration()){
-            // ANTS registration targe-atlas
-            BMSAutoSegMainFile<<"set (Path ${DisplacementFieldDirectory})"<<std::endl;
-            BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
+                    BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasExistList ${WarpedAtlasTrainToTrainDir} ${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl;
+                    BMSAutoSegMainFile<<"If (${WarpedAtlasExistList} == '')"<<std::endl;
+                    if (GetMultiModalitySegmentation()){ 
+                        BMSAutoSegMainFile<<"Run (output 'WarpImageMultiTransform 3 ${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -R ${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension} ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalAffine.txt --use-BSpline')"<<std::endl; 
+                        BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -rescale 0,32767 -outfile ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz')"<<std::endl; 
+                    }
+                    else{
+                        BMSAutoSegMainFile<<"Run (output 'WarpImageMultiTransform 3 ${MultiAtlasDir}atlas_image/${WarpedCase}${AtlasCaseExtension} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -R ${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}${AtlasCaseExtension} ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalAffine.txt --use-BSpline')"<<std::endl; 
+                        BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -rescale 0,32767 -outfile ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz')"<<std::endl; 
+                    }
+                    BMSAutoSegMainFile<<"      EndIf (${WarpedAtlasExistList})"<<std::endl;
+                BMSAutoSegMainFile<<"      EndIf (${WarpedCase})"<<std::endl;
+            BMSAutoSegMainFile<<"EndForEach (WarpedCase)"<<std::endl;
+        BMSAutoSegMainFile<<"EndForEach (WarpedCaseForTarget)"<<std::endl;
 
-            BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
-            BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
-            BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList}) "<<std::endl;
-                //check the exist of ANTS registration
-                BMSAutoSegMainFile<<"    	set (outputfilename atlas_${AtlasCase}x${TargetList}Total.nii.gz)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (outputfilenameForCheck atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
-                BMSAutoSegMainFile<<"ForEach (FilenameInList ${ANTSOutputDisplacementFieldList}) "<<std::endl;
-               //     BMSAutoSegMainFile<<"   echo(${FilenameInList}       ${outputfilename})"<<std::endl; 	  
-                    BMSAutoSegMainFile<<"      If (${FilenameInList} == ${outputfilenameForCheck})"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (FileExistFlag 1)"<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${FilenameInList})"<<std::endl;
-                BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
-                 
-                BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
-                    if (GetMultiModalitySegmentation()) 
-                        //BMSAutoSegMainFile<<"    	set (command_line ${ANTSCmd} 3 -m CC[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension},1,2] -m CC[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${2ndAtlasCase}${AtlasCaseExtension},1,2] -i 100x50x25 -o ${DisplacementFieldDirectory}${outputfilename} -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (command_line ${ANTSCmd} 3 -m CC[${StrippedCase},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension},1,2] -m CC[${T2StrippedCase},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t2w${AtlasCaseExtension},1,2] -i 5x1 -o ${DisplacementFieldDirectory}${outputfilename} -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
-                    else
-                        BMSAutoSegMainFile<<"    	set (command_line ${ANTSCmd} 3 -m CC[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension},1,2] -i 5x2 -o ${DisplacementFieldDirectory}${outputfilename} -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
-                    BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
-                //    BMSAutoSegMainFile<<"   echo(${output})"<<std::endl; 	  
-                BMSAutoSegMainFile<<"      EndIf (${FileExistFlag})"<<std::endl;
-            BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
+        // ANTS registration targe-atlas
+        BMSAutoSegMainFile<<"set (Path ${DisplacementFieldDirectory})"<<std::endl;
+        BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
 
+     //   BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
+        BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
+        BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList}) "<<std::endl;
+            //check the exist of ANTS registration
+            BMSAutoSegMainFile<<"    	set (outputfilename atlas_${AtlasCase}x${TargetList}Total.nii.gz)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (outputfilenameForCheck atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
+            BMSAutoSegMainFile<<"ForEach (FilenameInList ${ANTSOutputDisplacementFieldList}) "<<std::endl;
+                BMSAutoSegMainFile<<"      If (${FilenameInList} == ${outputfilenameForCheck})"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (FileExistFlag 1)"<<std::endl;
+                BMSAutoSegMainFile<<"      EndIf (${FilenameInList})"<<std::endl;
+            BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
+             
+            BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
+                if (GetMultiModalitySegmentation()) {
+                    BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3"<<std::endl;
+                    if (GetANTSCCWeight() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
+                    if (GetANTSCCWeight2nd() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${TargetPath}${MultiAtlasT2TargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t2w${AtlasCaseExtension},${ANTSCCWeight2nd},${ANTSCCRegionRadius2nd}])"<<std::endl;
+                    if (GetANTSMIWeight() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
+                    if (GetANTSMIWeight2nd() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${TargetPath}${MultiAtlasT2TargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t2w${AtlasCaseExtension},${ANTSMIWeight2nd},${ANTSMIBins2nd}])"<<std::endl;
+                    if (GetANTSMSQWeight() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension}],${ANTSMSQWeight},0.01)"<<std::endl;
+                    if (GetANTSMSQWeight2nd() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${TargetPath}${MultiAtlasT2TargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t2w${AtlasCaseExtension},${ANTSMSQWeight2nd},0.01])"<<std::endl;
+                }
+                else {
+                    BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3"<<std::endl;
+                    if (GetANTSCCWeight() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
+                    if (GetANTSMIWeight() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
+                    if (GetANTSMSQWeight() > 0.01)
+                        BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${TargetPath}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension}],${ANTSMSQWeight},0.01)"<<std::endl;
+                }
+                BMSAutoSegMainFile<<"    	set (command_line ${command_line} -i ${ANTSIterations} -o ${DisplacementFieldDirectory}${outputfilename})"<<std::endl;
+                if (std::strcmp(GetANTSRegistrationFilterType(), "GreedyDiffeomorphism") == 0)
+                {
+                    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t SyN[${ANTSTransformationStep}])"<<std::endl;
+                    if (GetANTSGaussianSmoothing())
+                      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[${ANTSGaussianSigma},0])"<<std::endl;      
+                }
+                else if (std::strcmp(GetANTSRegistrationFilterType(), "SpatiotemporalDiffeomorphism") == 0)
+                {
+                    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t SyN[${ANTSTransformationStep}])"<<std::endl;
+                    if (GetANTSGaussianSmoothing())
+                      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[${ANTSGaussianSigma},0.5])"<<std::endl;      
+                }
+                else if (std::strcmp(GetANTSRegistrationFilterType(), "Elastic") == 0)
+                {
+                    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t Elast[${ANTSTransformationStep}])"<<std::endl;
+                    if (GetANTSGaussianSmoothing())
+                      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
+                }
+                else if (std::strcmp(GetANTSRegistrationFilterType(), "Exponential") == 0)
+                {
+                    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -t Exp[${ANTSTransformationStep}])"<<std::endl;
+                    if (GetANTSGaussianSmoothing())
+                      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
+                }
+                BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
+                BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+            BMSAutoSegMainFile<<"      EndIf (${FileExistFlag})"<<std::endl;
+        BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
+        
+        BMSAutoSegMainFile<<"    	set (OriginalAtlasImagePath ${MultiAtlasDir}atlas_image/)"<<std::endl;
+        BMSAutoSegMainFile<<"ListFileInDir(AtlasImageLabelParcellationList ${OriginalAtlasImagePath})"<<std::endl;
+        // Atlas image Warping
+        BMSAutoSegMainFile<<"set (Path ${WarpedAtlasDir})"<<std::endl;
+        BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasImageList ${Path})"<<std::endl;
+        BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList}) "<<std::endl;
+            BMSAutoSegMainFile<<"    	set (outputfilename ${AtlasCase}_warped.nii.gz)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
+            BMSAutoSegMainFile<<"ForEach (FilenameInList ${WarpedAtlasImageList}) "<<std::endl;
+                BMSAutoSegMainFile<<"      If (${FilenameInList} == ${outputfilename})"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (FileExistFlag 1)"<<std::endl;
+                BMSAutoSegMainFile<<"      EndIf (${FilenameInList})"<<std::endl;
+            BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
             
-            BMSAutoSegMainFile<<"    	set (OriginalAtlasImagePath ${MultiAtlasDir}atlas_image/)"<<std::endl;
-            BMSAutoSegMainFile<<"ListFileInDir(AtlasImageLabelParcellationList ${OriginalAtlasImagePath})"<<std::endl;
-            // Atlas image Warping
-            BMSAutoSegMainFile<<"set (Path ${WarpedAtlasDir})"<<std::endl;
-            BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasImageList ${Path})"<<std::endl;
-            BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList}) "<<std::endl;
-                BMSAutoSegMainFile<<"    	set (outputfilename ${AtlasCase}_warped.nii.gz)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
-                BMSAutoSegMainFile<<"ForEach (FilenameInList ${WarpedAtlasImageList}) "<<std::endl;
-                    BMSAutoSegMainFile<<"      If (${FilenameInList} == ${outputfilename})"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (FileExistFlag 1)"<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${FilenameInList})"<<std::endl;
-                BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
-                
-                BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
-                    if (GetMultiModalitySegmentation()) {
-                        BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 0)"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (OriginalAtlasImage atlas_${AtlasCase}_t1w${AtlasCaseExtension})"<<std::endl;
-                        BMSAutoSegMainFile<<"ForEach (WarpedImageFilenameInList ${AtlasImageLabelParcellationList}) "<<std::endl;
-                            BMSAutoSegMainFile<<"      If (${WarpedImageFilenameInList} == ${OriginalAtlasImage})"<<std::endl;
-                                BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 1)"<<std::endl;
-                            BMSAutoSegMainFile<<"      EndIf (${WarpedImageFilenameInList})"<<std::endl;
-                        BMSAutoSegMainFile<<"EndForEach (WarpedImageFilenameInList)"<<std::endl;
-
-                        BMSAutoSegMainFile<<"If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
-                            BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt)"<<std::endl;
-                            BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
-                        BMSAutoSegMainFile<<"      EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
-                    }
-                    else {
-                        BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 0)"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (OriginalAtlasImage atlas_${AtlasCase}${AtlasCaseExtension})"<<std::endl;
-                        BMSAutoSegMainFile<<"ForEach (WarpedImageFilenameInList ${AtlasImageLabelParcellationList}) "<<std::endl;
-                            BMSAutoSegMainFile<<"      If (${WarpedImageFilenameInList} == ${OriginalAtlasImage})"<<std::endl;
-                                BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 1)"<<std::endl;
-                            BMSAutoSegMainFile<<"      EndIf (${WarpedImageFilenameInList})"<<std::endl;
-                        BMSAutoSegMainFile<<"EndForEach (WarpedImageFilenameInList)"<<std::endl;
-                        BMSAutoSegMainFile<<"If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
-                            BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt)"<<std::endl;
-                            BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
-                        BMSAutoSegMainFile<<"      EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
-                    }
-                   // BMSAutoSegMainFile<<"      Run (output 'WarpImageMultiTransform 3 ${MultiAtlasDir}${AtlasCase}.nii ${WarpedAtlasDir}${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}${TargetList}x${AtlasCase}TotalWarp.nii.gz')"<<std::endl; 
-                BMSAutoSegMainFile<<"      EndIf (${FileExistFlag})"<<std::endl;
-        //        BMSAutoSegMainFile<<"   echo(${output})"<<std::endl; 	  
-            BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
-
-            // Atlas label and parcellation Warping
-            BMSAutoSegMainFile<<"set (Path ${WarpedLabelDir})"<<std::endl;
-            BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasLabelList ${Path})"<<std::endl;
-            BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList})"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (outputfilename label_${AtlasCase}_warped.nii.gz)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
-                BMSAutoSegMainFile<<"ForEach (FilenameInList ${WarpedAtlasLabelList}) "<<std::endl;
-                    BMSAutoSegMainFile<<"      If (${FilenameInList} == ${outputfilename})"<<std::endl;
-                        BMSAutoSegMainFile<<"    	set (FileExistFlag 1)"<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${FilenameInList})"<<std::endl;
-                BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
-
-                BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
+            BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
+            if (GetMultiModalitySegmentation()) {
                 BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 0)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (OriginalAtlasImage label_${AtlasCase}${AtlasCaseExtension})"<<std::endl;
+                BMSAutoSegMainFile<<"    	set (OriginalAtlasImage atlas_${AtlasCase}_t1w${AtlasCaseExtension})"<<std::endl;
                 BMSAutoSegMainFile<<"ForEach (WarpedImageFilenameInList ${AtlasImageLabelParcellationList}) "<<std::endl;
                     BMSAutoSegMainFile<<"      If (${WarpedImageFilenameInList} == ${OriginalAtlasImage})"<<std::endl;
                         BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 1)"<<std::endl;
@@ -6390,25 +6435,70 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                 BMSAutoSegMainFile<<"EndForEach (WarpedImageFilenameInList)"<<std::endl;
 
                 BMSAutoSegMainFile<<"If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
-                    BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/label_${AtlasCase}${AtlasLabelExtension} ${WarpedLabelDir}label_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt --use-NN)"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt)"<<std::endl;
                     BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+                    BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -rescale 0,32767 -outfile ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz')"<<std::endl; 
                 BMSAutoSegMainFile<<"      EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
-                   // BMSAutoSegMainFile<<"      Run (output 'WarpImageMultiTransform 3 ${MultiAtlasDir}label_${AtlasCase}.nii ${WarpedLabelDir}label_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}${TargetList}xatlas_${AtlasCase}TotalWarp.nii.gz')"<<std::endl; 
-                BMSAutoSegMainFile<<"      EndIf (${FileExistFlag})"<<std::endl;
-
+            }
+            else {
                 BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 0)"<<std::endl;
-                BMSAutoSegMainFile<<"    	set (OriginalAtlasImage parcellation_${AtlasCase}${AtlasCaseExtension})"<<std::endl;
+                BMSAutoSegMainFile<<"    	set (OriginalAtlasImage atlas_${AtlasCase}${AtlasCaseExtension})"<<std::endl;
                 BMSAutoSegMainFile<<"ForEach (WarpedImageFilenameInList ${AtlasImageLabelParcellationList}) "<<std::endl;
                     BMSAutoSegMainFile<<"      If (${WarpedImageFilenameInList} == ${OriginalAtlasImage})"<<std::endl;
                         BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 1)"<<std::endl;
                     BMSAutoSegMainFile<<"      EndIf (${WarpedImageFilenameInList})"<<std::endl;
                 BMSAutoSegMainFile<<"EndForEach (WarpedImageFilenameInList)"<<std::endl;
-
                 BMSAutoSegMainFile<<"If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
-                    BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/parcellation_${AtlasCase}${AtlasCaseExtension} ${WarpedParcellationDir}parcellation_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt --use-NN)"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt)"<<std::endl;
                     BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+                    BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -rescale 0,32767 -outfile ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz')"<<std::endl; 
                 BMSAutoSegMainFile<<"      EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
-            BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
+            }
+            BMSAutoSegMainFile<<"      EndIf (${FileExistFlag})"<<std::endl;
+        BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
+
+        // Atlas label and parcellation Warping
+        BMSAutoSegMainFile<<"set (Path ${WarpedLabelDir})"<<std::endl;
+        BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasLabelList ${Path})"<<std::endl;
+        BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList})"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (outputfilename label_${AtlasCase}_warped.nii.gz)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
+            BMSAutoSegMainFile<<"ForEach (FilenameInList ${WarpedAtlasLabelList}) "<<std::endl;
+                BMSAutoSegMainFile<<"      If (${FilenameInList} == ${outputfilename})"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (FileExistFlag 1)"<<std::endl;
+                BMSAutoSegMainFile<<"      EndIf (${FilenameInList})"<<std::endl;
+            BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
+
+            BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 0)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (OriginalAtlasImage label_${AtlasCase}${AtlasCaseExtension})"<<std::endl;
+            BMSAutoSegMainFile<<"ForEach (WarpedImageFilenameInList ${AtlasImageLabelParcellationList}) "<<std::endl;
+                BMSAutoSegMainFile<<"      If (${WarpedImageFilenameInList} == ${OriginalAtlasImage})"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 1)"<<std::endl;
+                BMSAutoSegMainFile<<"      EndIf (${WarpedImageFilenameInList})"<<std::endl;
+            BMSAutoSegMainFile<<"EndForEach (WarpedImageFilenameInList)"<<std::endl;
+
+            BMSAutoSegMainFile<<"If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
+                BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/label_${AtlasCase}${AtlasLabelExtension} ${WarpedLabelDir}label_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt --use-NN)"<<std::endl;
+                BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+            BMSAutoSegMainFile<<"      EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
+               // BMSAutoSegMainFile<<"      Run (output 'WarpImageMultiTransform 3 ${MultiAtlasDir}label_${AtlasCase}.nii ${WarpedLabelDir}label_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}${TargetList}xatlas_${AtlasCase}TotalWarp.nii.gz')"<<std::endl; 
+            BMSAutoSegMainFile<<"      EndIf (${FileExistFlag})"<<std::endl;
+
+            BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 0)"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (OriginalAtlasImage parcellation_${AtlasCase}${AtlasCaseExtension})"<<std::endl;
+            BMSAutoSegMainFile<<"ForEach (WarpedImageFilenameInList ${AtlasImageLabelParcellationList}) "<<std::endl;
+                BMSAutoSegMainFile<<"      If (${WarpedImageFilenameInList} == ${OriginalAtlasImage})"<<std::endl;
+                    BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 1)"<<std::endl;
+                BMSAutoSegMainFile<<"      EndIf (${WarpedImageFilenameInList})"<<std::endl;
+            BMSAutoSegMainFile<<"EndForEach (WarpedImageFilenameInList)"<<std::endl;
+
+            BMSAutoSegMainFile<<"If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
+                BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/parcellation_${AtlasCase}${AtlasCaseExtension} ${WarpedParcellationDir}parcellation_${AtlasCase}_warped.nii.gz -R ${TargetPath}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt --use-NN)"<<std::endl;
+                BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+            BMSAutoSegMainFile<<"      EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
+        BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
 
         SetWarpedAtlasList(WarpedAtlasDirectory.c_str());
         SetWarpedAtlasTrainToTrainList(WarpedAtlasTrainToTrainDirectory.c_str());
@@ -6416,86 +6506,83 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         SetDeformationFieldList(DeformationFieldDirectory.c_str());
         SetDeformationFieldTrainToTrainList(DeformationFieldTrainToTrainDirectory.c_str());
 
- //       SortStringList(m_WarpedAtlasList, GetNbWarpedAtlas());
-//        strTmp = m_WarpedAtlasList[0];
-//        BMSAutoSegMainFile<<"set (IntEnergyCasesList "<<strTmp.c_str()<<")"<<std::endl;
-//        for (int DataNumber = 1; DataNumber < GetNbWarpedAtlas(); DataNumber++){       // set up warped atlas list
-//            strTmp = m_WarpedAtlasList[DataNumber];
-//            BMSAutoSegMainFile<<"set (IntEnergyCasesList ${IntEnergyCasesList} "<<strTmp.c_str()<<")"<<std::endl;
-//        }      
-
-  //      SortStringList(m_DeformationFieldList, GetNbDeformationField());
- //       strTmp = m_DeformationFieldList[0];
- //       BMSAutoSegMainFile<<"set (HarmonicEnergyCasesList "<<strTmp.c_str()<<")"<<std::endl;
- //       for (int DataNumber = 1; DataNumber < GetNbDeformationField(); DataNumber++){       // set up warped atlas list
- //           strTmp = m_DeformationFieldList[DataNumber];
- //           BMSAutoSegMainFile<<"set (HarmonicEnergyCasesList ${HarmonicEnergyCasesList} "<<strTmp.c_str()<<")"<<std::endl;
- //       }
- 
- //       BMSAutoSegMainFile<<"   ListFileInDir(IntEnergyCasesList ${WarpedAtlasDir})"<<std::endl;
-//        BMSAutoSegMainFile<<"ForEach (ShowCase ${IntEnergyCasesList}) "<<std::endl;
- //          BMSAutoSegMainFile<<"echo (${ShowCase}) "<<std::endl;
-  //      BMSAutoSegMainFile<<"EndForEach (ShowCase)"<<std::endl;
-        
-//        BMSAutoSegMainFile<<"   ListFileInDir(HarmonicEnergyCasesList ${DeformationFieldDir})"<<std::endl;
-//        BMSAutoSegMainFile<<"ForEach (ShowCase1 ${HarmonicEnergyCasesList}) "<<std::endl;
- //          BMSAutoSegMainFile<<"echo (${ShowCase1}) "<<std::endl;
-  //      BMSAutoSegMainFile<<"EndForEach (ShowCase1)"<<std::endl;
-
-  //      BMSAutoSegMainFile<<"ForEach (IntEnergyCase ${IntEnergyCasesList}) "<<std::endl;
-   //         BMSAutoSegMainFile<<"echo (${IntEnergyCase}) "<<std::endl;
-    //    BMSAutoSegMainFile<<"EndForEach (IntEnergyCase)"<<std::endl;
-
-//        BMSAutoSegMainFile<<"ForEach (HarmonicEnergyCase ${HarmonicEnergyCasesList}) "<<std::endl;
- //           BMSAutoSegMainFile<<"echo (${HarmonicEnergyCase}) "<<std::endl;
-  //      BMSAutoSegMainFile<<"EndForEach (HarmonicEnergyCase)"<<std::endl;
-
-        //if (GetMultiAtlasAtlasRegistration()){
         if (GetRecalculateAtlasAtlasMultiAtlasEnergy()){
-        // Calculate energy atlas-atlas intensity
             BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasList}) "<<std::endl;
-                BMSAutoSegMainFile<<"ForEach (IntEnergyCaseTrainToTrain ${AtlasList}) "<<std::endl;
-                    BMSAutoSegMainFile<<"      If (${IntEnergyCaseTrainToTrain} != ${AtlasCase})"<<std::endl;
-                        BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -p ${WarpedAtlasTrainToTrainDir}${IntEnergyCaseTrainToTrain}x${AtlasCase}Warped.nii.gz ${MultiAtlasDir}atlas_image/${AtlasCase}${AtlasCaseExtension} ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate intensity energy
-                        BMSAutoSegMainFile<<"echo (${output}) "<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${IntEnergyCaseTrainToTrain})"<<std::endl;
-                BMSAutoSegMainFile<<"EndForEach (IntEnergyCaseTrainToTrain)"<<std::endl;
-                BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${IntEnergyDir}IntensityEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize intensity energy
-                BMSAutoSegMainFile<<"echo (${output}) "<<std::endl;
+                BMSAutoSegMainFile<<"    	set (command_line rm ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt)"<<std::endl;
+                BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
             BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
-
-        // Calculate energy atlas-atlas harmonic
             BMSAutoSegMainFile<<"ForEach (TargetCase ${AtlasList}) "<<std::endl;
-                BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasList}) "<<std::endl;
-                    BMSAutoSegMainFile<<"      If (${AtlasCase} != ${TargetCase})"<<std::endl;
-                        BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -e ${DeformationFieldTrainToTrainDir}${TargetCase}x${AtlasCase}TotalWarp.nii.gz ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate harmonic energy
-                    BMSAutoSegMainFile<<"      EndIf (${AtlaseCase})"<<std::endl;
-                BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
-                BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize harmonic energy
+                BMSAutoSegMainFile<<"    	set (command_line rm ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt)"<<std::endl;
+                BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
             BMSAutoSegMainFile<<"EndForEach (TargetCase)"<<std::endl;
         }
 
+        // Calculate energy atlas-atlas intensity
+        BMSAutoSegMainFile<<"    	set (command_line rm ${IntEnergyDir}IntensityEnergyNormalized.txt)"<<std::endl;
+        BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasList}) "<<std::endl;
+            BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${IntEnergyDir} ${AtlasCase}IntensityEnergy.txt)"<<std::endl;
+            BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
+            BMSAutoSegMainFile<<"ForEach (IntEnergyCaseTrainToTrain ${AtlasList}) "<<std::endl;
+                BMSAutoSegMainFile<<"      If (${IntEnergyCaseTrainToTrain} != ${AtlasCase})"<<std::endl;
+                    if (GetMultiModalitySegmentation())
+                        BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -p ${WarpedAtlasTrainToTrainDir}${IntEnergyCaseTrainToTrain}x${AtlasCase}Warped.nii.gz ${MultiAtlasDir}atlas_image/${AtlasCase}_t1w${AtlasCaseExtension} ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate intensity energy
+                    else
+                        BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -p ${WarpedAtlasTrainToTrainDir}${IntEnergyCaseTrainToTrain}x${AtlasCase}Warped.nii.gz ${MultiAtlasDir}atlas_image/${AtlasCase}${AtlasCaseExtension} ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate intensity energy
+                BMSAutoSegMainFile<<"      EndIf (${IntEnergyCaseTrainToTrain})"<<std::endl;
+            BMSAutoSegMainFile<<"EndForEach (IntEnergyCaseTrainToTrain)"<<std::endl;
+      //          BMSAutoSegMainFile<<"echo (${output}) "<<std::endl;
+            BMSAutoSegMainFile<<"      EndIf (${EnergyList})"<<std::endl;
+            BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${IntEnergyDir}IntensityEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize intensity energy
+        BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
+
+        // Calculate energy atlas-atlas harmonic
+        BMSAutoSegMainFile<<"    	set (command_line rm ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt)"<<std::endl;
+        BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        BMSAutoSegMainFile<<"ForEach (TargetCase ${AtlasList}) "<<std::endl;
+            BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${HarmonicEnergyDir} ${TargetCase}HarmonicEnergy.txt)"<<std::endl;
+            BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
+                BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasList}) "<<std::endl;
+                    BMSAutoSegMainFile<<"      If (${AtlasCase} != ${TargetCase})"<<std::endl;
+                        if (GetMultiModalitySegmentation())
+                            BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -e ${DeformationFieldTrainToTrainDir}${TargetCase}x${AtlasCase}TotalWarp.nii.gz ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate harmonic energy
+                        else
+                            BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -e ${DeformationFieldTrainToTrainDir}${TargetCase}x${AtlasCase}TotalWarp.nii.gz ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate harmonic energy
+                    BMSAutoSegMainFile<<"      EndIf (${AtlaseCase})"<<std::endl;
+                BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
+                BMSAutoSegMainFile<<"      EndIf (${EnergyList})"<<std::endl;
+                BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize harmonic energy
+        BMSAutoSegMainFile<<"EndForEach (TargetCase)"<<std::endl;
+
         if (GetRecalculateAtlasTargetMultiAtlasEnergy()){
+       // if (GetRecalculateAtlasAtlasMultiAtlasEnergy()){
+            BMSAutoSegMainFile<<"    	set (command_line rm ${IntEnergyDir}intensityEnergy.txt)"<<std::endl;
+            BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+
+            BMSAutoSegMainFile<<"    	set (command_line rm ${HarmonicEnergyDir}harmonicEnergy.txt)"<<std::endl;
+            BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        }
         // Calculate energy atlas-target
-        //BMSAutoSegMainFile<<"ForEach (IntEnergyCase ${IntEnergyCasesList}) "<<std::endl;
+        BMSAutoSegMainFile<<"    	set (command_line rm ${IntEnergyDir}intensityEnergy.txt)"<<std::endl;
+        BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${IntEnergyDir} intensityEnergy.txt)"<<std::endl;
+        BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
             BMSAutoSegMainFile<<"ForEach (IntEnergyCase ${AtlasCaseIDList}) "<<std::endl;
                 BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -p ${TargetPath}${MultiAtlasTargetFile} ${WarpedAtlasDir}atlas_${IntEnergyCase}_warped.nii.gz ${IntEnergyDir}intensityEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate intensity energy
             BMSAutoSegMainFile<<"EndForEach (IntEnergyCase)"<<std::endl;
-            BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${IntEnergyDir}intensityEnergy.txt ${IntEnergyDir}IntensityEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize intensity energy
-        
-      //  std::string outputMark = ">>";
-      // BMSAutoSegMainFile<<"set (ABCDCmd cat)"<<std::endl;
-      //  BMSAutoSegMainFile<<"set (command_line ${ABCDCmd} ${IntEnergyDir}AtlasToTargetIntensityEnergyNormalized.txt ${IntEnergyDir}AtlasToAtlasIntensityEnergyNormalized.txt "<<outputMark.c_str()<<" ${IntEnergyDir}IntensityEnergyNormalized.txt)"<<std::endl;
-      //  BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        BMSAutoSegMainFile<<"      EndIf (${EnergyList})"<<std::endl;
+        BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${IntEnergyDir}intensityEnergy.txt ${IntEnergyDir}IntensityEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize intensity energy
 
+        BMSAutoSegMainFile<<"    	set (command_line rm ${HarmonicEnergyDir}harmonicEnergy.txt)"<<std::endl;
+        BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${HarmonicEnergyDir} harmonicEnergy.txt)"<<std::endl;
+        BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
             BMSAutoSegMainFile<<"ForEach (HarmonicEnergyCase ${AtlasCaseIDList}) "<<std::endl;
                 BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -e ${DeformationFieldDir}atlas_${HarmonicEnergyCase}x${TargetCaseIDList}TotalWarp.nii.gz ${HarmonicEnergyDir}harmonicEnergy.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // calculate harmonic energy
             BMSAutoSegMainFile<<"EndForEach (HarmonicEnergyCase)"<<std::endl;
-            BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${HarmonicEnergyDir}harmonicEnergy.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize harmonic energy
-        }
-
-      //  BMSAutoSegMainFile<<"    	set (command_line cat ${IntEnergyDir}AtlasToTargetHarmonicEnergyNormalized.txt ${IntEnergyDir}AtlasToAtlasHarmonicEnergyNormalized.txt >> ${IntEnergyDir}HarmonicEnergyNormalized.txt)"<<std::endl;
-       // BMSAutoSegMainFile<<"Run (output '${command_line}')"<<std::endl; // calculate intensity energy
+        BMSAutoSegMainFile<<"      EndIf (${EnergyList})"<<std::endl;
+        BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -n ${HarmonicEnergyDir}harmonicEnergy.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${NumberAtlas} ${NumberCase}')"<<std::endl; // normalize harmonic energy
 
             // Template selection
             BMSAutoSegMainFile<<"    	set (command_line rm ${TemplateDir}${TargetList}template.txt)"<<std::endl;
@@ -6514,8 +6601,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             BMSAutoSegMainFile<<"      Run (output '${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation_seg_cortical_GM.nrrd -extractLabel 1 -outfile ${FusedLabelDir}${TargetList}_seg_subcortical_mask.nrrd')"<<std::endl; 
             BMSAutoSegMainFile<<"      Run (output '${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation_seg_cortical_GM.nrrd -sub ${FusedLabelDir}${TargetList}_seg_subcortical_mask.nrrd -outfile ${FusedLabelDir}${TargetList}_seg_cortical.nrrd')"<<std::endl; 
             BMSAutoSegMainFile<<"      Run (output 'rm ${FusedLabelDir}${TargetList}parcellation_seg_cortical_CSF.nrrd ${FusedLabelDir}${TargetList}parcellation_seg_cortical_GM.nrrd ${FusedLabelDir}${TargetList}parcellation_seg_cortical_WM.nrrd ${FusedLabelDir}${TargetList}_seg_subcortical_mask.nrrd')"<<std::endl; 
-            
-    //        BMSAutoSegMainFile<<"   echo(${output})"<<std::endl; 	  
         }
     }
  
@@ -9744,6 +9829,11 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       {
           SetMultiModalitySegmentation(atoi(Line + 37));
       }
+      else if ( (std::strncmp("Compute Multi-atlas Segmentation: ", Line, 34)) == 0)
+      {
+          SetMultiAtlasSegmentation(atoi(Line + 34));
+ 
+      }
       else if ( (std::strncmp("Conduct Atlas-Atlas registration: ", Line, 34)) == 0)
       {
           SetMultiAtlasAtlasRegistration(atoi(Line + 34));
@@ -9755,6 +9845,10 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       else if ( (std::strncmp("Recalculate Atlas-Atlas Energy: ", Line, 32)) == 0)
       {
           SetRecalculateAtlasAtlasMultiAtlasEnergy(atoi(Line + 32));
+      }
+      else if ( (std::strncmp("Conduct Atlas-Atlas Registration: ", Line, 34)) == 0)
+      {
+          SetMultiAtlasAtlasRegistration(atoi(Line + 34));
       }
 
     }
@@ -10484,25 +10578,25 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
         else if ( (std::strncmp("ANTS CC weight for 2nd modality: ", Line, 33)) == 0)
 	{
 	  ANTSCCWeight = atof(Line+33);
-	  SetANTSCCWeight(ANTSCCWeight);	
-	} else if ( (std::strncmp("ANTS CC region radius 2nd modality: ", Line, 40)) == 0) {
+	  SetANTSCCWeight2nd(ANTSCCWeight);	
+	} else if ( (std::strncmp("ANTS CC region radius for 2nd modality: ", Line, 40)) == 0) {
 	  ANTSCCRegionRadius = atof(Line+40);
-	  SetANTSCCRegionRadius(ANTSCCRegionRadius);	
+	  SetANTSCCRegionRadius2nd(ANTSCCRegionRadius);	
 	}
-	else if ( (std::strncmp("ANTS MI weight 2nd modality: ", Line, 33)) == 0)
+	else if ( (std::strncmp("ANTS MI weight for 2nd modality: ", Line, 33)) == 0)
 	{
 	  ANTSMIWeight = atof(Line+33);
-	  SetANTSMIWeight(ANTSMIWeight);	
+	  SetANTSMIWeight2nd(ANTSMIWeight);	
 	}
-	else if ( (std::strncmp("ANTS MI bins 2nd modality: ", Line, 31)) == 0)
+	else if ( (std::strncmp("ANTS MI bins for 2nd modality: ", Line, 31)) == 0)
 	{
 	  ANTSMIBins = atoi(Line+31);
-	  SetANTSMIBins(ANTSMIBins);	
+	  SetANTSMIBins2nd(ANTSMIBins);	
 	}
-	else if ( (std::strncmp("ANTS MSQ weight 2nd modality: ", Line, 34)) == 0)
+	else if ( (std::strncmp("ANTS MSQ weight for 2nd modality: ", Line, 34)) == 0)
 	{
 	  ANTSMSQWeight = atof(Line+34);
-	  SetANTSMSQWeight(ANTSMSQWeight);	
+	  SetANTSMSQWeight2nd(ANTSMSQWeight);	
 	}
 	else if ( (std::strncmp("ANTS Registration Type: ", Line, 24)) == 0)
 	{
