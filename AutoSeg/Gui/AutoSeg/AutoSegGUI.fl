@@ -8,7 +8,7 @@ class AutoSegGUI {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg 3.0.0} open
-      xywh {423 51 1020 960} type Double box UP_BOX resizable visible
+      xywh {898 70 1020 960} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 10 633 15} labelfont 8 textfont 8
@@ -80,7 +80,7 @@ class AutoSegGUI {open
       } {
         Fl_Group g_ComputationGroup {
           label Computation open
-          xywh {5 75 895 860} labelfont 8 align 69 hide
+          xywh {5 75 895 860} labelfont 8 align 69
         } {
           Fl_Group {} {
             label {Step 1 - Set the process data directory} open
@@ -954,32 +954,56 @@ class AutoSegGUI {open
             }
             Fl_Group {} {
               label {Global class priors} open
-              xywh {35 380 385 95} box DOWN_FRAME labelfont 9 align 5
+              xywh {35 370 385 110} box DOWN_FRAME labelfont 9 align 5
             } {
               Fl_Counter g_Prior3 {
                 label {Prior 3 : }
                 callback {SetPrior3GUI()}
-                tooltip {Prior 3 (CSF)} xywh {105 445 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 0.7 textfont 8
+                tooltip {Prior 3 (CSF)} xywh {90 435 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 0.7 textfont 8
               }
               Fl_Counter g_Prior4 {
                 label {Prior 4 : }
                 callback {SetPrior4GUI()}
-                tooltip {Prior 4 (other)} xywh {255 395 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+                tooltip {Prior 4 (other)} xywh {215 385 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
               }
               Fl_Counter g_Prior2 {
                 label {Prior 2 : }
                 callback {SetPrior2GUI()}
-                tooltip {Prior 2 (Gray matter)} xywh {105 420 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+                tooltip {Prior 2 (Gray matter)} xywh {90 410 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
               }
               Fl_Counter g_Prior1 {
                 label {Prior 1 : }
                 callback {SetPrior1GUI()}
-                tooltip {Prior 1 (White matter)} xywh {105 395 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1.3 textfont 8
+                tooltip {Prior 1 (White matter)} xywh {90 385 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1.3 textfont 8
               }
               Fl_Counter g_Prior5 {
                 label {Prior 5 : }
                 callback {SetPrior5GUI()}
-                tooltip {Prior 4 (other)} xywh {255 420 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+                tooltip {Prior 4 (other)} xywh {215 410 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+              }
+              Fl_Counter g_Prior6 {
+                label {Prior 6 : }
+                callback {SetPrior6GUI()}
+                tooltip {Prior 4 (other)} xywh {215 435 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+              }
+              Fl_Counter g_Prior7 {
+                label {Prior 7 : }
+                callback {SetPrior7GUI()}
+                tooltip {Prior 4 (other)} xywh {340 385 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+              }
+              Fl_Counter g_Prior8 {
+                label {Prior 8 : }
+                callback {SetPrior8GUI()}
+                tooltip {Prior 4 (other)} xywh {340 410 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+              }
+              Fl_Counter g_Prior9 {
+                label {Prior 9 : }
+                callback {SetPrior9GUI()}
+                tooltip {Prior 4 (other)} xywh {340 435 60 20} type Simple labelfont 8 align 4 minimum 0 maximum 10 value 1 textfont 8
+              }
+              Fl_Button {} {
+                label {If more than 9 classes, please manually edit.}
+                xywh {40 459 270 19} box NO_BOX labelfont 8
               }
             }
             Fl_Counter g_MaxBiasDegree {
@@ -1277,7 +1301,7 @@ class AutoSegGUI {open
         }
         Fl_Group g_RegistrationParametersGroup {
           label {Registration Parameters} open
-          xywh {10 75 890 865} labelfont 8
+          xywh {10 75 890 865} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Rigid registration} open
@@ -1441,7 +1465,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMIWeight {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins {
                       label {MI bins :}
@@ -1451,7 +1475,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMSQWeight {
                       label {MSQ weight :}
                       callback {SetANTSMSQWeightGUI()}
-                      tooltip {Weight for mean-square difference} xywh {650 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Weight for mean-square difference} xywh {650 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                   }
                   Fl_Group {} {
@@ -1502,13 +1526,18 @@ class AutoSegGUI {open
                     }
                   }
                   Fl_Group {} {
-                    label Iterations open
+                    label {Number of Threads: } open
                     xywh {220 495 510 38} box DOWN_FRAME labelfont 9 align 5
                   } {
                     Fl_Input g_ANTSIterations {
                       label {Number of iterations : }
                       callback {SetANTSIterationsGUI()}
                       tooltip {Number of iterations - x separated (e.g 100x100x10)} xywh {369 502 110 24} labelfont 8 textfont 8
+                    }
+                    Fl_Counter g_NumberOfThreads {
+                      label {Number of Threads: }
+                      callback {SetNumberOfThreadsGUI()}
+                      tooltip {number of threads can be used for the ANTS} xywh {620 505 80 20} type Simple labelfont 8 align 4 minimum 1 maximum 100 step 1 value 1 textfont 8
                     }
                   }
                   Fl_Group {} {
@@ -1528,7 +1557,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMIWeight2nd {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI2nd()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins2nd {
                       label {MI bins :}
@@ -1537,8 +1566,8 @@ class AutoSegGUI {open
                     }
                     Fl_Spinner g_ANTSMSQWeight2nd {
                       label {MSQ weight :}
-                      callback {SetANTSMSQWeightGUI2nd()} selected
-                      tooltip {Weight for mean-square difference} xywh {650 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
+                      callback {SetANTSMSQWeightGUI2nd()}
+                      tooltip {Weight for mean-square difference} xywh {650 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                   }
                 }
@@ -1737,16 +1766,20 @@ class AutoSegGUI {open
             xywh {35 467 320 28} box NO_BOX labelfont 8
           }
           Fl_Button {} {
-            label {3. Name the atlas images with a prefix of "atlas_"; save these images in "atlas/atlas_image/"}
-            xywh {44 519 550 26} box NO_BOX labelfont 8
+            label {3. Name the atlas images with a prefix of "atlas_"; for multi-modality sutudies, add  suffix of "_t1w" and "_t2w" to the name of atlases;}
+            xywh {45 519 785 26} type Radio box NO_BOX labelfont 8
           }
           Fl_Button {} {
             label {4. Name the atlas labels with a prefix of "label_";save these images in "atlas/atlas_image/"}
-            xywh {40 544 545 26} box NO_BOX labelfont 8
+            xywh {40 569 545 26} box NO_BOX labelfont 8
           }
           Fl_Button {} {
             label {2. Create a folder of "atlas_image".under "atlas"}
             xywh {50 492 290 28} box NO_BOX labelfont 8
+          }
+          Fl_Button {} {
+            label { save these images in "atlas/atlas_image/"}
+            xywh {55 544 260 24} type Radio box NO_BOX labelfont 8
           }
         }
       }
@@ -2174,5 +2207,15 @@ class AutoSegGUI {open
   Function {ANTSWithBrainmaskButtonChecked()} {open return_type {virtual void}
   } {}
   Function {UseInitialAffineButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {SetPrior6GUI()} {open return_type {virtual void}
+  } {}
+  Function {SetPrior7GUI()} {open return_type {virtual void}
+  } {}
+  Function {SetPrior8GUI()} {open return_type {virtual void}
+  } {}
+  Function {SetPrior9GUI()} {open return_type {virtual void}
+  } {}
+  Function {SetNumberOfThreadsGUI()} {open selected return_type {virtual void}
   } {}
 } 

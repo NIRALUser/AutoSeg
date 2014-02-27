@@ -548,12 +548,17 @@ void AutoSegComputation::SetDataList(const char *_Data, int _DataNumber, bool _G
 {
     if (_GUIMode==0)
     {
-        if ( !GetT2Image() && !GetPDImage()) 
+        if ( !GetT2Image() && !GetPDImage()) {
             SetData(_Data, m_T1List[_DataNumber]);
+            SetData(_Data, m_MultiAtlasT1List[_DataNumber]);
+        }
         else if (GetT2Image() && GetPDImage()) 
             SetDatawoGUI(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber], m_PDList[_DataNumber]);
-        else if (GetT2Image())
+        else if (GetT2Image()) {
             SetDatawoGUI(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber]);
+            SetData(_Data, m_MultiAtlasT1List[_DataNumber], m_MultiAtlasT2List[_DataNumber]);
+            std::cout << "T1 data " << _DataNumber << " : " << m_MultiAtlasT1List[_DataNumber] << "  T2 data: " << m_MultiAtlasT2List[_DataNumber] << std::endl;
+        }
         else
             SetDatawoGUI(_Data, m_T1List[_DataNumber], m_PDList[_DataNumber]);
     }
@@ -569,7 +574,6 @@ void AutoSegComputation::SetDataList(const char *_Data, int _DataNumber, bool _G
             //SetData(_Data, m_T1List[_DataNumber * 2], m_T2List[_DataNumber * 2 + 1]);
             SetData(_Data, m_T1List[_DataNumber], m_T2List[_DataNumber]);
             SetData(_Data, m_MultiAtlasT1List[_DataNumber], m_MultiAtlasT2List[_DataNumber]);
-            std::cout << "T1 data " << _DataNumber << " : " << m_MultiAtlasT1List[_DataNumber] << "  T2 data: " << m_MultiAtlasT2List[_DataNumber] << std::endl;
         }
         else
             SetData(_Data, m_T1List[_DataNumber], m_PDList[_DataNumber]);
@@ -598,6 +602,67 @@ void AutoSegComputation::SetAtlasLabelList(const char *_Data, int _DataNumber)
     for (int j = 0; j < FILE_LIST_LENGTH; j++)
         m_AtlasLabelList[_DataNumber][j] = ' ';
     SetData(_Data, m_AtlasLabelList[_DataNumber]);
+}
+
+void AutoSegComputation::SetNbTissueClass(const char *_Directory)
+{
+    DIR *dir;
+    struct dirent *ent;
+
+    m_NbTissueClass = 0;
+    if ((dir = opendir (_Directory)) != NULL) {
+        std::string filename;
+        std::string nbClass;
+        int i = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            bool validClass = 1;
+            int location = filename.find_first_of(".");
+            if (location != std::string::npos) {
+            	for (int i = 0; i < filename.find_first_of("."); i++){
+                    std::string digit = filename.substr(i, 1);
+                    if (atoi(digit.c_str()) <= 0 || atoi(digit.c_str()) >= 10)
+                    	validClass = 0;   
+            	}
+            	nbClass = filename.substr(0, filename.find_first_of(".") + 1);
+            	if(atoi(nbClass.c_str()) > 0 && atoi(nbClass.c_str()) < 10000 && validClass)    // skip . and ..
+               	    m_NbTissueClass++;
+	     }
+        }
+    }
+    closedir (dir);
+}
+
+void AutoSegComputation::SetNbStrippedTissueClass(const char *_Directory)
+{
+    DIR *dir;
+    struct dirent *ent;
+
+    m_NbStrippedTissueClass = 0;
+   // std::cout << "number of Stripped Tissues: " << m_NbStrippedTissueClass << std::endl; 
+    if ((dir = opendir (_Directory)) != NULL) {
+        std::string filename;
+        std::string nbClass;
+        int i = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            bool validClass = 1;
+            int location = filename.find_first_of(".");
+            if (location != std::string::npos) {
+            	for (int i = 0; i < filename.find_first_of("."); i++){
+               	    std::string digit = filename.substr(i, 1);
+              	    if (atoi(digit.c_str()) <= 0 || atoi(digit.c_str()) >= 10)
+                 	validClass = 0;   
+            	}
+                nbClass = filename.substr(0, filename.find_first_of(".") + 1);
+                if(atoi(nbClass.c_str()) > 0 && atoi(nbClass.c_str()) < 10000 && validClass)    // skip . and ..
+                    m_NbStrippedTissueClass++;
+            }
+        }
+    }
+    closedir (dir);
+    //std::cout << "number of Stripped Tissues: " << m_NbStrippedTissueClass << std::endl; 
+   // getchar();
 }
 
 void AutoSegComputation::SetWarpedAtlasList(const char *_Directory )
@@ -1709,6 +1774,7 @@ void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, con
   m_KillProcess = false;
   m_output.clear();
   ExecuteBatchMake(GetBMSAutoSegFile(),0);
+
 }
 
 void AutoSegComputation::ShowDisplay()
@@ -2383,6 +2449,10 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"Prior 3: "<<GetPrior3()<<std::endl;
   ParameterFile<<"Prior 4: "<<GetPrior4()<<std::endl;
   ParameterFile<<"Prior 5: "<<GetPrior5()<<std::endl;
+  ParameterFile<<"Prior 6: "<<GetPrior6()<<std::endl;
+  ParameterFile<<"Prior 7: "<<GetPrior7()<<std::endl;
+  ParameterFile<<"Prior 8: "<<GetPrior8()<<std::endl;
+  ParameterFile<<"Prior 9: "<<GetPrior9()<<std::endl;
   if (std::strcmp(GetEMSoftware(), "ABC") == 0)
   {
     ParameterFile<<"Fluid Atlas Warp: "<<GetFluidAtlasWarp()<<std::endl;
@@ -2463,6 +2533,7 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"ANTS Registration Step: "<<GetANTSTransformationStep()<<std::endl;
   ParameterFile<<"ANTS Gaussian Smoothing: "<<GetANTSGaussianSmoothing()<<std::endl;
   ParameterFile<<"ANTS Gaussian Sigma: "<<GetANTSGaussianSigma()<<std::endl;  
+  ParameterFile<<"ANTS Number of Threads: "<<GetNbANTSThreads()<<std::endl;  
   ParameterFile<<"\n// Skull Stripping"<<std::endl;
   ParameterFile<<"Delete Vessels: "<<GetDeleteVessels()<<std::endl;
   ParameterFile<<"\n// Intensity Rescaling"<<std::endl;
@@ -2752,6 +2823,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"      echo ('T1 show cases: '${T1CasesListShow})"<<std::endl;
   BMSAutoSegMainFile<<"EndForEach (T1CasesListShow)"<<std::endl;
 
+  std::ostringstream ssNumberOfThreads ;
+  ssNumberOfThreads << "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=" << GetNbANTSThreads() ;
+  itksys::SystemTools::PutEnv( ssNumberOfThreads.str().c_str() ) ;
 
   if (GetT2Image())
   {
@@ -3467,35 +3541,41 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	nbtoTemplate=30;
 	nbPosterior=31;
       }
+        std::cout << "Stripped Tissue Atlas: " << GetAtlasLoop() << std::endl;
+        SetNbStrippedTissueClass(GetAtlasLoop());
     }
     else
     {
-      BMSAutoSegMainFile<<"      set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
-      BMSAutoSegMainFile<<"      ListDirInDir (EMSList ${T1Path}/${AutoSegDir}/ ems)"<<std::endl;
-      if (GetRigidRegistration())
-	BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/atlasIso/)"<<std::endl;
-      else if (GetN4ITKBiasFieldCorrection())
-	BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/${Bias}/)"<<std::endl;
-      else if(GetReorientation())
-	BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/${OutputOrientation}/)"<<std::endl;
-      else
-	BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/)"<<std::endl;
-
-      BMSAutoSegMainFile<<"      set  (SUFFIX EMS)"<<std::endl;
-      if (GetANTSAtlasABC()) 
-          BMSAutoSegMainFile<<"      set (Atlas ${TissueSegAtlas})"<<std::endl;
-      else
-          BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLoc})"<<std::endl;
-      
-
-      BMSAutoSegMainFile<<"      set (stripEMS '')"<<std::endl;
-      BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
-      nbCorrected=27;
-      nbLabel=24;
-      nbRegistered=28;
-      nbTemplate=26;
-      nbtoTemplate=27;
-      nbPosterior=28;
+        BMSAutoSegMainFile<<"      set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
+        BMSAutoSegMainFile<<"      ListDirInDir (EMSList ${T1Path}/${AutoSegDir}/ ems)"<<std::endl;
+        if (GetRigidRegistration())
+          BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/atlasIso/)"<<std::endl;
+        else if (GetN4ITKBiasFieldCorrection())
+          BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/${Bias}/)"<<std::endl;
+        else if(GetReorientation())
+          BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/${AutoSegDir}/${OutputOrientation}/)"<<std::endl;
+        else
+          BMSAutoSegMainFile<<"      set (InputPath ${T1Path}/)"<<std::endl;
+       
+        BMSAutoSegMainFile<<"      set  (SUFFIX EMS)"<<std::endl;
+        if (GetANTSAtlasABC()) 
+            BMSAutoSegMainFile<<"      set (Atlas ${TissueSegAtlas})"<<std::endl;
+        else
+            BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLoc})"<<std::endl;
+        
+        BMSAutoSegMainFile<<"      set (stripEMS '')"<<std::endl;
+        BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
+        nbCorrected=27;
+        nbLabel=24;
+        nbRegistered=28;
+        nbTemplate=26;
+        nbtoTemplate=27;
+        nbPosterior=28;
+       
+        std::cout << "Tissue Atlas: " << GetTissueSegmentationAtlasDirectory() << std::endl;
+        std::cout << "Stripped Tissue Atlas: " << GetAtlasLoop() << std::endl;
+        SetNbTissueClass(GetTissueSegmentationAtlasDirectory());
+        
     }
 
     BMSAutoSegMainFile<<"      set (SuffixCorrected _corrected_${SUFFIX})"<<std::endl;
@@ -3592,10 +3672,56 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     if (std::strcmp(GetEMSoftware(), "ABC") == 0)
     {
-      BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior1()<<"</PRIOR>\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior2()<<"</PRIOR>\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior3()<<"</PRIOR>\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior4()<<"</PRIOR>\\n')"<<std::endl;
+      if (iteration == 0) {
+          if (GetNbTissueClass() > 0)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior1()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 1)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior2()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 2)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior3()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 3)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior4()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 4)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior5()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 5)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior6()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 6)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior7()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 7)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior8()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 8)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior9()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbTissueClass() > 9) {
+              for (int i = 10; i <= GetNbTissueClass(); i++){
+                  BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>1.0</PRIOR>\\n')"<<std::endl;
+              }
+          }
+      }
+      else {
+          if (GetNbStrippedTissueClass() > 0)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior1()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 1)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior2()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 2)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior3()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 3)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior4()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 4)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior5()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 5)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior6()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 6)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior7()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 7)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior8()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 8)
+              BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>"<<GetPrior9()<<"</PRIOR>\\n')"<<std::endl;
+          if (GetNbStrippedTissueClass() > 9) {
+              for (int i = 10; i <= GetNbStrippedTissueClass(); i++){
+                  BMSAutoSegMainFile<<"	       AppendFile(${EMSfile} '<PRIOR>1.0</PRIOR>\\n')"<<std::endl;
+              }
+          }
+      }
     }
     else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
       {
@@ -3629,10 +3755,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                     BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasTemplateList} == '')" << std::endl;
                         BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i ${ANTSIterations} -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
                         BMSAutoSegMainFile<<"          Run (output '${ANTSRegStrippedTissueSegAtals}')"<<std::endl;
-
                         BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
                             BMSAutoSegMainFile<<"          set (WarpStrippedTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLocLoop}${TissueSegAtlasImage} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${StrippedTissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${StrippedTissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
                             BMSAutoSegMainFile<<"          Run (output '${WarpStrippedTissueSegAtals}')"<<std::endl;
+                            BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${StrippedTissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+                            BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
                         BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
                     BMSAutoSegMainFile<<"      EndIf (${StrippedTissueSegAtlasTemplateList})" << std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
@@ -3645,6 +3772,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                         BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
                             BMSAutoSegMainFile<<"          set (WarpStrippedTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLocLoop}${TissueSegAtlasImage} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${StrippedTissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${StrippedTissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
                             BMSAutoSegMainFile<<"          Run (output '${WarpStrippedTissueSegAtals}')"<<std::endl;
+                            BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${StrippedTissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+                            BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
                         BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
                     BMSAutoSegMainFile<<"      EndIf (${StrippedTissueSegAtlasTemplateList})" << std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
@@ -3670,6 +3799,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                         BMSAutoSegMainFile<<"      ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
                             BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
                             BMSAutoSegMainFile<<"          Run (output '${WarpTissueSegAtals}')"<<std::endl;
+                            BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+                            BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
                         BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
                     BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasTemplateList})" << std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
@@ -3702,6 +3833,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                         BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
                             BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
                             BMSAutoSegMainFile<<"          Run (output '${WarpTissueSegAtals}')"<<std::endl;
+                            BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+                            BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
                         BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
                     BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasTemplateList})" << std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
@@ -5960,7 +6093,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;  
- 
+
         BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
         BMSAutoSegMainFile<<"echo ('MULTI-ATLAS SEGMENTATION...')"<<std::endl;
         BMSAutoSegMainFile<<"echo ( )"<<std::endl;
@@ -5996,16 +6129,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                 targetDirectory = m_MultiAtlasT1List[NUMBER_OF_CASE];
                 NUMBER_OF_CASE++;
             }
-         
+               
+        std::cout << "T1 target directory: " << targetDirectory << std::endl;
+   
         short foundSlash = targetDirectory.find_last_of("\/");
         targetDirectory = targetDirectory.substr(0, foundSlash + 1);
         std::cout << "T1 target directory: " << targetDirectory << std::endl;
-
-   //     if (GetMultiModalitySegmentation()) { 
-  //          foundSlash = targetT2Directory.find_last_of("\/");
- //           targetT2Directory = targetT2Directory.substr(0, foundSlash + 1);
-//            std::cout << "T2 target directory: " << targetT2Directory << std::endl;
-    //    }
 
         BMSAutoSegMainFile<<"      set (MultiAtlasDir "<<GetMultiAtlasDirectory()<<")"<<std::endl;
         BMSAutoSegMainFile<<"      set (ProcessDir "<<GetDataDirectory()<<"process/)"<<std::endl;
@@ -6039,6 +6168,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"      echo('Target Case Path: '${TargetCasePath} )"<<std::endl;
 //        BMSAutoSegMainFile<<"      echo('Suffix Corrected: '${SuffixCorrected} )"<<std::endl;
         BMSAutoSegMainFile<<"set (SuffixStrippedNRRD -stripped.nrrd)"<<std::endl;
+
         if (GetMultiModalitySegmentation()) { 
             BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${TargetCaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
             BMSAutoSegMainFile<<"   GetFilename (T2CaseHead ${TargetT2CaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
@@ -6059,6 +6189,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${TargetCaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
             BMSAutoSegMainFile<<"      ListFileInDir(MultiAtlasTargetList ${TargetPath} ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
             BMSAutoSegMainFile<<"      set (MultiAtlasTargetFile ${MultiAtlasTargetList})"<<std::endl;
+            BMSAutoSegMainFile<<"      echo('MULTIATLS TARGET FILE:  '${MultiAtlasTargetFile} )"<<std::endl;
             BMSAutoSegMainFile<<"Run (output '${ImageMathCmd} ${TargetPath}${MultiAtlasTargetFile} -rescale 0,8192 -outfile ${TargetPath}Rescaled_${MultiAtlasTargetFile}')"<<std::endl; 
         }
 
@@ -6147,33 +6278,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
         BMSAutoSegMainFile<<"   echo('atlas extensioin: ' ${AtlasCaseExtension})"<<std::endl; 	  
         BMSAutoSegMainFile<<"   echo('atlas case ID list: ' ${AtlasCaseIDList})"<<std::endl; 	  
-        /*
-        strTmp = m_AtlasList[0];
-        sizeOfFilename = strTmp.length();
-        foundFilenameExtension = strTmp.find_last_of(".") + 1;
-        std::string tmpAtlasFilename;
-        std::string tmpAtlasFilenameExtension;
-   //     tmpAtlasFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
-    //    tmpAtlasFilenameExtension = strTmp.substr(sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1), (sizeOfFilename -  1));
-        //std::cout << strTmp << "  " << tmpAtlasFilename << "  " << sizeOfFilename << "  " << foundFilenameExtension<< std::endl;
-       // std::cout << tmpAtlasFilename << std::endl;
-        BMSAutoSegMainFile<<"set (AtlasList "<<tmpAtlasFilename.c_str()<<")"<<std::endl;
-        //BMSAutoSegMainFile<<"set (AtlasCaseExtension "<<tmpAtlasFilenameExtension.c_str()<<")"<<std::endl;
-        BMSAutoSegMainFile<<"GetFilename( AtlasList ${AtlasList} NAME_WITHOUT_EXTENSION)"<<std::endl;
-        BMSAutoSegMainFile<<"GetFilename( AtlasCaseExtension ${AtlasList} NAME_WITHOUT_EXTENSION)"<<std::endl;
-        BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
-        for (int DataNumber = 1; DataNumber < GetNbAtlas(); DataNumber++){       // set up warped atlas list
-            strTmp = m_AtlasList[DataNumber];
-            sizeOfFilename = strTmp.length();
-           // foundFilenameExtension = strTmp.find_first_of(".") + 1;
-          //  tmpAtlasFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
-            BMSAutoSegMainFile<<"set (AtlasListTmp "<<tmpAtlasFilename.c_str()<<")"<<std::endl;
-            BMSAutoSegMainFile<<"GetFilename( AtlasListTmp ${AtlasListTmp} NAME_WITHOUT_EXTENSION)"<<std::endl;
-          //  std::cout << tmpAtlasFilename << std::endl;
-            BMSAutoSegMainFile<<"set (AtlasList ${AtlasListTmp} "<<tmpAtlasFilename.c_str()<<")"<<std::endl;
-            BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
-        }
-        */
 
         //set up atlas label list
         strTmp = m_AtlasLabelList[0];
@@ -6279,8 +6383,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                 BMSAutoSegMainFile<<"      If (${WarpedCase} != ${WarpedCaseForTarget})"<<std::endl;
                     BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
                     BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
-                    BMSAutoSegMainFile<<"    	set (outputfilenameForCheck ${WarpedCaseForTarget}x${WarpedCase}TotalWarp.nii.gz)"<<std::endl;
-           //         BMSAutoSegMainFile<<"   echo('atlas-atlas displacement file; ' ${outputfilenameForCheck})"<<std::endl; 	  
+                    BMSAutoSegMainFile<<"    	set (outputfilenameForCheck ${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz)"<<std::endl;
+                    BMSAutoSegMainFile<<"   echo('atlas-atlas displacement file; ' ${outputfilenameForCheck})"<<std::endl; 	  
                     BMSAutoSegMainFile<<"ListFileInDir(DisplacementExistList ${Path} ${outputfilenameForCheck})"<<std::endl;
                     BMSAutoSegMainFile<<"If (${DisplacementExistList} == '')"<<std::endl;
                         if (GetMultiModalitySegmentation()) {
@@ -6354,6 +6458,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         // ANTS registration targe-atlas
         BMSAutoSegMainFile<<"set (Path ${DisplacementFieldDirectory})"<<std::endl;
         BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
+        BMSAutoSegMainFile<<"   echo('atlas-atlas displacement directory; ' ${Path})"<<std::endl; 	  
 
      //   BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
         BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
@@ -9841,6 +9946,7 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       {
 	DataList.push_back(Line+6);
 	nbData++;
+        SetMultiAtlasTargetFile(Line+6);
       }
       else if ( (std::strncmp("Compute Multi-modality Segmentation: ", Line, 37)) == 0)
       {
@@ -9867,20 +9973,161 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       {
           SetMultiAtlasAtlasRegistration(atoi(Line + 34));
       }
-
+      else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
+      {
+          SetMultiAtlasDirectory(Line + 23);
+      }
     }
     fclose(ComputationFile);
+    std::cout << "number of data: " << nbData << std::endl;
     if (nbData!=0)
     {
       SetNbData(nbData);
       AllocateDataList();
-      for(int i=0;i<nbData;i++)
+      for(int i=0;i<nbData;i++) {
 	SetDataList(DataList[i].c_str(),i,0);
+        std::cout << "number of data: " << DataList[i] << std::endl;
+      }
     }
   }
   else
     std::cout<<"Error Opening File: "<<_FileName<<std::endl;
 }
+
+bool AutoSegComputation::SetMultiAtlasDirectory(const char *_MultiAtlasDirectory)
+{
+    int c ='/';
+    int l = std::strlen(std::strrchr(_MultiAtlasDirectory, c));
+    if(l == 1) {
+        std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);
+    }
+    else {
+        std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);
+        std::strcat(m_MultiAtlasDirectory,"/");
+    }
+
+    std::string tmp;
+    //tmp = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
+    tmp = _MultiAtlasDirectory;
+    char MultiAtlasDirectory[256], MultiAtlasDirectoryDisp[256];
+    char WarpedMultiAtlasAtlasImageDirectory[256];
+    char MultiAtlasAtlasDisplacementDirectory[256];
+    bool needWarpAtlasAtlas = 0, needAtlasAtlasDisplacement = 0;
+  
+  //  MultiAtlasDirectory = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
+//    tmp = MultiAtlasDirectory;
+    strcpy(MultiAtlasDirectoryDisp, tmp.c_str());
+    strcpy(MultiAtlasDirectory, tmp.c_str());
+    strcat(MultiAtlasDirectory, "atlas_image/");
+    strncpy(WarpedMultiAtlasAtlasImageDirectory, MultiAtlasDirectory, tmp.length() - 12);
+    strcat(WarpedMultiAtlasAtlasImageDirectory, "warped-atlas-atlas-images/");
+    strncpy(MultiAtlasAtlasDisplacementDirectory, MultiAtlasDirectory, tmp.length() - 12) ;
+    strcat(MultiAtlasAtlasDisplacementDirectory, "displacement_field_atlas_to_atlas/");
+    
+    DIR *dir;
+    struct dirent *ent;
+
+    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
+        std::string filename;
+        int i = 0, j = 0, k = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                if (!filename.find("atlas")) {
+                    if (filename.find("t1w") != std::string::npos) {
+                        i++;
+                    }
+                    else if (filename.find("t2w") != std::string::npos) {
+                        k++;
+                    }
+                    else {
+                        i++;
+                    }
+                }
+                if (!filename.find("label"))
+                    j++;
+            }
+        }
+        SetNbAtlas(i);
+        SetNb2ndAtlas(k);
+        SetNbAtlasLabel(j);
+    }
+    closedir (dir);
+
+    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
+        std::string filename;
+        int i = 0, j = 0, k = 0;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                if (!filename.find("atlas")) {
+                    if (filename.find("t1w") != std::string::npos) {
+                        SetAtlasList(filename.c_str(), i);
+                        i++;
+                    }
+                    else if (filename.find("t2w") != std::string::npos) {
+                        Set2ndAtlasList(filename.c_str(), k);
+                        k++;
+                    }
+                    else {
+                        SetAtlasList(filename.c_str(), i);
+                        i++;
+                    }
+                }
+                if (!filename.find("label")) {
+                    SetAtlasLabelList(filename.c_str(), j);
+                    j++;
+                }
+            }
+        }
+    }
+    closedir (dir);
+   
+    int numberOfWarpedAtlasAtlasImage = 0;
+    if ((dir = opendir (WarpedMultiAtlasAtlasImageDirectory)) != NULL) {
+        std::string filename;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                numberOfWarpedAtlasAtlasImage++;
+            }
+        }
+    }
+    closedir (dir);
+
+    if( numberOfWarpedAtlasAtlasImage < (GetNbAtlas() * (GetNbAtlas() - 1)) ) {
+        needWarpAtlasAtlas = 1;
+    }
+
+    int numberOfAtlasAtlasDisplacement = 0;
+    if ((dir = opendir (MultiAtlasAtlasDisplacementDirectory)) != NULL) {
+        std::string filename;
+        while ((ent = readdir (dir)) != NULL) {
+            filename = ent->d_name;
+            if(filename.at(0) == '.')    // skip . and ..
+                continue;
+            else{
+                numberOfAtlasAtlasDisplacement++;
+            }
+        }
+    }
+    closedir (dir);
+    if( numberOfAtlasAtlasDisplacement < (GetNbAtlas() * (GetNbAtlas() - 1)) ) {
+        needAtlasAtlasDisplacement = 1;
+    }
+
+    if(needAtlasAtlasDisplacement || needWarpAtlasAtlas)
+        return 1;
+    else
+        return 0;
+}
+
 
 // Load parameter file
 // Mode = file: Read the total file
@@ -9895,7 +10142,7 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
   int Length;
     // Tissue Segmentation
   int FilterIterations, MaxBiasDegree, Loop;
-  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, Prior5, FluidAtlasWarpMaxStep;
+  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, Prior5, Prior6, Prior7, Prior8, Prior9,FluidAtlasWarpMaxStep;
   int BSplineAtlasWarp;
   float BSplineAtlasWarpGridX, BSplineAtlasWarpGridY, BSplineAtlasWarpGridZ;
   int FluidAtlasWarp, FluidAtlasFATW, FluidAtlasAffine, FluidAtlasWarpIterations, LoopIteration;
@@ -10312,6 +10559,26 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  Prior5 = atof(Line+9);
 	  SetPrior5(Prior5);
 	}
+        else if ( (std::strncmp("Prior 6: ", Line, 9)) == 0)
+	{
+	  Prior6 = atof(Line+9);
+	  SetPrior6(Prior6);
+	}
+        else if ( (std::strncmp("Prior 7: ", Line, 9)) == 0)
+	{
+	  Prior7 = atof(Line+9);
+	  SetPrior7(Prior7);
+	}
+        else if ( (std::strncmp("Prior 8: ", Line, 9)) == 0)
+	{
+	  Prior8 = atof(Line+9);
+	  SetPrior8(Prior8);
+	}
+        else if ( (std::strncmp("Prior 9: ", Line, 9)) == 0)
+	{
+	  Prior9 = atof(Line+9);
+	  SetPrior9(Prior9);
+	}
 	else if ( (std::strncmp("BSpline Atlas Warp: ", Line, 20)) == 0)
 	{
 	  BSplineAtlasWarp = atoi(Line+20);
@@ -10647,6 +10914,10 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  ANTSGaussianSigma = atof(Line+21);
 	  SetANTSGaussianSigma(ANTSGaussianSigma);	
 	}
+        else if ( (std::strncmp("ANTS Number of Threads: ", Line, 24)) == 0)
+	{
+	  SetNbANTSThreads(atoi(Line+24));	
+	}
       }
       if(mode == N4biasFieldCorrection||mode == advancedParameters||mode == file)
       {	
@@ -10714,6 +10985,42 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  SlicerVersion = atof(Line+27);
 	  SetSlicerVersion(SlicerVersion);
 	}
+        else if ( (std::strncmp("Label Fusion Algorithm: ", Line, 24)) == 0)
+        {
+          if (std::strcmp(Line+24,"Majority Voting") == 0)
+          {
+            SetLabelFusionAlgorithm("Majority Voting");
+          }
+          if (std::strcmp(Line+24,"Weighted Majority Voting") == 0)
+          {
+            SetLabelFusionAlgorithm("Weighted Majority Voting");
+          }
+          if (std::strcmp(Line+24,"STAPLE") == 0)
+          {
+            SetLabelFusionAlgorithm("STAPLE");
+          }
+        }
+        else if ( (std::strncmp("Intensity Energy Weight: ", Line, 25)) == 0)
+        {
+            SetWeightIntensityEnergy(atof(Line + 25));
+        }
+        else if ( (std::strncmp("Harmonic Energy Weight: ", Line, 24)) == 0)
+        {
+            SetWeightHarmonicEnergy(atof(Line + 24));
+        }
+        else if ( (std::strncmp("Shape Energy Weight: ", Line, 21)) == 0)
+        {
+            SetWeightShapeEnergy(atof(Line + 21));
+        }
+        else if ( (std::strncmp("ANTS with brainmask: ", Line, 21)) == 0)
+        {
+            SetANTSWithBrainmask(atof(Line + 21));
+        }
+        else if ( (std::strncmp("Use Initital Affine Transform: ", Line, 31)) == 0)
+        {
+            SetUseInitialAffine(atof(Line + 31));
+        }
+
       }
     }
     fclose(ParameterFile);

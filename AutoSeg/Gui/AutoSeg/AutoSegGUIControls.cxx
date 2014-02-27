@@ -1774,7 +1774,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   int Length;
     // Tissue Segmentation
   int FilterIterations, MaxBiasDegree, Loop;
-  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, Prior5, FluidAtlasWarpMaxStep;
+  float FilterTimeStep, Prior1, Prior2, Prior3, Prior4, Prior5, Prior6, Prior7, Prior8, Prior9, FluidAtlasWarpMaxStep;
   int BSplineAtlasWarp;
   float BSplineAtlasWarpGridX, BSplineAtlasWarpGridY, BSplineAtlasWarpGridZ;
   int FluidAtlasWarp, FluidAtlasFATW, FluidAtlasAffine, FluidAtlasWarpIterations, LoopIteration;
@@ -2501,6 +2501,26 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	  Prior5 = atof(Line+9);
 	  g_Prior5->value(Prior5);	
 	}
+        else if ( (std::strncmp("Prior 6: ", Line, 9)) == 0)
+	{
+	  Prior6 = atof(Line+9);
+	  g_Prior6->value(Prior6);	
+	}
+        else if ( (std::strncmp("Prior 7: ", Line, 9)) == 0)
+	{
+	  Prior7 = atof(Line+9);
+	  g_Prior7->value(Prior7);	
+	}
+        else if ( (std::strncmp("Prior 8: ", Line, 9)) == 0)
+	{
+	  Prior8 = atof(Line+9);
+	  g_Prior8->value(Prior8);	
+	}
+        else if ( (std::strncmp("Prior 9: ", Line, 9)) == 0)
+	{
+	  Prior9 = atof(Line+9);
+	  g_Prior9->value(Prior9);	
+	}
 	else if ( (std::strncmp("BSpline Atlas Warp: ", Line, 20)) == 0)
 	{
 	  BSplineAtlasWarp = atoi(Line+20);
@@ -3027,23 +3047,27 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	}	
         else if ( (std::strncmp("Label Fusion Algorithm: ", Line, 24)) == 0)
 	{
+
           if (std::strcmp(Line+24,"Majority Voting") == 0)
           {
             g_MajorityVotingButton->set();
             g_WeightedMajorityVotingButton->clear();
             g_StapleButton->clear();
+            m_Computation.SetLabelFusionAlgorithm("Majority Voting");
           }
           if (std::strcmp(Line+24,"Weighted Majority Voting") == 0)
           {
             g_MajorityVotingButton->clear();
             g_WeightedMajorityVotingButton->set();
             g_StapleButton->clear();
+            m_Computation.SetLabelFusionAlgorithm("Weighted Majority Voting");
           }
           if (std::strcmp(Line+24,"STAPLE") == 0)
           {
             g_MajorityVotingButton->clear();
             g_WeightedMajorityVotingButton->clear();
             g_StapleButton->set();
+            m_Computation.SetLabelFusionAlgorithm("STAPLE");
           }
 	}
         else if ( (std::strncmp("Intensity Energy Weight: ", Line, 25)) == 0)
@@ -3065,6 +3089,10 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
         else if ( (std::strncmp("Use Initital Affine Transform: ", Line, 31)) == 0)
 	{
             g_UseInitialAffineButton->value(atof(Line + 31));
+	}
+        else if ( (std::strncmp("ANTS Number of Threads: ", Line, 24)) == 0)
+	{
+            g_NumberOfThreads->value(atof(Line + 24));
 	}
       }
     }
@@ -3225,15 +3253,12 @@ void AutoSegGUIControls::SetMultiAtlasDirectoryGUI()
 void AutoSegGUIControls::SetMultiAtlasDirectoryInitialize(char* _AtlasDirectory)
 {
     std::string tmp;
-    //tmp = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
     tmp = _AtlasDirectory;
     char MultiAtlasDirectory[256], MultiAtlasDirectoryDisp[256];
     char WarpedMultiAtlasAtlasImageDirectory[256];
     char MultiAtlasAtlasDisplacementDirectory[256];
-    bool needWarpAtlasAtlas = 0, needAtlasAtlasDisplacement = 0;
+    bool needWarpAtlasAtlas;
   
-  //  MultiAtlasDirectory = fl_dir_chooser("Set the Multi Atlas Directory", NULL);
-//    tmp = MultiAtlasDirectory;
     strcpy(MultiAtlasDirectoryDisp, tmp.c_str());
     strcpy(MultiAtlasDirectory, tmp.c_str());
     strcat(MultiAtlasDirectory, "atlas_image/");
@@ -3245,113 +3270,14 @@ void AutoSegGUIControls::SetMultiAtlasDirectoryInitialize(char* _AtlasDirectory)
     if(MultiAtlasDirectory != NULL)
     {
         CheckDirectoryName(MultiAtlasDirectory);
-        m_Computation.SetMultiAtlasDirectory(MultiAtlasDirectoryDisp);
+        needWarpAtlasAtlas = m_Computation.SetMultiAtlasDirectory(MultiAtlasDirectoryDisp);
         g_MultiAtlasDirectoryDisp->value(MultiAtlasDirectoryDisp); 
         g_MultiAtlasDirectoryDisp->position(g_MultiAtlasDirectoryDisp->size());
     }
-    
-    DIR *dir;
-    struct dirent *ent;
 
-  //  std::cout << "atlas directory: " << MultiAtlasDirectory << std::endl;
-    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
-        std::string filename;
-        int i = 0, j = 0, k = 0;
-        while ((ent = readdir (dir)) != NULL) {
-            filename = ent->d_name;
-            if(filename.at(0) == '.')    // skip . and ..
-                continue;
-            else{
-                if (!filename.find("atlas")) {
-                    if (filename.find("t1w") != std::string::npos) {
-                        i++;
-                    }
-                    else if (filename.find("t2w") != std::string::npos) {
-                        k++;
-                    }
-                    else {
-                        i++;
-                    }
-                }
-                if (!filename.find("label"))
-                    j++;
-            }
-        }
-        m_Computation.SetNbAtlas(i);
-        m_Computation.SetNb2ndAtlas(k);
-        m_Computation.SetNbAtlasLabel(j);
-    }
-    closedir (dir);
-
-    if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
-        std::string filename;
-        int i = 0, j = 0, k = 0;
-        while ((ent = readdir (dir)) != NULL) {
-            filename = ent->d_name;
-            if(filename.at(0) == '.')    // skip . and ..
-                continue;
-            else{
-                if (!filename.find("atlas")) {
-                    if (filename.find("t1w") != std::string::npos) {
-                        m_Computation.SetAtlasList(filename.c_str(), i);
-                        i++;
-                    }
-                    else if (filename.find("t2w") != std::string::npos) {
-                        m_Computation.Set2ndAtlasList(filename.c_str(), k);
-                        k++;
-                    }
-                    else {
-                        m_Computation.SetAtlasList(filename.c_str(), i);
-                        i++;
-                    }
-                }
-                if (!filename.find("label")) {
-                    m_Computation.SetAtlasLabelList(filename.c_str(), j);
-                    j++;
-                }
-            }
-        }
-    }
-    closedir (dir);
-   
-    int numberOfWarpedAtlasAtlasImage = 0;
-    if ((dir = opendir (WarpedMultiAtlasAtlasImageDirectory)) != NULL) {
-        std::string filename;
-        while ((ent = readdir (dir)) != NULL) {
-            filename = ent->d_name;
-            if(filename.at(0) == '.')    // skip . and ..
-                continue;
-            else{
-                numberOfWarpedAtlasAtlasImage++;
-            }
-        }
-    }
-    closedir (dir);
-
-    if( numberOfWarpedAtlasAtlasImage < (m_Computation.GetNbAtlas() * (m_Computation.GetNbAtlas() - 1)) ) {
-        needWarpAtlasAtlas = 1;
-    }
-
-    int numberOfAtlasAtlasDisplacement = 0;
-    if ((dir = opendir (MultiAtlasAtlasDisplacementDirectory)) != NULL) {
-        std::string filename;
-        while ((ent = readdir (dir)) != NULL) {
-            filename = ent->d_name;
-            if(filename.at(0) == '.')    // skip . and ..
-                continue;
-            else{
-                numberOfAtlasAtlasDisplacement++;
-            }
-        }
-    }
-    closedir (dir);
-    if( numberOfAtlasAtlasDisplacement < (m_Computation.GetNbAtlas() * (m_Computation.GetNbAtlas() - 1)) ) {
-        needAtlasAtlasDisplacement = 1;
-    }
-
-    if(needAtlasAtlasDisplacement || needWarpAtlasAtlas)
+    if(needWarpAtlasAtlas)
         fl_message("Please, conduct the atlas to atlas registration");
-        
+
 }
 
 void AutoSegGUIControls::T2ButtonChecked()
@@ -5876,6 +5802,7 @@ void AutoSegGUIControls::StopAutoSeg()
 void AutoSegGUIControls::ComputeGUI()
 {
   int ComputeStudy = 1;
+  int NbClass = 0;
 
   if (m_Computation.GetIsAutoSegInProcess())
     fl_message("Automatic Segmentation already in process...");
@@ -5900,6 +5827,29 @@ void AutoSegGUIControls::ComputeGUI()
       m_Computation.SetWeightHarmonicEnergy(g_HarmonicEnergyWeight->value());
       m_Computation.SetWeightShapeEnergy(g_ShapeEnergyWeight->value());
       m_Computation.SetANTSWithBrainmask(g_ANTSWithBrainmaskButton->value());
+      m_Computation.SetUseInitialAffine(g_UseInitialAffineButton->value());
+      m_Computation.SetNbANTSThreads((int)g_NumberOfThreads->value());
+  /*    if ((float)g_Prior1->value() > 0)
+          NbClass++;
+      if ((float)g_Prior2->value() > 0)
+          NbClass++;
+      if ((float)g_Prior3->value() > 0)
+          NbClass++;
+      if ((float)g_Prior4->value() > 0)
+          NbClass++;
+      if ((float)g_Prior5->value() > 0)
+          NbClass++;
+      if ((float)g_Prior6->value() > 0)
+          NbClass++;
+      if ((float)g_Prior7->value() > 0)
+          NbClass++;
+      if ((float)g_Prior8->value() > 0)
+          NbClass++;
+      if ((float)g_Prior9->value() > 0)
+          NbClass++;
+      m_Computation.SetNbClass(NbClass);
+     */
+
       if (CheckStudy())
       {
 	if (g_RecomputeButton->value())
@@ -6265,6 +6215,11 @@ void AutoSegGUIControls::SetN4Parameters()
   m_Computation.SetStrippedN4ITKBiasFieldCorrection(g_StrippedN4ITKBiasFieldCorrectionButton->value());
 }
 
+void AutoSegGUIControls::SetNumberOfThreadsGUI()
+{
+    m_Computation.SetNbANTSThreads((int)g_NumberOfThreads->value());
+}
+
 void AutoSegGUIControls::SetGridTemplateParameters()
 {
   if (g_GridTemplateAtlasButton->value())
@@ -6427,6 +6382,10 @@ void AutoSegGUIControls::ABCButtonToggled()
   g_Prior3->value(0.7);
   g_Prior4->value(1.0);
   g_Prior5->value(1.0);
+  g_Prior6->value(1.0);
+  g_Prior7->value(1.0);
+  g_Prior8->value(1.0);
+  g_Prior9->value(1.0);
   g_FluidAtlasWarpButton->set();
   g_FluidAtlasAffineButton->clear();
   g_FluidAtlasFATWButton->clear();
@@ -6447,6 +6406,10 @@ void AutoSegGUIControls::ABCButtonToggled()
   m_Computation.SetPrior3((float)g_Prior3->value());
   m_Computation.SetPrior4((float)g_Prior4->value());
   m_Computation.SetPrior5((float)g_Prior5->value());
+  m_Computation.SetPrior6((float)g_Prior6->value());
+  m_Computation.SetPrior7((float)g_Prior7->value());
+  m_Computation.SetPrior8((float)g_Prior8->value());
+  m_Computation.SetPrior9((float)g_Prior9->value());
   m_Computation.SetFluidAtlasWarp(1);
   m_Computation.SetFluidAtlasAffine(0);
   m_Computation.SetFluidAtlasFATW(0);
@@ -6478,6 +6441,10 @@ void AutoSegGUIControls::NeosegButtonToggled()
   g_Prior3->value(1.0);
   g_Prior4->value(0.5);
   g_Prior5->value(1.0);
+  g_Prior6->value(1.0);
+  g_Prior7->value(1.0);
+  g_Prior8->value(1.0);
+  g_Prior9->value(1.0);
   g_BSplineAtlasWarpButton->set();
   g_BSplineAtlasWarpGridX->value(5.0);
   g_BSplineAtlasWarpGridY->value(5.0);
@@ -6499,6 +6466,10 @@ void AutoSegGUIControls::NeosegButtonToggled()
   m_Computation.SetPrior3((float)g_Prior3->value());
   m_Computation.SetPrior4((float)g_Prior4->value());
   m_Computation.SetPrior5((float)g_Prior5->value());
+  m_Computation.SetPrior6((float)g_Prior6->value());
+  m_Computation.SetPrior7((float)g_Prior7->value());
+  m_Computation.SetPrior8((float)g_Prior8->value());
+  m_Computation.SetPrior9((float)g_Prior9->value());
   m_Computation.SetBSplineAtlasWarp(1);
   m_Computation.SetBSplineAtlasWarpGridX((float)g_BSplineAtlasWarpGridX->value());
   m_Computation.SetBSplineAtlasWarpGridY((float)g_BSplineAtlasWarpGridY->value());
@@ -6587,6 +6558,26 @@ void AutoSegGUIControls::SetPrior4GUI()
 void AutoSegGUIControls::SetPrior5GUI()
 {
   m_Computation.SetPrior5((float)g_Prior5->value());
+}
+
+void AutoSegGUIControls::SetPrior6GUI()
+{
+  m_Computation.SetPrior6((float)g_Prior6->value());
+}
+
+void AutoSegGUIControls::SetPrior7GUI()
+{
+  m_Computation.SetPrior7((float)g_Prior7->value());
+}
+
+void AutoSegGUIControls::SetPrior8GUI()
+{
+  m_Computation.SetPrior8((float)g_Prior8->value());
+}
+
+void AutoSegGUIControls::SetPrior9GUI()
+{
+  m_Computation.SetPrior9((float)g_Prior9->value());
 }
 
 void AutoSegGUIControls::BSplineAtlasWarpButtonChecked()
@@ -7282,6 +7273,10 @@ void AutoSegGUIControls::InitializeParameters()
   g_Prior3->value(0.7);
   g_Prior4->value(1.0);
   g_Prior5->value(1.0);
+  g_Prior6->value(1.0);
+  g_Prior7->value(1.0);
+  g_Prior8->value(1.0);
+  g_Prior9->value(1.0);
   g_BSplineAtlasWarpGroup->deactivate();
   g_BSplineAtlasWarpButton->clear();
   g_BSplineAtlasWarpGridX->value(5.0);
@@ -7313,6 +7308,10 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetPrior3((float)g_Prior3->value());
   m_Computation.SetPrior4((float)g_Prior4->value());
   m_Computation.SetPrior5((float)g_Prior5->value());
+  m_Computation.SetPrior6((float)g_Prior6->value());
+  m_Computation.SetPrior7((float)g_Prior7->value());
+  m_Computation.SetPrior8((float)g_Prior8->value());
+  m_Computation.SetPrior9((float)g_Prior9->value());
   m_Computation.SetBSplineAtlasWarp(0);
   m_Computation.SetBSplineAtlasWarpGridX((float)g_BSplineAtlasWarpGridX->value());
   m_Computation.SetBSplineAtlasWarpGridY((float)g_BSplineAtlasWarpGridY->value());
@@ -7434,6 +7433,7 @@ void AutoSegGUIControls::InitializeParameters()
   g_ANTSRegistrationFilterType->value(0);
   g_ANTSGaussianSmoothingButton->set();
   g_ANTSGaussianSigma->value(3.0);
+  g_NumberOfThreads->value(1);
   //
   m_Computation.SetClassicWarpingMethod(0);
   m_Computation.SetBRAINSDemonWarpMethod(0);
@@ -7465,6 +7465,8 @@ void AutoSegGUIControls::InitializeParameters()
   m_Computation.SetANTSRegistrationFilterType("GreedyDiffeomorphism");
   m_Computation.SetANTSGaussianSmoothing(1);
   m_Computation.SetANTSGaussianSigma(3.0);
+  m_Computation.SetNbANTSThreads(1);
+  
 
   // Skull Stripping parameters
   g_DeleteVesselsButton->clear();

@@ -223,6 +223,10 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetPrior3GUI();
     void SetPrior4GUI();
     void SetPrior5GUI();
+    void SetPrior6GUI();
+    void SetPrior7GUI();
+    void SetPrior8GUI();
+    void SetPrior9GUI();
     void BSplineAtlasWarpButtonChecked();
     void SetBSplineAtlasWarpGridXGUI();
     void SetBSplineAtlasWarpGridYGUI();
@@ -370,6 +374,7 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetN4Parameters();
     void SetIntensityRescalingMethod();
     void SetRegionalHistogramParameters();
+    void SetNumberOfThreadsGUI();
     void InitializeData();
     void InitializeAuxData();
     void InitializeParameters();

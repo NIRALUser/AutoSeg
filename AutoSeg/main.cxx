@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
   bool gui = ipExistsArgument(argv, "-gui");
   char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);
   char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
+  
   if (gui)
   {
     if (argc == 2)

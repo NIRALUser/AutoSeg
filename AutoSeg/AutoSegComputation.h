@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <string>
 #include <algorithm>
+#include <sstream>
+#include <itksys/SystemTools.hxx>
 
 #include "TextDisplayGUIControls.h"
 
@@ -64,17 +66,7 @@ class AutoSegComputation
     bool GetIsAutoSegInProcess(){return m_IsAutoSegInProcess;};  
   // Tab Computation
     void SetProcessDataDirectory(const char *_ProcessDataDirectory){std::strcpy(m_ProcessDataDirectory,_ProcessDataDirectory);};
-    void SetMultiAtlasDirectory(const char *_MultiAtlasDirectory){
-        int c ='/'; 
-        int l = std::strlen(std::strrchr(_MultiAtlasDirectory, c)); 
-        if(l == 1) {
-            std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);
-        } 
-        else {
-            std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);
-            std::strcat(m_MultiAtlasDirectory,"/");
-        }
-    };
+    bool SetMultiAtlasDirectory(const char *_MultiAtlasDirectory);
     void SetMultiAtlasTargetFile(const char *_MultiAtlasTargetFile){std::strcpy(m_MultiAtlasTargetFile,_MultiAtlasTargetFile);};
 
     void SetT2Image(bool _IsT2Image){m_IsT2Image = _IsT2Image;};
@@ -194,6 +186,10 @@ class AutoSegComputation
     void SetPrior3(float _Prior3){m_Prior3 = _Prior3;};
     void SetPrior4(float _Prior4){m_Prior4 = _Prior4;};
     void SetPrior5(float _Prior5){m_Prior5 = _Prior5;};
+    void SetPrior6(float _Prior6){m_Prior6 = _Prior6;};
+    void SetPrior7(float _Prior7){m_Prior7 = _Prior7;};
+    void SetPrior8(float _Prior8){m_Prior8 = _Prior8;};
+    void SetPrior9(float _Prior9){m_Prior9 = _Prior9;};
     void SetBSplineAtlasWarp(bool _BSplineAtlasWarp){m_BSplineAtlasWarp = _BSplineAtlasWarp;};
     void SetBSplineAtlasWarpGridX(float _BSplineAtlasWarpGridX){m_BSplineAtlasWarpGridX = _BSplineAtlasWarpGridX;};
     void SetBSplineAtlasWarpGridY(float _BSplineAtlasWarpGridY){m_BSplineAtlasWarpGridY = _BSplineAtlasWarpGridY;};
@@ -300,6 +296,9 @@ class AutoSegComputation
     void SetNbDeformationField(int _NbDeformationField){m_NbDeformationField = _NbDeformationField; m_DeformationFieldList = new char *[m_NbDeformationField];};
     void SetNbDeformationFieldTrainToTrain(int _NbDeformationFieldTrainToTrain){m_NbDeformationFieldTrainToTrain = _NbDeformationFieldTrainToTrain; m_DeformationFieldTrainToTrainList = new char *[m_NbDeformationFieldTrainToTrain];};
     void SetNbAuxData(int _NbAuxData){m_NbAuxData = _NbAuxData;};
+    void SetNbTissueClass(const char *_Directory);
+    void SetNbStrippedTissueClass(const char *_Directory);
+    void SetNbANTSThreads(int _NbANTSThreads) {m_NbANTSThreads = _NbANTSThreads;};
     void AllocateDataList();
     void AllocateAuxDataList();
     void DesallocateDataList();
@@ -343,6 +342,9 @@ class AutoSegComputation
     int GetNbDeformationField(){return m_NbDeformationField;};
     int GetNbDeformationFieldTrainToTrain(){return m_NbDeformationFieldTrainToTrain;};
     int GetNbAuxData(){return m_NbAuxData;};
+    int GetNbTissueClass(){return m_NbTissueClass;};
+    int GetNbStrippedTissueClass(){return m_NbStrippedTissueClass;};
+    int GetNbANTSThreads() {return m_NbANTSThreads;};
 
     float GetIntensityEnergyWeight(){return m_WeightIntensityEnergy;};
     float GetHarmonicEnergyWeight(){return m_WeightHarmonicEnergy;};
@@ -479,6 +481,10 @@ class AutoSegComputation
     float GetPrior3(){return m_Prior3;};
     float GetPrior4(){return m_Prior4;};
     float GetPrior5(){return m_Prior5;};
+    float GetPrior6(){return m_Prior6;};
+    float GetPrior7(){return m_Prior7;};
+    float GetPrior8(){return m_Prior8;};
+    float GetPrior9(){return m_Prior9;};
     bool GetBSplineAtlasWarp(){return m_BSplineAtlasWarp;};
     float GetBSplineAtlasWarpGridX(){return m_BSplineAtlasWarpGridX;};
     float GetBSplineAtlasWarpGridY(){return m_BSplineAtlasWarpGridY;};
@@ -753,6 +759,10 @@ class AutoSegComputation
     float m_Prior3;
     float m_Prior4;
     float m_Prior5;
+    float m_Prior6;
+    float m_Prior7;
+    float m_Prior8;
+    float m_Prior9;
     bool m_BSplineAtlasWarp;
     float m_BSplineAtlasWarpGridX;
     float m_BSplineAtlasWarpGridY;
@@ -863,6 +873,9 @@ class AutoSegComputation
     int m_NbDeformationField;
     int m_NbDeformationFieldTrainToTrain;
     int m_NbAuxData;
+    int m_NbTissueClass;
+    int m_NbStrippedTissueClass;
+    int m_NbANTSThreads;
    // Allocation of data
     int m_AllocationData;
     int m_AllocationAuxData;
