@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <sstream>
 #include <itksys/SystemTools.hxx>
+#include <math.h>
 
 #include "TextDisplayGUIControls.h"
 

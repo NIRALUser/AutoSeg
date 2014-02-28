@@ -53,6 +53,8 @@ AutoSegComputation::AutoSegComputation()
 {
   m_AllocationData=0;
   m_AllocationAuxData=0;
+  m_NbTissueClass = 0;
+  m_NbStrippedTissueClass = 0;
 }
 
 AutoSegComputation::~AutoSegComputation()
@@ -612,25 +614,18 @@ void AutoSegComputation::SetNbTissueClass(const char *_Directory)
     m_NbTissueClass = 0;
     if ((dir = opendir (_Directory)) != NULL) {
         std::string filename;
-        std::string nbClass;
-        int i = 0;
         while ((ent = readdir (dir)) != NULL) {
             filename = ent->d_name;
-            bool validClass = 1;
             int location = filename.find_first_of(".");
             if (location != std::string::npos) {
-            	for (int i = 0; i < filename.find_first_of("."); i++){
-                    std::string digit = filename.substr(i, 1);
-                    if (atoi(digit.c_str()) <= 0 || atoi(digit.c_str()) >= 10)
-                    	validClass = 0;   
-            	}
-            	nbClass = filename.substr(0, filename.find_first_of(".") + 1);
-            	if(atoi(nbClass.c_str()) > 0 && atoi(nbClass.c_str()) < 10000 && validClass)    // skip . and ..
-               	    m_NbTissueClass++;
-	     }
+                int nbClass = atoi(filename.substr(0, location - 1).c_str());
+                if(nbClass> 0 && nbClass< 10000 && nbClass != 0 && ((int) log10(nbClass) + 1)  == location)    // skip . and ..
+                    m_NbTissueClass++;
+            }
         }
     }
     closedir (dir);
+    std::cout << "number of Tissues: " << m_NbTissueClass << std::endl; 
 }
 
 void AutoSegComputation::SetNbStrippedTissueClass(const char *_Directory)
@@ -639,30 +634,20 @@ void AutoSegComputation::SetNbStrippedTissueClass(const char *_Directory)
     struct dirent *ent;
 
     m_NbStrippedTissueClass = 0;
-   // std::cout << "number of Stripped Tissues: " << m_NbStrippedTissueClass << std::endl; 
     if ((dir = opendir (_Directory)) != NULL) {
         std::string filename;
-        std::string nbClass;
-        int i = 0;
         while ((ent = readdir (dir)) != NULL) {
             filename = ent->d_name;
-            bool validClass = 1;
             int location = filename.find_first_of(".");
             if (location != std::string::npos) {
-            	for (int i = 0; i < filename.find_first_of("."); i++){
-               	    std::string digit = filename.substr(i, 1);
-              	    if (atoi(digit.c_str()) <= 0 || atoi(digit.c_str()) >= 10)
-                 	validClass = 0;   
-            	}
-                nbClass = filename.substr(0, filename.find_first_of(".") + 1);
-                if(atoi(nbClass.c_str()) > 0 && atoi(nbClass.c_str()) < 10000 && validClass)    // skip . and ..
+                int nbClass = atoi(filename.substr(0, location - 1).c_str());
+                if(nbClass> 0 && nbClass< 10000 && nbClass != 0 && ((int) log10(nbClass) + 1)  == location)    // skip . and ..
                     m_NbStrippedTissueClass++;
             }
         }
     }
     closedir (dir);
-    //std::cout << "number of Stripped Tissues: " << m_NbStrippedTissueClass << std::endl; 
-   // getchar();
+    std::cout << "number of Stripped Tissues: " << m_NbStrippedTissueClass << std::endl; 
 }
 
 void AutoSegComputation::SetWarpedAtlasList(const char *_Directory )
@@ -2817,6 +2802,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
 
   BMSAutoSegMainFile<<"set (T1CasesList ${OrigT1CasesList})"<<std::endl;
+  BMSAutoSegMainFile<<"echo ('T1 case List:: ${T1CasesList')"<<std::endl;
 
   
   BMSAutoSegMainFile<<"ForEach (T1CasesListShow ${T1CasesList})"<<std::endl;
@@ -3458,12 +3444,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   int SuffixIteration=0;
   int SuffixIteration_2=0;
   int flag=GetLoopIteration();
-  int nbCorrected=0;
-  int nbLabel=0;
-  int nbRegistered=0;
-  int nbTemplate=0;
-  int nbtoTemplate=0;
-  int nbPosterior=0;
   bool IsT1LabelEMSFile=true;
 
   if ( (std::strcmp(GetTissueSegmentationAtlasType(),"T2") == 0) && (GetT2Image()) )
@@ -3523,26 +3503,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      echo ('The Atlas is '${Atlas})"<<std::endl;
       std::cout << "fluid atlas used: " << GetFluidAtlasWarp() << std::endl; 
       BMSAutoSegMainFile<<"      set (stripEMS _stripEMS${StrippedBias})"<<std::endl;
-      if (GetLoopIteration()<9)
-      {
-	nbCorrected=29;
-	nbLabel=26;
-	nbRegistered=30;
-	nbTemplate=28;
-	nbtoTemplate=29;
-	nbPosterior=30;
-      }
-      else
-      {
-	nbCorrected=30;
-	nbLabel=27;
-	nbRegistered=31;
-	nbTemplate=29;
-	nbtoTemplate=30;
-	nbPosterior=31;
-      }
-        std::cout << "Stripped Tissue Atlas: " << GetAtlasLoop() << std::endl;
-        SetNbStrippedTissueClass(GetAtlasLoop());
+      std::cout << "Stripped Tissue Atlas: " << GetAtlasLoop() << std::endl;
+      SetNbStrippedTissueClass(GetAtlasLoop());
     }
     else
     {
@@ -3565,12 +3527,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         
         BMSAutoSegMainFile<<"      set (stripEMS '')"<<std::endl;
         BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
-        nbCorrected=27;
-        nbLabel=24;
-        nbRegistered=28;
-        nbTemplate=26;
-        nbtoTemplate=27;
-        nbPosterior=28;
        
         std::cout << "Tissue Atlas: " << GetTissueSegmentationAtlasDirectory() << std::endl;
         std::cout << "Stripped Tissue Atlas: " << GetAtlasLoop() << std::endl;
@@ -6375,7 +6331,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         }
         // ANTS registration atlas-atlas
         BMSAutoSegMainFile<<"set (Path ${DeformationFieldTrainToTrainDir})"<<std::endl;
-        BMSAutoSegMainFile<<"   echo('atlas-atlas displacement directory; ' ${Path})"<<std::endl; 	  
+   //     BMSAutoSegMainFile<<"   echo('atlas-atlas displacement directory; ' ${Path})"<<std::endl; 	  
         BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
         BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
         BMSAutoSegMainFile<<"ForEach (WarpedCaseForTarget ${AtlasList}) "<<std::endl;
@@ -6384,7 +6340,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                     BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
                     BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
                     BMSAutoSegMainFile<<"    	set (outputfilenameForCheck ${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz)"<<std::endl;
-                    BMSAutoSegMainFile<<"   echo('atlas-atlas displacement file; ' ${outputfilenameForCheck})"<<std::endl; 	  
+              //      BMSAutoSegMainFile<<"   echo('atlas-atlas displacement file; ' ${outputfilenameForCheck})"<<std::endl; 	  
                     BMSAutoSegMainFile<<"ListFileInDir(DisplacementExistList ${Path} ${outputfilenameForCheck})"<<std::endl;
                     BMSAutoSegMainFile<<"If (${DisplacementExistList} == '')"<<std::endl;
                         if (GetMultiModalitySegmentation()) {
@@ -6712,8 +6668,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             BMSAutoSegMainFile<<"   echo(${output})"<<std::endl; 	  
                         
             // Label Fusion
-            BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -v ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedLabelDir} ${FusedLabelDir} ${TargetList}_seg_subcortical.nrrd label ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase}')"<<std::endl; 
-            BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -v ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedParcellationDir} ${FusedLabelDir} ${TargetList}_parcellation_seg_cortical.nrrd parce ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase}')"<<std::endl; 
+            if (!strcmp(GetLabelFusionAlgorithm(), "Weighted Majority Voting")) {
+                BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -v ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedLabelDir} ${FusedLabelDir} ${TargetList}_seg_subcortical.nrrd label ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase}')"<<std::endl; 
+                BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -v ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedParcellationDir} ${FusedLabelDir} ${TargetList}_parcellation_seg_cortical.nrrd parce ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase}')"<<std::endl; 
+            }
+            if (!strcmp(GetLabelFusionAlgorithm(), "Majority Voting")) {
+                BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -m ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedLabelDir} ${FusedLabelDir} ${TargetList}_seg_subcortical.nrrd label ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase}')"<<std::endl; 
+                BMSAutoSegMainFile<<"      Run (output '${MultiAtlasSegCmd} -m ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedParcellationDir} ${FusedLabelDir} ${TargetList}_parcellation_seg_cortical.nrrd parce ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase}')"<<std::endl; 
+            }
+            if (GetComputeVolume()) {
+                BMSAutoSegMainFile<<"      Run (output '${ImageStatCmd} ${TargetPath}Rescaled_${MultiAtlasTargetFile} -label ${FusedLabelDir}${TargetList}_seg_subcortical.nrrd -volumeSummary -outbase " <<GetProcessDataDirectory()<< "AutoSeg_Volume/MultiAtlas')"<<std::endl;
+            }
             BMSAutoSegMainFile<<"      Run (output '${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation_seg_cortical.nrrd -mask ${EMS2Dir}${TargetList}_Bias_regAtlas_stripEMS_GM.nrrd -outfile ${FusedLabelDir}${TargetList}_parcellation_seg_cortical_GM.nrrd')"<<std::endl; 
             BMSAutoSegMainFile<<"      Run (output '${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation_seg_cortical.nrrd -mask ${EMS2Dir}${TargetList}_Bias_regAtlas_stripEMS_WM.nrrd -outfile ${FusedLabelDir}${TargetList}_parcellation_seg_cortical_WM.nrrd')"<<std::endl; 
             BMSAutoSegMainFile<<"      Run (output '${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation_seg_cortical.nrrd -mask ${EMS2Dir}${TargetList}_Bias_regAtlas_stripEMS_CSF.nrrd -outfile ${FusedLabelDir}${TargetList}_parcellation_seg_cortical_CSF.nrrd')"<<std::endl; 
@@ -6789,7 +6754,23 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      GetFilename (SegmentedFileHead ${SegmentedFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      #Computing Statistics"<<std::endl;
     BMSAutoSegMainFile<<"      echo ('Computing Volume information...')"<<std::endl;
-    BMSAutoSegMainFile<<"      Run (output '${ImageStatCmd} ${SkullStrippedImage} -label ${SegmentedFile} -volumeSummary -outbase ${EMSPath}${SegmentedFileHead}')"<<std::endl;	
+ //       BMSAutoSegMainFile<<"      set (FusedLabelPath ${T1Path}/${AutoSegDir}/fused-labels/)"<<std::endl;
+  //      BMSAutoSegMainFile<<"      echo ('Computing Volume information 1: ${FusedLabelPath}')"<<std::endl;
+   //     BMSAutoSegMainFile<<"      set (FusedLabelFile ${FusedLabelPath}${T1CaseHead}_seg_subcortical.nrrd)"<<std::endl;
+    //    BMSAutoSegMainFile<<"      echo ('Computing Volume information 2: ${FusedlabelFile}')"<<std::endl;
+/*
+    if (GetMultiAtlasSegmentation()) {
+        BMSAutoSegMainFile<<"      set (FusedLabelPath ${T1Path}/${AutoSegDir}/fused-labels/)"<<std::endl;
+        BMSAutoSegMainFile<<"      echo ('Computing Volume information 1: ${FusedLabelPath}')"<<std::endl;
+        BMSAutoSegMainFile<<"      set (FusedLabelFile ${FusedLabelPath}${T1CaseHead}_seg_subcortical.nrrd)"<<std::endl;
+        BMSAutoSegMainFile<<"      echo ('Computing Volume information 2: ${FusedlabelFile}')"<<std::endl;
+        BMSAutoSegMainFile<<"      echo ('${ImageStatCmd} ${SkullStrippedImage} -label ${FusedLabelFile} -volumeSummary -outbase ${FusedLabelPath}${SegmentedFileHead}'))"<<std::endl;
+    //    BMSAutoSegMainFile<<"      Run (output '${ImageStatCmd} ${SkullStrippedImage} -label ${FusedLabelFile} -volumeSummary -outbase ${FusedLabelPath}${SegmentedFileHead}')"<<std::endl;	
+    }
+*/
+//    else  {
+        BMSAutoSegMainFile<<"      Run (output '${ImageStatCmd} ${SkullStrippedImage} -label ${SegmentedFile} -volumeSummary -outbase ${EMSPath}${SegmentedFileHead}')"<<std::endl;	
+ //   }
     BMSAutoSegMainFile<<"      set (files_to_cat ${files_to_cat} ${EMSPath}${SegmentedFileHead}_volumeSummary.csv)"<<std::endl;
     
     BMSAutoSegMainFile<<"      Inc(${CaseNumber} 1)"<<std::endl;
