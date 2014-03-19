@@ -24,7 +24,9 @@
 
 float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDirectory, const std::string filename)
 {
-    typedef   unsigned char  PixelType;
+    typedef   unsigned short  PixelType;
+    // does this really need to be char, switched to short by MST Mar 14,2014
+
     typedef itk::Image< PixelType, 3 >   ImageType;
     typedef itk::MeanSquaresImageToImageMetric< ImageType, ImageType >  MSMMetricType;
     typedef itk::NormalizedCorrelationImageToImageMetric< ImageType, ImageType >  NCCMetricType;
@@ -133,11 +135,6 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
     OrientedImageType::IndexType                    index;
     OrientedImageType::SizeType                     size;
     float                                           HE = 0;
-//    std::string                                     filename;
- //   std::ostringstream                              strFixCase;
-
-   // strFixCase << argv[3];
-//    strFixCase << fixedCase;
 
     orientedreader->SetFileName( deformedFieldDirectory );
     try {
@@ -162,10 +159,10 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
         }
     }
     std::cout << "harmonic energy: " << HE << std::endl;
-//    filename = "harmonicEnergyMICCAI_target.txt";
     std::ofstream hefile( filename.c_str() , std::ios::app );
     hefile << HE << "\n";
     hefile.close();
+
 }
 
 AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
@@ -345,186 +342,14 @@ void AutoSegGUIControls::LoadParameterFileGUI()
   }
 
   //if a name has been set
-  if(fc.count())
+  if(fc.count()) {
     m_Computation.LoadParameterFile(fc.value());  
-  UpdateParameterGUI(fc.value());
+    UpdateParameterGUI(fc.value());
+  }
+  m_CurrentDirectory = strdup(fc.directory());
+
 }
-/*
-void AutoSegGUIControls::MultiAtlasSeg()tlasSeg();
-{
-    float graph[NUMBER_OF_CASE][NUMBER_OF_CASE][2], circularity[NUMBER_OF_CASE]; //include deformation from two directions
-    float intensityE, harmonicE, shapeE, tmpHE = 0, maxDistance = 0, minDistance = 100000;
-    float alpha = 0.5, beta = 0.5, gama = 0;
-    int startNode, endNode, floydRoute[NUMBER_OF_CASE];
-    std::ostringstream strFixCase;
-    std::string filename;
-    strFixCase << (int)g_FixedCase->value();
-    //startNode = (int)g_StartCase->value();
-    //endNode = (int)g_EndCase->value();
-    startNode = 0;
-    endNode = g_NumAtlas->value();
-   // std::cout << startNode << "  " << endNode << "  " << g_FixedCase->value() << " finished!!!" << std::endl;
-    //filename = g_IntensityEnergyDirectoryDisp->value();
-    std::cout << filename << std::endl;
-    std::ifstream efile( filename.c_str() );
-   // filename = g_HarmonicEnergyDirectoryDisp->value();
-    std::cout << filename << std::endl;
-    std::ifstream iefile( filename.c_str() );
-    //filename = g_SelectedTemplateDirectoryDisp->value();
- //   filename = "test/templateForSegMICCAI_" + strFixCase.str() + ".txt";
-    std::cout << filename << std::endl;
-    std::string commandLine;
-    std::ofstream templatefile(filename.c_str(), std::ios::app );
-    int cases[25] = {39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 54, 55, 56, 57, 58, 59, 69, 71, 73, 88, 95, 107}, caseUsed[NUMBER_OF_CASE]; 
-    int graphHistogram[120] = {0};
 
-    for (int i = 0; i < NUMBER_OF_CASE; i++){
-        floydRoute[i] = MAX_NODE;
-        caseUsed[i] = 0;
-    }
-    
-    int m = 0;
-    for (int i = 0; i < NUMBER_OF_CASE; i++){
-        for (int j = 0; j < NUMBER_OF_CASE; j++){
-            graph[i][j][0] = -1;
-            graph[i][j][1] = -1;
-        }
-    }
-
-    for (int i = 0; i < NUMBER_OF_ATLAS; i++){ //start on the route
-        for (int j = 0; j < NUMBER_OF_ATLAS; j++){ // end on the route
-        if(i == j){
-            graph[i][j][0] = -1;
-            graph[i][j][1] = -1;
-        }
-        else {
-            m++;
-            efile >> harmonicE;
-            iefile >> intensityE;
-            graph[j][i][0] = alpha * harmonicE;
-            graph[j][i][0] += beta * intensityE;
-            if(graph[j][i][0] < minDistance)
-            minDistance = graph[j][i][0];
-            if(graph[j][i][0] > maxDistance)
-            maxDistance = graph[j][i][0];
-            int tmp = round(graph[j][i][0] * 100); 
-            if((tmp - 1) < 0)
-            graphHistogram[0]++;
-            else if ((tmp - 1) >= 120)
-            graphHistogram[119]++;
-            else
-            graphHistogram[tmp - 1]++;
-         //       invefile >> tmpHE;
-           //     graph[i][j][1] = tmpHE;
-            }
-        }
-    }
-    for (int i = NUMBER_OF_ATLAS; i < NUMBER_OF_CASE; i++){
-        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
-            m++;
-            efile >> harmonicE;
-            iefile >> intensityE;
-            graph[j][i][0] = alpha * harmonicE;
-            graph[j][i][0] += beta * intensityE;
-        //    graph[j][i][0] += gama * fabs(circularity[i] - circularity[j]) + ENERGY_CONST;
-            if(graph[j][i][0] < minDistance)
-            minDistance = graph[j][i][0];
-            if(graph[j][i][0] > maxDistance)
-            maxDistance = graph[j][i][0];
-            int tmp = round(graph[j][i][0] * 100); 
-            if((tmp - 1) < 0)
-            graphHistogram[0]++;
-            else if ((tmp - 1) >= 120)
-            graphHistogram[119]++;
-            else
-            graphHistogram[tmp - 1]++;
-        }
-    }
-    //normalize the distance
-    for (int i = 0; i < NUMBER_OF_ATLAS; i++){
-        minDistance = 1000000;
-        maxDistance = 0;
-        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
-        if(i == j){
-        }
-        else {
-            if(graph[j][i][0] < minDistance)
-            minDistance = graph[j][i][0];
-            if(graph[j][i][0] > maxDistance)
-            maxDistance = graph[j][i][0];
-        }
-        }
-        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
-        if(i == j){
-        }
-        else {
-            graph[j][i][0] = (graph[j][i][0] - minDistance) / (maxDistance - minDistance);
-        }
-        }
-    }
-    for (int i = NUMBER_OF_ATLAS; i < NUMBER_OF_CASE; i++){
-        minDistance = 1000000;
-        maxDistance = 0;
-        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
-        if(graph[j][i][0] < minDistance)
-            minDistance = graph[j][i][0];
-        if(graph[j][i][0] > maxDistance)
-            maxDistance = graph[j][i][0];
-        }
-        for (int j = 0; j < NUMBER_OF_ATLAS; j++){
-        graph[j][i][0] = (graph[j][i][0] - minDistance) / (maxDistance - minDistance);
-        }
-    }
-    
-    //end of normalization
-    efile.close();
-//    invefile.close();
-    iefile.close();
-
-    //search shortest route from startNode to endNode using Floyd algorithm
-    //startNode = atoi(argv[2]); endNode = atoi(argv[3]);
-    startNode = 0;
-    endNode = (int)g_NumAtlas->value();
-    int floydNode = startNode, lengthPathFloyd = 0;
-    bool changes = 1;
-    float directDistance = graph[startNode][endNode][0], currentDistance = graph[startNode][endNode][0], cumDistance = 0;
-    int k = 0;
-    floydRoute[k] = startNode;
-    while (changes == 1) {
-        changes = 0;
-        float tmpCumDistance =  directDistance;
-        for (int i = 0; i < NUMBER_OF_CASE; i++){
-            currentDistance = cumDistance + graph[startNode][i][0] + graph[i][endNode][0];  
-            if (tmpCumDistance > currentDistance && startNode != i && endNode != i && caseUsed[i] == 0) {
-                changes = 1; 
-                floydNode = i;
-                tmpCumDistance = currentDistance - graph[i][endNode][0];
-            }
-        }
-        if(changes == 1) {
-            cumDistance = tmpCumDistance;
-            startNode = floydNode;
-            k++;
-            floydRoute[k] = startNode;
-            caseUsed[floydNode] = 1;
-            lengthPathFloyd++;
-        }
-    }
-    k++;
-    floydRoute[k] = endNode;
-    //end of Floyd algorithm
-    k = 0;
-    //std::cout << argv[2] << "  " << argv[3] << ": ";
-    while(floydRoute[k] != MAX_NODE){
-        std::cout << floydRoute[k] << "  ";
-        k++;
-    } 
-    std::cout << "\n";
-    templatefile << floydRoute[k - 2];
-    templatefile << "\n";
-    templatefile.close();
-}
-*/
 void MajorityVotingLabelFusion(std::string segmentationfilename, std::string datadirectory )
 {
 
@@ -724,7 +549,7 @@ void AutoSegGUIControls::LoadComputationFileGUI()
 	m_Computation.LoadComputationFile(fc.value());
 	UpdateComputationGUI(fc.value());
       }
-  m_CurrentDirectory = fc.directory();
+    m_CurrentDirectory = strdup(fc.directory());
 }
 
 void AutoSegGUIControls::SaveParameterFileGUI()
@@ -796,7 +621,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
   int Length;
   // Computation Options
   int IsT2Image, IsPDImage;
-  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas, ComputeAtlasAtlasReg;  
+  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas;  
 
   if ((ComputationFile = fopen(_FileName,"r")) != NULL) 
   {
@@ -5802,7 +5627,6 @@ void AutoSegGUIControls::StopAutoSeg()
 void AutoSegGUIControls::ComputeGUI()
 {
   int ComputeStudy = 1;
-  int NbClass = 0;
 
   if (m_Computation.GetIsAutoSegInProcess())
     fl_message("Automatic Segmentation already in process...");
@@ -5864,6 +5688,7 @@ void AutoSegGUIControls::ComputeGUI()
 	{
 	  m_Computation.Computation();
 	  Fl::check();
+	  std::cout << "finally done!!" << std::endl;
 	}
       }
     }

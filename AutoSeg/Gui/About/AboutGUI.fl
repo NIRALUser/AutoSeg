@@ -8,72 +8,73 @@ class AboutGUI {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg - About} open
-      xywh {760 509 460 360} type Single modal visible
+      xywh {659 151 545 450} type Single modal visible
     } {
       Fl_Button {} {
-        image {AutoSeg.jpg} xywh {4 5 222 170} deactivate
+        label {AutoSeg 3.0.0}
+        xywh {200 20 115 30} box NO_BOX labelfont 1 labelsize 18
       }
       Fl_Button {} {
-        label {AutoSeg 2.9.1} selected
-        xywh {275 20 115 30} box NO_BOX labelfont 1 labelsize 18
-      }
-      Fl_Button {} {
-        label {Clement Vachet}
-        xywh {295 114 115 24} box NO_BOX labelfont 8 align 20
+        label {Martin Styner}
+        xywh {205 109 115 24} box NO_BOX labelfont 8 align 20
       }
       Fl_Return_Button g_OKButton {
         label OK
         callback {OKButtonPressed();}
-        xywh {207 322 53 25} labelfont 8
+        xywh {240 385 53 25} labelfont 8
       }
       Fl_Button {} {
         label {Original Pipeline: }
-        xywh {10 208 110 24} box NO_BOX labelfont 9 align 20
+        xywh {30 294 110 21} box NO_BOX labelfont 9 align 20
       }
       Fl_Button {} {
         label {Sylvain Gouttard}
-        xywh {130 208 105 24} box NO_BOX labelfont 8 align 16
+        xywh {190 291 105 24} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {
-        label {www.niral.unc.edu}
-        xywh {130 279 120 24} box NO_BOX labelfont 8 align 16
+        label {www.niral.unc.edu} selected
+        xywh {150 356 120 24} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {
-        label {cvachet@@unc.edu}
-        xywh {295 136 123 24} box NO_BOX labelfont 8 align 20
+        label {styner@@unc.edu}
+        xywh {205 131 123 24} box NO_BOX labelfont 8 align 20
       }
       Fl_Button {} {
         label {Laboratory: }
-        xywh {10 239 110 24} box NO_BOX labelfont 9 align 20
+        xywh {30 316 110 24} box NO_BOX labelfont 9 align 20
       }
       Fl_Button {} {
         label {Neuro Image Research and Analysis Laboratories}
-        xywh {130 239 293 24} box NO_BOX labelfont 8 align 16
+        xywh {150 316 293 24} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {
         label {University of North Carolina at Chapel Hill (NC, USA)}
-        xywh {130 259 310 24} box NO_BOX labelfont 8 align 16
+        xywh {150 336 310 24} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {
         label {http://www.nitrc.org/projects/autoseg/}
-        xywh {231 58 218 24} box NO_BOX labelfont 8 align 16
+        xywh {165 56 218 24} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {
-        label {Developpers: }
-        xywh {10 185 105 24} box NO_BOX labelfont 9 align 20
+        label {Developers: }
+        xywh {180 186 105 24} box NO_BOX labelfont 9 align 20
       }
       Fl_Button {} {
         label {Clement Vachet, Emilie Perrot, Clementine Ouziel}
-        xywh {130 185 285 24} box NO_BOX labelfont 8 align 16
+        xywh {115 193 290 54} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {
         label {Contact: }
-        xywh {228 114 70 24} box NO_BOX labelfont 9 align 16
+        xywh {135 109 70 24} box NO_BOX labelfont 9 align 16
+      }
+      Fl_Button {} {
+        label {Jiahui Wang, Martin Styner, Francois Budin}
+        xywh {115 216 290 54} box NO_BOX labelfont 8 align 16
       }
     }
   }
   Function {OKButtonPressed()} {open return_type {virtual void}
   } {}
-  Function {~AboutGUI()} {open return_type virtual
+  Function {~AboutGUI()} {open
   } {}
 } 

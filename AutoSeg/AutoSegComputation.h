@@ -25,6 +25,7 @@
 #include <vector>
 #include <itksys/Glob.hxx>
 #include <cstdlib>
+#include <cstdio>
 #include <dirent.h>
 #include <unistd.h>
 #include <string>
@@ -32,12 +33,15 @@
 #include <sstream>
 #include <itksys/SystemTools.hxx>
 #include <math.h>
+#include <itkMultiThreader.h>
 
 #include "TextDisplayGUIControls.h"
 
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Display.H>
 #include <FL/fl_ask.H>
+#include <bmScriptParser.h>
+
 #define FILE_LIST_LENGTH 128
 
 enum Mode
@@ -64,7 +68,9 @@ class AutoSegComputation
 
   // Automatic Segmentation computation
     void SetIsAutoSegInProcess(bool _IsAutoSegInProcess){m_IsAutoSegInProcess = _IsAutoSegInProcess;};
-    bool GetIsAutoSegInProcess(){return m_IsAutoSegInProcess;};  
+    bool GetIsAutoSegInProcess(){return m_IsAutoSegInProcess;}; 
+    const char * GetCurrentBatchmakeFile(){return m_currentBMS;};
+ 
   // Tab Computation
     void SetProcessDataDirectory(const char *_ProcessDataDirectory){std::strcpy(m_ProcessDataDirectory,_ProcessDataDirectory);};
     bool SetMultiAtlasDirectory(const char *_MultiAtlasDirectory);
@@ -325,6 +331,7 @@ class AutoSegComputation
   // Compute Automatic Segmentation
     void Computation();
     void ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile);
+    bool GetGUIMode() { return m_GUImode;};
     void StopBatchMake();
   // Show MRML Scene
     void ExecuteSlicer3withScene(std::string pathSlicer);
@@ -358,8 +365,76 @@ class AutoSegComputation
     float GetSlicerVersion(){return m_SlicerVersion;};
     int GetANTSWithBrainmask(){return m_ANTSWithBrainmask;};
     int GetUseInitialAffine(){return m_UseInitialAffine;};
+    char *GetLogFile(){return m_LogFile;};
+
     //void SetABCANTSWarpButtonChecked(){m_ABCANTSWarpChecked = 1;};
    // int GetABCANTSWarpButtonChecked(){return m_ABCANTSWarpChecked;};
+    char m_BMSAutoSegFile[512];
+    char m_BMSAutoSegMRMLSourceFile[512];
+    char m_BMSAutoSegMRMLParcelFile[512];
+    char m_BMSAutoSegMRMLAllROIFile[512];
+    char * m_currentBMS;
+    
+   // Log File
+    std::string m_output;
+    char m_LogFile[512];
+  // Parameter File
+    char m_ParameterFile[512];
+    char m_ComputationFile[512];
+    char m_AuxComputationFile[512];
+    bool m_IsAutoSegInProcess;
+
+  //Tab Computation
+    char m_ProcessDataDirectory[512];
+    char m_MultiAtlasDirectory[512];
+    char m_MultiAtlasTargetFile[512];
+    // Data AutoSeg Directory
+    char m_DataAutoSegDirectory[100];
+    // Automatic Data Selection
+    char m_DataDirectory[512];
+    char m_AuxDataDirectory[512];
+    char m_T1[100];
+    char m_T2[100];
+    char m_PD[100];
+    char m_Aux1[100];
+    char m_Aux2[100];
+    char m_Aux3[100];
+    char m_Aux4[100];
+    char m_Aux5[100];
+    char m_Aux6[100];
+    char m_Aux7[100];
+    char m_Aux8[100];
+    char m_Aux1Label[100];
+    char m_Aux2Label[100];
+    char m_Aux3Label[100];
+    char m_Aux4Label[100];
+    char m_Aux5Label[100];
+    char m_Aux6Label[100];
+    char m_Aux7Label[100];
+    char m_Aux8Label[100];
+		
+    // Computation Options
+    bool m_ComputeVolume;
+    bool m_ComputeCorticalThickness;
+    bool m_ComputeMultiAtlasAtlasRegistration;
+    bool m_MultiAtlasSegmentation;
+    bool m_RecalculateAtlasTargetMultiAtlasEnergy;
+    bool m_RecalculateAtlasAtlasMultiAtlasEnergy;
+    bool m_MultiModalitySegmentation;
+    bool m_Recompute; // Recompute all
+    bool m_UseCondor;
+
+    // Regional Histogram Options
+    bool m_AtlasSpaceImage;
+    bool m_BiasCorrectedImage;
+    bool m_SkullStrippedImage;
+    bool m_RigidTransformation;
+    bool m_AffineTransformation;
+    bool m_BsplineTransformation;
+
+    // Display
+    TextDisplayGUIControls TextDisplay;
+    Fl_Text_Buffer m_TextBuf;
 
   private:
 
@@ -588,7 +663,6 @@ class AutoSegComputation
     char *GetBMSAutoSegMRMLAllROIFile(){return m_BMSAutoSegMRMLAllROIFile;};
     char *GetParameterFile(){return m_ParameterFile;};
     char *GetComputationFile(){return m_ComputationFile;};
-    char *GetLogFile(){return m_LogFile;};
     // Set Private Parameters
     void SetBMSAutoSegFile();
     void SetBMSAutoSegMainFile();
@@ -644,70 +718,7 @@ class AutoSegComputation
    // BatchMake Script to compute Automatic Segmentation
     char m_BMSAutoSegMainFile[512];
     char m_BMSAutoSegAuxFile[512];
-    char m_BMSAutoSegFile[512];
-    char m_BMSAutoSegMRMLSourceFile[512];
-    char m_BMSAutoSegMRMLParcelFile[512];
-    char m_BMSAutoSegMRMLAllROIFile[512];
-   // Log File
-    std::string m_output;
-    char m_LogFile[512];
-  // Parameter File
-    char m_ParameterFile[512];
-    char m_ComputationFile[512];
-    char m_AuxComputationFile[512];
-    bool m_IsAutoSegInProcess;
 
-  //Tab Computation
-    char m_ProcessDataDirectory[512];
-    char m_MultiAtlasDirectory[512];
-    char m_MultiAtlasTargetFile[512];
-    // Data AutoSeg Directory
-    char m_DataAutoSegDirectory[100];
-    // Automatic Data Selection
-    char m_DataDirectory[512];
-    char m_AuxDataDirectory[512];
-    char m_T1[100];
-    char m_T2[100];
-    char m_PD[100];
-    char m_Aux1[100];
-    char m_Aux2[100];
-    char m_Aux3[100];
-    char m_Aux4[100];
-    char m_Aux5[100];
-    char m_Aux6[100];
-    char m_Aux7[100];
-    char m_Aux8[100];
-    char m_Aux1Label[100];
-    char m_Aux2Label[100];
-    char m_Aux3Label[100];
-    char m_Aux4Label[100];
-    char m_Aux5Label[100];
-    char m_Aux6Label[100];
-    char m_Aux7Label[100];
-    char m_Aux8Label[100];
-		
-    // Computation Options
-    bool m_ComputeVolume;
-    bool m_ComputeCorticalThickness;
-    bool m_ComputeMultiAtlasAtlasRegistration;
-    bool m_MultiAtlasSegmentation;
-    bool m_RecalculateAtlasTargetMultiAtlasEnergy;
-    bool m_RecalculateAtlasAtlasMultiAtlasEnergy;
-    bool m_MultiModalitySegmentation;
-    bool m_Recompute; // Recompute all
-    bool m_UseCondor;
-
-    // Regional Histogram Options
-    bool m_AtlasSpaceImage;
-    bool m_BiasCorrectedImage;
-    bool m_SkullStrippedImage;
-    bool m_RigidTransformation;
-    bool m_AffineTransformation;
-    bool m_BsplineTransformation;
-
-    // Display
-    TextDisplayGUIControls TextDisplay;
-    Fl_Text_Buffer m_TextBuf;
   
   // Tab Parameters
     // Atlases
@@ -933,6 +944,10 @@ class AutoSegComputation
     itksysProcess* m_Process;
     bool m_KillProcess;
     bool m_Manually;
+    bool m_GUImode;
+
+    //int m_stdOutListenerThreadID;
+    int m_batchMakeThreadID;
 };
 
 #endif

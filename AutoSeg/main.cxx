@@ -29,31 +29,30 @@
 
 void PrintHelp(char* progname)
 {
-  std::cerr<<"Usage: "<<progname<<std::endl;
-  std::cerr<<"Available options:"<<std::endl;
-  std::cerr<<"  [ -h ] or [ --help ]"<<std::endl;
-  std::cerr<<"    = List options"<<std::endl;
-  std::cerr<<"  [ -v ] or [ --version ]"<<std::endl;
-  std::cerr<<"    = Return the version number"<<std::endl;
-  std::cerr<<std::endl;
+    std::cout << "AutoSeg "<<AUTOSEG_VERSION<<" - Compiled on: " << __DATE__ << " - "<< __TIME__ <<std::endl;
+    std::cout << " performs automatic brain tissue classification and structural segmentation" << std::endl;
+    std::cout << "usage: AutoSeg [-computationFile computationFile] [-parameterFile parameterFile]"<< std::endl; std::cout << std::endl; std::cout << "-computationFile	computation file" << std::endl;
+    std::cout << "-parameterFile	parameter file" << std::endl;
+    std::cout << "-gui	open AutoSeg interface" << std::endl;
+    std::cout << "-logFile              log file for standard logging (not during execution)" << std::endl;
+    std::cout << std::endl << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
   if (argc <=1 || ipExistsArgument(argv, "-h") || ipExistsArgument(argv, "--help"))
   {
-    std::cout << "AutoSeg "<<AUTOSEG_VERSION<<" - Compiled on: " << __DATE__ << " - "<< __TIME__ <<std::endl;
-    std::cout << " performs automatic brain tissue classification and structural segmentation" << std::endl;
-    std::cout << "usage: AutoSeg [-computationFile computationFile] [-parameterFile parameterFile]"<< std::endl; std::cout << std::endl; std::cout << "-computationFile	computation file" << std::endl;
-    std::cout << "-parameterFile	parameter file" << std::endl;
-    std::cout << "-gui	open AutoSeg interface" << std::endl;
-    std::cout << std::endl << std::endl;
+    PrintHelp(argv[0]);
     exit(0);
   }
   bool gui = ipExistsArgument(argv, "-gui");
-  char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);
-  char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
-  
+  const char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);
+  const char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
+  const char *logFilename = ipGetStringArgument(argv, "-parameterFile", "/dev/null");
+
+  FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
+  FILE *fp2 = freopen(logFilename,"w",stderr); //redirect stdout
+
   if (gui)
   {
     if (argc == 2)
