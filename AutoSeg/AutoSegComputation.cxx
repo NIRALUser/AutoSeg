@@ -1771,7 +1771,7 @@ ITK_THREAD_RETURN_TYPE BatchMakeThreader( void * arg )
   AutoSegComputation  * comp  = (AutoSegComputation *) infoStruct->UserData;
 
   comp->SetIsAutoSegInProcess(true);
-
+ 
   bm::ScriptParser m_Parser;
   std::cout << "starting BatchMake execution as Thread: " << comp->GetCurrentBatchmakeFile() << std::endl;
   m_Parser.Execute(comp->GetCurrentBatchmakeFile());
@@ -1819,15 +1819,12 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
 
     if (GetGUIMode())
       {
-	ifstream logInput (GetLogFile());
-	if (logInput) {
-	  // get length of file:
-	  logInput.seekg (0, logInput.end);
-	  int length = logInput.tellg();
-	  logInput.seekg (0, logInput.beg);
+	int length = itksys::SystemTools::FileLength(GetLogFile());
+	if (length != curFileLength) {
+	  curFileLength = length;
+	  ifstream logInput (GetLogFile());
 	  
-	  if (length != curFileLength) {
-	    curFileLength = length;
+	  if (logInput) {
 	    std::string log((std::istreambuf_iterator<char>(logInput)), std::istreambuf_iterator<char>());
 	    
 	    m_output = log;
@@ -5495,13 +5492,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                 targetDirectory = m_MultiAtlasT1List[NUMBER_OF_CASE];
                 NUMBER_OF_CASE++;
             }
-               
-        std::cout << "T1 target directory: " << targetDirectory << std::endl;
-   
-	// TODO: Needs tobe replaces with itksys functions
-        short foundSlash = targetDirectory.find_last_of("\/");
-        targetDirectory = targetDirectory.substr(0, foundSlash + 1);
-        std::cout << "T1 target directory: " << targetDirectory << std::endl;
+
+        targetDirectory = itksys::SystemTools::GetParentDirectory(targetDirectory.c_str());
 
         BMSAutoSegMainFile<<"      set (MultiAtlasDir "<<GetMultiAtlasDirectory()<<")"<<std::endl;
         BMSAutoSegMainFile<<"      set (ProcessDir "<<GetDataDirectory()<<"process/)"<<std::endl;
@@ -5597,96 +5589,76 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         SortStringList(m_AtlasLabelList, GetNbAtlasLabel());
         //set up atlas case ID list 
         BMSAutoSegMainFile<<"Set(AtlasHead 'atlas_')"<<std::endl;
-        BMSAutoSegMainFile<<"   echo('atlas head: ' ${AtlasHead})"<<std::endl; 	  
-        std::string   strTmp = m_AtlasList[0];
-        strTmp = strTmp.substr(6);
-        int sizeOfFilename = strTmp.length();
-        int foundFilenameExtension = strTmp.find_first_of(".") + 1;
-        //char *tmpAtlasCaseIDFilename = new char [sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)];
-        std::string tmpAtlasCaseIDFilename, tmpAtlasCaseExtension;
-        //strncpy(tmpAtlasCaseIDFilename, strTmp.c_str(), sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1));
+        BMSAutoSegMainFile<<"   echo('atlas head: ' ${AtlasHead})"<<std::endl; 
+
+	std::string tmpAtlasCaseIDFilename;
+	std::string tmpAtlasCaseExtension = itksys::SystemTools::GetFilenameExtension(m_AtlasList[0]);
+
+	std::string tmpAtlasName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasList[0]);
+	int sizeOfFilename = tmpAtlasName.length();
+
         if (GetMultiModalitySegmentation()) { 
-            tmpAtlasCaseIDFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 4 + 1))); // remove the extension of _t1w or _t2w
-            tmpAtlasCaseExtension = strTmp.substr((sizeOfFilename - (sizeOfFilename - foundFilenameExtension)), sizeOfFilename);
+            tmpAtlasCaseIDFilename = tmpAtlasName.substr(6, sizeOfFilename - 4 - 1); // remove _atlas, dot,  _t1w or _t2w
         }
         else {
-            tmpAtlasCaseIDFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
-            tmpAtlasCaseExtension = strTmp.substr((sizeOfFilename - (sizeOfFilename - foundFilenameExtension)), sizeOfFilename);
+            tmpAtlasCaseIDFilename = tmpAtlasName.substr(6, sizeOfFilename - 1); // remove dot 
         }
         BMSAutoSegMainFile<<"set (AtlasCaseIDList "<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
         BMSAutoSegMainFile<<"set (AtlasList "<< "atlas_" <<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
-        BMSAutoSegMainFile<<"set (AtlasCaseExtension "<< "." << tmpAtlasCaseExtension.c_str()<<")"<<std::endl;
+        BMSAutoSegMainFile<<"set (AtlasCaseExtension "<< tmpAtlasCaseExtension.c_str()<<")"<<std::endl;
+
         for (int DataNumber = 1; DataNumber < GetNbAtlas(); DataNumber++){       // set up warped atlas list
-            strTmp = m_AtlasList[DataNumber];
-            strTmp = strTmp.substr(6);
-            sizeOfFilename = strTmp.length();
-         //   strncpy(tmpAtlasCaseIDFilename, strTmp.c_str(), sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1));
-        if (GetMultiModalitySegmentation()) 
-            tmpAtlasCaseIDFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 4 + 1)));// remove the extension of _t1w or _t2w
-        else
-            tmpAtlasCaseIDFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
-            BMSAutoSegMainFile<<"set (AtlasCaseIDList ${AtlasCaseIDList} "<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
-         //   BMSAutoSegMainFile<<"set (AtlasList "<< "atlas_" <<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
-            BMSAutoSegMainFile<<"set (AtlasList ${AtlasList} "<< "atlas_"<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
+	  tmpAtlasName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasList[DataNumber]);
+	  sizeOfFilename = tmpAtlasName.length();
+         
+	  if (GetMultiModalitySegmentation()) { 
+            tmpAtlasCaseIDFilename = tmpAtlasName.substr(6, sizeOfFilename - 4 - 1); // remove _atlas, dot,  _t1w or _t2w
+	  }
+	  else {
+            tmpAtlasCaseIDFilename = tmpAtlasName.substr(6, sizeOfFilename - 1); // remove dot 
+	  }
+	  BMSAutoSegMainFile<<"set (AtlasCaseIDList ${AtlasCaseIDList} "<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
+	  BMSAutoSegMainFile<<"set (AtlasList ${AtlasList} "<< "atlas_"<<tmpAtlasCaseIDFilename.c_str()<<")"<<std::endl;
         }
 
         //set up gray-level atlas image list
-//        BMSAutoSegMainFile<<"  ListFileInDir(AtlasList ${MultiAtlasDir}atlas_image/atlas_*)"<<std::endl;
-         
-        //BMSAutoSegMainFile<<"set (AtlasList atlas_${AtlasCaseIDList})"<<std::endl;
         BMSAutoSegMainFile<<"   echo('atlas directory: ' ${MultiAtlasDir})"<<std::endl; 	  
         BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
-        BMSAutoSegMainFile<<"   echo('atlas extensioin: ' ${AtlasCaseExtension})"<<std::endl; 	  
+        BMSAutoSegMainFile<<"   echo('atlas extension: ' ${AtlasCaseExtension})"<<std::endl; 	  
         BMSAutoSegMainFile<<"   echo('atlas case ID list: ' ${AtlasCaseIDList})"<<std::endl; 	  
 
         //set up atlas label list
-        strTmp = m_AtlasLabelList[0];
-        sizeOfFilename = strTmp.length();
-        foundFilenameExtension = strTmp.find_first_of(".") + 1;
-        std::string tmpAtlasLabelFilename;
-        std::string tmpAtlasLabelFilenameExtension;
-        tmpAtlasLabelFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
-        tmpAtlasLabelFilenameExtension = strTmp.substr(sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1), (sizeOfFilename -  1));
-    //    std::cout << m_AtlasLabelList[0]<< "  " << tmpAtlasLabelFilename << std::endl;
-        BMSAutoSegMainFile<<"set (AtlasLabelExtension "<<tmpAtlasLabelFilenameExtension.c_str() <<")"<<std::endl;
-        BMSAutoSegMainFile<<"set (AtlasLabelList "<<tmpAtlasLabelFilename.c_str() <<")"<<std::endl;
+	std::string tmpAtlasLabelExt = itksys::SystemTools::GetFilenameExtension(m_AtlasLabelList[0]);
+        BMSAutoSegMainFile<<"   set (AtlasLabelExtension "<< tmpAtlasLabelExt.c_str() <<")"<<std::endl;
+
+	std::string tmpAtlasLabelName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasLabelList[0]);
+	sizeOfFilename = tmpAtlasLabelName.length();
+	std::string tmpAtlasLabelFilename = tmpAtlasLabelName.substr(0, sizeOfFilename - 1); // remove dot
+        BMSAutoSegMainFile<<"   set (AtlasLabelList "<<tmpAtlasLabelFilename.c_str() <<")"<<std::endl;
+
         for (int DataNumber = 1; DataNumber < GetNbAtlasLabel(); DataNumber++){       // set up warped atlas list
-            strTmp = m_AtlasLabelList[DataNumber];
-            sizeOfFilename = strTmp.length();
-            foundFilenameExtension = strTmp.find_first_of(".") + 1;
-            tmpAtlasLabelFilename = strTmp.substr(0, (sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1)));
-            BMSAutoSegMainFile<<"set (AtlasLabelList ${AtlasLabelList} "<<tmpAtlasLabelFilename.c_str()<<")"<<std::endl;
+	    tmpAtlasLabelName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasLabelList[DataNumber]);
+	    sizeOfFilename = tmpAtlasLabelName.length();
+	    tmpAtlasLabelFilename = tmpAtlasLabelName.substr(0, sizeOfFilename - 1); // remove dot
+	
+            BMSAutoSegMainFile<<"   set (AtlasLabelList ${AtlasLabelList} "<<tmpAtlasLabelFilename.c_str()<<")"<<std::endl;
         }
         BMSAutoSegMainFile<<"   echo('label list: ' ${AtlaslabelList})"<<std::endl; 	  
 
         //set up target list 
-     //   strTmp = m_MultiAtlasTargetFile;
-        strTmp = m_MultiAtlasT1List[NUMBER_OF_CASE - 1];
-        sizeOfFilename = strTmp.length();
-        int found = strTmp.find_last_of("\/") + 1; 
-        foundFilenameExtension = strTmp.find_first_of(".") + 1;
-        strTmp = strTmp.substr(found);
-        foundFilenameExtension = strTmp.find_first_of(".") + 1;
-        sizeOfFilename = strTmp.length();
-        std::cout << "length of extension: " << sizeOfFilename << "  " << found << "  " << foundFilenameExtension << "  " <<  sizeOfFilename - foundFilenameExtension << std::endl;
-        std::cout << "0: " << strTmp << std::endl;
+
+	std::string tmpTargetName = itksys::SystemTools::GetFilenameWithoutExtension(m_MultiAtlasT1List[NUMBER_OF_CASE - 1]);
+	sizeOfFilename = tmpTargetName.length();
+							
         std::string tmpTargetFilename ;
-        
         if (GetMultiModalitySegmentation()) 
-            tmpTargetFilename = strTmp.substr(0, sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 4 + 1));  // remove the extension of _t1w or _t2w
+            tmpTargetFilename = tmpTargetName.substr(0, sizeOfFilename - 4 - 1);  // remove dot and _t1w or _t2w
         else 
-            tmpTargetFilename = strTmp.substr(0, sizeOfFilename - (sizeOfFilename - foundFilenameExtension + 1));
-        BMSAutoSegMainFile<<"set (TargetList "<<tmpTargetFilename.c_str()<<")"<<std::endl;
+            tmpTargetFilename = tmpTargetName.substr(0, sizeOfFilename - 1); // remove dot
+        BMSAutoSegMainFile<<"   set (TargetList "<<tmpTargetFilename.c_str()<<")"<<std::endl;
 
         //set up target case ID list
-        //strTmp = m_MultiAtlasTargetFile;
-        strTmp = m_MultiAtlasT1List[NUMBER_OF_CASE - 1];
-        sizeOfFilename = strTmp.length();
-        foundFilenameExtension = strTmp.find_first_of(".") + 1;
-        std::string tmpTargetCaseIDFilename ;
-        tmpTargetCaseIDFilename = tmpTargetFilename;
-        std::cout << "2: " << tmpTargetCaseIDFilename.c_str() << std::endl;
-        BMSAutoSegMainFile<<"set (TargetCaseIDList "<<tmpTargetCaseIDFilename.c_str()<<")"<<std::endl;
+        BMSAutoSegMainFile<<"   set (TargetCaseIDList "<<tmpTargetFilename.c_str()<<")"<<std::endl;
 
         std::string WarpedAtlasDirectory = GetDataDirectory();
         WarpedAtlasDirectory = targetDirectory;

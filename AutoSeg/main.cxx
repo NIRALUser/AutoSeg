@@ -35,6 +35,7 @@ void PrintHelp(char* progname)
     std::cout << "-parameterFile	parameter file" << std::endl;
     std::cout << "-gui	open AutoSeg interface" << std::endl;
     std::cout << "-logFile              log file for standard logging (not during execution)" << std::endl;
+    std::cout << "-h/-help              print this info" << std::endl;
     std::cout << std::endl << std::endl;
 }
 
@@ -48,19 +49,17 @@ int main(int argc, char *argv[])
   bool gui = ipExistsArgument(argv, "-gui");
   const char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);
   const char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
-  const char *logFilename = ipGetStringArgument(argv, "-parameterFile", "/dev/null");
+  const char *logFilename = ipGetStringArgument(argv, "-logFile", "/dev/null");
 
   FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
   FILE *fp2 = freopen(logFilename,"w",stderr); //redirect stdout
 
   if (gui)
   {
-    if (argc == 2)
-    {
-      const char *AutoSegHome = "AUTOSEG_HOME";
-      char *AutoSegPath = NULL;
-      AutoSegPath = getenv(AutoSegHome);
-      if (AutoSegPath != NULL)
+    const char *AutoSegHome = "AUTOSEG_HOME";
+    char *AutoSegPath = NULL;
+    AutoSegPath = getenv(AutoSegHome);
+    if (AutoSegPath != NULL)
       {
 	AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath);  
 	Fl::scheme("plastic");
@@ -68,14 +67,13 @@ int main(int argc, char *argv[])
 	delete MainWindow;
 	return 0;
       }
-      else
+    else
       {
 	std::cerr<<"The environment variable 'AUTOSEG_HOME' needs to be set"<<std::endl;
 	std::cerr<<"bash usage : export AUTOSEG_HOME=<InputDirectory>"<<std::endl;
 	std::cerr<<"tcsh usage : setenv AUTOSEG_HOME <InputDirectory>"<<std::endl;
 	return -1;
       }
-    }
   }
   else if ((argc == 5) && computationFile && parameterFile)
   {
