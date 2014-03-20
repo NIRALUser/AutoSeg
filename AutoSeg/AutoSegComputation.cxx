@@ -1775,6 +1775,7 @@ ITK_THREAD_RETURN_TYPE BatchMakeThreader( void * arg )
   bm::ScriptParser m_Parser;
   std::cout << "starting BatchMake execution as Thread: " << comp->GetCurrentBatchmakeFile() << std::endl;
   m_Parser.Execute(comp->GetCurrentBatchmakeFile());
+  std::cout << "finished with BatchMake execution: " << comp->GetCurrentBatchmakeFile() << std::endl;
 
   comp->SetIsAutoSegInProcess(false); 
 
@@ -1854,6 +1855,9 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
     
   }
   Fl::check();
+
+  freopen("/dev/null","w",stdout);
+  freopen("/dev/null","w",stderr);
 
   fclose(fp1);
   fclose(fp2);
@@ -2621,7 +2625,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     
   BMSAutoSegMainFile<<"# ROI Atlas File"<<std::endl;
   BMSAutoSegMainFile<<"set (atlasROIFile "<<GetROIAtlasFile()<<")"<<std::endl;
-  if (GetANTSWarpingMethod() && !GetMultiAtlasSegmentation()) {
+
+  if (GetANTSWarpingMethod() && GetMultiModalitySegmentation()) {
       BMSAutoSegMainFile<<"# ROI T2 Atlas File"<<std::endl;
       BMSAutoSegMainFile<<"set (atlasROIT2File "<<GetROIT2AtlasFile()<<")"<<std::endl;
   }
