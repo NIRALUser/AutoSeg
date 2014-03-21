@@ -618,8 +618,9 @@ void AutoSegComputation::SetNbTissueClass(const char *_Directory)
         while ((ent = readdir (dir)) != NULL) {
 	  filename = std::string(ent->d_name);
 	  int nbClass = 0;
-	  int numVal = sscanf(filename.c_str(),"%d.mha",&nbClass);
-	  if( numVal == 1 && nbClass != 0)  { 
+	  char extension[100];
+	  int numVal = sscanf(filename.c_str(),"%d.%s",&nbClass, extension);
+	  if( numVal == 2 && nbClass != 0 && !strcmp(extension,"mha"))  { 
 	    m_NbTissueClass++;
 	  }
         }
@@ -639,8 +640,9 @@ void AutoSegComputation::SetNbStrippedTissueClass(const char *_Directory)
         while ((ent = readdir (dir)) != NULL) {
 	  filename = std::string(ent->d_name);
 	  int nbClass = 0;
-	  int numVal = sscanf(filename.c_str(),"%d.mha",&nbClass);
-	  if( numVal == 1 && nbClass != 0)  { 
+	  char extension[100];
+	  int numVal = sscanf(filename.c_str(),"%d.%s",&nbClass, extension);
+	  if( numVal == 2 && nbClass != 0 && !strcmp(extension,"mha"))  { 
 	    m_NbStrippedTissueClass++;
 	  }
         }
@@ -1814,12 +1816,16 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
   int curFileLength = 0;
 
   while (GetIsAutoSegInProcess() && !m_KillProcess) {
-    Fl::check();
+    if (GetGUIMode())
+      {
+	Fl::check();
+      }
     
     itksys::SystemTools::Delay(100);
 
     if (GetGUIMode())
       {
+	Fl::check();
 	int length = itksys::SystemTools::FileLength(GetLogFile());
 	if (length != curFileLength) {
 	  curFileLength = length;
@@ -1983,16 +1989,13 @@ void AutoSegComputation::WriteComputationFile(const char *_FileName)
   ComputationFile<<"// Multi-Modality Segmentation Options"<<std::endl;
   ComputationFile<<"Compute Multi-modality Segmentation: "<<GetMultiModalitySegmentation()<<std::endl;
 
-  ComputationFile<<"// Multi-Atlas Segmentation Options"<<std::endl;
+  ComputationFile<<"// Multi vs Single-Atlas Segmentation Options"<<std::endl;
+  ComputationFile<<"Compute Single-atlas Segmentation: "<<GetSingleAtlasSegmentation()<<std::endl;
   ComputationFile<<"Compute Multi-atlas Segmentation: "<<GetMultiAtlasSegmentation()<<std::endl;
 //  ComputationFile<<"Compute Atlas-Atlas Registration: "<<GetMultiAtlasAtlasRegistration()<<std::endl;
   ComputationFile<<"Conduct Atlas-Atlas Registration: "<<GetMultiAtlasAtlasRegistration()<<std::endl;
   ComputationFile<<"Recalculate Atlas-Target Energy: "<<GetRecalculateAtlasTargetMultiAtlasEnergy()<<std::endl;
   ComputationFile<<"Recalculate Atlas-Atlas Energy: "<<GetRecalculateAtlasAtlasMultiAtlasEnergy()<<std::endl;
-
-  if(GetMultiAtlasSegmentation()) {
-      ComputationFile<<"Multi-atlas directory: "<<m_MultiAtlasDirectory<<std::endl;  
-  }
 
   if (GetAux1Image())
   {
@@ -2530,6 +2533,8 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"Harmonic Energy Weight: "<<GetHarmonicEnergyWeight()<<std::endl;
   ParameterFile<<"Shape Energy Weight: "<<GetShapeEnergyWeight()<<std::endl;
  
+  ParameterFile<<"Multi-atlas directory: "<<m_MultiAtlasDirectory<<std::endl; 
+
   ParameterFile.close();
 }
 
@@ -2624,9 +2629,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"set (regParamFile "<<GetTissueSegmentationAtlasDirectory()<<"areg_par.txt)"<<std::endl;
     
   BMSAutoSegMainFile<<"# ROI Atlas File"<<std::endl;
-  BMSAutoSegMainFile<<"set (atlasROIFile "<<GetROIAtlasFile()<<")"<<std::endl;
-
-  if (GetANTSWarpingMethod() && GetMultiModalitySegmentation()) {
+  if ( GetSingleAtlasSegmentation() ) {
+    BMSAutoSegMainFile<<"set (atlasROIFile "<<GetROIAtlasFile()<<")"<<std::endl;
+  }
+  if ( GetSingleAtlasSegmentation() && GetANTSWarpingMethod() && GetMultiModalitySegmentation()) {
       BMSAutoSegMainFile<<"# ROI T2 Atlas File"<<std::endl;
       BMSAutoSegMainFile<<"set (atlasROIT2File "<<GetROIT2AtlasFile()<<")"<<std::endl;
   }
@@ -2913,18 +2919,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
   }
 
-
-    BMSAutoSegMainFile<<"Set (NbOfIterations "<<GetNbOfIterations()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (SplineDistance "<<GetSplineDistance()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (ShrinkFactor "<<GetShrinkFactor()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (ConvergenceThreshold "<<GetConvergenceThreshold()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (BSplineGridResolutions "<<GetBSplineGridResolutions()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (BSplineAlpha "<<GetBSplineAlpha()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (BSplineBeta "<<GetBSplineBeta()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (BSplineOrder "<<GetBSplineOrder()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"Set (HistogramSharpening "<<GetHistogramSharpening()<<")"<<std::endl;  
-  if (GetN4ITKBiasFieldCorrection())
-  {
+  
+  BMSAutoSegMainFile<<"Set (NbOfIterations "<<GetNbOfIterations()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (SplineDistance "<<GetSplineDistance()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (ShrinkFactor "<<GetShrinkFactor()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (ConvergenceThreshold "<<GetConvergenceThreshold()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (BSplineGridResolutions "<<GetBSplineGridResolutions()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (BSplineAlpha "<<GetBSplineAlpha()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (BSplineBeta "<<GetBSplineBeta()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (BSplineOrder "<<GetBSplineOrder()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"Set (HistogramSharpening "<<GetHistogramSharpening()<<")"<<std::endl;  
+  if (GetN4ITKBiasFieldCorrection())   {
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
@@ -3650,13 +3655,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     else
     {
-      std::cout<<"Error EM Software (itkEMS is no longer supported)!"<<std::endl;
+      std::cout<<"	       Error EM Software (itkEMS is no longer supported)!"<<std::endl;
       exit(-2);
     }   
-	// next lines are kept for historic reasons MRML settings 
-    BMSAutoSegMainFile<<"set (OutputFileTail ${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"set (LabelFile ${EMSPath}${T1InputCaseHead}${SuffixLabel}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"set (LabelTail ${T1InputCaseHead}${SuffixLabel}.nrrd)"<<std::endl;
+    // next lines are kept for historic reasons MRML settings 
+    BMSAutoSegMainFile<<"	       set (OutputFileTail ${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"	       set (LabelFile ${EMSPath}${T1InputCaseHead}${SuffixLabel}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"	       set (LabelTail ${T1InputCaseHead}${SuffixLabel}.nrrd)"<<std::endl;
 
     BMSAutoSegMainFile<<"         Else ()"<<std::endl;
     BMSAutoSegMainFile<<"            echo ('EMS Segmentation already Done!')"<<std::endl;
@@ -3957,7 +3962,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 
   // Warping performed via ANTS: no intensity rescaling needed.
-  if (GetANTSWarpingMethod() && !GetMultiAtlasSegmentation())
+  if (GetANTSWarpingMethod() && GetSingleAtlasSegmentation())
   {    
 
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -4119,8 +4124,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
   }
   // Registration performed via fWarp or BRAINSDemonWarp -> intensity rescaling, affine registration via BRAINSFit, then warping.
-  else 
-    {
+  // only if single atlas segmentation is requested
+  else if (GetSingleAtlasSegmentation()) {
 
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -4152,67 +4157,67 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     // Intensity rescaling based on histogram quantile matching (ImageMath)
     if (GetIntensityRescalingMethod() == 1)
-    {
-      
-      BMSAutoSegMainFile<<"          set (command_line ${ImageMathCmd} ${StrippedCase} -matchHistogram ${atlasROIFile} -outfile ${OutputFile})"<<std::endl;
-      BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl;
-    }
+      {
+	
+	BMSAutoSegMainFile<<"          set (command_line ${ImageMathCmd} ${StrippedCase} -matchHistogram ${atlasROIFile} -outfile ${OutputFile})"<<std::endl;
+	BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl;
+      }
     // Intensity rescaling based on tissue mean matching (Intensity Rescaler)
     else
-    {
-      BMSAutoSegMainFile<<"         GetFilename (atlasROIFileHead ${atlasROIFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"         GetFilename (atlasROIFilePath ${atlasROIFile} PATH)"<<std::endl;
-      BMSAutoSegMainFile<<"         set (atlasROIEMSFile ${atlasROIFilePath}/${atlasROIFileHead}${SuffixLabel}.nrrd)"<<std::endl;
-
-      if(GetLoop())
-	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
-      else
-	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
-
-      if (IsT1LabelEMSFile)
-	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
-      else
       {
-	BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
-	BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-	BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"         GetFilename (atlasROIFileHead ${atlasROIFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
+	BMSAutoSegMainFile<<"         GetFilename (atlasROIFilePath ${atlasROIFile} PATH)"<<std::endl;
+	BMSAutoSegMainFile<<"         set (atlasROIEMSFile ${atlasROIFilePath}/${atlasROIFileHead}${SuffixLabel}.nrrd)"<<std::endl;
+	
+	if(GetLoop())
+	  BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
+	else
+	  BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
+	
+	if (IsT1LabelEMSFile)
+	  BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+	else
+	  {
+	    BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
+	    BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+	    BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+	  }
+
+	BMSAutoSegMainFile<<"         set (IntRescalerParameterFile ${StrippedPath}${StrippedCaseHead}_intRescale.txt)"<<std::endl;
+	BMSAutoSegMainFile<<"         ListFileInDir(IntRescalerParameterFileList ${StrippedPath} ${StrippedCaseHead}_intRescale.txt)"<<std::endl;
+	BMSAutoSegMainFile<<"         If (${IntRescalerParameterFileList} == '')"<<std::endl;
+	
+	BMSAutoSegMainFile<<"            # create Intensity Rescaler parameter file"<<std::endl;
+	BMSAutoSegMainFile<<"	           WriteFile (${IntRescalerParameterFile} '# Target image: One image which is the reference\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Target='${atlasROIFile}'\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target segmentation image: EM Segmentation of the target image\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetEMS='${atlasROIEMSFile}'\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source image: Image to be intensity rescaled base on reference image\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source segmentation image: EM Segmentation image\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Source='${StrippedCase}'\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceEMS='${SegmentedCase}'\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Label List: Usually 1,2 and 3 are the labels for White, Gray and CSF pattern\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=1\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=2\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=3\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target intensity windowing: Do you want to adjust min/max intensity of the target ? [ON/OFF]\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetWindowing=ON\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source intensity windowing: Do you want to adjust min/max intensity of source image ? [ON/OFF]\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceWindowing=ON\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Class matching: Do you want to iteratively adjust classes ? [ON/OFF]\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'ClassMatching=ON\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Sigma for class matching: Standard deviation for min/max adjustment\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Sigma=3\\n\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputSuffix: Suffix for output filename\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputSuffix=${IRescaled}\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputDir: Output Directory\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputDir='${StrippedPath}'\\n')"<<std::endl;
+	BMSAutoSegMainFile<<"         EndIf (${IntRescalerParameterFileList})"<<std::endl;
+	
+	
+	BMSAutoSegMainFile<<"              set (command_line ${IntensityRescalerCmd} -i ${IntRescalerParameterFile} -v)"<<std::endl;
+	BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
       }
-
-      BMSAutoSegMainFile<<"         set (IntRescalerParameterFile ${StrippedPath}${StrippedCaseHead}_intRescale.txt)"<<std::endl;
-      BMSAutoSegMainFile<<"         ListFileInDir(IntRescalerParameterFileList ${StrippedPath} ${StrippedCaseHead}_intRescale.txt)"<<std::endl;
-      BMSAutoSegMainFile<<"         If (${IntRescalerParameterFileList} == '')"<<std::endl;
-
-      BMSAutoSegMainFile<<"            # create Intensity Rescaler parameter file"<<std::endl;
-      BMSAutoSegMainFile<<"	           WriteFile (${IntRescalerParameterFile} '# Target image: One image which is the reference\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Target='${atlasROIFile}'\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target segmentation image: EM Segmentation of the target image\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetEMS='${atlasROIEMSFile}'\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source image: Image to be intensity rescaled base on reference image\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source segmentation image: EM Segmentation image\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Source='${StrippedCase}'\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceEMS='${SegmentedCase}'\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Label List: Usually 1,2 and 3 are the labels for White, Gray and CSF pattern\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=1\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=2\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Label=3\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Target intensity windowing: Do you want to adjust min/max intensity of the target ? [ON/OFF]\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'TargetWindowing=ON\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Source intensity windowing: Do you want to adjust min/max intensity of source image ? [ON/OFF]\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'SourceWindowing=ON\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Class matching: Do you want to iteratively adjust classes ? [ON/OFF]\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'ClassMatching=ON\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# Sigma for class matching: Standard deviation for min/max adjustment\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'Sigma=3\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputSuffix: Suffix for output filename\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputSuffix=${IRescaled}\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} '# OutputDir: Output Directory\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"	           AppendFile(${IntRescalerParameterFile} 'OutputDir='${StrippedPath}'\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"         EndIf (${IntRescalerParameterFileList})"<<std::endl;
-
-
-      BMSAutoSegMainFile<<"              set (command_line ${IntensityRescalerCmd} -i ${IntRescalerParameterFile} -v)"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
-    }
     BMSAutoSegMainFile<<"          If(${IsAtlasROIFileZipped} == 1)"<<std::endl;
     BMSAutoSegMainFile<<"              set (command_line gzip ${atlasROIFile})"<<std::endl;
     BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
@@ -4223,209 +4228,220 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
     BMSAutoSegMainFile<<"          echo ('Intensity Calibration already done!')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
-
+    
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
     BMSAutoSegMainFile<<"echo ('INTENSITY CALIBRATION DONE!')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
 
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"# 8. Affine Registration : register the atlas to the skull stripped image"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
-  
-  BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('AFFINE REGISTRATION...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-  BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-  BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-  BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
-  BMSAutoSegMainFile<<"      set (StrippedCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${StrippedCaseTail})"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (StrippedCaseHead ${StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
-  
-  BMSAutoSegMainFile<<"      # Creating WarpROI Directory if necessary"<<std::endl;
-  BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
-  BMSAutoSegMainFile<<"      ListDirInDir (WarpROIList ${T1Path}/${AutoSegDir}/ WarpROI)"<<std::endl;
-  BMSAutoSegMainFile<<"      If (${WarpROIList} == '')"<<std::endl;
-  BMSAutoSegMainFile<<"         MakeDirectory( ${WarpROIPath})"<<std::endl;
-  BMSAutoSegMainFile<<"      EndIf (${WarpROIList})"<<std::endl;
-  BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasAffReg-${StrippedCaseTail})"<<std::endl;
-  BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
-  
-  BMSAutoSegMainFile<<"         # Creating new Files"<<std::endl;
-  BMSAutoSegMainFile<<"          # Output File"<<std::endl;
-  BMSAutoSegMainFile<<"         set (OutputFileHead AtlasAffReg-${StrippedCaseHead})"<<std::endl;
-  BMSAutoSegMainFile<<"         set (OutputFileTail ${OutputFileHead}.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"         set (OutputFile ${WarpROIPath}${OutputFileTail})"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# 8. Affine Registration : register the atlas to the skull stripped image"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
+    
+    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('AFFINE REGISTRATION...')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${StrippedCaseTail})"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (StrippedCaseHead ${StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    
+    BMSAutoSegMainFile<<"      # Creating WarpROI Directory if necessary"<<std::endl;
+    BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
+    BMSAutoSegMainFile<<"      ListDirInDir (WarpROIList ${T1Path}/${AutoSegDir}/ WarpROI)"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${WarpROIList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"         MakeDirectory( ${WarpROIPath})"<<std::endl;
+    BMSAutoSegMainFile<<"      EndIf (${WarpROIList})"<<std::endl;
+    BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasAffReg-${StrippedCaseTail})"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
+    
+    BMSAutoSegMainFile<<"         # Creating new Files"<<std::endl;
+    BMSAutoSegMainFile<<"          # Output File"<<std::endl;
+    BMSAutoSegMainFile<<"         set (OutputFileHead AtlasAffReg-${StrippedCaseHead})"<<std::endl;
+    BMSAutoSegMainFile<<"         set (OutputFileTail ${OutputFileHead}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"         set (OutputFile ${WarpROIPath}${OutputFileTail})"<<std::endl;
 
-  BMSAutoSegMainFile<<"            set (TransformInputFile ${WarpROIPath}${OutputFileHead}_initializetransform.txt)"<<std::endl;
-  //BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${StrippedCase} --movingVolume ${atlasROIFile} --useRigid --useAffine --initializeTransformMode useCenterOfHeadAlign --outputVolume ${OutputFile} --outputTransform ${TransformInputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
-  BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${StrippedCase} --movingVolume ${atlasROIFile} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --useAffine --outputVolume ${OutputFile} --outputTransform ${TransformInputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
-  BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-  BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-  BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
-  BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
-  BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('AFFINE REGISTRATION: DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"            set (TransformInputFile ${WarpROIPath}${OutputFileHead}_initializetransform.txt)"<<std::endl;
+    BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${StrippedCase} --movingVolume ${atlasROIFile} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --useAffine --outputVolume ${OutputFile} --outputTransform ${TransformInputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+    BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
+    BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('AFFINE REGISTRATION: DONE!')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
 
 
-  BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"# 9. Warping Procedure:  Warping the Atlas to the skull stripping T1 image"<<std::endl;
-  BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
-  
-  BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-  BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-  BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;      
-  BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
-  BMSAutoSegMainFile<<"      set (AtlasAffRegCase ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"      GetFilename (AtlasAffRegCaseHead ${AtlasAffRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
-  
-  BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
-  BMSAutoSegMainFile<<"         # Creating new Files"<<std::endl;
-  BMSAutoSegMainFile<<"          # Output File"<<std::endl;
-  BMSAutoSegMainFile<<"         set (OutputFileHead AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled})"<<std::endl;
-  BMSAutoSegMainFile<<"         set (OutputFileTail ${OutputFileHead}.nrrd)"<<std::endl;
-  BMSAutoSegMainFile<<"         set (OutputFile ${WarpROIPath}${OutputFileTail})"<<std::endl;
-  BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
-  BMSAutoSegMainFile<<"         set (ReportFile ${WarpROIPath}${OutputFileHead}_out.txt)"<<std::endl;
+    BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"# 9. Warping Procedure:  Warping the Atlas to the skull stripping T1 image"<<std::endl;
+    BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
+    BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
+    
+    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION...')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
+    BMSAutoSegMainFile<<"      echo( )"<<std::endl;      
+    BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
+    BMSAutoSegMainFile<<"      set (AtlasAffRegCase ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      GetFilename (AtlasAffRegCaseHead ${AtlasAffRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    
+    BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"         # Creating new Files"<<std::endl;
+    BMSAutoSegMainFile<<"          # Output File"<<std::endl;
+    BMSAutoSegMainFile<<"         set (OutputFileHead AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled})"<<std::endl;
+    BMSAutoSegMainFile<<"         set (OutputFileTail ${OutputFileHead}.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"         set (OutputFile ${WarpROIPath}${OutputFileTail})"<<std::endl;
+    BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
+    BMSAutoSegMainFile<<"         set (ReportFile ${WarpROIPath}${OutputFileHead}_out.txt)"<<std::endl;
+    
+    if (GetClassicWarpingMethod())
+      {
+	BMSAutoSegMainFile<<"         ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"         If (${SkullStrippedList} != '')"<<std::endl;
+	BMSAutoSegMainFile<<"            set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
+	BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+	BMSAutoSegMainFile<<"            echo ('Error:No Skull Stripped File!')"<<std::endl;		
+	BMSAutoSegMainFile<<"         EndIf (${SkullStrippedList})"<<std::endl;
+	BMSAutoSegMainFile<<"         set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
+	
+	BMSAutoSegMainFile<<"         set (DofOutWarpFileTail ${OutputFileHead}_warp.hfield)"<<std::endl;
+	BMSAutoSegMainFile<<"         set (DofOutWarpFile ${WarpROIPath}${DofOutWarpFileTail})"<<std::endl;
+	BMSAutoSegMainFile<<"         ListFileInDir(DofOutWarpFileList ${WarpROIPath} ${DofOutWarpFileTail}.gz)"<<std::endl;
+	BMSAutoSegMainFile<<"         If (${DofOutWarpFileList} == '')"<<std::endl;
+	
+	BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Alpha "<<GetAlpha()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Beta "<<GetBeta()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Gamma "<<GetGamma()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (MaxPerturbation "<<GetMaxPerturbation()<<")"<<std::endl;  
+	BMSAutoSegMainFile<<"            set (NumBasis "<<GetNumBasis()<<")"<<std::endl;
+	
+	BMSAutoSegMainFile<<"            set (NumIteration "<<GetScale1NbIterations()<<")"<<std::endl;
+	
+	BMSAutoSegMainFile<<"            set (command_line ${warpCmd} -c ${AtlasAffRegCase} ${SkullStrippedFile} ${DofOutWarpFile} ${Alpha} ${Beta} ${Gamma} ${MaxPerturbation} ${NumIteration} ${NumBasis})"<<std::endl;
+	BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+	BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
+	BMSAutoSegMainFile<<"         EndIf (${DofOutWarpFileList})"<<std::endl;
+	
+	BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
+	BMSAutoSegMainFile<<"         # Transforming all volumes, by default uses cspline interpolation"<<std::endl;
+	BMSAutoSegMainFile<<"            echo ('Applying transformation...')"<<std::endl;
+	
+	BMSAutoSegMainFile<<"         set (command_line ${warpCmd} -a ${AtlasAffRegCase} ${DofOutWarpFile} ${OutputFile} -linear)"<<std::endl;
+	BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+	BMSAutoSegMainFile<<"         AppendFile(${ReportFile} ${output})"<<std::endl<<std::endl;
+	
+	BMSAutoSegMainFile<<"         set (command_line gzip ${DofOutWarpFile})"<<std::endl;
+	BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+      }
+    else if (GetBRAINSDemonWarpMethod())
+      {
+	BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
+	BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
+	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
+	BMSAutoSegMainFile<<"               echo ('Error:No Skull Stripped File!')"<<std::endl;
+	BMSAutoSegMainFile<<"            EndIf (${SkullStrippedList})"<<std::endl;
+	BMSAutoSegMainFile<<"            set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
+	
+	BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
+	BMSAutoSegMainFile<<"            set (RegistrationFilterType "<<GetRegistrationFilterType()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (DeformationFieldSmoothingSigma "<<GetDeformationFieldSmoothingSigma()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (PyramidLevels "<<GetPyramidLevels()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (MovingShrinkFactors "<<GetMovingShrinkFactors()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (FixedShrinkFactors "<<GetFixedShrinkFactors()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (IterationCountPyramidLevels "<<GetIterationCountPyramidLevels()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (InterpolationMode BSpline)"<<std::endl;
+	BMSAutoSegMainFile<<"            set (TransformOutputFile ${WarpROIPath}${OutputFileHead}_transform.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"            set (TransformInputFile ${WarpROIPath}${AtlasAffRegCaseHead}_initializetransform.txt)"<<std::endl;
+	BMSAutoSegMainFile<<"            set (parameters --registrationFilterType ${RegistrationFilterType} -s ${DeformationFieldSmoothingSigma} -n ${PyramidLevels} --minimumMovingPyramid ${MovingShrinkFactors} --minimumFixedPyramid ${FixedShrinkFactors} -i ${IterationCountPyramidLevels} --interpolationMode ${InterpolationMode})"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Input -f ${SkullStrippedFile} -m ${atlasROIFile} --inputPixelType short --initializeWithTransform ${TransformInputFile})"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Output -o ${OutputFile} -O ${TransformOutputFile} --outputPixelType short)"<<std::endl;
+	BMSAutoSegMainFile<<"    	set (command_line ${BRAINSDemonWarpCmd} ${Input} ${Output} ${parameters})"<<std::endl;
+	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+	BMSAutoSegMainFile<<"    	set (command_line ${ResampleVolume2Cmd} ${atlasROIFile} ${OutputFile} --hfieldtype displacement -i bs -H ${TransformOutputFile} --Reference ${SkullStrippedFile})"<<std::endl;
+	BMSAutoSegMainFile<<"      	Run (prog_output_2 ${command_line} prog_error)"<<std::endl;
+      }
+    else if (GetCoarseToFineWarpingMethod())
+      {
+	
+	BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
+	BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
+	BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
+	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
+	BMSAutoSegMainFile<<"               echo ('Error:No Skull Stripped File!')"<<std::endl;
+	BMSAutoSegMainFile<<"         	 EndIf (${SkullStrippedList})"<<std::endl;
+	BMSAutoSegMainFile<<"            set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
+	
+	BMSAutoSegMainFile<<"            set (DofOutWarpFileTail ${OutputFileHead}_deformationfield)"<<std::endl;
+	BMSAutoSegMainFile<<"            set (DofOutWarpFile ${WarpROIPath}${DofOutWarpFileTail})"<<std::endl;
+	
+	BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Alpha "<<GetAlpha()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Beta "<<GetBeta()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Gamma "<<GetGamma()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (MaxPerturbation "<<GetMaxPerturbation()<<")"<<std::endl;  
+	BMSAutoSegMainFile<<"            set (NumBasis "<<GetNumBasis()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Scale4NbIterations "<<GetScale4NbIterations()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Scale2NbIterations "<<GetScale2NbIterations()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"            set (Scale1NbIterations "<<GetScale1NbIterations()<<")"<<std::endl;
+	BMSAutoSegMainFile<<"    	     set (command_line ${fWarpCmd} --outputImageFilenamePrefix=${WarpROIPath}${OutputFileHead} --outputHFieldFilenamePrefix=${DofOutWarpFile} --scaleLevel=4 --numberOfIterations=${Scale4NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=2 --numberOfIterations=${Scale2NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=1 --numberOfIterations=${Scale1NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} ${SkullStrippedFile} ${AtlasAffRegCase})"<<std::endl;
+	BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+	BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
+	BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${WarpROIPath}${OutputFileHead}2.mhd -constOper 2,1000 -outfile ${OutputFile})"<<std::endl;
+	BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl;
+	
+	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.mhd)"<<std::endl;
+	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.raw)"<<std::endl;
+	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}1.mhd)"<<std::endl;
+	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}1.raw)"<<std::endl;
+	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}0.mhd)"<<std::endl;
+	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}0.raw)"<<std::endl;
+      }
 
-  if (GetClassicWarpingMethod())
-  {
-    BMSAutoSegMainFile<<"         ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"         If (${SkullStrippedList} != '')"<<std::endl;
-    BMSAutoSegMainFile<<"            set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
-    BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"            echo ('Error:No Skull Stripped File!')"<<std::endl;		
-    BMSAutoSegMainFile<<"         EndIf (${SkullStrippedList})"<<std::endl;
-    BMSAutoSegMainFile<<"         set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
 
-    BMSAutoSegMainFile<<"         set (DofOutWarpFileTail ${OutputFileHead}_warp.hfield)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (DofOutWarpFile ${WarpROIPath}${DofOutWarpFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"         ListFileInDir(DofOutWarpFileList ${WarpROIPath} ${DofOutWarpFileTail}.gz)"<<std::endl;
-    BMSAutoSegMainFile<<"         If (${DofOutWarpFileList} == '')"<<std::endl;
-
-    BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Alpha "<<GetAlpha()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Beta "<<GetBeta()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Gamma "<<GetGamma()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (MaxPerturbation "<<GetMaxPerturbation()<<")"<<std::endl;  
-    BMSAutoSegMainFile<<"            set (NumBasis "<<GetNumBasis()<<")"<<std::endl;
-
-    BMSAutoSegMainFile<<"            set (NumIteration "<<GetScale1NbIterations()<<")"<<std::endl;
-
-    BMSAutoSegMainFile<<"            set (command_line ${warpCmd} -c ${AtlasAffRegCase} ${SkullStrippedFile} ${DofOutWarpFile} ${Alpha} ${Beta} ${Gamma} ${MaxPerturbation} ${NumIteration} ${NumBasis})"<<std::endl;
-    BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
-    BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
-    BMSAutoSegMainFile<<"         EndIf (${DofOutWarpFileList})"<<std::endl;
-
-    BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
-    BMSAutoSegMainFile<<"         # Transforming all volumes, by default uses cspline interpolation"<<std::endl;
-    BMSAutoSegMainFile<<"            echo ('Applying transformation...')"<<std::endl;
-
-    BMSAutoSegMainFile<<"         set (command_line ${warpCmd} -a ${AtlasAffRegCase} ${DofOutWarpFile} ${OutputFile} -linear)"<<std::endl;
-    BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
-    BMSAutoSegMainFile<<"         AppendFile(${ReportFile} ${output})"<<std::endl<<std::endl;
-
-    BMSAutoSegMainFile<<"         set (command_line gzip ${DofOutWarpFile})"<<std::endl;
-    BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"         echo ('Warping already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
+    
+    BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION: DONE!')"<<std::endl;
+    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
   }
-  else if (GetBRAINSDemonWarpMethod())
-  {
-    BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
-    BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
-    BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"               echo ('Error:No Skull Stripped File!')"<<std::endl;
-    BMSAutoSegMainFile<<"            EndIf (${SkullStrippedList})"<<std::endl;
-    BMSAutoSegMainFile<<"            set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
-      
-    BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
-    BMSAutoSegMainFile<<"            set (RegistrationFilterType "<<GetRegistrationFilterType()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (DeformationFieldSmoothingSigma "<<GetDeformationFieldSmoothingSigma()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (PyramidLevels "<<GetPyramidLevels()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (MovingShrinkFactors "<<GetMovingShrinkFactors()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (FixedShrinkFactors "<<GetFixedShrinkFactors()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (IterationCountPyramidLevels "<<GetIterationCountPyramidLevels()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (InterpolationMode BSpline)"<<std::endl;
-    BMSAutoSegMainFile<<"            set (TransformOutputFile ${WarpROIPath}${OutputFileHead}_transform.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"            set (TransformInputFile ${WarpROIPath}${AtlasAffRegCaseHead}_initializetransform.txt)"<<std::endl;
-    BMSAutoSegMainFile<<"            set (parameters --registrationFilterType ${RegistrationFilterType} -s ${DeformationFieldSmoothingSigma} -n ${PyramidLevels} --minimumMovingPyramid ${MovingShrinkFactors} --minimumFixedPyramid ${FixedShrinkFactors} -i ${IterationCountPyramidLevels} --interpolationMode ${InterpolationMode})"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Input -f ${SkullStrippedFile} -m ${atlasROIFile} --inputPixelType short --initializeWithTransform ${TransformInputFile})"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Output -o ${OutputFile} -O ${TransformOutputFile} --outputPixelType short)"<<std::endl;
-    BMSAutoSegMainFile<<"    	set (command_line ${BRAINSDemonWarpCmd} ${Input} ${Output} ${parameters})"<<std::endl;
-    BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"    	set (command_line ${ResampleVolume2Cmd} ${atlasROIFile} ${OutputFile} --hfieldtype displacement -i bs -H ${TransformOutputFile} --Reference ${SkullStrippedFile})"<<std::endl;
-    BMSAutoSegMainFile<<"      	Run (prog_output_2 ${command_line} prog_error)"<<std::endl;
-  }
-  else if (GetCoarseToFineWarpingMethod())
-  {
 
-    BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
-    BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
-    BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"               echo ('Error:No Skull Stripped File!')"<<std::endl;
-    BMSAutoSegMainFile<<"         	 EndIf (${SkullStrippedList})"<<std::endl;
-    BMSAutoSegMainFile<<"            set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
-      
-    BMSAutoSegMainFile<<"            set (DofOutWarpFileTail ${OutputFileHead}_deformationfield)"<<std::endl;
-    BMSAutoSegMainFile<<"            set (DofOutWarpFile ${WarpROIPath}${DofOutWarpFileTail})"<<std::endl;
-      
-    BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Alpha "<<GetAlpha()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Beta "<<GetBeta()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Gamma "<<GetGamma()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (MaxPerturbation "<<GetMaxPerturbation()<<")"<<std::endl;  
-    BMSAutoSegMainFile<<"            set (NumBasis "<<GetNumBasis()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Scale4NbIterations "<<GetScale4NbIterations()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Scale2NbIterations "<<GetScale2NbIterations()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"            set (Scale1NbIterations "<<GetScale1NbIterations()<<")"<<std::endl;
-    BMSAutoSegMainFile<<"    	     set (command_line ${fWarpCmd} --outputImageFilenamePrefix=${WarpROIPath}${OutputFileHead} --outputHFieldFilenamePrefix=${DofOutWarpFile} --scaleLevel=4 --numberOfIterations=${Scale4NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=2 --numberOfIterations=${Scale2NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=1 --numberOfIterations=${Scale1NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} ${SkullStrippedFile} ${AtlasAffRegCase})"<<std::endl;
-    BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
-    BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
-    BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${WarpROIPath}${OutputFileHead}2.mhd -constOper 2,1000 -outfile ${OutputFile})"<<std::endl;
-    BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl;
+  bool IsStructureListEmpty = true;
+  bool IsVentricleListEmpty = true;
+  bool IsGenericROIMapListEmpty = true;
+  bool IsParcellationMapListEmpty = true;
+  bool IsLabelListEmpty = true;
 
-    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.mhd)"<<std::endl;
-    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.raw)"<<std::endl;
-    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}1.mhd)"<<std::endl;
-    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}1.raw)"<<std::endl;
-    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}0.mhd)"<<std::endl;
-    BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}0.raw)"<<std::endl;
-  }
-
-
-      BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Warping already Done!')"<<std::endl;
-      BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
-
-      BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION: DONE!')"<<std::endl;
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
-    }
-
+  int StructureListLength = 0;
+  int VentricleListLength = 0;
+  int GenericROIMapListLength = 0;
+  int ParcellationMapListLength = 0;
+  if (GetSingleAtlasSegmentation()) 
+    {
  
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -4438,18 +4454,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
   BMSAutoSegMainFile<<"echo ('ROI TRANSFORMATION...')"<<std::endl;
   BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-
-  bool IsStructureListEmpty = true;
-  bool IsVentricleListEmpty = true;
-  bool IsGenericROIMapListEmpty = true;
-  bool IsParcellationMapListEmpty = true;
-  bool IsLabelListEmpty = true;
-
-  int StructureListLength = 0;
-  int VentricleListLength = 0;
-  int GenericROIMapListLength = 0;
-  int ParcellationMapListLength = 0;
-
+    
   BMSAutoSegMainFile<<"set (VentricleListLength 0)"<<std::endl;
 
   if (GetSubcorticalStructureSegmentation())
@@ -4879,8 +4884,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         echo ('Registering '${StructureName}': DONE!')"<<std::endl;
     BMSAutoSegMainFile<<"         EndForEach(Structure)"<<std::endl<<std::endl;  
   }  
-  
-  
+    
+    
   if (!IsLabelListEmpty)
   {
     BMSAutoSegMainFile<<"         # Labels Segmentation "<<std::endl;
@@ -4911,21 +4916,22 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"           set (LabelWarpTail ${Case}--${LabelName}-WarpReg.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"           set (LabelWarpHead ${Case}--${LabelName}-WarpReg)"<<std::endl;
     }
-
+  
     BMSAutoSegMainFile<<"	          set (LabelAff ${WarpROIPath}${LabelAffTail})"<<std::endl;
     BMSAutoSegMainFile<<"	          set (LabelWarp ${WarpROIPath}${LabelWarpTail})"<<std::endl;
-    BMSAutoSegMainFile<<"           # Applying Affine transformation"<<std::endl;
+  
+    BMSAutoSegMainFile<<"                 # Applying Affine transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(AffFileList ${WarpROIPath} ${LabelAffTail})"<<std::endl;
+  
     BMSAutoSegMainFile<<"           If (${AffFileList} == '')"<<std::endl;
-
-    //if (!GetBRAINSDemonWarpMethod())
+  
     if (!GetANTSWarpingMethod())
     {
       BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_initializetransform.txt)"<<std::endl; 
       BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${SkullStrippedFile})"<<std::endl;
       BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
-
+  
     BMSAutoSegMainFile<<"	          Else ()"<<std::endl;
     BMSAutoSegMainFile<<"              echo ('File already exists: '${LabelAffTail})"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${AffFileList})"<<std::endl;
@@ -4970,21 +4976,22 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     else if (GetANTSWarpingMethod())
       {
-    BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
-    BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Label} ${LabelWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-NN)"<<std::endl;
-    BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-    BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
-    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
-
-    // Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
-    BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${LabelWarp} -constOper 2,1 -outfile ${LabelWarp})"<<std::endl;
-    BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-    BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
-    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
+	BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
+	BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Label} ${LabelWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-NN)"<<std::endl;
+	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+	BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
+	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+	
+	// Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
+	BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${LabelWarp} -constOper 2,1 -outfile ${LabelWarp})"<<std::endl;
+	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
+	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+	BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
+	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
       }
-
+  
+   
     BMSAutoSegMainFile<<"              If (${LabelNumber} > ${VentricleListLength} && ${LabelNumber} <= ${GenericROIMapLabelLimit})"<<std::endl;
     BMSAutoSegMainFile<<"                set (GenericROIMapComputed 1)"<<std::endl; 
     BMSAutoSegMainFile<<"              Else ()"<<std::endl;
@@ -5011,6 +5018,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"   set (Parcellation ${WarpROIPath}${ParcellationTail} )"<<std::endl;	
 
   }
+       
   if (!IsLabelListEmpty)
   {
     BMSAutoSegMainFile<<"           EndIf (${flag})"<<std::endl;
@@ -5050,7 +5058,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"         echo ('Error:No Deformation file!')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${DeformationFileList})"<<std::endl;
     }
-
+    
   BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
   BMSAutoSegMainFile<<"echo ( )"<<std::endl;
   BMSAutoSegMainFile<<"echo ('ROI TRANSFORMATION DONE!')"<<std::endl;
@@ -5370,8 +5378,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
     BMSAutoSegMainFile<<"echo ('ROI GATHERING: DONE!')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
-  } 
- 
+  }
+  }
+
   if (GetComputeCorticalThickness())
   {
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -5457,7 +5466,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
   }
     
-    if (GetMultiAtlasSegmentation()) {
+  if (GetMultiAtlasSegmentation()) {
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -8389,11 +8398,6 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       {
           SetMultiModalitySegmentation(atoi(Line + 37));
       }
-      else if ( (std::strncmp("Compute Multi-atlas Segmentation: ", Line, 34)) == 0)
-      {
-          SetMultiAtlasSegmentation(atoi(Line + 34));
- 
-      }
       else if ( (std::strncmp("Conduct Atlas-Atlas registration: ", Line, 34)) == 0)
       {
           SetMultiAtlasAtlasRegistration(atoi(Line + 34));
@@ -8410,9 +8414,20 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       {
           SetMultiAtlasAtlasRegistration(atoi(Line + 34));
       }
-      else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
+      else if ( (std::strncmp("Compute Multi-atlas Segmentation: ", Line, 34)) == 0)
       {
-          SetMultiAtlasDirectory(Line + 23);
+	  SetMultiAtlasSegmentation(atoi(Line+34)); 
+      }
+      else if ( (std::strncmp("Compute Single-atlas Segmentation: ", Line, 35)) == 0)
+      {
+	  SetSingleAtlasSegmentation(atoi(Line+35)); 
+      }
+      else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
+	{ // for sake of backward compatibility
+	if (std::strlen(Line+23) != 0)
+	  SetMultiAtlasDirectory(Line+23); 
+	else
+	  SetMultiAtlasDirectory("");
       }
     }
     fclose(ComputationFile);
@@ -8432,9 +8447,14 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
 }
 
 bool AutoSegComputation::SetMultiAtlasDirectory(const char *_MultiAtlasDirectory)
+// ToDo: THIS Procedure is NOT Cross-platform, likely won't work on windows
 {
     int c ='/';
-    int l = std::strlen(std::strrchr(_MultiAtlasDirectory, c));
+    const char * firstSlash = std::strrchr(_MultiAtlasDirectory, c);
+    if (!firstSlash) {
+      return false;
+    }
+    int l = std::strlen(firstSlash);
     if(l == 1) {
         std::strcpy(m_MultiAtlasDirectory,_MultiAtlasDirectory);
     }
@@ -9449,6 +9469,13 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
         {
             SetWeightShapeEnergy(atof(Line + 21));
         }
+	else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
+	{
+	  if (std::strlen(Line+23) != 0)
+	    SetMultiAtlasDirectory(Line+23); 
+	  else
+	    SetMultiAtlasDirectory("");
+	}
         else if ( (std::strncmp("ANTS with brainmask: ", Line, 21)) == 0)
         {
             SetANTSWithBrainmask(atof(Line + 21));
@@ -9456,7 +9483,7 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
         else if ( (std::strncmp("Use Initital Affine Transform: ", Line, 31)) == 0)
         {
             SetUseInitialAffine(atof(Line + 31));
-        }
+        } 
 
       }
     }
@@ -9467,3 +9494,4 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 
   return IsParameterFileLoaded;
 }
+

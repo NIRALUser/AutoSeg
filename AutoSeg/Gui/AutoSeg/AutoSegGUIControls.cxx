@@ -104,8 +104,8 @@ float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDir
     catch( itk::ExceptionObject & excep ){
         std::cerr << "Exception catched !" << std::endl;
         std::cerr << excep << std::endl;
-    //    return EXIT_FAILURE;
         exit(0);
+        return -1;
     }
     float msm = MSMmetric->GetValue( transform->GetParameters( ) );
    // float ncc = NCCmetric->GetValue( transform->GetParameters( ) );
@@ -123,6 +123,8 @@ float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDir
     //std::cout << "normalized cross correlation value:  " << ncc << std::endl;
     //std::cout << "mutual information value:            " << mi << std::endl;
     //std::cout << "normalized mutual information value: " << nmi << std::endl;
+
+    return msm;
 }
 
 float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::string filename)
@@ -146,7 +148,7 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
         std::cerr << "ExceptionObject caught !" << std::endl;
         std::cerr << err << std::endl;
         exit(0);
-        //return EXIT_FAILURE;
+        return -1;
     }
     for(index[2] = 0; index[2] < (int)size[2]; index[2]++) {
         for(index[1] = 0; index[1] < (int)size[1]; index[1]++) {
@@ -162,7 +164,7 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
     std::ofstream hefile( filename.c_str() , std::ios::app );
     hefile << HE << "\n";
     hefile.close();
-
+    return HE;
 }
 
 AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
@@ -204,6 +206,8 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
   m_Computation.SetRecompute(g_RecomputeButton->value());
   m_Computation.SetUseCondor(g_UseCondorButton->value());
   m_Computation.SetMultiModalitySegmentation(g_MultiModalitySegButton->value());
+  m_Computation.SetMultiAtlasSegmentation(g_MultiAtlasSegButton->value());
+  m_Computation.SetSingleAtlasSegmentation(true);
    
   m_Computation.SetIsAutoSegInProcess(false);
   m_Computation.SetSlicerVersion(4.3);
@@ -236,82 +240,6 @@ void AutoSegGUIControls::AboutButtonPressed()
   About.g_MainWindow->show();
   Fl::run();
 }
-/*
-void AutoSegGUIControls::AtlasRegistrationGUI()
-{
-    //int index = g_AtlasBrowser->value();
-    
-    std::cout << g_NumAtlas->value() << std::endl;
-    std::cout << AtlasDirectory << std::endl;
-    std::cout << g_TargetDirectoryDisp->value() << std::endl;
-    
-    for (int i = 1; i <= (int) g_NumAtlas->value(); i++){
-  //      std::cout << g_AtlasBrowser->text(i) << std::endl;
-    }
-
-    //std::cout << g_AtlasBrowser->text(3) << std::endl;
-    std::string command;
-    command = "ANTS 3 -m CC\[" ;
-    command += AtlasDirectory;
-    command += g_AtlasBrowser->text(3);  
-    command += ",";
-    command += AtlasDirectory;
-    command += g_AtlasBrowser->text(4);  
-    command += "\] -i 30x20x10 -o deformationField_1007fto1113.nii -t SyN\[1.00\] -r Gauss\[3,0\]";
-    std::cout << command << std::endl;
-
-    command.clear();
-
-    command = "ANTS 3 -m CC\[" ;
-    command += AtlasDirectory;
-    command += g_AtlasBrowser->text(3);  
-    command += ",";
-    command += g_TargetDirectoryDisp->value();
-    command += "\] -i 30x20x10 -o deformationField_1007fto1113.nii -t SyN\[1.00\] -r Gauss\[3,0\]";
-    std::cout << command << std::endl;
-}
-*/
-/*
-void AutoSegGUIControls::MultiAtlasSegGUI()
-{
-  int ComputeStudy = 1;
-
-  if (m_Computation.GetIsAutoSegInProcess())
-    fl_message("Automatic Segmentation already in process...");
-	
-  else
-  {
-    UpdateParameters();
-    if (!CheckInputAutoSeg())
-    {
-      m_Computation.DesallocateDataList();
-      m_Computation.DesallocateAuxDataList();
-      InitializeData();
-      InitializeAuxData();
-      m_Computation.SetSubcorticalStructureSegmentation(m_IsSubcorticalStructureSegmentation);
-      m_Computation.SetGenericROISegmentation(m_IsGenericROISegmentation);
-      m_Computation.SetParcellationMapSegmentation(m_IsParcellationMapSegmentation);
-      if (CheckStudy())
-      {
-	if (g_RecomputeButton->value())
-	  ComputeStudy = fl_choice("A study already exists. Do you really want to recompute your dataset (and delete current results)?", "No", "Yes", NULL);
-	else
-	  ComputeStudy = fl_choice("A study already exists. Do you really want to compute this study with this set of parameters?", "No", "Yes", NULL);
-      }
-      if (ComputeStudy)
-      {
-	      
-	m_Computation.SetIsAutoSegInProcess(true);   
-	while (m_Computation.GetIsAutoSegInProcess())
-	{
-	  m_Computation.Computation();
-	  Fl::check();
-	}
-      }
-    }
-  }
-}
-*/
 
 void AutoSegGUIControls::ExitAutoSeg()
 {
@@ -613,6 +541,7 @@ char * AutoSegGUIControls::GetDefaultParameterFile()
 }
 
 // Update GUI
+// THIS IS A DUPLICATION OF THE LOADING OF THE PARAMETER FILE, this needs to be adapted to be called from the main application
 void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
 {
   FILE* ComputationFile;
@@ -621,7 +550,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
   int Length;
   // Computation Options
   int IsT2Image, IsPDImage;
-  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas;  
+  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas, ComputeSingleAtlas;  
 
   if ((ComputationFile = fopen(_FileName,"r")) != NULL) 
   {
@@ -788,6 +717,16 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
         else
             g_MultiAtlasSegButton->clear();
       }
+      else if ( (std::strncmp("Compute Single-atlas Segmentation: ", Line, 35)) == 0)
+      {
+        ComputeSingleAtlas = atoi(Line + 35);
+	if (ComputeSingleAtlas == 1) {
+            g_SingleAtlasSegButton->set();
+	    SingleAtlasSegmentationButtonChecked();
+        }
+        else
+            g_SingleAtlasSegButton->clear();
+      }
       else if ( (std::strncmp("Conduct Atlas-Atlas Registration: ", Line, 34)) == 0)
       {
 	if (atoi(Line + 34) == 1) {
@@ -835,7 +774,8 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
   int IsAux1Image, IsAux2Image, IsAux3Image, IsAux4Image, IsAux5Image, IsAux6Image, IsAux7Image, IsAux8Image;
   int IsAuxT1Image, IsAuxT2Image, IsAuxPDImage;
   int RigidTransformation, AffineTransformation, BsplineTransformation, AtlasSpaceImage, BiasCorrectedImage, SkullStrippedImage;
-	
+  IsAux1Image = IsAux2Image = IsAux3Image = IsAux4Image = IsAux5Image = IsAux6Image = IsAux7Image = IsAux8Image	= 0;
+
   if ((AuxComputationFile = fopen(_FileName,"r")) != NULL) 
   {
     while ( (fgets(Line,1536,AuxComputationFile)) != NULL)
@@ -5456,6 +5396,16 @@ void AutoSegGUIControls::MultiAtlasSegmentationButtonChecked()
     }
 }
 
+void AutoSegGUIControls::SingleAtlasSegmentationButtonChecked()
+{
+    if (g_SingleAtlasSegButton->value()) {
+        m_Computation.SetSingleAtlasSegmentation(1);
+    }
+    else {
+        m_Computation.SetSingleAtlasSegmentation(0);    
+    }
+}
+
 void AutoSegGUIControls::RecalculateAtlasTargetEnergyButtonChecked()
 {
     if (g_RecalculateAtlasTargetEnergyButton->value()) {
@@ -5653,26 +5603,6 @@ void AutoSegGUIControls::ComputeGUI()
       m_Computation.SetANTSWithBrainmask(g_ANTSWithBrainmaskButton->value());
       m_Computation.SetUseInitialAffine(g_UseInitialAffineButton->value());
       m_Computation.SetNbANTSThreads((int)g_NumberOfThreads->value());
-  /*    if ((float)g_Prior1->value() > 0)
-          NbClass++;
-      if ((float)g_Prior2->value() > 0)
-          NbClass++;
-      if ((float)g_Prior3->value() > 0)
-          NbClass++;
-      if ((float)g_Prior4->value() > 0)
-          NbClass++;
-      if ((float)g_Prior5->value() > 0)
-          NbClass++;
-      if ((float)g_Prior6->value() > 0)
-          NbClass++;
-      if ((float)g_Prior7->value() > 0)
-          NbClass++;
-      if ((float)g_Prior8->value() > 0)
-          NbClass++;
-      if ((float)g_Prior9->value() > 0)
-          NbClass++;
-      m_Computation.SetNbClass(NbClass);
-     */
 
       if (CheckStudy())
       {
@@ -6105,14 +6035,14 @@ bool AutoSegGUIControls::CheckInputAutoSeg()
     fl_message("Please, set the tissue segmentation...");
     Warning = true;
   }  
-  else if (std::strlen(g_ROIAtlasFileDisp->value()) == 0)
+  else if (std::strlen(g_ROIAtlasFileDisp->value()) == 0 && g_SingleAtlasSegButton->value())
   {
     fl_message("Please, set the ROI atlas file...");
     Warning = true;
   }   
-  else if ( (m_IsSubcorticalStructureSegmentation == 0) && (m_IsGenericROISegmentation == 0) && (m_IsParcellationMapSegmentation == 0) )
+  else if ( (m_IsSubcorticalStructureSegmentation == 0) && (m_IsGenericROISegmentation == 0) && (m_IsParcellationMapSegmentation == 0) && g_SingleAtlasSegButton->value())
   {
-    fl_message("Please, set a file to be segmented...");
+    fl_message("Please, set a ROI or Parcellation file for the single Atlas segmentation ...");
     Warning = true;
   }  
   else if ( (g_ReorientationButton->value() == 1) && ( std::strlen(g_InputDataOrientationDisp->value()) != 3 || std::strlen(g_OutputDataOrientationDisp->value()) != 3))

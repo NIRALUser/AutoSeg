@@ -8,7 +8,7 @@ class AutoSegGUI {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg 3.0.0} open
-      xywh {898 70 1020 960} type Double box UP_BOX resizable visible
+      xywh {576 69 1020 960} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 10 633 15} labelfont 8 textfont 8
@@ -79,7 +79,7 @@ class AutoSegGUI {open
         xywh {0 30 1210 920} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
-          label Computation open
+          label Computation open selected
           xywh {5 75 895 860} labelfont 8 align 69
         } {
           Fl_Group {} {
@@ -210,12 +210,12 @@ class AutoSegGUI {open
           Fl_Button g_ShowDisplayButton {
             label {Show process status}
             callback {ShowDisplayButtonPressed();}
-            tooltip {Display the process} xywh {640 850 140 25} labelfont 8
+            tooltip {Display the process} xywh {640 850 145 50} labelfont 8
           }
           Fl_Button g_ExitButton {
             label Exit
             callback {ExitAutoSeg();}
-            tooltip {Exit AutoSeg} xywh {790 850 75 55} labelfont 8
+            tooltip {Exit AutoSeg} xywh {790 850 70 50} labelfont 8
           }
           Fl_Check_Button g_ComputeVolumeButton {
             label {Compute volume analysis}
@@ -230,7 +230,7 @@ class AutoSegGUI {open
           Fl_Button g_ShowMRMLScene {
             label {Show MRML Scene}
             callback {ShowMRMLSceneButtonPressed();}
-            tooltip {Display quality control images} xywh {640 880 140 25} labelfont 8
+            tooltip {Display quality control images} xywh {640 877 140 25} labelfont 8 hide deactivate
           }
           Fl_Check_Button g_ComputeCorticalThicknessButton {
             label {Compute cortical thickness}
@@ -238,14 +238,19 @@ class AutoSegGUI {open
             tooltip {Cortical thickness analysis} xywh {20 878 205 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
           Fl_Check_Button g_MultiAtlasSegButton {
-            label {Conduct Multi-Atlas Segmentation}
+            label {Multi-Atlas Segmentation}
             callback {MultiAtlasSegmentationButtonChecked();}
-            xywh {20 905 340 25} box UP_BOX down_box DOWN_BOX
+            xywh {20 905 205 25} box UP_BOX down_box DOWN_BOX
           }
           Fl_Check_Button g_MultiModalitySegButton {
-            label {Conduct Multi-Modality Segmentation}
+            label {Multi-Modality Segmentation}
             callback {MultiModalitySegmentationButtonChecked();}
-            xywh {370 905 260 25} box UP_BOX down_box DOWN_BOX
+            xywh {435 905 205 25} box UP_BOX down_box DOWN_BOX
+          }
+          Fl_Check_Button g_SingleAtlasSegButton {
+            label {Single Atlas Segmentation}
+            callback {SingleAtlasSegmentationButtonChecked();}
+            xywh {230 905 200 25} box UP_BOX down_box DOWN_BOX
           }
         }
         Fl_Group g_AuxComputationGroup {
@@ -2216,6 +2221,8 @@ class AutoSegGUI {open
   } {}
   Function {SetPrior9GUI()} {open return_type {virtual void}
   } {}
-  Function {SetNumberOfThreadsGUI()} {open selected return_type {virtual void}
+  Function {SetNumberOfThreadsGUI()} {open return_type {virtual void}
+  } {}
+  Function {SingleAtlasSegmentationButtonChecked()} {open return_type {virtual void}
   } {}
 } 

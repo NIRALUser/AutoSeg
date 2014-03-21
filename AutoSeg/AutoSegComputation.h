@@ -126,7 +126,8 @@ class AutoSegComputation
     void SetComputeVolume(bool _ComputeVolume){m_ComputeVolume = _ComputeVolume;};
     void SetComputeCorticalThickness(bool _ComputeCorticalThickness){m_ComputeCorticalThickness = _ComputeCorticalThickness;};
     void SetMultiAtlasAtlasRegistration(bool _ComputeMultiAtlasAtlasRegistration){m_ComputeMultiAtlasAtlasRegistration = _ComputeMultiAtlasAtlasRegistration;};
-    void SetMultiAtlasSegmentation(bool _MultiAtlasSegmentation){m_MultiAtlasSegmentation = _MultiAtlasSegmentation;};
+    void SetSingleAtlasSegmentation(bool _value){m_SingleAtlasSegmentation = _value;};
+    void SetMultiAtlasSegmentation(bool _value){m_MultiAtlasSegmentation = _value;};
     void SetRecalculateAtlasTargetMultiAtlasEnergy(bool _RecalculateAtlasTargetMultiAtlasEnergy){m_RecalculateAtlasTargetMultiAtlasEnergy = _RecalculateAtlasTargetMultiAtlasEnergy;};
     void SetRecalculateAtlasAtlasMultiAtlasEnergy(bool _RecalculateAtlasAtlasMultiAtlasEnergy){m_RecalculateAtlasAtlasMultiAtlasEnergy = _RecalculateAtlasAtlasMultiAtlasEnergy;};
     void SetMultiModalitySegmentation(bool _MultiModalitySegmentation){m_MultiModalitySegmentation = _MultiModalitySegmentation;};
@@ -418,6 +419,7 @@ class AutoSegComputation
     bool m_ComputeCorticalThickness;
     bool m_ComputeMultiAtlasAtlasRegistration;
     bool m_MultiAtlasSegmentation;
+    bool m_SingleAtlasSegmentation;
     bool m_RecalculateAtlasTargetMultiAtlasEnergy;
     bool m_RecalculateAtlasAtlasMultiAtlasEnergy;
     bool m_MultiModalitySegmentation;
@@ -492,6 +494,7 @@ class AutoSegComputation
     bool GetComputeVolume(){return m_ComputeVolume;};
     bool GetComputeCorticalThickness(){return m_ComputeCorticalThickness;};
     bool GetMultiAtlasSegmentation(){return m_MultiAtlasSegmentation;};
+    bool GetSingleAtlasSegmentation(){return m_SingleAtlasSegmentation;};
     bool GetRecalculateAtlasTargetMultiAtlasEnergy(){return m_RecalculateAtlasTargetMultiAtlasEnergy;};
     bool GetRecalculateAtlasAtlasMultiAtlasEnergy(){return m_RecalculateAtlasAtlasMultiAtlasEnergy;};
     bool GetMultiModalitySegmentation(){return m_MultiModalitySegmentation;};

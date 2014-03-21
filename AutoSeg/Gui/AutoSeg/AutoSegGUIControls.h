@@ -123,7 +123,6 @@ class AutoSegGUIControls : public AutoSegGUI
     void ClearAuxDataGUI();
     // Automatic Segmentation Computation
     void ComputeGUI();
-    //void MultiAtlasSegGUI();
     // Computation Parameters
     void ComputeVolumeButtonChecked();
     void ComputeCorticalThicknessButtonChecked();
@@ -324,6 +323,7 @@ class AutoSegGUIControls : public AutoSegGUI
     void STAPLELabelFusionGUI();
   //  void AtlasRegistrationGUI();
     void MultiAtlasSegmentationButtonChecked();
+    void SingleAtlasSegmentationButtonChecked();
     void MultiModalitySegmentationButtonChecked();
     
     char *AtlasDirectory ;
