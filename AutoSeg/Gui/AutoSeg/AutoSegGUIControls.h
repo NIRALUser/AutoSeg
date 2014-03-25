@@ -324,6 +324,7 @@ class AutoSegGUIControls : public AutoSegGUI
   //  void AtlasRegistrationGUI();
     void MultiAtlasSegmentationButtonChecked();
     void SingleAtlasSegmentationButtonChecked();
+    void RandomizeSubjectsButtonChecked();
     void MultiModalitySegmentationButtonChecked();
     
     char *AtlasDirectory ;

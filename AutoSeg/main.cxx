@@ -51,8 +51,9 @@ int main(int argc, char *argv[])
   const char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
   const char *logFilename = ipGetStringArgument(argv, "-logFile", "/dev/null");
 
+  std::string logErrorFilename = std::string(logFilename) + ".err";
   FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
-  FILE *fp2 = freopen(logFilename,"w",stderr); //redirect stdout
+  FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
 
   if (gui)
   {
@@ -83,12 +84,12 @@ int main(int argc, char *argv[])
   else if ( (argc == 2) && ( (!strcmp(argv[1],"-v")) || (!strcmp(argv[1],"--version")) ) )
   { 
     std::cout<<"AutoSeg "<<AUTOSEG_VERSION<<" - Compiled on: " << __DATE__ << " - "<< __TIME__ <<std::endl;
-    return 0; 
   }
   else
   {
     PrintHelp(argv[0]);
-    return -1;
   }
+  fclose(fp1); 
+  fclose(fp2);
 }
 

@@ -127,6 +127,7 @@ class AutoSegComputation
     void SetComputeCorticalThickness(bool _ComputeCorticalThickness){m_ComputeCorticalThickness = _ComputeCorticalThickness;};
     void SetMultiAtlasAtlasRegistration(bool _ComputeMultiAtlasAtlasRegistration){m_ComputeMultiAtlasAtlasRegistration = _ComputeMultiAtlasAtlasRegistration;};
     void SetSingleAtlasSegmentation(bool _value){m_SingleAtlasSegmentation = _value;};
+    void SetRandomizeSubjects(bool _value){m_RandomizeSubjects = _value;};
     void SetMultiAtlasSegmentation(bool _value){m_MultiAtlasSegmentation = _value;};
     void SetRecalculateAtlasTargetMultiAtlasEnergy(bool _RecalculateAtlasTargetMultiAtlasEnergy){m_RecalculateAtlasTargetMultiAtlasEnergy = _RecalculateAtlasTargetMultiAtlasEnergy;};
     void SetRecalculateAtlasAtlasMultiAtlasEnergy(bool _RecalculateAtlasAtlasMultiAtlasEnergy){m_RecalculateAtlasAtlasMultiAtlasEnergy = _RecalculateAtlasAtlasMultiAtlasEnergy;};
@@ -329,9 +330,13 @@ class AutoSegComputation
     void SetPointSpacing(float _PointSpacing){m_PointSpacing = _PointSpacing;};
    // Compute Automatic Data
     void ComputeData();
-  // Compute Automatic Segmentation
+
+    // Compute Automatic Segmentation
     void Computation();
     void ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile);
+    void RunPipeline(int _GUImode);
+
+    void RandomizeSubjects(int _GUImode);
     bool GetGUIMode() { return m_GUImode;};
     void StopBatchMake();
   // Show MRML Scene
@@ -369,23 +374,23 @@ class AutoSegComputation
     char *GetLogFile(){return m_LogFile;};
 
     //void SetABCANTSWarpButtonChecked(){m_ABCANTSWarpChecked = 1;};
-   // int GetABCANTSWarpButtonChecked(){return m_ABCANTSWarpChecked;};
+    // int GetABCANTSWarpButtonChecked(){return m_ABCANTSWarpChecked;};
     char m_BMSAutoSegFile[512];
     char m_BMSAutoSegMRMLSourceFile[512];
     char m_BMSAutoSegMRMLParcelFile[512];
     char m_BMSAutoSegMRMLAllROIFile[512];
     char * m_currentBMS;
     
-   // Log File
+    // Log File
     std::string m_output;
     char m_LogFile[512];
-  // Parameter File
+    // Parameter File
     char m_ParameterFile[512];
     char m_ComputationFile[512];
     char m_AuxComputationFile[512];
     bool m_IsAutoSegInProcess;
 
-  //Tab Computation
+    //Tab Computation
     char m_ProcessDataDirectory[512];
     char m_MultiAtlasDirectory[512];
     char m_MultiAtlasTargetFile[512];
@@ -420,6 +425,7 @@ class AutoSegComputation
     bool m_ComputeMultiAtlasAtlasRegistration;
     bool m_MultiAtlasSegmentation;
     bool m_SingleAtlasSegmentation;
+    bool m_RandomizeSubjects;
     bool m_RecalculateAtlasTargetMultiAtlasEnergy;
     bool m_RecalculateAtlasAtlasMultiAtlasEnergy;
     bool m_MultiModalitySegmentation;
@@ -495,6 +501,7 @@ class AutoSegComputation
     bool GetComputeCorticalThickness(){return m_ComputeCorticalThickness;};
     bool GetMultiAtlasSegmentation(){return m_MultiAtlasSegmentation;};
     bool GetSingleAtlasSegmentation(){return m_SingleAtlasSegmentation;};
+    bool GetRandomizeSubjects(){return m_RandomizeSubjects;};
     bool GetRecalculateAtlasTargetMultiAtlasEnergy(){return m_RecalculateAtlasTargetMultiAtlasEnergy;};
     bool GetRecalculateAtlasAtlasMultiAtlasEnergy(){return m_RecalculateAtlasAtlasMultiAtlasEnergy;};
     bool GetMultiModalitySegmentation(){return m_MultiModalitySegmentation;};
@@ -919,6 +926,7 @@ class AutoSegComputation
     char **m_T2List;
    // PD Data List: contains all the PD files 
     char **m_PDList;
+
     char **m_MultiAtlasT1List;
     char **m_MultiAtlasT2List;
    // Multi Atlas List: contains all the Multi Atlases 

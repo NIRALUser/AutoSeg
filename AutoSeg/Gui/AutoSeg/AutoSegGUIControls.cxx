@@ -207,7 +207,8 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
   m_Computation.SetUseCondor(g_UseCondorButton->value());
   m_Computation.SetMultiModalitySegmentation(g_MultiModalitySegButton->value());
   m_Computation.SetMultiAtlasSegmentation(g_MultiAtlasSegButton->value());
-  m_Computation.SetSingleAtlasSegmentation(true);
+  m_Computation.SetSingleAtlasSegmentation(g_SingleAtlasSegButton->value());
+  m_Computation.SetRandomizeSubjects(g_RandomizeSubjectsButton->value());
    
   m_Computation.SetIsAutoSegInProcess(false);
   m_Computation.SetSlicerVersion(4.3);
@@ -550,7 +551,8 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
   int Length;
   // Computation Options
   int IsT2Image, IsPDImage;
-  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas, ComputeSingleAtlas;  
+  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas;  
+  int boolValue;
 
   if ((ComputationFile = fopen(_FileName,"r")) != NULL) 
   {
@@ -719,13 +721,23 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       }
       else if ( (std::strncmp("Compute Single-atlas Segmentation: ", Line, 35)) == 0)
       {
-        ComputeSingleAtlas = atoi(Line + 35);
-	if (ComputeSingleAtlas == 1) {
+        boolValue = atoi(Line + 35);
+	if (boolValue == 1) {
             g_SingleAtlasSegButton->set();
 	    SingleAtlasSegmentationButtonChecked();
         }
         else
             g_SingleAtlasSegButton->clear();
+      }
+      else if ( (std::strncmp("Randomize Subject Order: ", Line, 25)) == 0)
+      {
+        boolValue = atoi(Line + 25);
+	if (boolValue == 1) {
+            g_RandomizeSubjectsButton->set();
+	    RandomizeSubjectsButtonChecked();
+        }
+        else
+            g_RandomizeSubjectsButton->clear();
       }
       else if ( (std::strncmp("Conduct Atlas-Atlas Registration: ", Line, 34)) == 0)
       {
@@ -5403,6 +5415,16 @@ void AutoSegGUIControls::SingleAtlasSegmentationButtonChecked()
     }
     else {
         m_Computation.SetSingleAtlasSegmentation(0);    
+    }
+}
+
+void AutoSegGUIControls::RandomizeSubjectsButtonChecked()
+{
+    if (g_RandomizeSubjectsButton->value()) {
+        m_Computation.SetRandomizeSubjects(1);
+    }
+    else {
+        m_Computation.SetRandomizeSubjects(0);    
     }
 }
 

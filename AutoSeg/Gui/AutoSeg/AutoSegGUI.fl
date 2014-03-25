@@ -8,7 +8,7 @@ class AutoSegGUI {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg 3.0.0} open
-      xywh {576 69 1020 960} type Double box UP_BOX resizable visible
+      xywh {576 69 1020 960} type Double box UP_BOX hide resizable
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 10 633 15} labelfont 8 textfont 8
@@ -79,7 +79,7 @@ class AutoSegGUI {open
         xywh {0 30 1210 920} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
-          label Computation open selected
+          label Computation open
           xywh {5 75 895 860} labelfont 8 align 69
         } {
           Fl_Group {} {
@@ -195,27 +195,27 @@ class AutoSegGUI {open
           Fl_Check_Button g_RecomputeButton {
             label {Recompute all}
             callback {RecomputeButtonChecked()}
-            tooltip {Recompute all data} xywh {230 850 130 25} box UP_BOX down_box DOWN_BOX labelfont 8
+            tooltip {Recompute all data} xywh {229 850 130 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
           Fl_Check_Button g_UseCondorButton {
             label {Use condor}
             callback {UseCondorButtonChecked()}
-            tooltip {Dataset is run in a distributed environment via Condor} xywh {230 878 130 25} box UP_BOX down_box DOWN_BOX labelfont 8 deactivate
+            tooltip {Dataset is run in a distributed environment via Condor} xywh {229 878 130 25} box UP_BOX down_box DOWN_BOX labelfont 8 deactivate
           }
           Fl_Return_Button g_ReturnButton {
             label {Compute AutoSeg}
             callback {ComputeGUI()}
-            tooltip {Compute the automatic segmentation} xywh {370 850 180 50} labelfont 8
+            tooltip {Compute the automatic segmentation} xywh {365 850 180 50} labelfont 8
           }
           Fl_Button g_ShowDisplayButton {
             label {Show process status}
             callback {ShowDisplayButtonPressed();}
-            tooltip {Display the process} xywh {640 850 145 50} labelfont 8
+            tooltip {Display the process} xywh {615 850 145 50} labelfont 8
           }
           Fl_Button g_ExitButton {
             label Exit
             callback {ExitAutoSeg();}
-            tooltip {Exit AutoSeg} xywh {790 850 70 50} labelfont 8
+            tooltip {Exit AutoSeg} xywh {765 850 70 50} labelfont 8
           }
           Fl_Check_Button g_ComputeVolumeButton {
             label {Compute volume analysis}
@@ -225,7 +225,7 @@ class AutoSegGUI {open
           Fl_Button g_StopButton {
             label Stop
             callback {StopAutoSeg();}
-            tooltip {Stop the automatic segmentation} xywh {560 850 70 50} labelfont 8
+            tooltip {Stop the automatic segmentation} xywh {550 850 60 50} labelfont 8
           }
           Fl_Button g_ShowMRMLScene {
             label {Show MRML Scene}
@@ -240,17 +240,22 @@ class AutoSegGUI {open
           Fl_Check_Button g_MultiAtlasSegButton {
             label {Multi-Atlas Segmentation}
             callback {MultiAtlasSegmentationButtonChecked();}
-            xywh {20 905 205 25} box UP_BOX down_box DOWN_BOX
+            xywh {20 905 205 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
           Fl_Check_Button g_MultiModalitySegButton {
             label {Multi-Modality Segmentation}
             callback {MultiModalitySegmentationButtonChecked();}
-            xywh {435 905 205 25} box UP_BOX down_box DOWN_BOX
+            xywh {415 905 195 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
           Fl_Check_Button g_SingleAtlasSegButton {
             label {Single Atlas Segmentation}
             callback {SingleAtlasSegmentationButtonChecked();}
-            xywh {230 905 200 25} box UP_BOX down_box DOWN_BOX
+            xywh {229 905 181 25} box UP_BOX down_box DOWN_BOX value 1 labelfont 8
+          }
+          Fl_Check_Button g_RandomizeSubjectsButton {
+            label {Randomize Subjects}
+            callback {RandomizeSubjectsButtonChecked();}
+            xywh {615 905 145 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
         }
         Fl_Group g_AuxComputationGroup {
@@ -2224,5 +2229,7 @@ class AutoSegGUI {open
   Function {SetNumberOfThreadsGUI()} {open return_type {virtual void}
   } {}
   Function {SingleAtlasSegmentationButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {RandomizeSubjectsButtonChecked()} {open selected return_type {virtual void}
   } {}
 } 

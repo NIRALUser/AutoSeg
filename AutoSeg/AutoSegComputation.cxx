@@ -35,6 +35,14 @@
 #include "AutoSegComputation.h"
 #include <ctime>
 
+#ifdef _POSIX_SOURCE
+
+//for killing child processes in UNIX
+#include <signal.h>
+#include <unistd.h>
+
+#endif
+
 /*
 bool stringCompare( const std::string &left, const std::string &right )
 {
@@ -1709,12 +1717,42 @@ void AutoSegComputation::ComputeData()
   m_KillProcess = false;
 }
 
+void AutoSegComputation::RandomizeSubjects( int _GUIMode )
+{
+  // randomize tables
+
+  // 1. copy
+  
+
+  //if ( !GetT2Image() && !GetPDImage()) 
+  // m_T1List[i]
+  // m_T2List[i] 
+  // m_PDList[i]
+  // for (i = 0; i < GetNbData(); i++)
+}
 
 // Compute Automatic Segmentation
 void AutoSegComputation::Computation()
 {
   SetParameterFile();
   SetComputationFile();
+  RunPipeline(1);
+}
+
+// Compute Automatic Segmentation
+void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile)
+{
+
+  LoadComputationFile(_computationFile);
+  LoadParameterFile(_parameterFile);
+  SetParameterFile(_computationFile);
+  SetComputationFile(_parameterFile);
+  
+  RunPipeline(0);
+}
+
+void AutoSegComputation::RunPipeline( int _GUIMode )
+{
   SetBMSAutoSegFile();
   SetBMSAutoSegMainFile();
   if (GetAux1Image())
@@ -1722,6 +1760,11 @@ void AutoSegComputation::Computation()
     SetBMSAutoSegAuxFile();
   }
   SetLogFile();
+
+  if (GetRandomizeSubjects()) 
+  {
+    RandomizeSubjects(_GUIMode);
+  }
 
   WriteParameterFile(GetParameterFile());
   WriteComputationFile(GetComputationFile());
@@ -1734,28 +1777,10 @@ void AutoSegComputation::Computation()
   m_KillProcess = false;
   m_output.clear();
   std::cout << GetBMSAutoSegFile() << std::endl;
-  ExecuteBatchMake(GetBMSAutoSegFile(),1);
+  ExecuteBatchMake(GetBMSAutoSegFile(),_GUIMode);
   std::cout << "finished!!!" << std::endl;
 }
 
-// Compute Automatic Segmentation
-void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile)
-{
-  LoadComputationFile(_computationFile);
-  LoadParameterFile(_parameterFile);
-  SetParameterFile(_computationFile);
-  SetComputationFile(_parameterFile);
-  SetBMSAutoSegFile();
-  SetBMSAutoSegMainFile();
-  SetLogFile();
-  SetAux1Image(0);
-  WriteBMSAutoSegFile();
-  WriteBMSAutoSegMainFile();
-  m_KillProcess = false;
-  m_output.clear();
-  ExecuteBatchMake(GetBMSAutoSegFile(),0);
-
-}
 
 void AutoSegComputation::ShowDisplay()
 {
@@ -1804,10 +1829,12 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
 
   ThreaderType::Pointer threader = ThreaderType::New();
 
-  const char * logFilename = GetLogFile();
+  std::string logFilename = std::string(GetLogFile());
+  std::string logErrorFilename = logFilename + ".err";
+
   std::cout << "starting to listen and logging to : " << logFilename << std::endl;
-  FILE *fp1 = freopen(logFilename,"w",stdout);
-  FILE *fp2 = freopen(logFilename,"w",stderr);
+  FILE *fp1 = freopen(logFilename.c_str(),"w",stdout);
+  FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr);
 
   m_GUImode = (bool) _GUIMode;
   m_currentBMS = _Input;
@@ -1826,7 +1853,7 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
     if (GetGUIMode())
       {
 	Fl::check();
-	int length = itksys::SystemTools::FileLength(GetLogFile());
+	int length = itksys::SystemTools::FileLength(logFilename.c_str());
 	if (length != curFileLength) {
 	  curFileLength = length;
 	  ifstream logInput (GetLogFile());
@@ -1847,26 +1874,59 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
       {
 	std::cout << "Killing BatchMake process " << std::endl;
 	m_IsAutoSegInProcess = false;
-	// kill all processes with this process as parent
 
-	//SetIsAutoSegInProcess(false); 
-	//threader->TerminateThread(m_batchMakeThreadID);
-	// TODO: killing the batchmake process currently hangs AutoSeg, why? does it wait for the child process to finish?
+#ifdef _POSIX_SOURCE
+	// kill all processes with this process as parent       
+	pid_t processID = getpid();
+	char processIDstring[100];
+	sprintf(processIDstring,"%d",processID);
+	std::vector<const char*> args;
+	args.push_back("pkill");
+	args.push_back("-P");
+	args.push_back(processIDstring);
+	// don't forget this line at the end of the argument list
+	args.push_back(0);
+	
+	m_Process = itksysProcess_New();
+	itksysProcess_SetCommand(m_Process, &*args.begin());
+	itksysProcess_SetOption(m_Process,itksysProcess_Option_HideWindow,1);
+	itksysProcess_Execute(m_Process);
+	//itksysProcess_WaitForExit(m_Process, 0);
 
-	//SetIsAutoSegInProcess(false); 
-
+	threader->TerminateThread(m_batchMakeThreadID);
+	SetIsAutoSegInProcess(false); 
+#endif
 	std::cout << "Killing BatchMake process done" << std::endl;
 	break;
       }
-    
-  }
-  Fl::check();
 
-  freopen("/dev/null","w",stdout);
-  freopen("/dev/null","w",stderr);
+  }
+
+  if (GetGUIMode())
+    {
+      Fl::check();
+      int length = itksys::SystemTools::FileLength(logFilename.c_str());
+      if (length != curFileLength) {
+	curFileLength = length;
+	ifstream logInput (GetLogFile());
+	
+	if (logInput) {
+	  std::string log((std::istreambuf_iterator<char>(logInput)), std::istreambuf_iterator<char>());
+	  
+	  m_output = log;
+	  
+	  m_TextBuf.text(m_output.c_str());
+	  TextDisplay.g_TextDisp->scroll(100000,0);
+	}
+	logInput.close();
+      }
+    }
 
   fclose(fp1);
   fclose(fp2);
+
+  freopen("/dev/null","w",stdout);
+  freopen("/dev/null","w",stderr);
 
 }
 
@@ -1985,6 +2045,9 @@ void AutoSegComputation::WriteComputationFile(const char *_FileName)
     for (i = 0; i < GetNbData(); i++)
       ComputationFile<<"Data: "<<m_T1List[i]<<" "<<m_PDList[i]<<std::endl<<std::endl;;  
   }
+
+  ComputationFile<<"// Randomize the subject order prior to processing?"<<std::endl;
+  ComputationFile<<"Randomize Subject Order: "<<GetRandomizeSubjects()<<std::endl;
 
   ComputationFile<<"// Multi-Modality Segmentation Options"<<std::endl;
   ComputationFile<<"Compute Multi-modality Segmentation: "<<GetMultiModalitySegmentation()<<std::endl;
@@ -8421,6 +8484,10 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       else if ( (std::strncmp("Compute Single-atlas Segmentation: ", Line, 35)) == 0)
       {
 	  SetSingleAtlasSegmentation(atoi(Line+35)); 
+      }
+      else if ( (std::strncmp("Randomize Subject Order: ", Line, 25)) == 0)
+      {
+	  SetRandomizeSubjects(atoi(Line+25)); 
       }
       else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
 	{ // for sake of backward compatibility
