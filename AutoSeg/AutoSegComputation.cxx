@@ -2992,6 +2992,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"Set (BSplineBeta "<<GetBSplineBeta()<<")"<<std::endl;
   BMSAutoSegMainFile<<"Set (BSplineOrder "<<GetBSplineOrder()<<")"<<std::endl;
   BMSAutoSegMainFile<<"Set (HistogramSharpening "<<GetHistogramSharpening()<<")"<<std::endl;  
+
+  // set SlicerN4 options
+    
+  if(GetSlicerVersion() < 4.0) {
+    BMSAutoSegMainFile<<"    Set (SlicerN4parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+  }
+  else if(GetSlicerVersion() < 4.3) {
+    BMSAutoSegMainFile<<"    Set (SlicerN4parameters --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+    }
+  else { // >= 4.3
+    BMSAutoSegMainFile<<"    Set (SlicerN4parameters --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
+  }
+
   if (GetN4ITKBiasFieldCorrection())   {
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
@@ -3044,19 +3057,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"  ListFileInDir(OutputFileN4List ${BiasPath} ${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"  If (${OutputFileN4List} == '')"<<std::endl;
     BMSAutoSegMainFile<<"    Set (my_output ${BiasPath}${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
-    //BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-    if(GetSlicerVersion() < 4.0) {
-        BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-        BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${CaseN4} ${parameters})"<<std::endl;
-    }
-    else if(GetSlicerVersion() < 4.3) {
-        BMSAutoSegMainFile<<"    Set (parameters --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-        BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${CaseN4} ${parameters})"<<std::endl;
+
+    // set SlicerN4 options
+    
+    if(GetSlicerVersion() < 4.3) {
+        BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${CaseN4} ${SlicerN4parameters})"<<std::endl;
     }
     else { // >= 4.3
-        BMSAutoSegMainFile<<"    Set (parameters --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-        BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} ${parameters} ${CaseN4} ${my_output})"<<std::endl;
+        BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${CaseN4} ${my_output} ${SlicerN4parameters})"<<std::endl;
     }
+
+
     BMSAutoSegMainFile<<"    Run (prog_output ${command_line} ${parameters} prog_error)"<<std::endl;
 
 
@@ -3348,6 +3359,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ('TISSUE SEGMENTATION...')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
         
+    BMSAutoSegMainFile<<"      set (stripEMS '')"<<std::endl;
+    BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
+
     if (std::strcmp(GetEMSoftware(), "ABC") == 0)
       BMSAutoSegMainFile<<"set (NEOSEG_PREFIX '')"<<std::endl;
     else
@@ -3787,12 +3801,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration_2<<")"<<std::endl;
 	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration_2<<"/)"<<std::endl;
       }
-      // else
-      //{
-      //	BMSAutoSegMainFile<<"      set (stripEMS _stripEMS)"<<std::endl;
-      //	BMSAutoSegMainFile<<"      ListDirInDir (StrippedList ${T1Path}/${AutoSegDir}/ ems_"<<SuffixIteration_2<<")"<<std::endl;
-      //	BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration_2<<"/)"<<std::endl;
-      //}
     }
     else
     {
@@ -3938,46 +3946,38 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set(StrippedBias _${Bias})"<<std::endl;
 
       BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
      
-      if(GetSlicerVersion() <= 4.0) {
-          BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-          BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${parameters})"<<std::endl;
+      if(GetSlicerVersion() < 4.3) {
+        BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${SlicerN4parameters})"<<std::endl;
       }
-      else {
-          BMSAutoSegMainFile<<"    Set (parameters --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-          BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} ${parameters} ${FinalTarget} ${my_output})"<<std::endl;
+      else { // >= 4.3
+        BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${FinalTarget} ${my_output} ${SlicerN4parameters})"<<std::endl;
       }
+
       BMSAutoSegMainFile<<"      Run (prog_output ${command_line} prog_error)"<<std::endl;
       BMSAutoSegMainFile<<"      Set (FinalTarget ${my_output})"<<std::endl;
 	
       if (GetT2Image())
       {
 	BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      //BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
 
-        if(GetSlicerVersion() <= 4.0) {
-          BMSAutoSegMainFile<<"    Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-          BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${FinalTarget} ${parameters})"<<std::endl;
-        }
-        else {
-          BMSAutoSegMainFile<<"    Set (parameters --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-          BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} ${parameters} ${T2FinalTarget} ${my_output})"<<std::endl;
-        }
+	if(GetSlicerVersion() < 4.3) {
+	  BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${T2FinalTarget} ${SlicerN4parameters})"<<std::endl;
+	}
+	else { // >= 4.3
+	  BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${T2FinalTarget} ${my_output} ${SlicerN4parameters})"<<std::endl;
+	}
 	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;	
       }
       if (GetPDImage())
       {
 	BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
-      //BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplinebeta ${BSplineBeta} --bsplinealpha ${BSplineAlpha} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-        if(GetSlicerVersion() <= 4.0) {
-            BMSAutoSegMainFile<<"      Set (parameters --histogramsharpening ${HistogramSharpening} --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-	    BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${PDFinalTarget} ${parameters})"<<std::endl;
-        }
-        else {
-            BMSAutoSegMainFile<<"    Set (parameters --bsplineorder ${BSplineOrder} --shrinkfactor ${ShrinkFactor} --splinedistance ${SplineDistance} --convergencethreshold ${ConvergenceThreshold} --iterations ${NbOfIterations} --meshresolution ${BSplineGridResolutions})"<<std::endl;
-            BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} ${parameters} ${PDFinalTarget} ${my_output})"<<std::endl;
-        }
+	if(GetSlicerVersion() < 4.3) {
+	  BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd} --outputimage ${my_output} --inputimage ${PDFinalTarget} ${SlicerN4parameters})"<<std::endl;
+	}
+	else { // >= 4.3
+	  BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${PDFinalTarget} ${my_output} ${SlicerN4parameters})"<<std::endl;
+	}
 	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;
       }		
     }
@@ -6741,9 +6741,9 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"set (NEOSEG_PREFIX '_EMonly')"<<std::endl;
 
   if (GetStrippedN4ITKBiasFieldCorrection())
-    BMSAutoSegAuxFile<<"set (StrippedBias '')"<<std::endl;
-  else
     BMSAutoSegAuxFile<<"set (StrippedBias _Bias)"<<std::endl;
+  else
+    BMSAutoSegAuxFile<<"set (StrippedBias '')"<<std::endl;
 
   if (GetLoop())
   {
