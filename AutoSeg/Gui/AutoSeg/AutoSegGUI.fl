@@ -8,10 +8,10 @@ class AutoSegGUI {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg 3.0.0} open
-      xywh {576 69 1020 960} type Double box UP_BOX hide resizable
+      xywh {576 69 890 960} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
-        xywh {0 10 633 15} labelfont 8 textfont 8
+        xywh {0 10 785 15} labelfont 8 textfont 8
       } {
         Submenu {} {
           label File open
@@ -79,7 +79,7 @@ class AutoSegGUI {open
         xywh {0 30 1210 920} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
-          label Computation open
+          label Computation open selected
           xywh {5 75 895 860} labelfont 8 align 69
         } {
           Fl_Group {} {
@@ -1701,7 +1701,7 @@ class AutoSegGUI {open
         }
         Fl_Group g_MultiAtlasSegGroup {
           label {Multiple Atlas Segmentation} open
-          xywh {0 80 1210 860} labelfont 8 align 69 hide
+          xywh {10 75 875 865} labelfont 8 align 69 hide
         } {
           Fl_Group g_MultiAtlasSegParametersGroup {
             label {Multi-Atlas Segmentation  Parameters} open
@@ -1755,15 +1755,15 @@ class AutoSegGUI {open
           }
           Fl_Group {} {
             label {Atlas directory} open
-            xywh {20 380 880 70} box UP_BOX labelfont 9 align 21
+            xywh {20 380 840 70} box UP_BOX labelfont 9 align 21
           } {
             Fl_Button g_MultiAtlasDirectory {
               label {...}
               callback {SetMultiAtlasDirectoryGUI()}
-              tooltip {Set the process data directory} xywh {35 411 23 23}
+              tooltip {Set the process data directory} xywh {35 410 23 1}
             }
             Fl_Output g_MultiAtlasDirectoryDisp {
-              xywh {65 411 775 23} labelfont 8 textfont 8
+              xywh {65 410 775 1} labelfont 8 textfont 8
             }
           }
           Fl_Check_Button g_AtlasAtlasRegButton {
@@ -1794,14 +1794,10 @@ class AutoSegGUI {open
         }
       }
       Fl_Group {} {open
-        xywh {795 0 210 65} box PLASTIC_UP_BOX align 0
+        xywh {795 8 90 67} box PLASTIC_UP_BOX align 0
       } {
         Fl_Button {} {
-          image {AutoSeg.jpg} xywh {805 8 80 52} box NO_BOX align 64 when 2 deactivate
-        }
-        Fl_Button {} {
-          label {AutoSeg 3.0.0}
-          xywh {885 23 120 22} box NO_BOX labelfont 1 labelsize 17
+          image {AutoSeg.jpg} xywh {800 15 80 50} box NO_BOX align 64 when 2 deactivate
         }
       }
     }
@@ -2230,6 +2226,6 @@ class AutoSegGUI {open
   } {}
   Function {SingleAtlasSegmentationButtonChecked()} {open return_type {virtual void}
   } {}
-  Function {RandomizeSubjectsButtonChecked()} {open selected return_type {virtual void}
+  Function {RandomizeSubjectsButtonChecked()} {open return_type {virtual void}
   } {}
 } 
