@@ -33,7 +33,8 @@ void PrintHelp(char* progname)
     std::cout << " performs automatic brain tissue classification and structural segmentation" << std::endl;
     std::cout << "usage: AutoSeg [-computationFile computationFile] [-parameterFile parameterFile]"<< std::endl; std::cout << std::endl; std::cout << "-computationFile	computation file" << std::endl;
     std::cout << "-parameterFile	parameter file" << std::endl;
-    std::cout << "-gui	open AutoSeg interface" << std::endl;
+    std::cout << "-gui	                open AutoSeg interface" << std::endl;
+    std::cout << "-version	        version number" << std::endl;
     std::cout << "-logFile              log file for standard logging (not during execution)" << std::endl;
     std::cout << "-h/-help              print this info" << std::endl;
     std::cout << std::endl << std::endl;
@@ -47,16 +48,17 @@ int main(int argc, char *argv[])
     exit(0);
   }
   bool gui = ipExistsArgument(argv, "-gui");
+  bool version = ipExistsArgument(argv, "-version");
   const char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);
   const char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
   const char *logFilename = ipGetStringArgument(argv, "-logFile", "/dev/null");
 
   std::string logErrorFilename = std::string(logFilename) + ".err";
-  FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
-  FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
 
   if (gui)
   {
+    FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
+    FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
     const char *AutoSegHome = "AUTOSEG_HOME";
     char *AutoSegPath = NULL;
     AutoSegPath = getenv(AutoSegHome);
@@ -76,12 +78,14 @@ int main(int argc, char *argv[])
 	return -1;
       }
   }
-  else if ((argc == 5) && computationFile && parameterFile)
+  else if ( computationFile && parameterFile)
   {
+    FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
+    FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
     AutoSegComputation m_Computation;
     m_Computation.ComputationWithoutGUI(computationFile, parameterFile);
   }
-  else if ( (argc == 2) && ( (!strcmp(argv[1],"-v")) || (!strcmp(argv[1],"--version")) ) )
+  else if (version)
   { 
     std::cout<<"AutoSeg "<<AUTOSEG_VERSION<<" - Compiled on: " << __DATE__ << " - "<< __TIME__ <<std::endl;
   }
@@ -89,7 +93,5 @@ int main(int argc, char *argv[])
   {
     PrintHelp(argv[0]);
   }
-  fclose(fp1); 
-  fclose(fp2);
 }
 

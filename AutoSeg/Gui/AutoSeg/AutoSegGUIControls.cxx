@@ -1580,7 +1580,8 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   // Reorientation
   int Reorientation;
   std::string InputDataOrientation, OutputDataOrientation;
-  
+  int value;
+
   bool IsParameterFileLoaded=false;
 
   if (mode ==file)
@@ -2718,6 +2719,14 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       }
       if(mode == N4biasFieldCorrection||mode == advancedParameters||mode == file)
       {	
+	if ((std::strncmp("Bias Correction stripped image: ", Line, 32)) == 0)
+	{
+	  value = atoi(Line+32);
+	  if (value == 1)
+	    g_StrippedN4ITKBiasFieldCorrectionButton->set();
+	  else
+	    g_StrippedN4ITKBiasFieldCorrectionButton->clear();
+	}
 	if ((std::strncmp("N4 ITK Bias Field Correction: ", Line, 30)) == 0)
 	{
 	  N4ITKBiasFieldCorrection= atoi(Line+30);

@@ -1745,8 +1745,8 @@ void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, con
 
   LoadComputationFile(_computationFile);
   LoadParameterFile(_parameterFile);
-  SetParameterFile(_computationFile);
-  SetComputationFile(_parameterFile);
+  SetComputationFile(_computationFile);
+  SetParameterFile(_parameterFile);
   
   RunPipeline(0);
 }
@@ -1801,7 +1801,12 @@ ITK_THREAD_RETURN_TYPE BatchMakeThreader( void * arg )
  
   bm::ScriptParser m_Parser;
   std::cout << "starting BatchMake execution as Thread: " << comp->GetCurrentBatchmakeFile() << std::endl;
-  m_Parser.Execute(comp->GetCurrentBatchmakeFile());
+  m_Parser.Compile(comp->GetCurrentBatchmakeFile());
+
+  m_Parser.GetScriptActionManager()->Execute();
+
+  //m_Parser.Execute(comp->GetCurrentBatchmakeFile());
+
   std::cout << "finished with BatchMake execution: " << comp->GetCurrentBatchmakeFile() << std::endl;
 
   comp->SetIsAutoSegInProcess(false); 
@@ -1838,7 +1843,14 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
 
   m_GUImode = (bool) _GUIMode;
   m_currentBMS = _Input;
-  m_batchMakeThreadID = threader->SpawnThread( BatchMakeThreader, this );
+  if (GetGUIMode()) {
+    m_batchMakeThreadID = threader->SpawnThread( BatchMakeThreader, this );
+  } else {
+    typedef itk::MultiThreader::ThreadInfoStruct  ThreadInfoType;
+    ThreadInfoType infoStruct;
+    infoStruct.UserData = this;
+    BatchMakeThreader(&infoStruct);
+  }
 
   int curFileLength = 0;
 
@@ -2582,7 +2594,7 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"N4 BSpline beta: "<<GetBSplineBeta()<<std::endl;
   ParameterFile<<"N4 Histogram sharpening: "<<GetHistogramSharpening()<<std::endl;
   ParameterFile<<"N4 BSpline order: "<<GetBSplineOrder()<<std::endl<<std::endl;
-  ParameterFile<<"Stripped N4 ITK Bias Field Correction: "<<GetStrippedN4ITKBiasFieldCorrection()<<std::endl;
+  ParameterFile<<"Bias Correction stripped image: "<<GetStrippedN4ITKBiasFieldCorrection()<<std::endl;
   ParameterFile<<"The Version of Slicer Used: "<<GetSlicerVersion()<<std::endl;
 
   ParameterFile<<"\n// Reorientation"<<std::endl;
@@ -8697,6 +8709,7 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
     // Reorientation
   int Reorientation;
   std::string InputDataOrientation, OutputDataOrientation;
+  int value;
 
   bool IsParameterFileLoaded=false;
 
@@ -9445,6 +9458,14 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
       }
       if(mode == N4biasFieldCorrection||mode == advancedParameters||mode == file)
       {	
+	if ((std::strncmp("Bias Correction stripped image: ", Line, 32)) == 0)
+	{
+	  value = atoi(Line+32);
+	  if (value == 1)
+	    SetStrippedN4ITKBiasFieldCorrection(1);
+	  else
+	    SetStrippedN4ITKBiasFieldCorrection(0);
+	}
 	if ((std::strncmp("N4 ITK Bias Field Correction: ", Line, 30)) == 0)
 	{
 	  N4ITKBiasFieldCorrection= atoi(Line+30);
