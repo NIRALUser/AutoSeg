@@ -70,7 +70,8 @@ class AutoSegComputation
     void SetIsAutoSegInProcess(bool _IsAutoSegInProcess){m_IsAutoSegInProcess = _IsAutoSegInProcess;};
     bool GetIsAutoSegInProcess(){return m_IsAutoSegInProcess;}; 
     const char * GetCurrentBatchmakeFile(){return m_currentBMS;};
- 
+    
+    bm::ScriptParser* GetParser() { return &m_Parser;};
   // Tab Computation
     void SetProcessDataDirectory(const char *_ProcessDataDirectory){std::strcpy(m_ProcessDataDirectory,_ProcessDataDirectory);};
     bool SetMultiAtlasDirectory(const char *_MultiAtlasDirectory);
@@ -959,6 +960,7 @@ class AutoSegComputation
 
     //int m_stdOutListenerThreadID;
     int m_batchMakeThreadID;
+    bm::ScriptParser m_Parser;
 };
 
 #endif

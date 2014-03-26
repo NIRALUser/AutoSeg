@@ -1799,13 +1799,9 @@ ITK_THREAD_RETURN_TYPE BatchMakeThreader( void * arg )
 
   comp->SetIsAutoSegInProcess(true);
  
-  bm::ScriptParser m_Parser;
   std::cout << "starting BatchMake execution as Thread: " << comp->GetCurrentBatchmakeFile() << std::endl;
-  m_Parser.Compile(comp->GetCurrentBatchmakeFile());
 
-  m_Parser.GetScriptActionManager()->Execute();
-
-  //m_Parser.Execute(comp->GetCurrentBatchmakeFile());
+  comp->GetParser()->Execute(comp->GetCurrentBatchmakeFile());
 
   std::cout << "finished with BatchMake execution: " << comp->GetCurrentBatchmakeFile() << std::endl;
 
@@ -1888,6 +1884,9 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
 	m_IsAutoSegInProcess = false;
 
 #ifdef _POSIX_SOURCE
+	//set progress manager to stop
+	m_Parser.GetScriptActionManager()->GetProgressManager()->Stop();
+
 	// kill all processes with this process as parent       
 	pid_t processID = getpid();
 	char processIDstring[100];
@@ -4117,7 +4116,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         if (GetANTSMIWeight() > 0.01)
             BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${StrippedCase},${atlasROIFile},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
         if (GetANTSMIWeight2nd() > 0.01)
-            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${T2StrippedCase},${atlasROIT2File},${ANTSMIWeighth2nd},${ANTSMIBins2nd}])"<<std::endl;
+            BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${T2StrippedCase},${atlasROIT2File},${ANTSMIWeight2nd},${ANTSMIBins2nd}])"<<std::endl;
         if (GetANTSMSQWeight() > 0.01)
             BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${StrippedCase},${atlasROIFile},${ANTSMSQWeight},0.01])"<<std::endl;
         if (GetANTSMSQWeight2nd() > 0.01)

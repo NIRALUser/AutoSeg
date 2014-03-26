@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
 
   if (gui)
   {
-    FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
-    FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
+    freopen(logFilename,"w",stdout); //redirect stdout
+    freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
     const char *AutoSegHome = "AUTOSEG_HOME";
     char *AutoSegPath = NULL;
     AutoSegPath = getenv(AutoSegHome);
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
   }
   else if ( computationFile && parameterFile)
   {
-    FILE *fp1 = freopen(logFilename,"w",stdout); //redirect stdout
-    FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
+    freopen(logFilename,"w",stdout); //redirect stdout
+    freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
     AutoSegComputation m_Computation;
     m_Computation.ComputationWithoutGUI(computationFile, parameterFile);
   }
