@@ -2066,7 +2066,6 @@ void AutoSegComputation::WriteComputationFile(const char *_FileName)
   ComputationFile<<"// Multi vs Single-Atlas Segmentation Options"<<std::endl;
   ComputationFile<<"Compute Single-atlas Segmentation: "<<GetSingleAtlasSegmentation()<<std::endl;
   ComputationFile<<"Compute Multi-atlas Segmentation: "<<GetMultiAtlasSegmentation()<<std::endl;
-//  ComputationFile<<"Compute Atlas-Atlas Registration: "<<GetMultiAtlasAtlasRegistration()<<std::endl;
   ComputationFile<<"Conduct Atlas-Atlas Registration: "<<GetMultiAtlasAtlasRegistration()<<std::endl;
   ComputationFile<<"Recalculate Atlas-Target Energy: "<<GetRecalculateAtlasTargetMultiAtlasEnergy()<<std::endl;
   ComputationFile<<"Recalculate Atlas-Atlas Energy: "<<GetRecalculateAtlasAtlasMultiAtlasEnergy()<<std::endl;
@@ -5585,32 +5584,31 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                 NUMBER_OF_CASE++;
             }
 
-        targetDirectory = itksys::SystemTools::GetParentDirectory(targetDirectory.c_str());
+	    targetDirectory = itksys::SystemTools::GetParentDirectory(targetDirectory.c_str()) +"/";
 
-        BMSAutoSegMainFile<<"      set (MultiAtlasDir "<<GetMultiAtlasDirectory()<<")"<<std::endl;
-        BMSAutoSegMainFile<<"      set (ProcessDir "<<GetDataDirectory()<<"process/)"<<std::endl;
-        BMSAutoSegMainFile<<"      set (MultiAtlasSegCmd 'MultiAtlasSeg')"<<std::endl;
-        if (GetMultiModalitySegmentation()) { 
-            BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
-            BMSAutoSegMainFile<<"      set (TargetT2CaseFile "<<m_MultiAtlasT2List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
-        }
-        else {
-            BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
-        }
-
-        if (GetMultiModalitySegmentation()) { 
-            std::cout << "target file of first modality: " << m_MultiAtlasT1List[NUMBER_OF_CASE - 1] << std::endl;
-            std::cout << "target file of second modality: " << m_MultiAtlasT2List[NUMBER_OF_CASE - 1] << std::endl; }
-        else {
-            std::cout << "target file: " << m_MultiAtlasT1List[NUMBER_OF_CASE - 1] << std::endl;
-        }
+	    BMSAutoSegMainFile<<"      set (MultiAtlasDir "<<GetMultiAtlasDirectory()<<")"<<std::endl;
+	    BMSAutoSegMainFile<<"      set (MultiAtlasSegCmd 'MultiAtlasSeg')"<<std::endl;
+	    if (GetMultiModalitySegmentation()) { 
+	      BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
+	      BMSAutoSegMainFile<<"      set (TargetT2CaseFile "<<m_MultiAtlasT2List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
+	    }
+	    else {
+	      BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
+	    }
+	    
+	    if (GetMultiModalitySegmentation()) { 
+	      std::cout << "target file of first modality: " << m_MultiAtlasT1List[NUMBER_OF_CASE - 1] << std::endl;
+	      std::cout << "target file of second modality: " << m_MultiAtlasT2List[NUMBER_OF_CASE - 1] << std::endl; }
+	    else {
+	      std::cout << "target file: " << m_MultiAtlasT1List[NUMBER_OF_CASE - 1] << std::endl;
+	    }
 
         BMSAutoSegMainFile<<"      set (WeightIntensityEnergy "<<GetIntensityEnergyWeight()<<")"<<std::endl;
         BMSAutoSegMainFile<<"      set (WeightHarmonicEnergy "<<GetHarmonicEnergyWeight()<<")"<<std::endl;
         BMSAutoSegMainFile<<"      set (WeightShapeEnergy "<<GetShapeEnergyWeight()<<")"<<std::endl;
 
         BMSAutoSegMainFile<<"   GetFilename (TargetCasePath ${TargetCaseFile} PATH)"<<std::endl;
-        BMSAutoSegMainFile<<"      set (TargetPath "<< targetDirectory.c_str()<<"${AutoSegDir}/Stripped/)"<<std::endl;
+        BMSAutoSegMainFile<<"      set (TargetPath "<< targetDirectory.c_str()<<"/${AutoSegDir}/Stripped/)"<<std::endl;
         BMSAutoSegMainFile<<"      echo('Target Case Path: '${TargetCasePath} )"<<std::endl;
         BMSAutoSegMainFile<<"set (SuffixStrippedNRRD -stripped.nrrd)"<<std::endl;
 
@@ -6238,7 +6236,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      GetFilename (SegmentedFileHead ${SegmentedFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      #Computing Statistics"<<std::endl;
     BMSAutoSegMainFile<<"      echo ('Computing Volume information...')"<<std::endl;
-    BMSAutoSegMainFile<<"      set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${SegmentedFile} -volumeSummary -outbase ${EMSPath}${SegmentedFileHead})"<<std::endl;
+    BMSAutoSegMainFile<<"      set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${SegmentedFile} -volumeSummary  -outbase ${EMSPath}${SegmentedFileHead})"<<std::endl;
     BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
     BMSAutoSegMainFile<<"      set (files_to_cat ${files_to_cat} ${EMSPath}${SegmentedFileHead}_volumeSummary.csv)"<<std::endl;
     
@@ -6349,7 +6347,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"       #Computing Statistics"<<std::endl;
       BMSAutoSegMainFile<<"       echo ('Computing Volume information...')"<<std::endl;
       BMSAutoSegMainFile<<"       set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
-      BMSAutoSegMainFile<<"       set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${File} -volumeSummary -outbase ${WarpROIPath}${FileHead})"<<std::endl;
+      BMSAutoSegMainFile<<"       set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${File} -volumeSummary  -outbase ${WarpROIPath}${FileHead})"<<std::endl;
       BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 
       BMSAutoSegMainFile<<"       set (files_to_cat ${files_to_cat} ${WarpROIPath}${FileHead}_volumeSummary.csv)"<<std::endl;
 
@@ -6538,7 +6536,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"             GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
 	  BMSAutoSegMainFile<<"           set (ProbMap ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixPosterior}.nrrd)"<<std::endl;
 	}	
-	BMSAutoSegMainFile<<"             set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${File} -probabilityMap ${ProbMap} -volumeSummary -outbase ${WarpROIPath}${FileMaskedRoot})"<<std::endl;
+	BMSAutoSegMainFile<<"             set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${File} -probabilityMap ${ProbMap} -volumeSummary  -outbase ${WarpROIPath}${FileMaskedRoot})"<<std::endl;
 	BMSAutoSegMainFile<<"             Run (output ${command_line})"<<std::endl; 	
       }
       else  
@@ -8527,6 +8525,9 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
 bool AutoSegComputation::SetMultiAtlasDirectory(const char *_MultiAtlasDirectory)
 // ToDo: THIS Procedure is NOT Cross-platform, likely won't work on windows
 {
+
+  std::cout << "setting multiAtlas Directory" << _MultiAtlasDirectory << std::endl;
+
     int c ='/';
     const char * firstSlash = std::strrchr(_MultiAtlasDirectory, c);
     if (!firstSlash) {

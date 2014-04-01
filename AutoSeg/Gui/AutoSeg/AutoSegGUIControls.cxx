@@ -763,11 +763,6 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
         else
             g_RecalculateAtlasAtlasEnergyButton->clear();
       }
-      else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
-      {
-	g_MultiAtlasDirectoryDisp->value(Line+23);
-        SetMultiAtlasDirectoryInitialize(Line+23);
-      }
     }
     fclose(ComputationFile);
   }
@@ -2880,15 +2875,27 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
 	{
             g_NumberOfThreads->value(atof(Line + 24));
 	}
+	else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
+	{
+	  if (std::strlen(Line+23) != 0)
+	  {
+	    g_MultiAtlasDirectoryDisp->value(Line+23);
+	    SetMultiAtlasDirectoryInitialize(Line+23);
+	  }
+	  else
+	  {
+	    g_DataDirectoryDisp->value(NULL);
+	  }
+	}
       }
     }
     fclose(ParameterFile);
   }
   else
-  {
+    {
     std::cout<<"Error Opening File: "<<_FileName<<std::endl;
   }
-
+  
   return IsParameterFileLoaded;
 }
 
@@ -3031,8 +3038,8 @@ void AutoSegGUIControls::SetMultiAtlasDirectoryGUI()
         needAtlasAtlasDisplacement = 1;
     }
 
-    if(needAtlasAtlasDisplacement || needWarpAtlasAtlas)
-        fl_message("Please, conduct the atlas to atlas registration");
+    //if(needAtlasAtlasDisplacement || needWarpAtlasAtlas)
+    //    fl_message("Please, conduct the atlas to atlas registration");
         
 }
 
@@ -3061,8 +3068,8 @@ void AutoSegGUIControls::SetMultiAtlasDirectoryInitialize(char* _AtlasDirectory)
         g_MultiAtlasDirectoryDisp->position(g_MultiAtlasDirectoryDisp->size());
     }
 
-    if(needWarpAtlasAtlas)
-        fl_message("Please, conduct the atlas to atlas registration");
+    //    if(needWarpAtlasAtlas)
+    //        fl_message("Please, conduct the atlas to atlas registration");
 
 }
 
@@ -4588,12 +4595,8 @@ void AutoSegGUIControls::AddDataGUI()
   if (g_DataBrowser->size() < 2)
     InitBrowser();  
     if (std::strlen(Line) != 0)
-        g_DataBrowser->add(Line);	
-//  SetMultiAtlasTargetFileGUI();
+        g_DataBrowser->add(Line);
     m_Computation.SetMultiAtlasTargetFile(g_DataBrowser->text(2));
-//    for (int i = 2; i <= g_DataBrowser->size(); i++) {
- //       std::cout << "line " << i << ": " << g_DataBrowser->text(i) << std::endl;
-  //  }
 }
 
 // Add data manually to Auxbrowser
@@ -5680,8 +5683,7 @@ void AutoSegGUIControls::InitializeData()
          m_Computation.AllocateDataList();
       
          for (Line = 2; Line <= g_DataBrowser->size(); Line++) {
-             m_Computation.SetDataList(g_DataBrowser->text(Line), Line-2,1); 
-   //   m_Computation.SetMultiAtlasDataList(g_DataBrowser->text(Line), Line-2,1); 
+             m_Computation.SetDataList(g_DataBrowser->text(Line), Line-2,1);  
          }
     }
 }

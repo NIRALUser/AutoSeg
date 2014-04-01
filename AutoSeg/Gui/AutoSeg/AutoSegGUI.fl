@@ -8,7 +8,7 @@ class AutoSegGUI {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg 3.0.0} open
-      xywh {576 69 890 960} type Double box UP_BOX resizable visible
+      xywh {576 69 900 980} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {open
         xywh {0 10 785 15} labelfont 8 textfont 8
@@ -76,11 +76,11 @@ class AutoSegGUI {open
         }
       }
       Fl_Tabs {} {open
-        xywh {0 30 1210 920} labelfont 8
+        xywh {0 30 895 945} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
           label Computation open selected
-          xywh {5 75 895 860} labelfont 8 align 69
+          xywh {5 75 890 895} labelfont 8 align 69
         } {
           Fl_Group {} {
             label {Step 1 - Set the process data directory} open
@@ -240,27 +240,32 @@ class AutoSegGUI {open
           Fl_Check_Button g_MultiAtlasSegButton {
             label {Multi-Atlas Segmentation}
             callback {MultiAtlasSegmentationButtonChecked();}
-            xywh {20 905 205 25} box UP_BOX down_box DOWN_BOX labelfont 8
+            xywh {20 906 205 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
-          Fl_Check_Button g_MultiModalitySegButton {
-            label {Multi-Modality Segmentation}
-            callback {MultiModalitySegmentationButtonChecked();}
-            xywh {415 905 195 25} box UP_BOX down_box DOWN_BOX labelfont 8
+          Fl_Check_Button g_MultiModalitySingleSegButton {
+            label {Multi-Modality Single Atlas}
+            callback {MultiModalitySingleSegmentationButtonChecked();}
+            xywh {230 935 195 35} box UP_BOX down_box DOWN_BOX labelfont 8
           }
           Fl_Check_Button g_SingleAtlasSegButton {
             label {Single Atlas Segmentation}
             callback {SingleAtlasSegmentationButtonChecked();}
-            xywh {229 905 181 25} box UP_BOX down_box DOWN_BOX value 1 labelfont 8
+            xywh {229 906 196 25} box UP_BOX down_box DOWN_BOX value 1 labelfont 8
           }
           Fl_Check_Button g_RandomizeSubjectsButton {
             label {Randomize Subjects}
             callback {RandomizeSubjectsButtonChecked();}
             xywh {615 905 145 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
+          Fl_Check_Button g_MultiModalityMultiSegButton {
+            label {Multi-Modality Multi Atlas}
+            callback {MultiModalityMultiSegmentationButtonChecked();}
+            xywh {20 935 205 35} box UP_BOX down_box DOWN_BOX labelfont 8
+          }
         }
         Fl_Group g_AuxComputationGroup {
           label {Regional histogram} open
-          xywh {10 75 890 850} labelfont 8 hide
+          xywh {10 75 885 850} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Auxiliary data information} open
@@ -503,7 +508,7 @@ class AutoSegGUI {open
         }
         Fl_Group g_ParametersGroup {
           label {Atlas Parameters} open
-          xywh {10 75 890 865} labelfont 8 hide
+          xywh {10 75 885 865} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Atlases - Grayscale images} open
@@ -912,7 +917,7 @@ class AutoSegGUI {open
         }
         Fl_Group g_AdvancedParametersGroup {
           label {Advanced parameters} open
-          xywh {10 75 890 850} labelfont 8 hide
+          xywh {10 75 885 850} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Tissue Segmentation} open
@@ -1311,7 +1316,7 @@ class AutoSegGUI {open
         }
         Fl_Group g_RegistrationParametersGroup {
           label {Registration Parameters} open
-          xywh {10 75 890 865} labelfont 8 hide
+          xywh {10 75 885 865} labelfont 8 hide
         } {
           Fl_Group {} {
             label {Rigid registration} open
@@ -1478,9 +1483,9 @@ class AutoSegGUI {open
                       tooltip {Weight for mutual-information similarity} xywh {480 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins {
-                      label {MI bins :}
+                      label {MI radius :}
                       callback {SetANTSMIBinsGUI()}
-                      tooltip {Number of histogram bins} xywh {480 598 45 23} labelfont 8 value 32 textfont 8
+                      tooltip {Number of histogram bins} xywh {480 598 45 23} labelfont 8 value 8 textfont 8
                     }
                     Fl_Spinner g_ANTSMSQWeight {
                       label {MSQ weight :}
@@ -1570,9 +1575,9 @@ class AutoSegGUI {open
                       tooltip {Weight for mutual-information similarity} xywh {480 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins2nd {
-                      label {MI bins :}
+                      label {MI radius :}
                       callback {SetANTSMIBinsGUI2nd()}
-                      tooltip {Number of histogram bins} xywh {480 693 45 23} labelfont 8 value 32 textfont 8
+                      tooltip {Number of histogram bins} xywh {480 693 45 23} labelfont 8 value 8 textfont 8
                     }
                     Fl_Spinner g_ANTSMSQWeight2nd {
                       label {MSQ weight :}
@@ -1705,7 +1710,7 @@ class AutoSegGUI {open
         } {
           Fl_Group g_MultiAtlasSegParametersGroup {
             label {Multi-Atlas Segmentation  Parameters} open
-            xywh {30 101 555 262} box DOWN_FRAME labelfont 9 align 5
+            xywh {30 101 580 262} box DOWN_FRAME labelfont 9 align 5
           } {
             Fl_Counter g_IntensityEnergyWeight {
               label {Intensity Energy Weight:   }
@@ -1725,12 +1730,12 @@ class AutoSegGUI {open
             Fl_Check_Button g_RecalculateAtlasTargetEnergyButton {
               label {Re-Calculate Atlas-Target Energy}
               callback {RecalculateAtlasTargetEnergyButtonChecked();}
-              xywh {340 290 240 25} box UP_BOX down_box DOWN_BOX
+              xywh {340 290 255 25} box UP_BOX down_box DOWN_BOX
             }
             Fl_Check_Button g_RecalculateAtlasAtlasEnergyButton {
               label {Re-Calculate Atlas-Atlas Energy}
               callback {RecalculateAtlasAtlasEnergyButtonChecked();}
-              xywh {340 320 240 25} box UP_BOX down_box DOWN_BOX
+              xywh {340 320 255 25} box UP_BOX down_box DOWN_BOX
             }
           }
           Fl_Group {} {
@@ -1755,21 +1760,21 @@ class AutoSegGUI {open
           }
           Fl_Group {} {
             label {Atlas directory} open
-            xywh {20 380 840 70} box UP_BOX labelfont 9 align 21
+            xywh {20 380 840 95} box UP_BOX labelfont 9 align 21
           } {
             Fl_Button g_MultiAtlasDirectory {
               label {...}
               callback {SetMultiAtlasDirectoryGUI()}
-              tooltip {Set the process data directory} xywh {35 410 23 1}
+              tooltip {Set the process data directory} xywh {35 413 23 18}
             }
             Fl_Output g_MultiAtlasDirectoryDisp {
-              xywh {65 410 775 1} labelfont 8 textfont 8
+              xywh {65 411 775 22} labelfont 8 textfont 8
             }
           }
           Fl_Check_Button g_AtlasAtlasRegButton {
-            label {Conduct Atlas-Atlas Registration}
+            label {Re-Calculate Atlas-Atlas Registration}
             callback {MultiAtlasAtlasRegistrationButtonChecked();}
-            xywh {340 260 240 25} box UP_BOX down_box DOWN_BOX
+            xywh {340 260 255 25} box UP_BOX down_box DOWN_BOX
           }
           Fl_Button {} {
             label {1. Currently can only process nifty images (*.nii)}
