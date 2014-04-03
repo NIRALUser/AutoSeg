@@ -205,7 +205,8 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
   m_Computation.SetComputeCorticalThickness(g_ComputeCorticalThicknessButton->value());
   m_Computation.SetRecompute(g_RecomputeButton->value());
   m_Computation.SetUseCondor(g_UseCondorButton->value());
-  m_Computation.SetMultiModalitySegmentation(g_MultiModalitySegButton->value());
+  m_Computation.SetMultiModalityMultiSegmentation(g_MultiModalityMultiSegButton->value());
+  m_Computation.SetMultiModalitySingleSegmentation(g_MultiModalitySingleSegButton->value());
   m_Computation.SetMultiAtlasSegmentation(g_MultiAtlasSegButton->value());
   m_Computation.SetSingleAtlasSegmentation(g_SingleAtlasSegButton->value());
   m_Computation.SetRandomizeSubjects(g_RandomizeSubjectsButton->value());
@@ -551,7 +552,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
   int Length;
   // Computation Options
   int IsT2Image, IsPDImage;
-  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiModality, ComputeMultiAtlas;  
+  int ComputeVolume, ComputeCorticalThickness, Recompute, UseCondor, ComputeMultiAtlas;  
   int boolValue;
 
   if ((ComputationFile = fopen(_FileName,"r")) != NULL) 
@@ -679,39 +680,48 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
 	else
 	  g_ComputeCorticalThicknessButton->clear();
       }
-      else if ( (std::strncmp("Recompute: ", Line, 11)) == 0)
+      else if ( (std::strncmp("Recompute: ", Line, strlen("Recompute: "))) == 0)
       {
-	Recompute = atoi(Line+11);
+	Recompute = atoi(Line+strlen("Recompute: "));
 	if (Recompute == 1)
 	  g_RecomputeButton->set();
 	else
 	  g_RecomputeButton->clear();
       }
-      else if ( (std::strncmp("Use Condor: ", Line, 12)) == 0)
+      else if ( (std::strncmp("Use Condor: ", Line, strlen("Use Condor: "))) == 0)
       {
-	UseCondor = atoi(Line+12);
+	UseCondor = atoi(Line+strlen("Use Condor: "));
 	if (UseCondor == 1)
 	  g_UseCondorButton->set();
 	else
 	  g_UseCondorButton->clear();
       }
-      else if ( (std::strncmp("Data: ", Line, 6)) == 0)
+      else if ( (std::strncmp("Data: ", Line, strlen("Data: "))) == 0)
       {
-	RightJustifyData(Line+6, Data);
+	RightJustifyData(Line+strlen("Data: "), Data);
 	g_DataBrowser->add(Data);
       }
-      else if ( (std::strncmp("Compute Multi-modality Segmentation: ", Line, 37)) == 0)
+      else if ( (std::strncmp("Compute Multi-modality Single-atlas Segmentation: ", Line, strlen("Compute Multi-modality Single-atlas Segmentation: "))) == 0)
       {
-        ComputeMultiModality = atoi(Line + 37);
-	if (ComputeMultiModality == 1) {
-            g_MultiModalitySegButton->set();
+        boolValue = atoi(Line + strlen("Compute Multi-modality Single-atlas Segmentation: "));
+	if (boolValue == 1) {
+            g_MultiModalitySingleSegButton->set();
         }
         else
-            g_MultiModalitySegButton->clear();
+            g_MultiModalitySingleSegButton->clear();
       }
-      else if ( (std::strncmp("Compute Multi-atlas Segmentation: ", Line, 34)) == 0)
+      else if ( (std::strncmp("Compute Multi-modality Multi-atlas Segmentation: ", Line, strlen("Compute Multi-modality Multi-atlas Segmentation: "))) == 0)
       {
-        ComputeMultiAtlas = atoi(Line + 34);
+        boolValue = atoi(Line + strlen("Compute Multi-modality Multi-atlas Segmentation: "));
+	if (boolValue == 1) {
+            g_MultiModalityMultiSegButton->set();
+        }
+        else
+            g_MultiModalityMultiSegButton->clear();
+      }
+      else if ( (std::strncmp("Compute Multi-atlas Segmentation: ", Line, strlen("Compute Multi-atlas Segmentation: "))) == 0)
+      {
+        ComputeMultiAtlas = atoi(Line + strlen("Compute Multi-atlas Segmentation: "));
 	if (ComputeMultiAtlas == 1) {
             g_MultiAtlasSegButton->set();
             MultiAtlasSegmentationButtonChecked();
@@ -719,9 +729,9 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
         else
             g_MultiAtlasSegButton->clear();
       }
-      else if ( (std::strncmp("Compute Single-atlas Segmentation: ", Line, 35)) == 0)
+      else if ( (std::strncmp("Compute Single-atlas Segmentation: ", Line, strlen("Compute Single-atlas Segmentation: "))) == 0)
       {
-        boolValue = atoi(Line + 35);
+        boolValue = atoi(Line + strlen("Compute Single-atlas Segmentation: "));
 	if (boolValue == 1) {
             g_SingleAtlasSegButton->set();
 	    SingleAtlasSegmentationButtonChecked();
@@ -762,6 +772,10 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
         }
         else
             g_RecalculateAtlasAtlasEnergyButton->clear();
+      } 
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      {
+	std::cout << "unknown line:" << Line << std::endl;
       }
     }
     fclose(ComputationFile);
@@ -1523,6 +1537,10 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
 	RightJustifyAuxData(Line+9, Data);
 	g_AuxDataBrowser->add(Data);	
 				
+      }
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      {
+	std::cout << "unknown line:" << Line << std::endl;
       }
     }
     fclose(AuxComputationFile);
@@ -5391,13 +5409,23 @@ void AutoSegGUIControls::ComputeCorticalThicknessButtonChecked()
     m_Computation.SetComputeCorticalThickness(0);    
 }
 
-void AutoSegGUIControls::MultiModalitySegmentationButtonChecked()
+void AutoSegGUIControls::MultiModalitySingleSegmentationButtonChecked()
 {
-    if (g_MultiModalitySegButton->value()) {
-        m_Computation.SetMultiModalitySegmentation(1);
+    if (g_MultiModalitySingleSegButton->value()) {
+        m_Computation.SetMultiModalitySingleSegmentation(1);
     }
     else {
-        m_Computation.SetMultiModalitySegmentation(0);    
+        m_Computation.SetMultiModalitySingleSegmentation(0);    
+    }
+}
+
+void AutoSegGUIControls::MultiModalityMultiSegmentationButtonChecked()
+{
+    if (g_MultiModalityMultiSegButton->value()) {
+        m_Computation.SetMultiModalityMultiSegmentation(1);
+    }
+    else {
+        m_Computation.SetMultiModalityMultiSegmentation(0);    
     }
 }
 
@@ -5628,7 +5656,8 @@ void AutoSegGUIControls::ComputeGUI()
       m_Computation.SetGenericROISegmentation(m_IsGenericROISegmentation);
       m_Computation.SetParcellationMapSegmentation(m_IsParcellationMapSegmentation);
       m_Computation.SetMultiAtlasTargetFile(g_DataBrowser->text(2));
-      m_Computation.SetMultiModalitySegmentation(g_MultiModalitySegButton->value());
+      m_Computation.SetMultiModalitySingleSegmentation(g_MultiModalitySingleSegButton->value());
+      m_Computation.SetMultiModalityMultiSegmentation(g_MultiModalityMultiSegButton->value());
       m_Computation.SetDataDirectory(g_DataDirectoryDisp->value());
       m_Computation.SetProcessDataDirectory(g_ProcessDataDirectoryDisp->value());
       m_Computation.SetWeightIntensityEnergy(g_IntensityEnergyWeight->value());

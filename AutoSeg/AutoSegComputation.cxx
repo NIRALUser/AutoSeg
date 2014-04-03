@@ -2061,9 +2061,10 @@ void AutoSegComputation::WriteComputationFile(const char *_FileName)
   ComputationFile<<"Randomize Subject Order: "<<GetRandomizeSubjects()<<std::endl;
 
   ComputationFile<<"// Multi-Modality Segmentation Options"<<std::endl;
-  ComputationFile<<"Compute Multi-modality Segmentation: "<<GetMultiModalitySegmentation()<<std::endl;
-
   ComputationFile<<"// Multi vs Single-Atlas Segmentation Options"<<std::endl;
+  ComputationFile<<"Compute Multi-modality Single-atlas Segmentation: "<<GetMultiModalitySingleSegmentation()<<std::endl;
+  ComputationFile<<"Compute Multi-modality Multi-atlas Segmentation: "<<GetMultiModalityMultiSegmentation()<<std::endl;
+
   ComputationFile<<"Compute Single-atlas Segmentation: "<<GetSingleAtlasSegmentation()<<std::endl;
   ComputationFile<<"Compute Multi-atlas Segmentation: "<<GetMultiAtlasSegmentation()<<std::endl;
   ComputationFile<<"Conduct Atlas-Atlas Registration: "<<GetMultiAtlasAtlasRegistration()<<std::endl;
@@ -2705,7 +2706,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   if ( GetSingleAtlasSegmentation() ) {
     BMSAutoSegMainFile<<"set (atlasROIFile "<<GetROIAtlasFile()<<")"<<std::endl;
   }
-  if ( GetSingleAtlasSegmentation() && GetANTSWarpingMethod() && GetMultiModalitySegmentation()) {
+  if ( GetSingleAtlasSegmentation() && GetANTSWarpingMethod() && GetMultiModalitySingleSegmentation()) {
       BMSAutoSegMainFile<<"# ROI T2 Atlas File"<<std::endl;
       BMSAutoSegMainFile<<"set (atlasROIT2File "<<GetROIT2AtlasFile()<<")"<<std::endl;
   }
@@ -4106,7 +4107,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      If (${DeformationFieldList} == '')"<<std::endl;        
     BMSAutoSegMainFile<<"         echo ('Computing deformation field...')"<<std::endl;  
     //if (GetROIT2Atlas()) {
-    if (GetMultiModalitySegmentation()) {
+    if (GetMultiModalitySingleSegmentation()) {
         BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3)"<<std::endl;
         if (GetANTSCCWeight() > 0.01)
             BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${StrippedCase},${atlasROIFile},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
@@ -5575,7 +5576,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
         while (NUMBER_OF_CASE < GetNbData()) { 
             std::string targetDirectory;// targetT2Directory; 
-            if (GetMultiModalitySegmentation()) { 
+            if (GetMultiModalityMultiSegmentation()) { 
                 targetDirectory = m_MultiAtlasT1List[NUMBER_OF_CASE];
                 NUMBER_OF_CASE++;
             }
@@ -5588,7 +5589,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 	    BMSAutoSegMainFile<<"      set (MultiAtlasDir "<<GetMultiAtlasDirectory()<<")"<<std::endl;
 	    BMSAutoSegMainFile<<"      set (MultiAtlasSegCmd 'MultiAtlasSeg')"<<std::endl;
-	    if (GetMultiModalitySegmentation()) { 
+	    if (GetMultiModalityMultiSegmentation()) { 
 	      BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
 	      BMSAutoSegMainFile<<"      set (TargetT2CaseFile "<<m_MultiAtlasT2List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
 	    }
@@ -5596,7 +5597,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	      BMSAutoSegMainFile<<"      set (TargetCaseFile "<<m_MultiAtlasT1List[NUMBER_OF_CASE - 1]<<")"<<std::endl;
 	    }
 	    
-	    if (GetMultiModalitySegmentation()) { 
+	    if (GetMultiModalityMultiSegmentation()) { 
 	      std::cout << "target file of first modality: " << m_MultiAtlasT1List[NUMBER_OF_CASE - 1] << std::endl;
 	      std::cout << "target file of second modality: " << m_MultiAtlasT2List[NUMBER_OF_CASE - 1] << std::endl; }
 	    else {
@@ -5612,7 +5613,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"      echo('Target Case Path: '${TargetCasePath} )"<<std::endl;
         BMSAutoSegMainFile<<"set (SuffixStrippedNRRD -stripped.nrrd)"<<std::endl;
 
-        if (GetMultiModalitySegmentation()) { 
+        if (GetMultiModalityMultiSegmentation()) { 
             BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${TargetCaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
             BMSAutoSegMainFile<<"   GetFilename (T2CaseHead ${TargetT2CaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
 
@@ -5673,7 +5674,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
         // sort the name of atlas
         SortStringList(m_AtlasList, GetNbAtlas());
-        if (GetMultiModalitySegmentation()) { 
+        if (GetMultiModalityMultiSegmentation()) { 
             SortStringList(m_2ndAtlasList, GetNb2ndAtlas());
         }
         SortStringList(m_AtlasLabelList, GetNbAtlasLabel());
@@ -5687,7 +5688,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	std::string tmpAtlasName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasList[0]);
 	int sizeOfFilename = tmpAtlasName.length();
 
-        if (GetMultiModalitySegmentation()) { 
+        if (GetMultiModalityMultiSegmentation()) { 
             tmpAtlasCaseIDFilename = tmpAtlasName.substr(6, sizeOfFilename - 4 - 1); // remove _atlas, dot,  _t1w or _t2w
         }
         else {
@@ -5701,7 +5702,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  tmpAtlasName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasList[DataNumber]);
 	  sizeOfFilename = tmpAtlasName.length();
          
-	  if (GetMultiModalitySegmentation()) { 
+	  if (GetMultiModalityMultiSegmentation()) { 
             tmpAtlasCaseIDFilename = tmpAtlasName.substr(6, sizeOfFilename - 4 - 1); // remove _atlas, dot,  _t1w or _t2w
 	  }
 	  else {
@@ -5741,7 +5742,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	sizeOfFilename = tmpTargetName.length();
 							
         std::string tmpTargetFilename ;
-        if (GetMultiModalitySegmentation()) 
+        if (GetMultiModalityMultiSegmentation()) 
             tmpTargetFilename = tmpTargetName.substr(0, sizeOfFilename - 4 - 1);  // remove dot and _t1w or _t2w
         else 
             tmpTargetFilename = tmpTargetName.substr(0, sizeOfFilename - 1); // remove dot
@@ -5799,7 +5800,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                     BMSAutoSegMainFile<<"    	set (outputfilenameForCheck ${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz)"<<std::endl;
                     BMSAutoSegMainFile<<"ListFileInDir(DisplacementExistList ${Path} ${outputfilenameForCheck})"<<std::endl;
                     BMSAutoSegMainFile<<"If (${DisplacementExistList} == '')"<<std::endl;
-                        if (GetMultiModalitySegmentation()) {
+                        if (GetMultiModalityMultiSegmentation()) {
                             BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3)"<<std::endl;
                             if (GetANTSCCWeight() > 0.01)
                                 BMSAutoSegMainFile<<"    set (command_line ${command_line} -m CC[${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension},${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
@@ -5854,7 +5855,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
                     BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasExistList ${WarpedAtlasTrainToTrainDir} ${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl;
                     BMSAutoSegMainFile<<"If (${WarpedAtlasExistList} == '')"<<std::endl;
-                    if (GetMultiModalitySegmentation()){ 
+                    if (GetMultiModalityMultiSegmentation()){ 
                         BMSAutoSegMainFile<<"set (command_line WarpImageMultiTransform 3 ${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -R ${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension} ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalAffine.txt --use-BSpline)"<<std::endl; 
 			BMSAutoSegMainFile<<"Run (output ${command_line})"<<std::endl;
                         BMSAutoSegMainFile<<"set (command_line ${ImageMathCmd} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -rescale 0,8192 -outfile ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl; 
@@ -5876,7 +5877,6 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
         BMSAutoSegMainFile<<"   echo('atlas-atlas displacement directory; ' ${Path})"<<std::endl; 	  
 
-     //   BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
         BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
         BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList}) "<<std::endl;
             //check the exist of ANTS registration
@@ -5891,7 +5891,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
              
             BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
-                if (GetMultiModalitySegmentation()) {
+                if (GetMultiModalityMultiSegmentation()) {
                     BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3)"<<std::endl;
                     if (GetANTSCCWeight() > 0.01)
                         BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${TargetPath}Rescaled_${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
@@ -5961,7 +5961,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"EndForEach (FilenameInList)"<<std::endl;
         
 	BMSAutoSegMainFile<<"If (${FileExistFlag} != ${FileExist})"<<std::endl;
-	if (GetMultiModalitySegmentation()) {
+	if (GetMultiModalityMultiSegmentation()) {
 	  BMSAutoSegMainFile<<"    	set (OriginalAtlasImageExistFlag 0)"<<std::endl;
 	  BMSAutoSegMainFile<<"    	set (OriginalAtlasImage atlas_${AtlasCase}_t1w${AtlasCaseExtension})"<<std::endl;
 	  BMSAutoSegMainFile<<"ForEach (WarpedImageFilenameInList ${AtlasImageLabelParcellationList}) "<<std::endl;
@@ -6063,7 +6063,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"ForEach (IntEnergyCaseTrainToTrain ${AtlasList}) "<<std::endl;
 	BMSAutoSegMainFile<<"      If (${IntEnergyCaseTrainToTrain} != ${AtlasCase})"<<std::endl;
-	if (GetMultiModalitySegmentation()) {
+	if (GetMultiModalityMultiSegmentation()) {
 	  BMSAutoSegMainFile<<"       set (command_line ${MultiAtlasSegCmd} -p ${WarpedAtlasTrainToTrainDir}${IntEnergyCaseTrainToTrain}x${AtlasCase}Warped.nii.gz ${MultiAtlasDir}atlas_image/${AtlasCase}_t1w${AtlasCaseExtension} ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
 	  BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 
 	} else {
@@ -6085,7 +6085,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasList}) "<<std::endl;
 	BMSAutoSegMainFile<<"      If (${AtlasCase} != ${TargetCase})"<<std::endl;
-	if (GetMultiModalitySegmentation()) {
+	if (GetMultiModalityMultiSegmentation()) {
 	  BMSAutoSegMainFile<<"      set (command_line ${MultiAtlasSegCmd} -e ${DeformationFieldTrainToTrainDir}${TargetCase}x${AtlasCase}TotalWarp.nii.gz ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
 	  BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
 	} else {
@@ -8353,6 +8353,10 @@ void AutoSegComputation::LoadAuxComputationFile(const char *_FileName)
 	DataList.push_back(Line+9);
 	nbData++;				
       }
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      {
+	std::cout << "unknown line:" << Line << std::endl;
+      }
     }
     fclose(AuxComputationFile);
     if (nbData!=0)
@@ -8466,9 +8470,13 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
 	nbData++;
         SetMultiAtlasTargetFile(Line+6);
       }
-      else if ( (std::strncmp("Compute Multi-modality Segmentation: ", Line, 37)) == 0)
+      else if ( (std::strncmp("Compute Multi-modality Single-atlas Segmentation: ", Line, strlen("Compute Multi-modality Single-atlas Segmentation: "))) == 0)
       {
-          SetMultiModalitySegmentation(atoi(Line + 37));
+          SetMultiModalitySingleSegmentation(atoi(Line + 37));
+      }
+      else if ( (std::strncmp("Compute Multi-modality Multi-atlas Segmentation: ", Line, strlen("Compute Multi-modality Multi-atlas Segmentation: "))) == 0)
+      {
+          SetMultiModalityMultiSegmentation(atoi(Line + 37));
       }
       else if ( (std::strncmp("Conduct Atlas-Atlas registration: ", Line, 34)) == 0)
       {
@@ -8499,11 +8507,15 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
 	  SetRandomizeSubjects(atoi(Line+25)); 
       }
       else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
-	{ // for sake of backward compatibility
+      { // for sake of backward compatibility
 	if (std::strlen(Line+23) != 0)
 	  SetMultiAtlasDirectory(Line+23); 
 	else
 	  SetMultiAtlasDirectory("");
+      }
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      {
+	std::cout << "unknown line:" << Line << std::endl;
       }
     }
     fclose(ComputationFile);
@@ -9572,7 +9584,10 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
         {
             SetUseInitialAffine(atof(Line + 31));
         } 
-
+	else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+	{
+	  std::cout << "unknown line:" << Line << std::endl;
+	}
       }
     }
     fclose(ParameterFile);

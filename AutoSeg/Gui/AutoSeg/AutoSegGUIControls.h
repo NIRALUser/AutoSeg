@@ -325,7 +325,8 @@ class AutoSegGUIControls : public AutoSegGUI
     void MultiAtlasSegmentationButtonChecked();
     void SingleAtlasSegmentationButtonChecked();
     void RandomizeSubjectsButtonChecked();
-    void MultiModalitySegmentationButtonChecked();
+    void MultiModalitySingleSegmentationButtonChecked();
+    void MultiModalityMultiSegmentationButtonChecked();
     
     char *AtlasDirectory ;
     char *TargetDirectory ;     

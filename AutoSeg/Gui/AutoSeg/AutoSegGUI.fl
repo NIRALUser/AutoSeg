@@ -10,7 +10,7 @@ class AutoSegGUI {open
       label {AutoSeg 3.0.0} open
       xywh {576 69 900 980} type Double box UP_BOX resizable visible
     } {
-      Fl_Menu_Bar g_MenuBar {open
+      Fl_Menu_Bar g_MenuBar {
         xywh {0 10 785 15} labelfont 8 textfont 8
       } {
         Submenu {} {
@@ -79,7 +79,7 @@ class AutoSegGUI {open
         xywh {0 30 895 945} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
-          label Computation open selected
+          label Computation open
           xywh {5 75 890 895} labelfont 8 align 69
         } {
           Fl_Group {} {
@@ -96,7 +96,7 @@ class AutoSegGUI {open
             }
           }
           Fl_Group {} {
-            label {Step 2 - Set dataset information} open
+            label {Step 2 - Set dataset information}
             xywh {15 165 550 60} box UP_BOX labelfont 9 align 21
           } {
             Fl_Button {} {
@@ -119,7 +119,7 @@ class AutoSegGUI {open
             }
           }
           Fl_Group {} {
-            label {Step 3 - Set the output data directory} open
+            label {Step 3 - Set the output data directory}
             xywh {574 165 315 60} box UP_BOX labelfont 9 align 21
           } {
             Fl_Input g_DataAutoSegDirectoryDisp {
@@ -127,7 +127,7 @@ class AutoSegGUI {open
             }
           }
           Fl_Group {} {
-            label {Step 4 - Set dataset} open
+            label {Step 4 - Set dataset}
             xywh {15 235 875 605} box UP_BOX labelfont 9 align 21
           } {
             Fl_Group g_AutoDataSelectionGroup {
@@ -245,7 +245,7 @@ class AutoSegGUI {open
           Fl_Check_Button g_MultiModalitySingleSegButton {
             label {Multi-Modality Single Atlas}
             callback {MultiModalitySingleSegmentationButtonChecked();}
-            xywh {230 935 195 35} box UP_BOX down_box DOWN_BOX labelfont 8
+            xywh {230 935 195 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
           Fl_Check_Button g_SingleAtlasSegButton {
             label {Single Atlas Segmentation}
@@ -260,7 +260,7 @@ class AutoSegGUI {open
           Fl_Check_Button g_MultiModalityMultiSegButton {
             label {Multi-Modality Multi Atlas}
             callback {MultiModalityMultiSegmentationButtonChecked();}
-            xywh {20 935 205 35} box UP_BOX down_box DOWN_BOX labelfont 8
+            xywh {20 935 205 25} box UP_BOX down_box DOWN_BOX labelfont 8
           }
         }
         Fl_Group g_AuxComputationGroup {
@@ -2232,5 +2232,9 @@ class AutoSegGUI {open
   Function {SingleAtlasSegmentationButtonChecked()} {open return_type {virtual void}
   } {}
   Function {RandomizeSubjectsButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {MultiModalitySingleSegmentationButtonChecked()} {open return_type {virtual void}
+  } {}
+  Function {MultiModalityMultiSegmentationButtonChecked()} {open selected return_type {virtual void}
   } {}
 } 

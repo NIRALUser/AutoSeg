@@ -132,7 +132,8 @@ class AutoSegComputation
     void SetMultiAtlasSegmentation(bool _value){m_MultiAtlasSegmentation = _value;};
     void SetRecalculateAtlasTargetMultiAtlasEnergy(bool _RecalculateAtlasTargetMultiAtlasEnergy){m_RecalculateAtlasTargetMultiAtlasEnergy = _RecalculateAtlasTargetMultiAtlasEnergy;};
     void SetRecalculateAtlasAtlasMultiAtlasEnergy(bool _RecalculateAtlasAtlasMultiAtlasEnergy){m_RecalculateAtlasAtlasMultiAtlasEnergy = _RecalculateAtlasAtlasMultiAtlasEnergy;};
-    void SetMultiModalitySegmentation(bool _MultiModalitySegmentation){m_MultiModalitySegmentation = _MultiModalitySegmentation;};
+    void SetMultiModalitySingleSegmentation(bool _MultiModalitySegmentation){m_MultiModalitySingleSegmentation = _MultiModalitySegmentation;};
+    void SetMultiModalityMultiSegmentation(bool _MultiModalitySegmentation){m_MultiModalityMultiSegmentation = _MultiModalitySegmentation;};
     void SetRecompute(bool _Recompute){m_Recompute = _Recompute;};
     void SetUseCondor(bool _UseCondor){m_UseCondor = _UseCondor;};
 		
@@ -429,7 +430,8 @@ class AutoSegComputation
     bool m_RandomizeSubjects;
     bool m_RecalculateAtlasTargetMultiAtlasEnergy;
     bool m_RecalculateAtlasAtlasMultiAtlasEnergy;
-    bool m_MultiModalitySegmentation;
+    bool m_MultiModalitySingleSegmentation;
+    bool m_MultiModalityMultiSegmentation;
     bool m_Recompute; // Recompute all
     bool m_UseCondor;
 
@@ -505,7 +507,8 @@ class AutoSegComputation
     bool GetRandomizeSubjects(){return m_RandomizeSubjects;};
     bool GetRecalculateAtlasTargetMultiAtlasEnergy(){return m_RecalculateAtlasTargetMultiAtlasEnergy;};
     bool GetRecalculateAtlasAtlasMultiAtlasEnergy(){return m_RecalculateAtlasAtlasMultiAtlasEnergy;};
-    bool GetMultiModalitySegmentation(){return m_MultiModalitySegmentation;};
+    bool GetMultiModalitySingleSegmentation(){return m_MultiModalitySingleSegmentation;};
+    bool GetMultiModalityMultiSegmentation(){return m_MultiModalityMultiSegmentation;};
     bool GetMultiAtlasAtlasRegistration(){return m_ComputeMultiAtlasAtlasRegistration;};
     bool GetRecompute(){return m_Recompute;};
     bool GetUseCondor(){return m_UseCondor;};
