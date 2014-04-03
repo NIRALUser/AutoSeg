@@ -773,7 +773,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
         else
             g_RecalculateAtlasAtlasEnergyButton->clear();
       } 
-      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
       {
 	std::cout << "unknown line:" << Line << std::endl;
       }
@@ -1538,7 +1538,7 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
 	g_AuxDataBrowser->add(Data);	
 				
       }
-      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
       {
 	std::cout << "unknown line:" << Line << std::endl;
       }

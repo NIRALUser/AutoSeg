@@ -8353,7 +8353,7 @@ void AutoSegComputation::LoadAuxComputationFile(const char *_FileName)
 	DataList.push_back(Line+9);
 	nbData++;				
       }
-      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
       {
 	std::cout << "unknown line:" << Line << std::endl;
       }
@@ -8513,7 +8513,7 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
 	else
 	  SetMultiAtlasDirectory("");
       }
-      else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+      else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
       {
 	std::cout << "unknown line:" << Line << std::endl;
       }
@@ -9584,7 +9584,7 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
         {
             SetUseInitialAffine(atof(Line + 31));
         } 
-	else if (Line[0] != '/' && Line[0] != '#' && (std::strncmp("",Line) != 0) && (std::strncmp(" ",Line) != 0)) 
+	else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
 	{
 	  std::cout << "unknown line:" << Line << std::endl;
 	}
