@@ -3685,15 +3685,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		BMSAutoSegMainFile<<"      If (   ${TissueSegAtlasTemplateList} == '')" << std::endl;
 		if (GetANTSWithBrainmask())  {
 		  if (GetUseInitialAffine())  {
-		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
-		  } else {
 		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
+		  } else {
+		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
 		  }
 		} else  {
 		  if (GetUseInitialAffine())  {
-		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
+		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
 		  } else {
-		      BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
+		      BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
 		  }
 		}
 		BMSAutoSegMainFile<<"          Run (output ${ANTSRegTissueSegAtals})"<<std::endl;
