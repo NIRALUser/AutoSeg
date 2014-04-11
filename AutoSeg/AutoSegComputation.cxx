@@ -1745,8 +1745,8 @@ void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, con
 
   LoadComputationFile(_computationFile);
   LoadParameterFile(_parameterFile);
-  SetComputationFile(_computationFile);
-  SetParameterFile(_parameterFile);
+  SetComputationFile();
+  SetParameterFile();
   
   RunPipeline(0);
 }
@@ -3190,7 +3190,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"            If (${TxtInitFileList} == '')"<<std::endl;  
     BMSAutoSegMainFile<<"               echo ('Computing rigid transformation T1 to Atlas ...')"<<std::endl;
     BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
-//    BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --${RegistrationInitialization} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+
     BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
     BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
@@ -3659,50 +3659,51 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
                 BMSAutoSegMainFile<<"      EndIf (${StrippedTissueSegAtlasList})"<<std::endl;
 
                 BMSAutoSegMainFile<<"      If (${TissueSegAtlasBrainMaskList} == '')" << std::endl;     //if don't have brainmask in tissue seg atlas
-                    BMSAutoSegMainFile<<"      If (${TissueSegAtlasTemplateList} == '')" << std::endl;  //if tissue seg atlas template doesn't exist
-                        BMSAutoSegMainFile<<"      set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
-                        BMSAutoSegMainFile<<"      Run (output ${ANTSRegTissueSegAtals})"<<std::endl;
-                        BMSAutoSegMainFile<<"      ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
-                            BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
-                            BMSAutoSegMainFile<<"          Run (output ${WarpTissueSegAtals})"<<std::endl;
-                            BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
-                            BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
-                        BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasTemplateList})" << std::endl;
+		BMSAutoSegMainFile<<"      If (${TissueSegAtlasTemplateList} == '')" << std::endl;  //if tissue seg atlas template doesn't exist
+		BMSAutoSegMainFile<<"      set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0])"<<std::endl;
+		BMSAutoSegMainFile<<"      Run (output ${ANTSRegTissueSegAtals})"<<std::endl;
+		BMSAutoSegMainFile<<"      ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
+		BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
+		BMSAutoSegMainFile<<"          Run (output ${WarpTissueSegAtals})"<<std::endl;
+		BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+		BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
+		BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
+		BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasTemplateList})" << std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
 
                 BMSAutoSegMainFile<<"      If (   ${TissueSegAtlasBrainMaskList} != '')" << std::endl;    //if brainmask exist
-                    BMSAutoSegMainFile<<"      ListFileInDir (AffineBrainMaskList ${TissueSegAtlas} brainmask.nrrd)" << std::endl;  // check if warped brainmask already exist
-                    BMSAutoSegMainFile<<"      If (   ${AffineBrainMaskList} == '')" << std::endl;
-                    BMSAutoSegMainFile<<"          set (AffineTissueSegAtlasTemplate BRAINSFit --useAffine --outputTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${TissueSegAtlas}template_affine.nrrd --movingVolume ${atlasSegLoc}template.mha --fixedVolume ${T1InputCase})"<<std::endl;
-                    BMSAutoSegMainFile<<"          set (AffineTissueSegAtlasResample BRAINSResample --warpTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${TissueSegAtlas}brainmask_affine.nrrd --inputVolume ${atlasSegLoc}brainmask.nrrd --referenceVolume ${T1InputCase})"<<std::endl;
-                    BMSAutoSegMainFile<<"          set (AffineStrippedTissueSegAtlasResample BRAINSResample --warpTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${StrippedTissueSegAtlas}brainmask_affine.nrrd --inputVolume ${atlasSegLocLoop}brainmask.nrrd --referenceVolume ${T1InputCase})"<<std::endl;
-                    BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasTemplate})"<<std::endl;
-                    BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasResample})"<<std::endl;
-                    BMSAutoSegMainFile<<"          Run (output ${AffineStrippedTissueSegAtlasResample})"<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${AffineBrainMaskList})" << std::endl;
+		BMSAutoSegMainFile<<"      ListFileInDir (AffineBrainMaskList ${TissueSegAtlas} brainmask.nrrd)" << std::endl;  // check if warped brainmask already exist
+		BMSAutoSegMainFile<<"      If (   ${AffineBrainMaskList} == '')" << std::endl;
+		BMSAutoSegMainFile<<"          set (AffineTissueSegAtlasTemplate BRAINSFit --useAffine --outputTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${TissueSegAtlas}template_affine.nrrd --movingVolume ${atlasSegLoc}template.mha --fixedVolume ${T1InputCase}) --initializeTransformMode ${RegistrationInitialization}"<<std::endl;
+		BMSAutoSegMainFile<<"          set (AffineTissueSegAtlasResample BRAINSResample --warpTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${TissueSegAtlas}brainmask_affine.nrrd --inputVolume ${atlasSegLoc}brainmask.nrrd --referenceVolume ${T1InputCase})"<<std::endl;
+		BMSAutoSegMainFile<<"          set (AffineStrippedTissueSegAtlasResample BRAINSResample --warpTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${StrippedTissueSegAtlas}brainmask_affine.nrrd --inputVolume ${atlasSegLocLoop}brainmask.nrrd --referenceVolume ${T1InputCase})"<<std::endl;
+		BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasTemplate})"<<std::endl;
+		BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasResample})"<<std::endl;
+		BMSAutoSegMainFile<<"          Run (output ${AffineStrippedTissueSegAtlasResample})"<<std::endl;
+		BMSAutoSegMainFile<<"      EndIf (${AffineBrainMaskList})" << std::endl;
  
-                    BMSAutoSegMainFile<<"      If (   ${TissueSegAtlasTemplateList} == '')" << std::endl;
-                        if (GetANTSWithBrainmask())  {
-                            if (GetUseInitialAffine())  
-                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
-                            else
-                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
-                        }
-                        else  {
-                            if (GetUseInitialAffine())  
-                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
-                            else
-                                BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
-                        }
-                        BMSAutoSegMainFile<<"          Run (output ${ANTSRegTissueSegAtals})"<<std::endl;
-                        BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
-                            BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
-                            BMSAutoSegMainFile<<"          Run (output ${WarpTissueSegAtals})"<<std::endl;
-                            BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
-                            BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
-                        BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
-                    BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasTemplateList})" << std::endl;
+		BMSAutoSegMainFile<<"      If (   ${TissueSegAtlasTemplateList} == '')" << std::endl;
+		if (GetANTSWithBrainmask())  {
+		  if (GetUseInitialAffine())  {
+		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
+		  } else {
+		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
+		  }
+		} else  {
+		  if (GetUseInitialAffine())  {
+		    BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
+		  } else {
+		      BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[3,0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
+		  }
+		}
+		BMSAutoSegMainFile<<"          Run (output ${ANTSRegTissueSegAtals})"<<std::endl;
+		BMSAutoSegMainFile<<"ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
+		BMSAutoSegMainFile<<"          set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
+		BMSAutoSegMainFile<<"          Run (output ${WarpTissueSegAtals})"<<std::endl;
+		BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+		BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
+		BMSAutoSegMainFile<<"EndForEach(TissueSegAtlasImage)"<<std::endl;
+		BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasTemplateList})" << std::endl;
                 BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
             }
         }
@@ -6204,10 +6205,27 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '##################################\\n')"<<std::endl;
     BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '# Tissue segmentation volume analysis:\\n')"<<std::endl;
     BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} '##################################\\n\\n')"<<std::endl;
-    if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
+    if (std::strcmp(GetEMSoftware(), "neoseg") == 0)  {
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} 'Case,Volume,MWM,WM,GM,CSF\\n')"<<std::endl;
-    else
+    } else if (std::strcmp(GetEMSoftware(), "ABC") == 0) {
+      // check for number of priors
+      if (m_NbTissueClass == 4) {
+	BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} 'Case,Volume,WM,GM,CSF\\n')"<<std::endl;
+      } else {
+	std::string tissueClassString = std::string("'Case,Volume");
+	for (int classID = 0; classID < m_NbTissueClass; classID++) {
+	  char classIDstring[100];
+	  sprintf(classIDstring,"%d",classID);
+
+	  tissueClassString = tissueClassString + std::string(",") + std::string(classIDstring);
+	}
+	tissueClassString = tissueClassString + std::string("\\n')");
+	BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} " << tissueClassString <<std::endl;
+      }
+
+    } else {
       BMSAutoSegMainFile<<"   AppendFile(${VolumeFile} 'Case,Volume,WM,GM,CSF\\n')"<<std::endl;
+    }
     BMSAutoSegMainFile<<"   set (files_to_cat '')"<<std::endl;
     BMSAutoSegMainFile<<"   set (CaseNumber 0)"<<std::endl;
     BMSAutoSegMainFile<<"   ForEach (T1Case ${T1CasesList})"<<std::endl;
@@ -6408,9 +6426,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"   set (files_to_cat_MWM '')"<<std::endl;
 	  BMSAutoSegMainFile<<"  EndIf (${FileListMWM})"<<std::endl;  
 	}      
-      else
+      else 
+	{
 	BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
-	  
+	}
+
       BMSAutoSegMainFile<<"  set (flagWM 0)"<<std::endl;
       BMSAutoSegMainFile<<"  set (flagGM 0)"<<std::endl;
       BMSAutoSegMainFile<<"  set (flagCSF 0)"<<std::endl;
@@ -8394,10 +8414,17 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
 
       if ( (std::strncmp("Process Data Directory: ", Line, 24)) == 0)
       {
-	if (std::strlen(Line+24) != 0)
+	if ( std::strlen(Line+24) != 0)
 	  SetProcessDataDirectory(Line+24);
 	else
 	  SetProcessDataDirectory("");
+      }
+      else if ( (std::strncmp("Is T1 Image: ", Line, strlen("Is T1 Image: "))) == 0)
+      {
+	if (atoi(Line+strlen("Is T1 Image: ")) == 0)
+	{
+	  std::cout << "Computation File issue: T1 image is not set, setting back to 1 (default)" << std::endl;
+	} 
       }
       else if ( (std::strncmp("Is T2 Image: ", Line, 13)) == 0)
       {
@@ -8724,6 +8751,9 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
   int value;
 
   bool IsParameterFileLoaded=false;
+  bool unknownLineFile= false;
+  bool unknownLineWarping = false;
+  bool unknownLineTissueSeg = false;
 
   if (mode == file)
   {
@@ -9059,7 +9089,14 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  PointSpacing = atof(Line+15);
 	  SetPointSpacing(PointSpacing);
 	}
+	else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
+	{
+	  unknownLineFile = true;
+	}
       }
+
+      /// tissue seg params *****************************************
+
       if (mode == tissueSeg ||mode == advancedParameters||mode == file)
       {
 	if ((std::strncmp("EM Software: ", Line, 13)) == 0)
@@ -9253,7 +9290,14 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
 	  LoopIteration = atoi(Line+29);
 	  SetLoopIteration(LoopIteration);
 	}
+	else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
+	{
+	  unknownLineTissueSeg = true;
+	}
       }
+
+      /// warping params *****************************************
+
       if (mode == warping||mode == advancedParameters||mode == file)
       {
 	if ( (std::strncmp("Warping Method: ", Line, 16)) == 0)
@@ -9586,7 +9630,12 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
         } 
 	else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
 	{
-	  std::cout << "unknown line:" << Line << std::endl;
+	  unknownLineWarping = true;
+	}
+
+	if (unknownLineWarping && unknownLineTissueSeg && unknownLineFile && (mode == file)) 
+	{
+	  //std::cout << "Unknown Line: " << Line << std::endl;
 	}
       }
     }
