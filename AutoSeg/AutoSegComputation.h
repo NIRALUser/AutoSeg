@@ -301,6 +301,8 @@ class AutoSegComputation
     void SetNbAtlas(int _NbAtlas){m_NbAtlas = _NbAtlas; m_AtlasList = new char *[m_NbAtlas];};
     void SetNb2ndAtlas(int _NbAtlas){m_Nb2ndAtlas = _NbAtlas; m_2ndAtlasList = new char *[m_Nb2ndAtlas];};
     void SetNbAtlasLabel(int _NbAtlasLabel){m_NbAtlasLabel = _NbAtlasLabel; m_AtlasLabelList = new char *[m_NbAtlasLabel];};
+    void SetNbAtlasParcellation(int _NbAtlasParcellation){m_NbAtlasParcellation = _NbAtlasParcellation; m_AtlasParcellationList = new char *[m_NbAtlasParcellation];};
+
     void SetNbWarpedAtlas(int _NbWarpedAtlas){m_NbWarpedAtlas = _NbWarpedAtlas; m_WarpedAtlasList = new char *[m_NbWarpedAtlas];};
     void SetNbWarpedAtlasTrainToTrain(int _NbWarpedAtlasTrainToTrain){m_NbWarpedAtlasTrainToTrain = _NbWarpedAtlasTrainToTrain; m_WarpedAtlasTrainToTrainList = new char *[m_NbWarpedAtlasTrainToTrain];};
     void SetNbWarpedLabel(int _NbWarpedLabel){m_NbWarpedLabel = _NbWarpedLabel; m_WarpedLabelList = new char *[m_NbWarpedLabel];};
@@ -319,6 +321,7 @@ class AutoSegComputation
     void SetAtlasList(const char *_Data, int _DataNumber);
     void Set2ndAtlasList(const char *_Data, int _DataNumber);
     void SetAtlasLabelList(const char *_Data, int _DataNumber);
+    void SetAtlasParcellationList(const char *_Data, int _DataNumber);
     void SetTargetList(const char *_Data, int _DataNumber);
 //    void SetProcessedList(const char *_Directory);
     void SetWarpedAtlasList(const char *_Directory);
@@ -352,6 +355,7 @@ class AutoSegComputation
     int GetNbAtlas(){return m_NbAtlas;};
     int GetNb2ndAtlas(){return m_Nb2ndAtlas;};
     int GetNbAtlasLabel(){return m_NbAtlasLabel;};
+    int GetNbAtlasParcellation(){return m_NbAtlasParcellation;};
     int GetNbWarpedAtlas(){return m_NbWarpedAtlas;};
     int GetNbWarpedAtlasTrainToTrain(){return m_NbWarpedAtlasTrainToTrain;};
     int GetNbWarpedLabel(){return m_NbWarpedLabel;};
@@ -693,11 +697,10 @@ class AutoSegComputation
     void SetComputationFile(const char *_ComputationFile);
     void SetLogFile();
 
+    const char * PrepData (const char *_Data);
     void SetData(const char *_Data, char *_T1);
-    void SetData(const char *_Data, char *_T1, char *_SecondImage);
+    void SetData(const char *_Data, char *_T1, char *_T2);
     void SetData(const char *_Data, char *_T1, char *_T2, char *_PD);
-    void SetDatawoGUI(const char *_Data, char *_T1, char *_SecondImage);
-    void SetDatawoGUI(const char *_Data, char *_T1, char *_T2, char *_PD);
     void SetAuxData(const char *_Data, char *_T1);
     void SetAuxData(const char *_Data, char *_T1, char *_SecondImage);
     void SetAuxData(const char *_Data, char *_T1, char *_Aux1, char *_Aux2);
@@ -893,6 +896,7 @@ class AutoSegComputation
     int m_NbAtlas;
     int m_Nb2ndAtlas;
     int m_NbAtlasLabel;
+    int m_NbAtlasParcellation;
     int m_NbWarpedAtlas;
     int m_NbWarpedAtlasTrainToTrain;
     int m_NbWarpedLabel;
@@ -937,6 +941,7 @@ class AutoSegComputation
     char **m_AtlasList;
     char **m_2ndAtlasList;
     char **m_AtlasLabelList;
+    char **m_AtlasParcellationList;
     char **m_TargetList;
     char **m_WarpedLabelList;
     char **m_WarpedAtlasList;

@@ -80,7 +80,7 @@ class AutoSegGUI {open
       } {
         Fl_Group g_ComputationGroup {
           label Computation open
-          xywh {5 75 890 895} labelfont 8 align 69
+          xywh {5 75 890 895} labelfont 8 align 69 hide
         } {
           Fl_Group {} {
             label {Step 1 - Set the process data directory} open
@@ -1706,26 +1706,26 @@ class AutoSegGUI {open
         }
         Fl_Group g_MultiAtlasSegGroup {
           label {Multiple Atlas Segmentation} open
-          xywh {10 75 875 865} labelfont 8 align 69 hide
+          xywh {10 75 875 865} labelfont 8 align 69
         } {
           Fl_Group g_MultiAtlasSegParametersGroup {
-            label {Multi-Atlas Segmentation  Parameters} open
+            label {Multi-Atlas Segmentation  Parameters} open selected
             xywh {30 101 580 262} box DOWN_FRAME labelfont 9 align 5
           } {
             Fl_Counter g_IntensityEnergyWeight {
               label {Intensity Energy Weight:   }
               callback {SetIntensityEnergyGUI();}
-              tooltip {Prior 1 (White matter)} xywh {195 147 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
+              tooltip {weight for intensity energy} xywh {195 147 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
             }
             Fl_Counter g_HarmonicEnergyWeight {
               label {Harmonic Energy Weight: }
               callback {SetHarmonicEnergyGUI();}
-              tooltip {Prior 1 (White matter)} xywh {195 179 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
+              tooltip {Weight for harmonic energy} xywh {195 179 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
             }
             Fl_Counter g_ShapeEnergyWeight {
               label {Shape Energy Weight:        }
               callback {SetShapeEnergyGUI();}
-              tooltip {Prior 1 (White matter)} xywh {195 214 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
+              tooltip {weight for shape energy} xywh {195 214 80 20} type Simple labelfont 8 align 4 minimum 0 maximum 100 step 0.01 value 0.5 textfont 8
             }
             Fl_Check_Button g_RecalculateAtlasTargetEnergyButton {
               label {Re-Calculate Atlas-Target Energy}
@@ -1755,7 +1755,7 @@ class AutoSegGUI {open
             Fl_Round_Button g_StapleButton {
               label STAPLE
               callback {StapleButtonToggled();}
-              xywh {160 310 170 25} down_box ROUND_DOWN_BOX
+              xywh {160 310 170 25} down_box ROUND_DOWN_BOX deactivate
             }
           }
           Fl_Group {} {
@@ -2235,6 +2235,6 @@ class AutoSegGUI {open
   } {}
   Function {MultiModalitySingleSegmentationButtonChecked()} {open return_type {virtual void}
   } {}
-  Function {MultiModalityMultiSegmentationButtonChecked()} {open selected return_type {virtual void}
+  Function {MultiModalityMultiSegmentationButtonChecked()} {open return_type {virtual void}
   } {}
 } 
