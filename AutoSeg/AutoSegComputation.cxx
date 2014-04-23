@@ -5864,19 +5864,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         SetDeformationFieldTrainToTrainList(DeformationFieldTrainToTrainDirectory.c_str());
 
 	if (!strcmp(GetLabelFusionAlgorithm(), "Weighted Majority Voting")) {
-	  if (GetRecalculateAtlasAtlasMultiAtlasEnergy()){
-            BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasList}) "<<std::endl;
-	    BMSAutoSegMainFile<<"    	set (command_line rm ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 
-            BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
-            BMSAutoSegMainFile<<"ForEach (TargetCase ${AtlasList}) "<<std::endl;
-	    BMSAutoSegMainFile<<"    	set (command_line rm ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 
-            BMSAutoSegMainFile<<"EndForEach (TargetCase)"<<std::endl;
+	  if (GetRecalculateAtlasTargetMultiAtlasEnergy()){
+            BMSAutoSegMainFile<<"      ForEach (AtlasCase ${AtlasList}) "<<std::endl;
+	    BMSAutoSegMainFile<<"    	 set (command_line rm ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt)"<<std::endl;
+	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+            BMSAutoSegMainFile<<"      EndForEach (AtlasCase)"<<std::endl;
+            BMSAutoSegMainFile<<"      ForEach (AtlasCase ${AtlasList}) "<<std::endl;
+	    BMSAutoSegMainFile<<"    	 set (command_line rm ${HarmonicEnergyDir}${AtlasCase}HarmonicEnergy.txt)"<<std::endl;
+	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+            BMSAutoSegMainFile<<"      EndForEach (AtlasCase)"<<std::endl;
             BMSAutoSegMainFile<<"      set (command_line rm ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt)"<<std::endl;
 	    BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
-            BMSAutoSegMainFile<<"        set (command_line rm ${IntEnergyDir}IntensityEnergyNormalized.txt)"<<std::endl;
-            BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl;
+            BMSAutoSegMainFile<<"      set (command_line rm ${IntEnergyDir}IntensityEnergyNormalized.txt)"<<std::endl;
+            BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl;
 	  }
 
 	  // Calculate energy atlas-atlas intensity
@@ -8466,9 +8466,9 @@ bool AutoSegComputation::SetMultiAtlasDirectory(const char *_MultiAtlasDirectory
     DIR *dir;
     struct dirent *ent;
 
+    int t1num = 0, labelnum = 0, t2num = 0, parcelnum = 0;
     if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
         std::string filename;
-        int t1num = 0, labelnum = 0, t2num = 0, parcelnum = 0;
         while ((ent = readdir (dir)) != NULL) {
             filename = ent->d_name;
             if(filename.at(0) == '.')    // skip . and ..
@@ -8498,9 +8498,11 @@ bool AutoSegComputation::SetMultiAtlasDirectory(const char *_MultiAtlasDirectory
     }
     closedir (dir);
 
+    std::cout << "Multiatlas numbers: " << t1num << ", " << t2num << " ," << labelnum << ", " << parcelnum << std::endl;
+
+    t1num = 0; labelnum = 0; t2num = 0; parcelnum = 0;
     if ((dir = opendir (MultiAtlasDirectory)) != NULL) {
         std::string filename;
-        int t1num = 0, labelnum = 0, t2num = 0, parcelnum = 0;
         while ((ent = readdir (dir)) != NULL) {
             filename = ent->d_name;
             if(filename.at(0) == '.')    // skip . and ..
@@ -8526,12 +8528,13 @@ bool AutoSegComputation::SetMultiAtlasDirectory(const char *_MultiAtlasDirectory
                 }
                 if (!filename.find("parcellation")) {
                     SetAtlasParcellationList(filename.c_str(), parcelnum);
-                    labelnum++;
+                    parcelnum++;
                 }
             }
         }
     }
     closedir (dir);
+    std::cout << "Multiatlas numbers: " << t1num << ", " << t2num << " ," << labelnum << ", " << parcelnum << std::endl;
    
     int numberOfWarpedAtlasAtlasImage = 0;
     if ((dir = opendir (WarpedMultiAtlasAtlasImageDirectory)) != NULL) {
