@@ -64,6 +64,17 @@ AutoSegComputation::AutoSegComputation()
   m_AllocationAuxData=0;
   m_NbTissueClass = 0;
   m_NbStrippedTissueClass = 0;
+  m_IsAuxT1Image = false;
+  m_IsAuxT2Image = false;
+  m_IsAuxPDImage = false;
+  m_IsAux1Image = false;
+  m_IsAux2Image = false;
+  m_IsAux3Image = false;
+  m_IsAux4Image = false;
+  m_IsAux5Image = false;
+  m_IsAux6Image = false;
+  m_IsAux7Image = false;
+  m_IsAux8Image = false;
 }
 
 AutoSegComputation::~AutoSegComputation()
@@ -1773,6 +1784,19 @@ void AutoSegComputation::WriteComputationFile(const char *_FileName)
     ComputationFile<<"Is Aux6 Image: "<<GetAux6Image()<<std::endl;
     ComputationFile<<"Is Aux7 Image: "<<GetAux7Image()<<std::endl;
     ComputationFile<<"Is Aux8 Image: "<<GetAux8Image()<<std::endl<<std::endl;
+  } else {
+    ComputationFile<<"// AuxData"<<std::endl;
+    ComputationFile<<"Is AuxT1 Image: 0"<<std::endl;
+    ComputationFile<<"Is AuxT2 Image: 0"<<std::endl;
+    ComputationFile<<"Is AuxPD Image: 0"<<std::endl;
+    ComputationFile<<"Is Aux1 Image: 0"<<std::endl; 	
+    ComputationFile<<"Is Aux2 Image: 0"<<std::endl;
+    ComputationFile<<"Is Aux3 Image: 0"<<std::endl;
+    ComputationFile<<"Is Aux4 Image: 0"<<std::endl;
+    ComputationFile<<"Is Aux5 Image: 0"<<std::endl;
+    ComputationFile<<"Is Aux6 Image: 0"<<std::endl;
+    ComputationFile<<"Is Aux7 Image: 0"<<std::endl;
+    ComputationFile<<"Is Aux8 Image: 0"<<std::endl<<std::endl;
   }
   ComputationFile<<"T1 Files: "<<GetT1()<<std::endl;   
   ComputationFile<<"T2 Files: "<<GetT2()<<std::endl;
@@ -2465,10 +2489,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
 
     BMSAutoSegMainFile<<"set (OrigT1CasesList "<<m_T1List[0]<<")"<<std::endl;
-    BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
+    //BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
     for (DataNumber = 1; DataNumber < GetNbData(); DataNumber++) {
         BMSAutoSegMainFile<<"set (OrigT1CasesList ${OrigT1CasesList} "<<m_T1List[DataNumber]<<")"<<std::endl;
-        BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
+        //BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
     }
 
     if (GetT2Image())
@@ -2831,9 +2855,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
 
     
-    BMSAutoSegMainFile<<"ForEach (CaseN4Show ${T1CasesList})"<<std::endl;
-        BMSAutoSegMainFile<<"echo ('T1 Cases List: '${CaseN4Show})"<<std::endl;
-    BMSAutoSegMainFile<<"EndForEach (CaseN4Show)"<<std::endl;
+    //BMSAutoSegMainFile<<"ForEach (CaseN4Show ${T1CasesList})"<<std::endl;
+    //BMSAutoSegMainFile<<"echo ('T1 Cases List: '${CaseN4Show})"<<std::endl;
+    //BMSAutoSegMainFile<<"EndForEach (CaseN4Show)"<<std::endl;
 
     BMSAutoSegMainFile<<"set (CasesListN4 ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"Set(T1ImageExtension '.nrrd')"<<std::endl;
@@ -2866,6 +2890,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (GetReorientation())
       BMSAutoSegMainFile<<"  set (CaseN4 ${OrigCasePath}/${AutoSegDir}/${OutputOrientation}/${OrigCaseHead}${ProcessExtension}.nrrd)"<<std::endl;    
 
+    // is the input there??
+    //    BMSAutoSegMainFile<<"  FileExists(N4InputExists ${CaseN4})"<<std::endl;
+    //    BMSAutoSegMainFile<<"  If (${N4InputExists} == 1)"<<std::endl;
+    //    BMSAutoSegMainFile<<"    echo ('N4 input exists:  ${CaseN4})"<<std::endl;
+    //    BMSAutoSegMainFile<<"  EndIf (${N4InputExists})"<<std::endl;
+    
+    // is the output already there??
     BMSAutoSegMainFile<<"  ListFileInDir(OutputFileN4List ${BiasPath} ${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"  If (${OutputFileN4List} == '')"<<std::endl;
     BMSAutoSegMainFile<<"    Set (my_output ${BiasPath}${OrigCaseHead}${NewProcessExtension}.nrrd)"<<std::endl;
@@ -3283,6 +3314,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     else
       BMSAutoSegMainFile<<"         set (EMSfile ${EMSPath}EMSparam.xml)"<<std::endl;
 
+    // check if inputs exist
+    //    BMSAutoSegMainFile<<"         FileExists(EMST1InputExists ${T1InputCase})"<<std::endl;
+    //    BMSAutoSegMainFile<<"         If (${EMST1InputExists} == 1)"<<std::endl;
+    //    BMSAutoSegMainFile<<"           echo ('EMS T1 input exists:  ${T1InputCase})"<<std::endl;
+    //    BMSAutoSegMainFile<<"         EndIf (${EMST1InputExists})"<<std::endl;
+
+    // check if T1 EMS corrected file already exists, if not compute
     BMSAutoSegMainFile<<"         ListFileInDir(EMSFileList ${EMSPath} ${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"         If (${EMSFileList} == '')"<<std::endl;  
     BMSAutoSegMainFile<<"           set (EMSComputed 1)"<<std::endl;
@@ -3546,7 +3584,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     else
     {
-      std::cout<<"	       Error EM Software (itkEMS is no longer supported)!"<<std::endl;
+      std::cout<<"	               Error EM Software (itkEMS is no longer supported)!"<<std::endl;
       exit(-2);
     }   
     // next lines are kept for historic reasons MRML settings 
@@ -3556,7 +3594,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     BMSAutoSegMainFile<<"         Else ()"<<std::endl;
     BMSAutoSegMainFile<<"            echo ('EMS Segmentation already Done!')"<<std::endl;
-    BMSAutoSegMainFile<<"         EndIf (${EMSfileList})"<<std::endl;
+    BMSAutoSegMainFile<<"         EndIf (${EMSFileList})"<<std::endl;
     BMSAutoSegMainFile<<"   Inc (${CaseNumber} 1)"<<std::endl;
     BMSAutoSegMainFile<<"   Int (${CaseNumber})"<<std::endl;
 
@@ -5446,6 +5484,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${TargetCaseFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
             BMSAutoSegMainFile<<"      ListFileInDir(MultiAtlasTargetList ${TargetPath} ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
             BMSAutoSegMainFile<<"      set (MultiAtlasTargetFile ${MultiAtlasTargetList})"<<std::endl;
+            BMSAutoSegMainFile<<"set (MultiAtlasTargetHead ${TargetPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected})"<<std::endl;
             BMSAutoSegMainFile<<"      echo('MULTIATLAS TARGET FILE:  '${MultiAtlasTargetFile} )"<<std::endl;
             BMSAutoSegMainFile<<"      ListFileInDir(RescaleOutputFileList ${TargetPath} ${PrefixMultiAtlas}${MultiAtlasTargetFile})"<<std::endl;
             BMSAutoSegMainFile<<"      If (${RescaleOutputFileList} == '')"<<std::endl;  
@@ -5991,7 +6030,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"      ListFileInDir(FusionList ${FusedLabelDir} ${TargetList}_label.nrrd)"<<std::endl;
 	  BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -v ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedLabelDir} ${FusedLabelDir} ${TargetList}_label.nrrd label ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl;
+	  BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+	  BMSAutoSegMainFile<<"        echo ('File already exists: '${TargetList}_label.nrrd)"<<std::endl; 
 	  BMSAutoSegMainFile<<"      EndIf (${FusionList})"<<std::endl;
 	  
 	  if (GetNbAtlasParcellation() > 0 ) {
@@ -6008,6 +6049,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -m ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedLabelDir} ${FusedLabelDir} ${TargetList}_label.nrrd label ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase})"<<std::endl; 
 	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+	  BMSAutoSegMainFile<<"      Else ()"<<std::endl;
+	  BMSAutoSegMainFile<<"        echo ('File already exists: '${TargetList}_label.nrrd)"<<std::endl;
 	  BMSAutoSegMainFile<<"      EndIf (${FusionList})"<<std::endl;
 
 	  if (GetNbAtlasParcellation() > 0 ) {
