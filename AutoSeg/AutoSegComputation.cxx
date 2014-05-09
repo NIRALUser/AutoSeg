@@ -4811,9 +4811,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         ForEach (Label ${LabelList})"<<std::endl;  
     BMSAutoSegMainFile<<"           GetFilename(LabelName ${Label} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"           echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"	          echo ('Registering '${LabelName}...)"<<std::endl;
+    BMSAutoSegMainFile<<"	    echo ('Registering '${LabelName}...)"<<std::endl;
     BMSAutoSegMainFile<<"           Inc (${LabelNumber} 1)"<<std::endl;
-    BMSAutoSegMainFile<<"	          Int(${LabelNumber})"<<std::endl;
+    BMSAutoSegMainFile<<"	    Int(${LabelNumber})"<<std::endl;
   
     if (!IsVentricleListEmpty)
     {
@@ -4834,8 +4834,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"           set (LabelWarpHead ${Case}--${LabelName}-WarpReg)"<<std::endl;
     }
   
-    BMSAutoSegMainFile<<"	          set (LabelAff ${WarpROIPath}${LabelAffTail})"<<std::endl;
-    BMSAutoSegMainFile<<"	          set (LabelWarp ${WarpROIPath}${LabelWarpTail})"<<std::endl;
+    BMSAutoSegMainFile<<"	    set (LabelAff ${WarpROIPath}${LabelAffTail})"<<std::endl;
+    BMSAutoSegMainFile<<"	    set (LabelWarp ${WarpROIPath}${LabelWarpTail})"<<std::endl;
   
     BMSAutoSegMainFile<<"                 # Applying Affine transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(AffFileList ${WarpROIPath} ${LabelAffTail})"<<std::endl;
@@ -4844,17 +4844,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   
     if (!GetANTSWarpingMethod())
     {
-      BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_initializetransform.txt)"<<std::endl; 
-      BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${SkullStrippedFile})"<<std::endl;
-      BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"             set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_initializetransform.txt)"<<std::endl; 
+      BMSAutoSegMainFile<<"             set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${SkullStrippedFile})"<<std::endl;
+      BMSAutoSegMainFile<<"             Run (prog_output ${command_line} prog_error)"<<std::endl;
     }
   
-    BMSAutoSegMainFile<<"	          Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"              echo ('File already exists: '${LabelAffTail})"<<std::endl;
+    BMSAutoSegMainFile<<"	    Else ()"<<std::endl;
+    BMSAutoSegMainFile<<"             echo ('File already exists: '${LabelAffTail})"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${AffFileList})"<<std::endl;
 
-    BMSAutoSegMainFile<<"               set (flag 0)"<<std::endl;	  
-    BMSAutoSegMainFile<<"	          # Applying Warping transformation"<<std::endl;
+    BMSAutoSegMainFile<<"           set (flag 0)"<<std::endl;	  
+    BMSAutoSegMainFile<<"	    # Applying Warping transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(WarpFileList ${WarpROIPath} ${LabelWarpTail})"<<std::endl;
     BMSAutoSegMainFile<<"           If (${WarpFileList} == '')"<<std::endl;	  
     BMSAutoSegMainFile<<"               set (flag 1)"<<std::endl;	  
@@ -5612,19 +5612,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	std::string tmpAtlasLabelExt = itksys::SystemTools::GetFilenameExtension(m_AtlasLabelList[0]);
         BMSAutoSegMainFile<<"   set (AtlasLabelExtension "<< tmpAtlasLabelExt.c_str() <<")"<<std::endl;
 
-	std::string tmpAtlasLabelName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasLabelList[0]);
-	sizeOfFilename = tmpAtlasLabelName.length();
-	std::string tmpAtlasLabelFilename = tmpAtlasLabelName.substr(0, sizeOfFilename - 1); // remove dot
-        BMSAutoSegMainFile<<"   set (AtlasLabelList "<<tmpAtlasLabelFilename.c_str() <<")"<<std::endl;
+	//std::string tmpAtlasLabelName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasLabelList[0]);
+	//sizeOfFilename = tmpAtlasLabelName.length();
+	//	std::string tmpAtlasLabelFilename = tmpAtlasLabelName.substr(0, sizeOfFilename - 1); // remove dot
+        
+	//BMSAutoSegMainFile<<"   set (AtlasLabelList "<<tmpAtlasLabelFilename.c_str() <<")"<<std::endl;
 
-        for (int DataNumber = 1; DataNumber < GetNbAtlasLabel(); DataNumber++){       // set up warped atlas list
-	    tmpAtlasLabelName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasLabelList[DataNumber]);
-	    sizeOfFilename = tmpAtlasLabelName.length();
-	    tmpAtlasLabelFilename = tmpAtlasLabelName.substr(0, sizeOfFilename - 1); // remove dot
-	
-            BMSAutoSegMainFile<<"   set (AtlasLabelList ${AtlasLabelList} "<<tmpAtlasLabelFilename.c_str()<<")"<<std::endl;
-        }
-        BMSAutoSegMainFile<<"   echo('label list: ' ${AtlasLabelList})"<<std::endl; 	  
+        //for (int DataNumber = 1; DataNumber < GetNbAtlasLabel(); DataNumber++){       // set up warped atlas list
+	//    tmpAtlasLabelName = itksys::SystemTools::GetFilenameWithoutExtension(m_AtlasLabelList[DataNumber]);
+	//    sizeOfFilename = tmpAtlasLabelName.length();
+	//    tmpAtlasLabelFilename = tmpAtlasLabelName.substr(0, sizeOfFilename - 1); // remove dot
+        //    BMSAutoSegMainFile<<"   set (AtlasLabelList ${AtlasLabelList} "<<tmpAtlasLabelFilename.c_str()<<")"<<std::endl;
+	//}
+        //BMSAutoSegMainFile<<"   echo('label list: ' ${AtlasLabelList})"<<std::endl; 	  
 
         //set up target list 
 
@@ -6432,18 +6432,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"         ForEach(Label ${LabelList})"<<std::endl;
       BMSAutoSegMainFile<<"            set (LabelFileTail ${SegmentedFileHead}_${Label}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"            set (LabelFile ${EMSPath}${LabelFileTail})"<<std::endl;
-      BMSAutoSegMainFile<<"            echo (${LabelFile})"<<std::endl;
+      //BMSAutoSegMainFile<<"            echo (${LabelFile})"<<std::endl;
       BMSAutoSegMainFile<<"            set (File ${WarpROIPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}--${ParcellationMapName}-WarpReg.nrrd )"<<std::endl;
       BMSAutoSegMainFile<<"            GetFilename (FileName ${File} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"            set(FileMaskedRoot ${FileName}_${Label})"<<std::endl;
       BMSAutoSegMainFile<<"            set(FileMaskedTail ${FileMaskedRoot}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"            set(FileMasked ${WarpROIPath}${FileMaskedTail})"<<std::endl;
-      BMSAutoSegMainFile<<"            set (OutputTail ${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
       std::string SoftTissueMap =GetSoftTissueMap();
-      if (SoftTissueMap=="Soft")
-      {
-	if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
-	  {
+      if (SoftTissueMap=="Soft") {
+	if (std::strcmp(GetEMSoftware(), "neoseg") == 0) {
 	    BMSAutoSegMainFile<<"           If (${Label} == 'MWM' && ${flagMWM} == 1)"<<std::endl;
 	    BMSAutoSegMainFile<<"              set(Posterior ${NEOSEG_PREFIX}_posterior0)"<<std::endl;
 	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
@@ -6456,9 +6453,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    BMSAutoSegMainFile<<"           If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
 	    BMSAutoSegMainFile<<"              set(Posterior ${NEOSEG_PREFIX}_posterior3)"<<std::endl;
 	    BMSAutoSegMainFile<<"           EndIf (${Label})"<<std::endl;
-	  }
-	else
-	  {
+	} else {
 	    if (m_NbTissueClass == 4 ) {
 	      BMSAutoSegMainFile<<"           If (${Label} == 'WM' && ${flagWM} == 1)"<<std::endl;
 	      BMSAutoSegMainFile<<"              set(Posterior _posterior0)"<<std::endl;
@@ -6472,37 +6467,35 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    } else {
 	      BMSAutoSegMainFile<<"              set(Posterior _posterior${Label})"<<std::endl;
 	    }
-	  }
-	if(GetLoop() && std::strcmp(GetEMSoftware(), "neoseg") != 0)
-	{
+	}
+	if(GetLoop() && std::strcmp(GetEMSoftware(), "neoseg") != 0) {
 	  BMSAutoSegMainFile<<"           set(EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
 	  BMSAutoSegMainFile<<"           set(SuffixPosterior _stripEMS${StrippedBias}${Posterior}_${SUFFIX})"<<std::endl;
-	}
-	else
-	{
+	} else {
 	  BMSAutoSegMainFile<<"           set(EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
 	  BMSAutoSegMainFile<<"           set(SuffixPosterior ${Posterior}_${SUFFIX})"<<std::endl;
 	}
-	if (IsT1LabelEMSFile)
-	  BMSAutoSegMainFile<<"           set (ProbMap ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixPosterior}.nrrd)"<<std::endl;
-	else
-	{
+	if (IsT1LabelEMSFile) {
+	  BMSAutoSegMainFile<<"             set (ProbMap ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixPosterior}.nrrd)"<<std::endl;
+	} else {
 	  BMSAutoSegMainFile<<"             GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
 	  BMSAutoSegMainFile<<"             GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-	  BMSAutoSegMainFile<<"           set (ProbMap ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixPosterior}.nrrd)"<<std::endl;
+	  BMSAutoSegMainFile<<"             set (ProbMap ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixPosterior}.nrrd)"<<std::endl;
 	}	
 	BMSAutoSegMainFile<<"             ListFileInDir(List ${WarpROIPath} ${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
 	BMSAutoSegMainFile<<"             If (${List} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"               set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${File} -probabilityMap ${ProbMap} -volumeSummary  -outbase ${WarpROIPath}${FileMaskedRoot})"<<std::endl;
-	BMSAutoSegMainFile<<"               Run (output ${command_line})"<<std::endl;  
+	BMSAutoSegMainFile<<"               Run (output ${command_line})"<<std::endl; 
+	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
+	BMSAutoSegMainFile<<"              echo('File already exists: '${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl; 
 	BMSAutoSegMainFile<<"             Endif(${List})"<<std::endl;		
-      }
-      else  
-      {
+      } else {
 	BMSAutoSegMainFile<<"            ListFileInDir(List ${EMSPath} ${LabelFileTail})"<<std::endl;
 	BMSAutoSegMainFile<<"            If (${List} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"              set (command_line ${ImageMathCmd} ${SegmentedFile} -extractLabel ${TissueNumber} -outfile ${LabelFile})"<<std::endl;
 	BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
+	BMSAutoSegMainFile<<"              echo('File already exists: '${EMSPath}${LabelFileTail})"<<std::endl;
 	BMSAutoSegMainFile<<"            Endif(${List})"<<std::endl;	
 
 	BMSAutoSegMainFile<<"            ListFileInDir(List ${WarpROIPath} ${FileMaskedTail})"<<std::endl;
@@ -6518,7 +6511,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"              set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${FileMasked} -volumeSummary -outbase ${WarpROIPath}${FileMaskedRoot})"<<std::endl;
 	BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
 	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	BMSAutoSegMainFile<<"              echo('File already exists: '${FileMaskedTail}_volumeSummary.csv)"<<std::endl;
+	BMSAutoSegMainFile<<"              echo('File already exists: '${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
 	BMSAutoSegMainFile<<"            Endif(${List})"<<std::endl;
       }
 
@@ -6539,12 +6532,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"                  set (files_to_cat_CSF ${files_to_cat_CSF} ${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
 	BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
       } else {
-	
+	// TODO: add cat-ing of files when more than 3 clases
       }
 
-      BMSAutoSegMainFile<<"            echo ( )  "<<std::endl;
+      //BMSAutoSegMainFile<<"           echo ( )  "<<std::endl;
       BMSAutoSegMainFile<<"           Inc(${TissueNumber} 1)"<<std::endl;
-      BMSAutoSegMainFile<<"           Int(${TissueNumber})"<<std::endl;      
+      BMSAutoSegMainFile<<"           Int(${TissueNumber})"<<std::endl;
       BMSAutoSegMainFile<<"         EndForEach(Label)"<<std::endl;
       BMSAutoSegMainFile<<"      Inc(${CaseNumber} 1)"<<std::endl;
       BMSAutoSegMainFile<<"      Int(${CaseNumber})"<<std::endl;
@@ -6584,46 +6577,90 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"     EndIf (${files_to_cat_CSF})"<<std::endl; 
 	BMSAutoSegMainFile<<"   EndIf (${flagCSF})"<<std::endl;
       }
+
       BMSAutoSegMainFile<<"  Else ()"<<std::endl; // else (${ParcellationMapComputed})
       BMSAutoSegMainFile<<"   echo ('Volume file already exists!')"<<std::endl;
       BMSAutoSegMainFile<<"  EndIf(${ParcellationMapComputed})"<<std::endl;
-	  
+	
       BMSAutoSegMainFile<<"EndForEach(ParcellationMap)"<<std::endl;
+      
     }
-
+  
     //multi-atlas
     
     if (GetMultiAtlasSegmentation()) {
-     
-      BMSAutoSegMainFile<<"      ListFileInDir(List ${TargetPath} ${MultiAtlasTargetHead}_volumeSummary.csv)"<<std::endl;
-      BMSAutoSegMainFile<<"      If (${List} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"        set (command_line ${ImageStatCmd} ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile} -label ${FusedLabelDir}${TargetList}_label.nrrd -volumeSummary -outbase ${TargetPath}${MultiAtlasTargetHead})"<<std::endl;
-      BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
-      BMSAutoSegMainFile<<"      EndIf (${Label})"<<std::endl;
+      BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl;
+      BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
+      BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<"      GetFilename (T1Dir ${T1Path} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Case Number - multi atlas: '${T1CaseHead})"<<std::endl;
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
+      if(GetLoop() && std::strcmp(GetEMSoftware(), "neoseg") != 0)
+	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
+      else
+	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems/)"<<std::endl;
+      if (IsT1LabelEMSFile)
+	BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+      else
+      {
+	BMSAutoSegMainFile<<"      GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
+	BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+	BMSAutoSegMainFile<<"      set (SegmentedFile ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+      }
 
+      BMSAutoSegMainFile<<"      GetFilename (SegmentedFileTail ${SegmentedFile} NAME_WITHOUT_EXTENSION)"<<std::endl; 
+      if(GetLoop() && std::strcmp(GetEMSoftware(), "neoseg") != 0)
+	BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 13 FROMEND)"<<std::endl;
+      else
+	BMSAutoSegMainFile<<"      ExtractString(SegmentedFileHead ${SegmentedFileTail} 11 FROMEND)"<<std::endl;
+      
+      BMSAutoSegMainFile<<"         set (FusedLabelDir ${T1Path}/${AutoSegDir}/fused-labels/)"<<std::endl;
+      BMSAutoSegMainFile<<"         set (MultiAtlasTarget ${FusedLabelDir}${T1CaseHead}_label.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"         set (MultiAtlasTargetHead ${T1CaseHead}_label)"<<std::endl;
+      BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_volumeSummary.csv)"<<std::endl;
+      BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"           set (command_line ${ImageStatCmd} ${SkullStrippedImage}  -label ${MultiAtlasTarget} -volumeSummary -outbase ${FusedLabelDir}${MultiAtlasTargetHead})"<<std::endl;
+      BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+      BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_volumeSummary.csv)"<<std::endl; 
+      BMSAutoSegMainFile<<"         EndIf (${Label})"<<std::endl;
+      
       if (GetNbAtlasParcellation() > 0 ) {
+	BMSAutoSegMainFile<<"         set (MultiAtlasTargetHead ${T1CaseHead}_parcellation)"<<std::endl;
+
 	if (m_NbTissueClass == 4 || (std::strcmp(GetEMSoftware(), "neoseg") == 0)) {
-	  BMSAutoSegMainFile<<"      ListFileInDir(List ${FusedLabelDir} ${TargetList}_parcellation_GM.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${List} == '')"<<std::endl;
-	  BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation.nrrd -mask ${EMSDir}${TargetList}${StrippedBias}${T1RegistrationExtension}_GM.nrrd -outfile ${FusedLabelDir}${TargetList}_parcellation_GM.nrrd)"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
-	  BMSAutoSegMainFile<<"      EndIf (${Label})"<<std::endl;
-	  BMSAutoSegMainFile<<"      ListFileInDir(List ${FusedLabelDir} ${TargetList}_parcellation_WM.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${List} == '')"<<std::endl;
-	  BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation.nrrd -mask ${EMSDir}${TargetList}${StrippedBias}${T1RegistrationExtension}_WM.nrrd -outfile ${FusedLabelDir}${TargetList}_parcellation_WM.nrrd)"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
-	  BMSAutoSegMainFile<<"      EndIf (${Label})"<<std::endl;
-	  BMSAutoSegMainFile<<"      ListFileInDir(List ${FusedLabelDir} ${TargetList}_parcellation_CSF.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${List} == '')"<<std::endl;
-	  BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation.nrrd -mask ${EMSDir}${TargetList}${StrippedBias}${T1RegistrationExtension}_CSF.nrrd -outfile ${FusedLabelDir}${TargetList}_parcellation_CSF.nrrd)"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl;
-	  BMSAutoSegMainFile<<"      EndIf (${Label})"<<std::endl; 
+	  BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_GM.nrrd)"<<std::endl;
+	  BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+	  BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_GM.nrrd  -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_GM.nrrd)"<<std::endl; 
+	  BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+	  BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+	  BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_GM.nrrd )"<<std::endl; 
+	  BMSAutoSegMainFile<<"         EndIf (${Label})"<<std::endl;
+	  BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_WM.nrrd)"<<std::endl;
+	  BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+	  BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_WM -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_WM.nrrd)"<<std::endl; 
+	  BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+	  BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+	  BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_WM.nrrd )"<<std::endl; 
+	  BMSAutoSegMainFile<<"         EndIf (${Label})"<<std::endl;
+	  BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_CSF.nrrd)"<<std::endl;
+	  BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+	  BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_CSG -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_CSF.nrrd)"<<std::endl; 
+	  BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl;
+	  BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+	  BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_CSF.nrrd )"<<std::endl; 
+	  BMSAutoSegMainFile<<"         EndIf (${Label})"<<std::endl; 
 	  if (std::strcmp(GetEMSoftware(), "neoseg") == 0)  {
-	    BMSAutoSegMainFile<<"      ListFileInDir(List ${FusedLabelDir} ${TargetList}_parcellation_MWM.nrrd)"<<std::endl;
-	    BMSAutoSegMainFile<<"      If (${List} == '')"<<std::endl;
-	    BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation.nrrd -mask ${EMSDir}${TargetList}${StrippedBias}${T1RegistrationExtension}_MWM.nrrd -outfile ${FusedLabelDir}${TargetList}_parcellation_MWM.nrrd)"<<std::endl; 
-	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
-	    BMSAutoSegMainFile<<"      EndIf (${Label})"<<std::endl;
+	    BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_MWM.nrrd)"<<std::endl;
+	    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+	    BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_MWM -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_MWM.nrrd)"<<std::endl; 
+	    BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+	    BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+	    BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_MWM.nrrd )"<<std::endl; 
+	    BMSAutoSegMainFile<<"         EndIf (${Label})"<<std::endl;
 	  }
 	} else {
 	  for (int classID = 1; classID < m_NbTissueClass; classID++) {
@@ -6631,21 +6668,35 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    sprintf(parcellationSuffix,"_label_%d.nrrd",classID);
 	    
 	    
-	    BMSAutoSegMainFile<<"     echo(${T1RegistrationExtension})"<< std::endl;
-	    BMSAutoSegMainFile<<"      ListFileInDir(List ${FusedLabelDir} ${FusedLabelDir}${TargetList}_parcellation"<< parcellationSuffix << ")" << std::endl;
-	    BMSAutoSegMainFile<<"      If (${List} == '')"<<std::endl;
-	    BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${FusedLabelDir}${TargetList}_parcellation.nrrd -mask ${EMSDir}${TargetList}${StrippedBias}${T1RegistrationExtension}" << parcellationSuffix << " -outfile ${FusedLabelDir}${TargetList}_parcellation"<< parcellationSuffix << ")"<<std::endl; 
-	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
-	    BMSAutoSegMainFile<<"      EndIf (${Label})"<<std::endl;
+	    //BMSAutoSegMainFile<<"         echo('ext: '${FusedLabelDir}${MultiAtlasTargetHead}.nrrd' -mask '${EMSPath}${SegmentedFileHead}" << parcellationSuffix << ")" << std::endl;
+	    BMSAutoSegMainFile<<"         set (MultiAtlasParcFile ${MultiAtlasTargetHead}"<< parcellationSuffix << ")" << std::endl;
+	    BMSAutoSegMainFile<<"         GetFilename (MultiAtlasParcHead ${MultiAtlasParcFile} NAME_WITHOUT_EXTENSION)" << std::endl;
+
+	    BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasParcFile})" << std::endl;
+	    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+	    BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}" << parcellationSuffix << " -outfile ${FusedLabelDir}${MultiAtlasParcFile})"<<std::endl; 
+	    BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl;
+	    BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+	    BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasParcFile})"<<std::endl; 
+
+	    BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasParcHead}_volumeSummary.csv)"<<std::endl;
+	    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+	    BMSAutoSegMainFile<<"            set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${FusedLabelDir}${MultiAtlasParcFile} -volumeSummary -outbase ${FusedLabelDir}${MultiAtlasParcHead})"<<std::endl;
+	    BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl; 
+	    BMSAutoSegMainFile<<"         Else ()"<<std::endl;
+	    BMSAutoSegMainFile<<"            echo('File already exists: '${FusedLabelDir}${MultiAtlasParcHead}_volumeSummary.csv)"<<std::endl;
+	    BMSAutoSegMainFile<<"         Endif(${List})"<<std::endl;
+	    BMSAutoSegMainFile<<"       EndIf (${Label})"<<std::endl;
 	  }
 	}
       }
+      BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
     }
-
     BMSAutoSegMainFile<<"echo ( )"<<std::endl;
     BMSAutoSegMainFile<<"echo ('VOLUME COMPUTATION: DONE!')"<<std::endl;
     BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
   }
+  // TODO: add cat-ing of multi-atlas files when more than 3 clases
 
   BMSAutoSegMainFile<<"   Glob (UnzippedFileList ${T1Path}/${AutoSegDir}/*warp.hfield RECURSIVE)"<<std::endl;
   BMSAutoSegMainFile<<"   If (${UnzippedFileList} != '')"<<std::endl;
@@ -8044,7 +8095,7 @@ void AutoSegComputation::ExecuteSlicer3withScene(std::string pathSlicer)
     std::vector<const char*> args;
     char* data = NULL;
     int length;
-    int result, Value;
+    int Value;
     args.push_back(pathSlicer.c_str());
     args.push_back((MRML.front()).c_str());
 	// don't forget this line at the end of the argument list
@@ -8066,12 +8117,11 @@ void AutoSegComputation::ExecuteSlicer3withScene(std::string pathSlicer)
 	
     LogFile<<m_output.c_str()<<std::endl;
 	
-    result = 1;
     switch(itksysProcess_GetState(m_Process))
     {
       case itksysProcess_State_Exited:
       {
-	result = itksysProcess_GetExitValue(m_Process);
+	itksysProcess_GetExitValue(m_Process);
       } break;
       case itksysProcess_State_Error:
       {
