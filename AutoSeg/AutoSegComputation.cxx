@@ -5795,10 +5795,16 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3)"<<std::endl;
 	  if (GetANTSCCWeight() > 0.01)
 	    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m CC[${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension},${ANTSCCWeight},${ANTSCCRegionRadius}])"<<std::endl;
-	  if (GetANTSMIWeight() > 0.01)
+	  else if (GetANTSMIWeight() > 0.01)
 	    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
-	  if (GetANTSMSQWeight() > 0.01)
+	  else if (GetANTSMSQWeight() > 0.01)
 	    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension}],${ANTSMSQWeight},0.01)"<<std::endl;
+	  % ADDED by Yundi Shi to handle exception
+	  else{
+	    std::cerr<<"Error:   Please specify the metric used in ANTS by ssigning a non-zero weighting "<<itksysProcess_GetExceptionString(m_Process)<<"\n";
+	    LogFile<<"Error:  Please specify the metric used in ANTS by ssigning a non-zero weighting "<<itksysProcess_GetExceptionString(m_Process)<<"\n";
+	  }
+	    
 	}
 	BMSAutoSegMainFile<<"    	set (command_line ${command_line} -i ${ANTSIterations} -o ${DisplacementFieldDirectory}${outputfilename})"<<std::endl;
 	if (std::strcmp(GetANTSRegistrationFilterType(), "GreedyDiffeomorphism") == 0)
