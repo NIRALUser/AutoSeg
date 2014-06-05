@@ -5799,10 +5799,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MI[${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension},${ANTSMIWeight},${ANTSMIBins}])"<<std::endl;
 	  else if (GetANTSMSQWeight() > 0.01)
 	    BMSAutoSegMainFile<<"    	set (command_line ${command_line} -m MSQ[${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile},${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension}],${ANTSMSQWeight},0.01)"<<std::endl;
-	  % ADDED by Yundi Shi to handle exception
+	  // ADDED by Yundi Shi to handle exception
 	  else{
-	    std::cerr<<"Error:   Please specify the metric used in ANTS by ssigning a non-zero weighting "<<itksysProcess_GetExceptionString(m_Process)<<"\n";
-	    LogFile<<"Error:  Please specify the metric used in ANTS by ssigning a non-zero weighting "<<itksysProcess_GetExceptionString(m_Process)<<"\n";
+	    std::cerr<<"Error:   Please specify the metric used in ANTS by ssigning a non-zero weighting "<<itksysProcess_GetExceptionString(m_Process)<<"\n"<<std::endl;
+	    LogFile<<"Error:  Please specify the metric used in ANTS by ssigning a non-zero weighting "<<itksysProcess_GetExceptionString(m_Process)<<"\n"<<std::endl;
 	  }
 	    
 	}
