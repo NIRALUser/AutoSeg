@@ -7,8 +7,8 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 3.0.0} open
-      xywh {576 69 900 980} type Double box UP_BOX resizable visible
+      label {AutoSeg 3.0.1} open selected
+      xywh {318 69 900 980} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {
         xywh {0 10 785 15} labelfont 8 textfont 8
@@ -79,7 +79,7 @@ class AutoSegGUI {open
         xywh {0 30 895 945} labelfont 8
       } {
         Fl_Group g_ComputationGroup {
-          label Computation open selected
+          label Computation open
           xywh {5 75 890 895} labelfont 8 align 69
         } {
           Fl_Group {} {
@@ -1281,11 +1281,11 @@ class AutoSegGUI {open
           } {
             Fl_Input g_InputDataOrientationDisp {
               label {Input orientation: }
-              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 116 40 24} labelfont 8 textfont 8 deactivate
+              tooltip {Orientation (3 letter code: RAI, LPS...)} xywh {795 116 40 24} labelfont 8 textfont 8 deactivate
             }
             Fl_Input g_OutputDataOrientationDisp {
               label {Output orientation: }
-              tooltip {Orientation (3 letters: RAI, LPS...)} xywh {795 146 40 24} labelfont 8 textfont 8 deactivate
+              tooltip {Orientation (3 letter code: RAI, LPS...)} xywh {795 146 40 24} labelfont 8 textfont 8 deactivate
             }
             Fl_Check_Button g_ReorientationButton {
               label Reorientation
