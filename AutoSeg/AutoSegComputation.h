@@ -35,11 +35,11 @@
 #include <math.h>
 #include <itkMultiThreader.h>
 
-#include "TextDisplayGUIControls.h"
+//#include "TextDisplayGUIControls.h"
 
-#include <FL/Fl_Text_Buffer.H>
-#include <FL/Fl_Text_Display.H>
-#include <FL/fl_ask.H>
+//#include <FL/Fl_Text_Buffer.H>
+//#include <FL/Fl_Text_Display.H>
+//#include <FL/fl_ask.H>
 #include <bmScriptParser.h>
 
 #define FILE_LIST_LENGTH 128
@@ -448,8 +448,8 @@ class AutoSegComputation
     bool m_BsplineTransformation;
 
     // Display
-    TextDisplayGUIControls TextDisplay;
-    Fl_Text_Buffer m_TextBuf;
+//    TextDisplayGUIControls TextDisplay;
+//    Fl_Text_Buffer m_TextBuf;
 
   private:
 

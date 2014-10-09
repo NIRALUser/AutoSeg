@@ -4,14 +4,17 @@
   Module:    $RCSfile: main.cxx,v $
   Language:  C++
   Date:      $Date: 2010/06/30 13:19:06 $
-  Version:  
+  Version:   $Revision: 1.5 $
+             $Revision: 1.6: 1. Remove the setting of alpha and beta on gui for N4 (11-20-2012)$
+             $               2. Revised thd BRAINSFit option --initializeTransformMode in AutoSegComputation.cxx (11-21-2012) / this revision is not true for the new version of BRAINSFit (12-04-2012) $
+             $               2. Excluded lines 2028, 2029 in AutoSegComputation.cxx (11-26-2012)$
   Author:    Clement Vachet, Jiahui Wang
 
   Copyright (c) 2004 NeuroImaging Lab @ UNC. All rights reserved.
   See NeuroLibCopyright.txt for details.
 
      This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTILITY or FITNESS FOR A PARTICULAR 
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -22,7 +25,7 @@
 #include "AutoSegGUIControls.h"
 #include "AutoSegComputation.h"
 
-#define AUTOSEG_VERSION "3.0.1"
+#define AUTOSEG_VERSION "2.9.2"
 
 void PrintHelp(char* progname)
 {
@@ -61,11 +64,18 @@ int main(int argc, char *argv[])
     AutoSegPath = getenv(AutoSegHome);
     if (AutoSegPath != NULL)
       {
-	AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath);  
-	Fl::scheme("plastic");
-	Fl::run();
-	delete MainWindow;
-	return 0;
+      QApplication app( argc , argv );
+      AutoSegGUIControls mainWindow( AutoSegPath );
+      mainWindow.show();
+      int ret = app.exec() ;
+      if( ret )
+      {
+          return EXIT_FAILURE ;
+      }
+      else
+      {
+          return EXIT_SUCCESS ;
+      }
       }
     else
       {
