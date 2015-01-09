@@ -75,6 +75,7 @@ AutoSegComputation::AutoSegComputation()
   m_IsAux6Image = false;
   m_IsAux7Image = false;
   m_IsAux8Image = false;
+  m_AtlasLoop[0] = '\0';
 }
 
 AutoSegComputation::~AutoSegComputation()
@@ -2488,20 +2489,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
 
-    BMSAutoSegMainFile<<"set (OrigT1CasesList "<<m_T1List[0]<<")"<<std::endl;
-    //BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
-    for (DataNumber = 1; DataNumber < GetNbData(); DataNumber++) {
+  BMSAutoSegMainFile<<"set (OrigT1CasesList "<<m_T1List[0]<<")"<<std::endl;
+  //BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
+  for (DataNumber = 1; DataNumber < GetNbData(); DataNumber++) {
         BMSAutoSegMainFile<<"set (OrigT1CasesList ${OrigT1CasesList} "<<m_T1List[DataNumber]<<")"<<std::endl;
         //BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
-    }
+  }
 
-    if (GetT2Image())
-    {
+  if (GetT2Image())
+  {
         BMSAutoSegMainFile<<"\nset (OrigT2CasesList "<<m_T2List[0]<<")"<<std::endl;
         for (DataNumber = 1; DataNumber < GetNbData(); DataNumber++) {
             BMSAutoSegMainFile<<"set (OrigT2CasesList ${OrigT2CasesList} "<<m_T2List[DataNumber]<<")"<<std::endl;
-        }
-    }  
+      }
+  }  
 
   if (GetPDImage())
   {
@@ -2536,8 +2537,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   }
 
   BMSAutoSegMainFile<<"# Stripped Atlas Directory"<<std::endl;
-  BMSAutoSegMainFile<<"set (atlasSegLocLoop "<<GetAtlasLoop()<<")"<<std::endl;
   
+  if (strcmp(GetAtlasLoop(),"")) {  
+      BMSAutoSegMainFile<<"set (atlasSegLocLoop "<<GetAtlasLoop()<<")"<<std::endl;
+    } else {
+      BMSAutoSegMainFile<<"set (atlasSegLocLoop None)"<<std::endl;
+    }
+    
+
   BMSAutoSegMainFile<<"# Parameters"<<std::endl;
   BMSAutoSegMainFile<<"set(EMSoftware "<<GetEMSoftware()<<")"<<std::endl;
   BMSAutoSegMainFile<<"set (ComputeVolume "<<GetComputeVolume()<<")"<<std::endl;
@@ -2565,6 +2572,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
   BMSAutoSegMainFile<<"set (WarpImageMultiTransformCmd WarpImageMultiTransform)"<<std::endl<<std::endl;
   BMSAutoSegMainFile<<"set (ANTSIterations "<<GetANTSIterations()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSCCWeight "<<GetANTSCCWeight()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSCCRegionRadius "<<GetANTSCCRegionRadius()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSMIWeight "<<GetANTSMIWeight()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSMIBins "<<GetANTSMIBins()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSMSQWeight "<<GetANTSMSQWeight()<<")"<<std::endl;
+  
+  BMSAutoSegMainFile<<"set (ANTSCCWeight2nd "<<GetANTSCCWeight2nd()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSCCRegionRadius2nd "<<GetANTSCCRegionRadius2nd()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSMIWeight2nd "<<GetANTSMIWeight2nd()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSMIBins2nd "<<GetANTSMIBins2nd()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSMSQWeight2nd "<<GetANTSMSQWeight2nd()<<")"<<std::endl;
+  
+  BMSAutoSegMainFile<<"set (ANTSTransformationStep "<<GetANTSTransformationStep()<<")"<<std::endl;
+  BMSAutoSegMainFile<<"set (ANTSGaussianSigma "<<GetANTSGaussianSigma()<<")"<<std::endl;
   
   BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
   BMSAutoSegMainFile<<"echo ('CHECKING FILES...')"<<std::endl;
@@ -2686,9 +2707,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
   if (GetT2Image())
   {
+    BMSAutoSegMainFile<<"set (T2CasesList ${OrigT2CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"GetParam(Case ${OrigT2CasesList} 0)"<<std::endl;
     BMSAutoSegMainFile<<"GetFilename (T2ImageExtension ${Case} EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"set (T2CasesList ${OrigT2CasesList})"<<std::endl;
 
     BMSAutoSegMainFile<<"ForEach (T2CasesListShow ${T2CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      echo ('T2 show cases: '${T2CasesListShow})"<<std::endl;
@@ -2696,9 +2717,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   }
   if (GetPDImage())
   {
+    BMSAutoSegMainFile<<"set (PDCasesList ${OrigPDCasesList})"<<std::endl;
     BMSAutoSegMainFile<<"GetParam(Case ${OrigPDCasesList} 0)"<<std::endl;
     BMSAutoSegMainFile<<"GetFilename (PDImageExtension ${Case} EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"set (PDCasesList ${OrigPDCasesList})"<<std::endl;
 
     BMSAutoSegMainFile<<"ForEach (PDCasesListShow ${PDCasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      echo ('PD show cases: '${PDCasesListShow})"<<std::endl;
@@ -3687,9 +3708,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"        set (SegmentedCase ${EMSPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl; 	
     else
     {
-      BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
-      BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"          set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+      if (GetT2Image()) {
+	BMSAutoSegMainFile<<"          GetParam(T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
+	BMSAutoSegMainFile<<"          GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+	BMSAutoSegMainFile<<"          set (SegmentedCase ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixLabel}.nrrd)"<<std::endl;
+      }
     }
     BMSAutoSegMainFile<<"        GetFilename (SegmentedCaseHead ${SegmentedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
 	
@@ -3929,19 +3952,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      EndIf (${WarpROIList})"<<std::endl;
     
     // for T2
-    BMSAutoSegMainFile<<"      GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
-    BMSAutoSegMainFile<<"      GetFilename (T2Path ${T2Case} PATH)"<<std::endl;
-    BMSAutoSegMainFile<<"Inc(${CaseNumber} 1)"<<std::endl;
+    if (GetT2Image()) {
+      BMSAutoSegMainFile<<"      GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
+      BMSAutoSegMainFile<<"      GetFilename (T2Path ${T2Case} PATH)"<<std::endl;
+      BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      echo('Case Number: '${T2CaseHead})"<<std::endl;
+      BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
+      BMSAutoSegMainFile<<"      set (T2StrippedPath ${T2Path}/${AutoSegDir}/Stripped/)"<<std::endl;
+      BMSAutoSegMainFile<<"      set (T2StrippedCaseHead ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS})"<<std::endl;
+      BMSAutoSegMainFile<<"      set (T2StrippedCaseTail ${T2StrippedCaseHead}.nrrd)"<<std::endl;
+      BMSAutoSegMainFile<<"      set (T2StrippedCase ${T2StrippedPath}${T2StrippedCaseTail})"<<std::endl;
+      BMSAutoSegMainFile<<"      GetFilename (T2StrippedCaseHead ${T2StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    }
 
-    BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo('Case Number: '${T2CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
-    BMSAutoSegMainFile<<"      set (T2StrippedPath ${T2Path}/${AutoSegDir}/Stripped/)"<<std::endl;
-    BMSAutoSegMainFile<<"      set (T2StrippedCaseHead ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS})"<<std::endl;
-    BMSAutoSegMainFile<<"      set (T2StrippedCaseTail ${T2StrippedCaseHead}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"      set (T2StrippedCase ${T2StrippedPath}${T2StrippedCaseTail})"<<std::endl;
-    BMSAutoSegMainFile<<"      GetFilename (T2StrippedCaseHead ${T2StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
+    BMSAutoSegMainFile<<"Inc(${CaseNumber} 1)"<<std::endl;
 
     BMSAutoSegMainFile<<"      ListFileInDir(DeformationFieldList ${WarpROIPath} AtlasWarpReg-${StrippedCaseHead}_Warp.nii.gz)"<<std::endl;
     BMSAutoSegMainFile<<"      If (${DeformationFieldList} == '')"<<std::endl;        
