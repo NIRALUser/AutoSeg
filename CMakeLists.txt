@@ -19,6 +19,16 @@ SETIFEMPTY(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 SETIFEMPTY(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 SETIFEMPTY(CMAKE_BUNDLE_OUTPUT_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
+#-----------------------------------------------------------------------------
+# Git protocole option
+#-----------------------------------------------------------------------------
+option(USE_GIT_PROTOCOL "If behind a firewall turn this off to use http
+instead." ON)
+set(git_protocol "git")
+if(NOT USE_GIT_PROTOCOL)
+  set(git_protocol "http")
+endif()
+
 set(LOCAL_CMAKE_BUILD_OPTIONS
   -DMAKECOMMAND:STRING=${MAKECOMMAND}
   -DCMAKE_SKIP_RPATH:BOOL=ON
@@ -67,6 +77,7 @@ endif()
 PACKAGE_NEEDS_ITK("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
 PACKAGE_NEEDS_VTK_NOGUI("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
 PACKAGE_NEEDS_SlicerExecutionModel("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
+PACKAGE_NEEDS_BatchMake("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
 
 OPTION(COMPILE_EXTERNAL_NIRAL_UTILITIES "Compile NIRALUtilities." ON)
 IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
@@ -75,11 +86,11 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
   OPTION(COMPILE_EXTERNAL_IMAGEMATH "Compile ImageMath." ON)
   OPTION(COMPILE_EXTERNAL_INTENSITYRESCALER "Compile IntensityRescaler." OFF)
   set(proj NIRALUtilities)
+  set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/niral_utilities.git )
+  set( ${proj}_GIT_TAG a61be26aeae26dcef1739e0a2d876a24c72b003e )
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/niral_utilities/trunk/"
-    SVN_USERNAME "slicerbot"
-    SVN_PASSWORD "slicer"
-    SVN_REVISION  -r 36
+    GIT_REPOSITORY ${${proj}_REPOSITORY}
+    GIT_TAG ${${proj}_GIT_TAG}
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND} ${VTK_DEPEND}
@@ -154,45 +165,35 @@ OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
 IF(COMPILE_EXTERNAL_ABC)
   set(proj abc)
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/tags/ABC-REL1.4.1/"
+    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/trunk"
     SVN_USERNAME "slicerbot"
     SVN_PASSWORD "slicer"
+    SVN_REVISION -r 67
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
-    DEPENDS  ${ITK_DEPEND}
+    DEPENDS ${ITK_DEPEND}
     CMAKE_GENERATOR ${gen}
     CMAKE_ARGS
       ${LOCAL_CMAKE_BUILD_OPTIONS}
       -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
       -DITK_DIR:PATH=${ITK_DIR}
-      -DCOMPILE_SLICER3COMMANDLINE:BOOL=OFF
-      -DCOMPILE_COMMANDLINE:BOOL=COMPILE_EXTERNAL_ABC
+      -DCOMPILE_SLICER4COMMANDLINE:BOOL=OFF
+      -DCOMPILE_COMMANDLINE:BOOL=ON
+      -DSlicer_SOURCE_DIR:PATH=${EXTERNAL_BINARY_DIRECTORY}/${proj}-build#Dummy
+directory to set the variable so that ABC doesn't try to find Slicer
+    PATCH_COMMAND ${CMAKE_COMMAND} -E copy
+${CMAKE_CURRENT_SOURCE_DIR}/CMake/ABC_patch-CMakeLists.txt
+${CMAKE_BINARY_DIR}/${proj}/CMakeLists.txt
     INSTALL_COMMAND ""
-    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-  )
+   )
+   ExternalProject_Add_Step(abc e1
+      COMMAND ${CMAKE_COMMAND} -E copy
+${CMAKE_CURRENT_SOURCE_DIR}/CMake/ABC_patch-subdirCLI-CMakeLists.txt
+${CMAKE_BINARY_DIR}/${proj}/StandAloneCLI/CMakeLists.txt
+      DEPENDEES patch
+      DEPENDERS configure
+   )
 ENDIF(COMPILE_EXTERNAL_ABC)
-
-OPTION(COMPILE_EXTERNAL_BATCHMAKE "Compile External BatchMake." ON)
-IF(COMPILE_EXTERNAL_BATCHMAKE)
-  set(proj BatchMake)
-  set(${proj}_REPOSITORY git://batchmake.org/BatchMake.git CACHE STRING "" FORCE)
-  ExternalProject_Add(${proj}
-      GIT_REPOSITORY ${${proj}_REPOSITORY}
-      GIT_TAG "43d21fcccd09e5a12497bc1fb924bc6d5718f98c"
-      SOURCE_DIR BatchMake
-      BINARY_DIR BatchMake-build
-      CMAKE_GENERATOR ${gen}
-      DEPENDS  ${ITK_DEPEND}
-      CMAKE_ARGS
-        ${LOCAL_CMAKE_BUILD_OPTIONS}
-        -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
-        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-        -DUSE_SPLASHSCREEN:BOOL=OFF
-        -DITK_DIR:FILEPATH=${ITK_DIR}
-    INSTALL_COMMAND ""
-    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
-  )
-ENDIF(COMPILE_EXTERNAL_BATCHMAKE)
 
 OPTION(COMPILE_AUTOSEG "Compile AutoSeg." ON)
 IF(COMPILE_AUTOSEG)

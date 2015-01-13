@@ -30,7 +30,6 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "itkOrientedImage.h"
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkMeanSquaresImageToImageMetric.h"
 #include "itkNormalizedCorrelationImageToImageMetric.h"
