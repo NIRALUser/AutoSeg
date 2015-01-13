@@ -87,7 +87,7 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
   OPTION(COMPILE_EXTERNAL_INTENSITYRESCALER "Compile IntensityRescaler." OFF)
   set(proj NIRALUtilities)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/niral_utilities.git )
-  set( ${proj}_GIT_TAG a61be26aeae26dcef1739e0a2d876a24c72b003e )
+  set( ${proj}_GIT_TAG debff5f9fbf41f7508e5d3988c33e56dee5cdcc6 )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}
@@ -102,7 +102,8 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
       -DCOMPILE_CONVERTITKFORMATS:BOOL=${COMPILE_EXTERNAL_CONVERTITKFORMATS}
       -DCOMPILE_IMAGESTAT:BOOL=${COMPILE_EXTERNAL_IMAGESTAT}
       -DCOMPILE_IMAGEMATH:BOOL=${COMPILE_EXTERNAL_IMAGEMATH}
-      -DCOMPILE_INTENSITYRESCALER:BOOL=${COMPILE_EXTERNAL_INTENSITYRESCALER}
+      -DCOMPILE_IntensityRescaler:BOOL=${COMPILE_EXTERNAL_INTENSITYRESCALER}
+      -DCOMPILE_Unsupported:BOOL=ON
       -DCOMPILE_TRANSFORMDEFORMATIONFIELD:BOOL=OFF
       -DCOMPILE_CROPTOOLS:BOOL=OFF
     -DCOMPILE_DWI_NIFTINRRDCONVERSION:BOOL=OFF
@@ -119,20 +120,24 @@ ENDIF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
 OPTION(COMPILE_EXTERNAL_CORTTHICK "Compile CortThick." ON)
 IF(COMPILE_EXTERNAL_CORTTHICK)
   set(proj CortThick)
+  set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/ARCTIC.git )
+  set( ${proj}_GIT_TAG ccf2c8f4007534c73fbb27edf1b30aa2154b3b9e )
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/arctic/trunk/CortThick/"
-    SVN_USERNAME "slicerbot"
-    SVN_PASSWORD "slicer"
+    GIT_REPOSITORY ${${proj}_REPOSITORY}
+    GIT_TAG ${${proj}_GIT_TAG}
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
-    DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND} ${VTK_DEPEND}
+    DEPENDS ${ITK_DEPEND} ${SlicerExecutionModel_DEPEND} ${VTK_DEPEND}
     CMAKE_GENERATOR ${gen}
     CMAKE_ARGS
       ${LOCAL_CMAKE_BUILD_OPTIONS}
       -DITK_DIR:PATH=${ITK_DIR}
-      -DFLTK_DIR:PATH=${FLTK_DIR}
-      -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
+      -DSlicerExecutionModel_DIR:PATH=${SlicerExecutionModel_DIR}
       -DVTK_DIR:PATH=${VTK_DIR}
+      -DCOMPILE_ImageMath:BOOL=OFF
+      -DCOMPILE_ImageStat:BOOL=OFF
+      -DCOMPILE_ITKEMS:BOOL=OFF
+      -DCOMPILE_SegPostProcess:BOOL=OFF
     INSTALL_COMMAND ""
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
   )
@@ -142,19 +147,35 @@ ENDIF(COMPILE_EXTERNAL_CORTTHICK)
 OPTION(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP "Compile SegPostProcessCLP." ON)
 IF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
   set(proj SegPostProcessCLP)
+  set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/SPHARM-PDM.git )
+  set( ${proj}_GIT_TAG d7b3ce71b58d4e4ebacd153315fd6c957cf183b0 )
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/spharm-pdm/Applications/SegPostProcessCLP/"
-    SVN_USERNAME "slicerbot"
-    SVN_PASSWORD "slicer"
-    SVN_REVISION  -r 124
+    GIT_REPOSITORY ${${proj}_REPOSITORY}
+    GIT_TAG ${${proj}_GIT_TAG}
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
-    DEPENDS ${ITK_DEPEND} ${GenerateCLP_DEPEND}
+    DEPENDS ${ITK_DEPEND} ${SlicerExecutionModel_DEPEND} ${VTK_DEPEND} ${BatchMake_DEPEND}
     CMAKE_GENERATOR ${gen}
     CMAKE_ARGS
       ${LOCAL_CMAKE_BUILD_OPTIONS}
       -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
       -DITK_DIR:PATH=${ITK_DIR}
+      -DVTK_DIR:PATH=${VTK_DIR}
+      -DBatchMake_DIR:PATH=${BatchMake_DIR}
+      -DCOMPILE_ImageMath:BOOL=OFF
+      -DCOMPILE_MetaMeshTools:BOOL=OFF
+      -DCOMPILE_SegPostProcessCLP:BOOL=ON
+      -DCOMPILE_GenParaMeshCLP:BOOL=OFF
+      -DCOMPILE_RadiusToMesh:BOOL=OFF
+      -DCOMPILE_ParaToSPHARMMeshCLP:BOOL=OFF
+      -DCOMPILE_ShapeAnalysisModule:BOOL=OFF
+      -DCOMPILE_SpharmTool:BOOL=OFF
+      -DCOMPILE_shapeAnalysisMANCOVA_Wizard:BOOL=OFF
+      -DCOMPILE_StatNonParamTestPDM:BOOL=OFF
+      -DCOMPILE_shapeworks:BOOL=OFF
+      -DCOMPILE_ParticleModule:BOOL=OFF
+      -DBUILD_LIBRARIES:BOOL=OFF
+      -DSPHARM-PDM_SUPERBUILD:BOOL=OFF
     INSTALL_COMMAND ""
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
   )
@@ -164,11 +185,11 @@ ENDIF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
 OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
 IF(COMPILE_EXTERNAL_ABC)
   set(proj abc)
+  set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/ABC.git )
+  set( ${proj}_GIT_TAG 20788dd86f4dbab4edb695da1f0e75c049d4210f )
   ExternalProject_Add(${proj}
-    SVN_REPOSITORY "https://www.nitrc.org/svn/abc/trunk"
-    SVN_USERNAME "slicerbot"
-    SVN_PASSWORD "slicer"
-    SVN_REVISION -r 67
+    GIT_REPOSITORY ${${proj}_REPOSITORY}
+    GIT_TAG ${${proj}_GIT_TAG}
     SOURCE_DIR ${proj}
     BINARY_DIR ${proj}-build
     DEPENDS ${ITK_DEPEND}
@@ -178,20 +199,10 @@ IF(COMPILE_EXTERNAL_ABC)
       -DGenerateCLP_DIR:PATH=${GenerateCLP_DIR}
       -DITK_DIR:PATH=${ITK_DIR}
       -DCOMPILE_SLICER4COMMANDLINE:BOOL=OFF
+      -DCOMPILE_BRAINSEG:BOOL=OFF
+      -DCOMPILE_STANDALONEGUI:BOOL=OFF
       -DCOMPILE_COMMANDLINE:BOOL=ON
-      -DSlicer_SOURCE_DIR:PATH=${EXTERNAL_BINARY_DIRECTORY}/${proj}-build#Dummy
-directory to set the variable so that ABC doesn't try to find Slicer
-    PATCH_COMMAND ${CMAKE_COMMAND} -E copy
-${CMAKE_CURRENT_SOURCE_DIR}/CMake/ABC_patch-CMakeLists.txt
-${CMAKE_BINARY_DIR}/${proj}/CMakeLists.txt
     INSTALL_COMMAND ""
-   )
-   ExternalProject_Add_Step(abc e1
-      COMMAND ${CMAKE_COMMAND} -E copy
-${CMAKE_CURRENT_SOURCE_DIR}/CMake/ABC_patch-subdirCLI-CMakeLists.txt
-${CMAKE_BINARY_DIR}/${proj}/StandAloneCLI/CMakeLists.txt
-      DEPENDEES patch
-      DEPENDERS configure
    )
 ENDIF(COMPILE_EXTERNAL_ABC)
 
