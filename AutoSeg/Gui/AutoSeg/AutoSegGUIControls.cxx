@@ -129,13 +129,13 @@ float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDir
 
 float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::string filename)
 {
-    typedef itk::OrientedImage< float, 3 >          OrientedImageType;
-    typedef itk::ImageFileReader<OrientedImageType> OrientedReaderType;
-    typedef itk::ImageFileWriter<OrientedImageType> OrientedWriterType;
-    OrientedReaderType::Pointer                     orientedreader = OrientedReaderType::New();
-    OrientedImageType::Pointer                      deformationField; 
-    OrientedImageType::IndexType                    index;
-    OrientedImageType::SizeType                     size;
+    typedef itk::Image< float, 3 >          ImageType;
+    typedef itk::ImageFileReader<ImageType> ReaderType;
+    typedef itk::ImageFileWriter<ImageType> WriterType;
+    ReaderType::Pointer                     orientedreader = ReaderType::New();
+    ImageType::Pointer                      deformationField; 
+    ImageType::IndexType                    index;
+    ImageType::SizeType                     size;
     float                                           HE = 0;
 
     orientedreader->SetFileName( deformedFieldDirectory );

@@ -12,7 +12,14 @@ macro(FORCE_BUILD_CHECK  proj)
       ALWAYS 1
     )
 endmacro()
-
+#-----------------------------------------------------------------------------
+# Git protocole option
+#-----------------------------------------------------------------------------
+option(USE_GIT_PROTOCOL "If behind a firewall turn this off to use http instead." ON)
+set(git_protocol "git")
+if(NOT USE_GIT_PROTOCOL)
+  set(git_protocol "http")
+endif()
 #-----------------------------------------------------------------------------
 ## empty until ITK is brought into here as an ExternalProject
 macro(PACKAGE_NEEDS_ITK LOCAL_CMAKE_BUILD_OPTIONS gen)
@@ -25,10 +32,12 @@ macro(PACKAGE_NEEDS_ITK LOCAL_CMAKE_BUILD_OPTIONS gen)
     set(ITK_DEPEND "") ## Set the external depandancy for ITK
   else()
     set(proj Insight)
+    set(${proj}_REPOSITORY ${git_protocol}://itk.org/ITK.git)
+    set(${proj}_GIT_TAG 12f11d1f408680d24b6380856dd28dbe43582285 )
+    set(ITK_VERSION_ID ITK-4.8)
     ExternalProject_Add(${proj}
-      CVS_REPOSITORY ":pserver:anonymous:insight@public.kitware.com:/cvsroot/Insight"
-      CVS_MODULE "Insight"
-      CVS_TAG -r ITK-3-20
+      GIT_REPOSITORY ${${proj}_REPOSITORY}
+      GIT_TAG ${${proj}_GIT_TAG}
       UPDATE_COMMAND ""
       SOURCE_DIR ${proj}
       BINARY_DIR ${proj}-build
@@ -38,15 +47,8 @@ macro(PACKAGE_NEEDS_ITK LOCAL_CMAKE_BUILD_OPTIONS gen)
         -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
         -DBUILD_TESTING:BOOL=OFF
         -DITK_USE_REVIEW:BOOL=ON
-        -DITK_USE_REVIEW_STATISTICS:BOOL=ON
-        -DITK_USE_TRANSFORM_IO_FACTORIES:BOOL=ON
-        -DITK_USE_ORIENTED_IMAGE_DIRECTION:BOOL=ON
-        -DITK_IMAGE_BEHAVES_AS_ORIENTED_IMAGE:BOOL=ON
-        -DITK_USE_OPTIMIZED_REGISTRATION_METHODS:BOOL=ON
-        -DITK_USE_PORTABLE_ROUND:BOOL=ON
-        -DITK_USE_CENTERED_PIXEL_COORDINATES_CONSISTENTLY:BOOL=ON
-        -DITK_USE_TRANSFORM_IO_FACTORIES:BOOL=ON
-        -DITK_LEGACY_REMOVE:BOOL=ON
+        -DITKV3_COMPATIBILITY:BOOL=ON
+#        -DITK_USE_REVIEW_STATISTICS:BOOL=ON
         INSTALL_COMMAND ""
         INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
     )
@@ -69,8 +71,6 @@ macro(PACKAGE_NEEDS_VTKWITHQT LOCAL_CMAKE_BUILD_OPTIONS gen)
     set(VTK_DEPEND "") ## Set the external depandancy for VTK
   else()
     set(proj vtk-5-6)
-    set(vtk_tag -r VTK-5-6)
-    set(vtk_module VTK)
 
     set(vtk_WRAP_TCL OFF)
     set(vtk_WRAP_PYTHON OFF)
@@ -100,12 +100,11 @@ macro(PACKAGE_NEEDS_VTKWITHQT LOCAL_CMAKE_BUILD_OPTIONS gen)
         -DVTK_REQUIRED_OBJCXX_FLAGS:STRING=
         )
     endif(APPLE)
-
+    set(${proj}_GIT_TAG "v5.6.0")
+    set(${proj}_REPOSITORY ${git_protocol}://vtk.org/VTK.git)
     ExternalProject_Add(${proj}
-      CVS_REPOSITORY ":pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK"
-      CVS_MODULE "${vtk_module}"
-      CVS_TAG ${vtk_tag}
-      UPDATE_COMMAND ""
+      GIT_REPOSITORY ${${proj}_REPOSITORY}
+      GIT_TAG ${${proj}_GIT_TAG}
       SOURCE_DIR ${proj}
       BINARY_DIR ${proj}-build
       CMAKE_GENERATOR ${gen}
@@ -142,8 +141,6 @@ macro(PACKAGE_NEEDS_VTK_NOGUI LOCAL_CMAKE_BUILD_OPTIONS gen)
     set(VTK_DEPEND "") ## Set the external depandancy for ITK
   else()
     set(proj vtk-5-6)
-    set(vtk_tag -r VTK-5-6)
-    set(vtk_module VTK)
 
     set(vtk_WRAP_TCL OFF)
     set(vtk_WRAP_PYTHON OFF)
@@ -164,12 +161,11 @@ macro(PACKAGE_NEEDS_VTK_NOGUI LOCAL_CMAKE_BUILD_OPTIONS gen)
         -DVTK_REQUIRED_OBJCXX_FLAGS:STRING=
         )
     endif(APPLE)
-
+    set(${proj}_GIT_TAG "v5.6.0")
+    set(${proj}_REPOSITORY ${git_protocol}://vtk.org/VTK.git)
     ExternalProject_Add(${proj}
-      CVS_REPOSITORY ":pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK"
-      CVS_MODULE "${vtk_module}"
-      CVS_TAG ${vtk_tag}
-      UPDATE_COMMAND ""
+      GIT_REPOSITORY ${${proj}_REPOSITORY}
+      GIT_TAG ${${proj}_GIT_TAG}
       SOURCE_DIR ${proj}
       BINARY_DIR ${proj}-build
       CMAKE_GENERATOR ${gen}
@@ -210,8 +206,11 @@ macro(PACKAGE_NEEDS_SlicerExecutionModel LOCAL_CMAKE_BUILD_OPTIONS gen)
   else()
     #### ALWAYS BUILD WITH STATIC LIBS
     set(proj SlicerExecutionModel)
+    set(${proj}_REPOSITORY "${git_protocol}://github.com/Slicer/SlicerExecutionModel.git")
+    set(${proj}_GIT_TAG "e96f2965378cd9a9e5217cd43c8023350138b1cf")
     ExternalProject_Add(${proj}
-      SVN_REPOSITORY "http://svn.slicer.org/Slicer3/trunk/Libs/SlicerExecutionModel"
+      GIT_REPOSITORY ${${proj}_REPOSITORY}
+      GIT_TAG ${${proj}_GIT_TAG}
       SOURCE_DIR ${proj}
       BINARY_DIR ${proj}-build
       DEPENDS ${ITK_DEPEND}
@@ -225,6 +224,7 @@ macro(PACKAGE_NEEDS_SlicerExecutionModel LOCAL_CMAKE_BUILD_OPTIONS gen)
     )
     FORCE_BUILD_CHECK(${proj})
     set(GenerateCLP_DIR ${CMAKE_CURRENT_BINARY_DIR}/SlicerExecutionModel-build/GenerateCLP)
+    set(SlicerExecutionModel_DIR ${CMAKE_CURRENT_BINARY_DIR}/SlicerExecutionModel-build)
     set(GenerateCLP_DEPEND "${proj}")
     set(SlicerExecutionModel_DEPEND "${proj}")
   endif()
@@ -280,10 +280,11 @@ macro(PACKAGE_NEEDS_BatchMake LOCAL_CMAKE_BUILD_OPTIONS gen)
   else()
     #### ALWAYS BUILD WITH STATIC LIBS
     set(proj BatchMake)
+    set(${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/BatchMake.git)
+    set(${proj}_GIT_TAG "5e1c185b564ac2acef35ba68fbde370c19ba33de")
     ExternalProject_Add(${proj}
-      CVS_REPOSITORY ":pserver:anoncvs@batchmake.org:/cvsroot/BatchMake"
-      CVS_MODULE "BatchMake"
-      CVS_TAG -r BatchMake-1-3
+      GIT_REPOSITORY ${${proj}_REPOSITORY}
+      GIT_TAG ${${proj}_GIT_TAG}
       UPDATE_COMMAND ""
       SOURCE_DIR ${proj}
       BINARY_DIR ${proj}-build
@@ -291,7 +292,10 @@ macro(PACKAGE_NEEDS_BatchMake LOCAL_CMAKE_BUILD_OPTIONS gen)
       CMAKE_GENERATOR ${gen}
       CMAKE_ARGS
         ${LOCAL_CMAKE_BUILD_OPTIONS}
-        -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
+        --no-warn-unused-cli
+        -DUSE_FLTK:BOOL=OFF
+        -DGRID_SUPPORT:BOOL=ON
+        -DUSE_SPLASHSCREEN:BOOL=OFF
         -DITK_DIR:PATH=${ITK_DIR}
         INSTALL_COMMAND ""
         INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
