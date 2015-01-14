@@ -340,3 +340,56 @@ macro(PACKAGE_NEEDS_vtkITK LOCAL_CMAKE_BUILD_OPTIONS gen)
     set(vtkITK_DEPEND "${proj}")
   endif()
 endmacro()
+
+#-----------------------------------------------------------------------------
+# Get and build FLTK
+##  Build the FLTK Once, and let all derived project use the same version
+macro(PACKAGE_NEEDS_FLTK LOCAL_CMAKE_BUILD_OPTIONS gen)
+  set(packageToCheck FLTK)
+  OPTION(OPT_USE_SYSTEM_${packageToCheck} "Use the system's ${packageToCheck} library." OFF)
+  #  MARK_AS_ADVANCED(OPT_USE_SYSTEM_${packageToCheck})
+  set( FLTK_LOCAL_CMAKE_BUILD_OPTIONS ${LOCAL_CMAKE_BUILD_OPTIONS} )
+  list( REMOVE_ITEM FLTK_LOCAL_CMAKE_BUILD_OPTIONS "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" )
+  list( REMOVE_ITEM FLTK_LOCAL_CMAKE_BUILD_OPTIONS "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY:PATH=${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}" )
+  list( REMOVE_ITEM FLTK_LOCAL_CMAKE_BUILD_OPTIONS "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY:PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )
+  list( REMOVE_ITEM FLTK_LOCAL_CMAKE_BUILD_OPTIONS "-DCMAKE_BUNDLE_OUTPUT_DIRECTORY:PATH=${CMAKE_BUNDLE_OUTPUT_DIRECTORY}" )
+  list( REMOVE_ITEM FLTK_LOCAL_CMAKE_BUILD_OPTIONS "-DLIBRARY_OUTPUT_PATH:PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" )
+  list( REMOVE_ITEM FLTK_LOCAL_CMAKE_BUILD_OPTIONS "-DEXECUTABLE_OUTPUT_PATH:PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )
+  if(OPT_USE_SYSTEM_FLTK)
+    find_package(FLTK REQUIRED)
+    set(FLTK_DEPEND "")
+  else()
+    OPTION(PATCH_FLTK "Patch FLTK library (patch if getting compilation error)." OFF)
+    if( PATCH_FLTK )
+      set( PATCH_FLTK_COMMAND  PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/CMake/FLTK-path-filename_list.cxx ${CMAKE_CURRENT_BINARY_DIR}/FLTK/src/filename_list.cxx )
+      message( WARNING "Remove FLTK files that have already been downloaded and compiled with this option set to OFF" )
+    endif()
+    #### ALWAYS BUILD WITH STATIC LIBS
+    set(proj FLTK)
+    ExternalProject_Add(${proj}
+      DOWNLOAD_NAME fltk-1.1.10.tar.gz
+      DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}
+      #If URL does not work anymore, uncomment the next line (copy of fltk-1.1.10.tar.gz on the NIRAL website) and comment the following one. (CMake must be build with SSL support)
+      #URL https://www.med.unc.edu/psych/research/niral/files/externaltools/fltk-1-1-10-tar.gz/at_download/file
+      URL http://fltk.org/pub/fltk/1.1.10/fltk-1.1.10-source.tar.gz
+      URL_MD5 e6378a76ca1ef073bcb092df1ef3ba55
+      SOURCE_DIR ${proj}
+      BINARY_DIR ${proj}-build
+      CMAKE_GENERATOR ${gen}
+      CMAKE_ARGS
+        ${FLTK_LOCAL_CMAKE_BUILD_OPTIONS}
+        -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
+        -DBUILD_EXAMPLES:BOOL=OFF
+        -DBUILD_TESTING:BOOL=OFF
+        -DFLTK_USE_SYSTEM_JPEG:BOOL=OFF
+        -DFLTK_USE_SYSTEM_PNG:BOOL=OFF
+        -DFLTK_USE_SYSTEM_ZLIB:BOOL=OFF
+        -DUSE_OPENGL:BOOL=ON
+       ${PATCH_FLTK_COMMAND}
+       INSTALL_COMMAND ""
+    )
+    FORCE_BUILD_CHECK(${proj})
+    set(FLTK_DIR ${CMAKE_CURRENT_BINARY_DIR}/${proj}-build)
+    set(FLTK_DEPEND "${proj}")
+  endif()
+endmacro()
