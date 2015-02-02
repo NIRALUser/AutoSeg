@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0300 
+version 1.0110 
 header_name {.h} 
 code_name {.cxx}
 class AboutGUI {open
@@ -8,10 +8,10 @@ class AboutGUI {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg - About} open
-      xywh {659 151 545 450} type Single modal visible
+      xywh {659 151 545 450} type Single hide modal
     } {
-      Fl_Button {} {
-        label {AutoSeg 3.0.0}
+      Fl_Button AboutGUI_Label {
+        label Unknown selected
         xywh {200 20 115 30} box NO_BOX labelfont 1 labelsize 18
       }
       Fl_Button {} {
@@ -32,7 +32,7 @@ class AboutGUI {open
         xywh {190 291 105 24} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {
-        label {www.niral.unc.edu} selected
+        label {www.niral.unc.edu}
         xywh {150 356 120 24} box NO_BOX labelfont 8 align 16
       }
       Fl_Button {} {

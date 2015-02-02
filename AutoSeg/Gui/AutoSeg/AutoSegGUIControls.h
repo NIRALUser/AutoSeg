@@ -68,7 +68,7 @@ class AutoSegGUIControls : public AutoSegGUI
 {
   public:
   
-    AutoSegGUIControls(char *_AutoSegPath);
+    AutoSegGUIControls(char *_AutoSegPath, const char *AutoSegVersion);
     virtual ~AutoSegGUIControls();
 
   // Menu
@@ -402,7 +402,7 @@ class AutoSegGUIControls : public AutoSegGUI
     bool m_IsSubcorticalStructureSegmentation;
     bool m_IsGenericROISegmentation;
     bool m_IsParcellationMapSegmentation;
-  
+    std::string m_AutoSegVersion ;
   // Default Parameter Files
     char m_DefaultParameterFile[512];
     char *m_ProcessDataDirectory;

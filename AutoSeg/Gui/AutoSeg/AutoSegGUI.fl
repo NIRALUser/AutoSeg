@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0109 
+version 1.0110 
 header_name {.h} 
 code_name {.cxx}
 class AutoSegGUI {open
@@ -7,8 +7,8 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label {AutoSeg 3.0.1} open selected
-      xywh {318 69 900 980} type Double box UP_BOX resizable visible
+      label AutoSeg open selected
+      xywh {207 69 900 980} type Double box UP_BOX hide resizable
     } {
       Fl_Menu_Bar g_MenuBar {
         xywh {0 10 785 15} labelfont 8 textfont 8
@@ -603,7 +603,7 @@ class AutoSegGUI {open
               Fl_Spinner g_LoopIteration {
                 label {\# iterations}
                 callback {SetLoopIterationGUI()}
-                xywh {810 186 45 25} labelfont 8 when 1 value 1 textfont 8
+                xywh {810 186 45 25} labelfont 8 when 1 textfont 8
               }
             }
             Fl_Button {} {
@@ -1231,7 +1231,7 @@ class AutoSegGUI {open
               Fl_Spinner g_SplineDistance {
                 label {Spline distance:}
                 callback {SetSplineDistanceGUI()}
-                xywh {710 330 75 25} type Float labelfont 8 when 1 step 0.5 value 1 textfont 8
+                xywh {710 330 75 25} type Float labelfont 8 when 1 step 0.5 textfont 8
               }
               Fl_Spinner g_ShrinkFactor {
                 label {Shrink factor:}
@@ -1470,7 +1470,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSCCWeight {
                       label {CC weight :}
                       callback {SetANTSCCWeightGUI()}
-                      tooltip {Similarity: cross-correlation} xywh {340 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Similarity: cross-correlation} xywh {340 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                     Fl_Spinner g_ANTSCCRegionRadius {
                       label {CC region radius :}
@@ -1480,7 +1480,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMIWeight {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins {
                       label {MI radius :}
@@ -1490,7 +1490,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMSQWeight {
                       label {MSQ weight :}
                       callback {SetANTSMSQWeightGUI()}
-                      tooltip {Weight for mean-square difference} xywh {650 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mean-square difference} xywh {650 568 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                   }
                   Fl_Group {} {
@@ -1562,7 +1562,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSCCWeight2nd {
                       label {CC weight :}
                       callback {SetANTSCCWeightGUI2nd()}
-                      tooltip {Similarity: cross-correlation} xywh {340 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Similarity: cross-correlation} xywh {340 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                     Fl_Spinner g_ANTSCCRegionRadius2nd {
                       label {CC region radius :}
@@ -1572,7 +1572,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMIWeight2nd {
                       label {MI weight :}
                       callback {SetANTSMIWeightGUI2nd()}
-                      tooltip {Weight for mutual-information similarity} xywh {480 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mutual-information similarity} xywh {480 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                     Fl_Spinner g_ANTSMIBins2nd {
                       label {MI radius :}
@@ -1582,7 +1582,7 @@ class AutoSegGUI {open
                     Fl_Spinner g_ANTSMSQWeight2nd {
                       label {MSQ weight :}
                       callback {SetANTSMSQWeightGUI2nd()}
-                      tooltip {Weight for mean-square difference} xywh {650 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 value 1 textfont 8
+                      tooltip {Weight for mean-square difference} xywh {650 663 45 23} type Float labelfont 8 minimum 0 maximum 10 step 0.1 textfont 8
                     }
                   }
                 }

@@ -54,26 +54,26 @@ int main(int argc, char *argv[])
 
   if (gui)
   {
-    freopen(logFilename,"w",stdout); //redirect stdout
-    freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
     const char *AutoSegHome = "AUTOSEG_HOME";
     char *AutoSegPath = NULL;
     AutoSegPath = getenv(AutoSegHome);
     if (AutoSegPath != NULL)
-      {
-	AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath);  
-	Fl::scheme("plastic");
-	Fl::run();
-	delete MainWindow;
-	return 0;
-      }
+    {
+        freopen(logFilename,"w",stdout); //redirect stdout
+        freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
+        AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath,AUTOSEG_VERSION);
+        Fl::scheme("plastic");
+        Fl::run();
+        delete MainWindow;
+        return 0;
+    }
     else
-      {
-	std::cerr<<"The environment variable 'AUTOSEG_HOME' needs to be set"<<std::endl;
-	std::cerr<<"bash usage : export AUTOSEG_HOME=<InputDirectory>"<<std::endl;
-	std::cerr<<"tcsh usage : setenv AUTOSEG_HOME <InputDirectory>"<<std::endl;
-	return -1;
-      }
+    {
+        std::cerr<<"The environment variable 'AUTOSEG_HOME' needs to be set"<<std::endl;
+        std::cerr<<"bash usage : export AUTOSEG_HOME=<InputDirectory>"<<std::endl;
+        std::cerr<<"tcsh usage : setenv AUTOSEG_HOME <InputDirectory>"<<std::endl;
+        return -1;
+    }
   }
   else if ( computationFile && parameterFile)
   {

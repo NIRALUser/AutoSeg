@@ -167,11 +167,12 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
     return HE;
 }
 
-AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath)
+AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath,const char*AutoSegVersion)
   : AutoSegGUI()
 {
+  m_AutoSegVersion = std::string("Autoseg ") + AutoSegVersion ;
+  this->g_MainWindow->label( m_AutoSegVersion.c_str() ) ;
   bool IsDefaultParameterFile;
-
   char DefaultParameterFile[512];
 
   g_MainWindow->show();
@@ -239,6 +240,7 @@ AutoSegGUIControls::~AutoSegGUIControls()
 void AutoSegGUIControls::AboutButtonPressed()
 {
   AboutGUIControls About;
+  About.AboutGUI_Label->label(m_AutoSegVersion.c_str());
   About.g_MainWindow->show();
   Fl::run();
 }
