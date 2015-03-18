@@ -1,8 +1,8 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0110 
+version 1.0303 
 header_name {.h} 
 code_name {.cxx}
-class AboutGUI {open
+class AboutGUI {open selected
 } {
   Function {AboutGUI()} {open
   } {
@@ -11,7 +11,7 @@ class AboutGUI {open
       xywh {659 151 545 450} type Single hide modal
     } {
       Fl_Button AboutGUI_Label {
-        label Unknown selected
+        label Unknown
         xywh {200 20 115 30} box NO_BOX labelfont 1 labelsize 18
       }
       Fl_Button {} {
@@ -73,8 +73,6 @@ class AboutGUI {open
       }
     }
   }
-  Function {OKButtonPressed()} {open return_type {virtual void}
-  } {}
-  Function {~AboutGUI()} {open
+  Function {OKButtonPressed()=0} {open return_type {virtual void}
   } {}
 } 

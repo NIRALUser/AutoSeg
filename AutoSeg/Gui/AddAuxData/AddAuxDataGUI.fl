@@ -1,14 +1,14 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0109 
+version 1.0303 
 header_name {.h} 
 code_name {.cxx}
-class AddAuxDataGUI {open
+class AddAuxDataGUI {open selected
 } {
   Function {AddAuxDataGUI()} {open
   } {
     Fl_Window g_MainWindow {
       label {AutoSeg - AddAuxData} open
-      xywh {648 323 615 600} type Double modal visible
+      xywh {648 296 615 600} type Double modal visible
     } {
       Fl_Button {} {
         label {Select the files:}
@@ -115,42 +115,40 @@ class AddAuxDataGUI {open
       }
       Fl_Return_Button g_OKButton {
         label OK
-        callback {OKButtonPressed();} selected
+        callback {OKButtonPressed();}
         xywh {385 550 85 25} labelfont 8
       }
       Fl_Button g_CancelButton {
         label Cancel
-        callback {CancelButtonPressed();} selected
+        callback {CancelButtonPressed();}
         xywh {485 550 85 25} labelfont 8
       }
     }
   }
-  Function {SetAuxT1FileGUI()} {open return_type {virtual void}
+  Function {SetAuxT1FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAuxT2FileGUI()} {open return_type {virtual void}
+  Function {SetAuxT2FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAuxPDFileGUI()} {open return_type {virtual void}
+  Function {SetAuxPDFileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux1FileGUI()} {open return_type {virtual void}
+  Function {SetAux1FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux2FileGUI()} {open return_type {virtual void}
+  Function {SetAux2FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux3FileGUI()} {open return_type {virtual void}
+  Function {SetAux3FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux4FileGUI()} {open return_type {virtual void}
+  Function {SetAux4FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux5FileGUI()} {open return_type {virtual void}
+  Function {SetAux5FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux6FileGUI()} {open return_type {virtual void}
+  Function {SetAux6FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux7FileGUI()} {open return_type {virtual void}
+  Function {SetAux7FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetAux8FileGUI()} {open return_type {virtual void}
+  Function {SetAux8FileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {OKButtonPressed()} {open return_type {virtual void}
+  Function {OKButtonPressed()=0} {open return_type {virtual void}
   } {}
-  Function {~AddAuxDataGUI()} {open return_type virtual
-  } {}
-  Function {CancelButtonPressed()} {open return_type {virtual void}
+  Function {CancelButtonPressed()=0} {open return_type {virtual void}
   } {}
 } 

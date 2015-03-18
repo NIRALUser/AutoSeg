@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0110 
+version 1.0303 
 header_name {.h} 
 code_name {.cxx}
 class AutoSegGUI {open
@@ -7,8 +7,8 @@ class AutoSegGUI {open
   Function {AutoSegGUI()} {open
   } {
     Fl_Window g_MainWindow {
-      label AutoSeg open selected
-      xywh {207 69 900 980} type Double box UP_BOX hide resizable
+      label AutoSeg open
+      xywh {320 88 900 851} type Double box UP_BOX resizable visible
     } {
       Fl_Menu_Bar g_MenuBar {
         xywh {0 10 785 15} labelfont 8 textfont 8
@@ -1801,440 +1801,436 @@ class AutoSegGUI {open
       Fl_Group {} {open
         xywh {795 8 90 67} box PLASTIC_UP_BOX align 0
       } {
-        Fl_Button {} {
-          image {AutoSeg.jpg} xywh {800 15 80 50} box NO_BOX align 64 when 2 deactivate
+        Fl_Button {} {selected
+          image {AutoSeg.png} xywh {800 15 80 50} box NO_BOX align 64 when 2 deactivate
         }
       }
     }
   }
-  Function {LoadParameterFileGUI()} {return_type {virtual void}
+  Function {LoadParameterFileGUI()=0} {return_type {virtual void}
   } {}
-  Function {LoadComputationFileGUI()} {return_type {virtual void}
+  Function {LoadComputationFileGUI()=0} {return_type {virtual void}
   } {}
-  Function {SaveParameterFileGUI()} {return_type {virtual void}
+  Function {SaveParameterFileGUI()=0} {return_type {virtual void}
   } {}
-  Function {SaveComputationFileGUI()} {return_type {virtual void}
+  Function {SaveComputationFileGUI()=0} {return_type {virtual void}
   } {}
-  Function {UseDefaultParametersGUI()} {return_type {virtual void}
+  Function {UseDefaultParametersGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetDefaultParametersGUI()} {return_type {virtual void}
+  Function {SetDefaultParametersGUI()=0} {return_type {virtual void}
   } {}
-  Function {ResetDefaultParametersGUI()} {return_type {virtual void}
+  Function {ResetDefaultParametersGUI()=0} {return_type {virtual void}
   } {}
-  Function {AboutButtonPressed()} {return_type {virtual void}
+  Function {AboutButtonPressed()=0} {return_type {virtual void}
   } {}
-  Function {SetProcessDataDirectoryGUI()} {return_type {virtual void}
+  Function {SetProcessDataDirectoryGUI()=0} {return_type {virtual void}
   } {}
-  Function {T2ButtonChecked()} {return_type {virtual void}
+  Function {T2ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {PDButtonChecked()} {return_type {virtual void}
+  Function {PDButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {SetDataDirectoryGUI()} {return_type {virtual void}
+  Function {SetDataDirectoryGUI()=0} {return_type {virtual void}
   } {}
-  Function {ComputeDataGUI()} {return_type {virtual void}
+  Function {ComputeDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {AddDataGUI()} {return_type {virtual void}
+  Function {AddDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {RemoveDataGUI()} {return_type {virtual void}
+  Function {RemoveDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {ClearDataGUI()} {return_type {virtual void}
+  Function {ClearDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {ComputeVolumeButtonChecked()} {return_type {virtual void}
+  Function {ComputeVolumeButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ComputeCorticalThicknessButtonChecked()} {return_type {virtual void}
+  Function {ComputeCorticalThicknessButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {RecomputeButtonChecked()} {return_type {virtual void}
+  Function {RecomputeButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {UseCondorButtonChecked()} {return_type {virtual void}
+  Function {UseCondorButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ComputeGUI()} {return_type {virtual void}
+  Function {ComputeGUI()=0} {return_type {virtual void}
   } {}
-  Function {ShowDisplayButtonPressed()} {return_type {virtual void}
+  Function {ShowDisplayButtonPressed()=0} {return_type {virtual void}
   } {}
-  Function {StopAutoSeg()} {return_type {virtual void}
+  Function {StopAutoSeg()=0} {return_type {virtual void}
   } {}
-  Function {ExitAutoSeg()} {return_type {virtual void}
+  Function {ExitAutoSeg()=0} {return_type {virtual void}
   } {}
-  Function {SetCommonCoordinateImageGUI()} {return_type {virtual void}
+  Function {SetCommonCoordinateImageGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetTissueSegmentationAtlasDirectoryGUI()} {return_type {virtual void}
+  Function {SetTissueSegmentationAtlasDirectoryGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetROIAtlasFileGUI()} {return_type {virtual void}
+  Function {SetROIAtlasFileGUI()=0} {return_type {virtual void}
   } {}
-  Function {TissueSegmentationAtlasT1ButtonToggled()} {return_type {virtual void}
+  Function {TissueSegmentationAtlasT1ButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {TissueSegmentationAtlasT2ButtonToggled()} {return_type {virtual void}
+  Function {TissueSegmentationAtlasT2ButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {CommonCoordinateImageT1ButtonToggled()} {return_type {virtual void}
+  Function {CommonCoordinateImageT1ButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {CommonCoordinateImageT2ButtonToggled()} {return_type {virtual void}
+  Function {CommonCoordinateImageT2ButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {AllStructuresButtonChecked()} {return_type {virtual void}
+  Function {AllStructuresButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {AmygdalaLeftButtonChecked()} {return_type {virtual void}
+  Function {AmygdalaLeftButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {AmygdalaRightButtonChecked()} {return_type {virtual void}
+  Function {AmygdalaRightButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {CaudateLeftButtonChecked()} {return_type {virtual void}
+  Function {CaudateLeftButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {CaudateRightButtonChecked()} {return_type {virtual void}
+  Function {CaudateRightButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {HippocampusLeftButtonChecked()} {return_type {virtual void}
+  Function {HippocampusLeftButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {HippocampusRightButtonChecked()} {return_type {virtual void}
+  Function {HippocampusRightButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {PallidusLeftButtonChecked()} {return_type {virtual void}
+  Function {PallidusLeftButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {PallidusRightButtonChecked()} {return_type {virtual void}
+  Function {PallidusRightButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {PutamenLeftButtonChecked()} {return_type {virtual void}
+  Function {PutamenLeftButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {PutamenRightButtonChecked()} {return_type {virtual void}
+  Function {PutamenRightButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {LateralVentricleLeftButtonChecked()} {return_type {virtual void}
+  Function {LateralVentricleLeftButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {LateralVentricleRightButtonChecked()} {return_type {virtual void}
+  Function {LateralVentricleRightButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {SetAmygdalaLeftGUI()} {return_type {virtual void}
+  Function {SetAmygdalaLeftGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetAmygdalaRightGUI()} {return_type {virtual void}
+  Function {SetAmygdalaRightGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetCaudateLeftGUI()} {return_type {virtual void}
+  Function {SetCaudateLeftGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetCaudateRightGUI()} {return_type {virtual void}
+  Function {SetCaudateRightGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetHippocampusLeftGUI()} {return_type {virtual void}
+  Function {SetHippocampusLeftGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetHippocampusRightGUI()} {return_type {virtual void}
+  Function {SetHippocampusRightGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPallidusRightGUI()} {return_type {virtual void}
+  Function {SetPallidusRightGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPallidusLeftGUI()} {return_type {virtual void}
+  Function {SetPallidusLeftGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPutamenLeftGUI()} {return_type {virtual void}
+  Function {SetPutamenLeftGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPutamenRightGUI()} {return_type {virtual void}
+  Function {SetPutamenRightGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetLateralVentricleLeftGUI()} {return_type {virtual void}
+  Function {SetLateralVentricleLeftGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetLateralVentricleRightGUI()} {return_type {virtual void}
+  Function {SetLateralVentricleRightGUI()=0} {return_type {virtual void}
   } {}
-  Function {ROIFile1ButtonChecked()} {return_type {virtual void}
+  Function {ROIFile1ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ROIFile2ButtonChecked()} {return_type {virtual void}
+  Function {ROIFile2ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ROIFile3ButtonChecked()} {return_type {virtual void}
+  Function {ROIFile3ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ROIFile4ButtonChecked()} {return_type {virtual void}
+  Function {ROIFile4ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ROIFile5ButtonChecked()} {return_type {virtual void}
+  Function {ROIFile5ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {SetROIFile1GUI()} {return_type {virtual void}
+  Function {SetROIFile1GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetROIFile2GUI()} {return_type {virtual void}
+  Function {SetROIFile2GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetROIFile3GUI()} {return_type {virtual void}
+  Function {SetROIFile3GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetROIFile4GUI()} {return_type {virtual void}
+  Function {SetROIFile4GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetROIFile5GUI()} {return_type {virtual void}
+  Function {SetROIFile5GUI()=0} {return_type {virtual void}
   } {}
-  Function {ParcellationFile1ButtonChecked()} {return_type {virtual void}
+  Function {ParcellationFile1ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ParcellationFile2ButtonChecked()} {return_type {virtual void}
+  Function {ParcellationFile2ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ParcellationFile3ButtonChecked()} {return_type {virtual void}
+  Function {ParcellationFile3ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {SetParcellationFile1GUI()} {return_type {virtual void}
+  Function {SetParcellationFile1GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetParcellationFile2GUI()} {return_type {virtual void}
+  Function {SetParcellationFile2GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetParcellationFile3GUI()} {return_type {virtual void}
+  Function {SetParcellationFile3GUI()=0} {return_type {virtual void}
   } {}
-  Function {ABCButtonToggled()} {return_type {virtual void}
+  Function {ABCButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {NeosegButtonToggled()} {return_type {virtual void}
+  Function {NeosegButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {SetFilterIterationsGUI()} {return_type {virtual void}
+  Function {SetFilterIterationsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetFilterTimeStepGUI()} {return_type {virtual void}
+  Function {SetFilterTimeStepGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetFilterMethodChoiceGUI()} {return_type {virtual void}
+  Function {SetFilterMethodChoiceGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetMaxBiasDegreeGUI()} {return_type {virtual void}
+  Function {SetMaxBiasDegreeGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetInitialDistributionEstimatorChoiceGUI()} {return_type {virtual void}
+  Function {SetInitialDistributionEstimatorChoiceGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPrior1GUI()} {return_type {virtual void}
+  Function {SetPrior1GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPrior2GUI()} {return_type {virtual void}
+  Function {SetPrior2GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPrior3GUI()} {return_type {virtual void}
+  Function {SetPrior3GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPrior4GUI()} {return_type {virtual void}
+  Function {SetPrior4GUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPrior5GUI()} {return_type {virtual void}
+  Function {SetPrior5GUI()=0} {return_type {virtual void}
   } {}
-  Function {BSplineAtlasWarpButtonChecked()} {return_type {virtual void}
+  Function {BSplineAtlasWarpButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {SetBSplineAtlasWarpGridXGUI()} {return_type {virtual void}
+  Function {SetBSplineAtlasWarpGridXGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetBSplineAtlasWarpGridYGUI()} {return_type {virtual void}
+  Function {SetBSplineAtlasWarpGridYGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetBSplineAtlasWarpGridZGUI()} {return_type {virtual void}
+  Function {SetBSplineAtlasWarpGridZGUI()=0} {return_type {virtual void}
   } {}
-  Function {FluidAtlasWarpButtonChecked()} {return_type {virtual void}
+  Function {FluidAtlasWarpButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {FluidAtlasFATWButtonChecked()} {return_type {virtual void}
+  Function {FluidAtlasFATWButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {FluidAtlasAffineButtonChecked()} {return_type {virtual void}
+  Function {FluidAtlasAffineButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {SetFluidAtlasWarpIterationsGUI()} {return_type {virtual void}
+  Function {SetFluidAtlasWarpIterationsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetFluidAtlasWarpMaxStepGUI()} {return_type {virtual void}
+  Function {SetFluidAtlasWarpMaxStepGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetAtlasLinearMappingChoiceGUI()} {return_type {virtual void}
+  Function {SetAtlasLinearMappingChoiceGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetImageLinearMappingChoiceGUI()} {return_type {virtual void}
+  Function {SetImageLinearMappingChoiceGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetNeosegPriorThresholdGUI()} {return_type {virtual void}
+  Function {SetNeosegPriorThresholdGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetNeosegParzenKernelGUI()} {return_type {virtual void}
+  Function {SetNeosegParzenKernelGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetNeosegMahalanobisThresholdGUI()} {return_type {virtual void}
+  Function {SetNeosegMahalanobisThresholdGUI()=0} {return_type {virtual void}
   } {}
-  Function {UseDefaultEMSAdvancedParametersGUI()} {return_type {virtual void}
+  Function {UseDefaultEMSAdvancedParametersGUI()=0} {return_type {virtual void}
   } {}
-  Function {RigidRegistrationButtonChecked()} {return_type {virtual void}
+  Function {RigidRegistrationButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {GridTemplateAtlasButtonToggled()} {return_type {virtual void}
+  Function {GridTemplateAtlasButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {GridTemplateManualButtonToggled()} {return_type {virtual void}
+  Function {GridTemplateManualButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {InitRegCenterOfHeadButtonToggled()} {return_type {virtual void}
+  Function {InitRegCenterOfHeadButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {InitRegMomentsButtonToggled()} {return_type {virtual void}
+  Function {InitRegMomentsButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {InitRegGeometryButtonToggled()} {return_type {virtual void}
+  Function {InitRegGeometryButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {InitRegOffButtonToggled()} {return_type {virtual void}
+  Function {InitRegOffButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {InitRegUseT1InitTransformButtonChecked()} {return_type {virtual void}
+  Function {InitRegUseT1InitTransformButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ClassicWarpingButtonToggled()} {return_type {virtual void}
+  Function {ClassicWarpingButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {CoarseToFineWarpingButtonToggled()} {return_type {virtual void}
+  Function {CoarseToFineWarpingButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {SetAlphaGUI()} {return_type {virtual void}
+  Function {SetAlphaGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetBetaGUI()} {return_type {virtual void}
+  Function {SetBetaGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetGammaGUI()} {return_type {virtual void}
+  Function {SetGammaGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetNumBasisGUI()} {return_type {virtual void}
+  Function {SetNumBasisGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetMaxPerturbationGUI()} {return_type {virtual void}
+  Function {SetMaxPerturbationGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetScale4NbIterationsGUI()} {return_type {virtual void}
+  Function {SetScale4NbIterationsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetScale2NbIterationsGUI()} {return_type {virtual void}
+  Function {SetScale2NbIterationsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetScale1NbIterationsGUI()} {return_type {virtual void}
+  Function {SetScale1NbIterationsGUI()=0} {return_type {virtual void}
   } {}
-  Function {ShowMRMLSceneButtonPressed()} {return_type {virtual void}
+  Function {ShowMRMLSceneButtonPressed()=0} {return_type {virtual void}
   } {}
-  Function {UseDefaultWarpingAdvancedParametersGUI()} {return_type {virtual void}
+  Function {UseDefaultWarpingAdvancedParametersGUI()=0} {return_type {virtual void}
   } {}
-  Function {DeleteVesselsButtonChecked()} {return_type {virtual void}
+  Function {DeleteVesselsButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {HistogramQuantileButtonToggled()} {return_type {virtual void}
+  Function {HistogramQuantileButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {TissueMeanMatchButtonToggled()} {return_type {virtual void}
+  Function {TissueMeanMatchButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {Aux1ButtonChecked()} {return_type {virtual void}
+  Function {Aux1ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {Aux2ButtonChecked()} {return_type {virtual void}
+  Function {Aux2ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {Aux3ButtonChecked()} {return_type {virtual void}
+  Function {Aux3ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {Aux4ButtonChecked()} {return_type {virtual void}
+  Function {Aux4ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {Aux5ButtonChecked()} {return_type {virtual void}
+  Function {Aux5ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {Aux6ButtonChecked()} {return_type {virtual void}
+  Function {Aux6ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {Aux7ButtonChecked()} {return_type {virtual void}
+  Function {Aux7ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {Aux8ButtonChecked()} {return_type {virtual void}
+  Function {Aux8ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ComputeAuxDataGUI()} {return_type {virtual void}
+  Function {ComputeAuxDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {AddAuxDataGUI()} {return_type {virtual void}
+  Function {AddAuxDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {RemoveAuxDataGUI()} {return_type {virtual void}
+  Function {RemoveAuxDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {ClearAuxDataGUI()} {return_type {virtual void}
+  Function {ClearAuxDataGUI()=0} {return_type {virtual void}
   } {}
-  Function {AuxT1ButtonChecked()} {return_type {virtual void}
+  Function {AuxT1ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {AuxT2ButtonChecked()} {return_type {virtual void}
+  Function {AuxT2ButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {AuxPDButtonChecked()} {return_type {virtual void}
+  Function {AuxPDButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {AtlasSpaceButtonChecked()} {return_type {virtual void}
+  Function {AtlasSpaceButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {StrippedButtonChecked()} {return_type {virtual void}
+  Function {StrippedButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {BiasCorrectedButtonChecked()} {return_type {virtual void}
+  Function {BiasCorrectedButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {RigidTransformationButtonChecked()} {return_type {virtual void}
+  Function {RigidTransformationButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {AffineTransformationButtonChecked()} {return_type {virtual void}
+  Function {AffineTransformationButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {BsplineTransformationButtonChecked()} {return_type {virtual void}
+  Function {BsplineTransformationButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {SetPointSpacingGUI()} {return_type {virtual void}
+  Function {SetPointSpacingGUI()=0} {return_type {virtual void}
   } {}
-  Function {~AutoSegGUI()} {return_type virtual
+  Function {ReorientationButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {ReorientationButtonChecked()} {return_type {virtual void}
+  Function {N4ITKBiasFieldCorrectionButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {N4ITKBiasFieldCorrectionButtonChecked()} {return_type {virtual void}
+  Function {StrippedN4ITKBiasFieldCorrectionButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {StrippedN4ITKBiasFieldCorrectionButtonChecked()} {return_type {virtual void}
+  Function {UseDefaultN4AdvancedParametersGUI()=0} {return_type {virtual void}
   } {}
-  Function {UseDefaultN4AdvancedParametersGUI()} {return_type {virtual void}
+  Function {SetLoopGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetLoopGUI()} {return_type {virtual void}
+  Function {LoopButtonChecked()=0} {return_type {virtual void}
   } {}
-  Function {LoopButtonChecked()} {return_type {virtual void}
+  Function {SetHistogramSharpeningGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetHistogramSharpeningGUI()} {return_type {virtual void}
+  Function {SetBSplineBetaGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetBSplineBetaGUI()} {return_type {virtual void}
+  Function {SetBSplineAlphaGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetBSplineAlphaGUI()} {return_type {virtual void}
+  Function {SetBSplineOrderGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetBSplineOrderGUI()} {return_type {virtual void}
+  Function {SetShrinkFactorGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetShrinkFactorGUI()} {return_type {virtual void}
+  Function {SetSplineDistanceGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetSplineDistanceGUI()} {return_type {virtual void}
+  Function {SetConvergenceThresholdGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetConvergenceThresholdGUI()} {return_type {virtual void}
+  Function {SetBSplineGridResolutionsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetBSplineGridResolutionsGUI()} {return_type {virtual void}
+  Function {SetNbOfIterationsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetNbOfIterationsGUI()} {return_type {virtual void}
+  Function {SetLoopIterationGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetLoopIterationGUI()} {return_type {virtual void}
+  Function {SetRegistrationFilterTypeGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetRegistrationFilterTypeGUI()} {return_type {virtual void}
+  Function {SetDeformationFieldSmoothingSigmaGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetDeformationFieldSmoothingSigmaGUI()} {return_type {virtual void}
+  Function {SetPyramidLevelsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetPyramidLevelsGUI()} {return_type {virtual void}
+  Function {SetMovingShrinkFactorsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetMovingShrinkFactorsGUI()} {return_type {virtual void}
+  Function {SetIterationCountPyramidLevelsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetIterationCountPyramidLevelsGUI()} {return_type {virtual void}
+  Function {BRAINSDemonWarpButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {BRAINSDemonWarpButtonToggled()} {return_type {virtual void}
+  Function {SetFixedShrinkFactorsGUI()=0} {return_type {virtual void}
   } {}
-  Function {SetFixedShrinkFactorsGUI()} {return_type {virtual void}
+  Function {SoftTissueMapButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {SoftTissueMapButtonToggled()} {return_type {virtual void}
+  Function {HardTissueMapButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {HardTissueMapButtonToggled()} {return_type {virtual void}
+  Function {ANTSWarpingButtonToggled()=0} {return_type {virtual void}
   } {}
-  Function {ANTSWarpingButtonToggled()} {return_type {virtual void}
+  Function {SetANTSIterationsGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSIterationsGUI()} {open return_type {virtual void}
+  Function {SetANTSCCWeightGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSCCWeightGUI()} {open return_type {virtual void}
+  Function {SetANTSCCRegionRadiusGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSCCRegionRadiusGUI()} {open return_type {virtual void}
+  Function {SetANTSMIWeightGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSMIWeightGUI()} {open return_type {virtual void}
+  Function {SetANTSMIBinsGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSMIBinsGUI()} {open return_type {virtual void}
+  Function {SetANTSMSQWeightGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSMSQWeightGUI()} {open return_type {virtual void}
+  Function {SetANTSRegistrationFilterTypeGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSRegistrationFilterTypeGUI()} {open return_type {virtual void}
+  Function {SetANTSTransformationStepGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSTransformationStepGUI()} {open return_type {virtual void}
+  Function {ANTSGaussianSmoothingButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {ANTSGaussianSmoothingButtonChecked()} {open return_type {virtual void}
+  Function {SetANTSGaussianSigmaGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSGaussianSigmaGUI()} {open return_type {virtual void}
+  Function {MajorityVotingButtonToggled()=0} {open return_type {virtual void}
   } {}
-  Function {MajorityVotingButtonToggled()} {open return_type {virtual void}
+  Function {WeightedMajorityVotingButtonToggled()=0} {open return_type {virtual void}
   } {}
-  Function {WeightedMajorityVotingButtonToggled()} {open return_type {virtual void}
-  } {}
-  Function {StapleButtonToggled()} {open return_type {virtual void}
+  Function {StapleButtonToggled()=0} {open return_type {virtual void}
   } {}
   Function {make_window()} {open
   } {}
-  Function {MultiAtlasSegmentationButtonChecked()} {open return_type {virtual void}
+  Function {SetMultiAtlasDirectoryGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetMultiAtlasDirectoryGUI()} {open return_type {virtual void}
+  Function {MultiAtlasAtlasRegistrationButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {MultiAtlasAtlasRegistrationButtonChecked()} {open return_type {virtual void}
+  Function {SetIntensityEnergyGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetIntensityEnergyGUI()} {open return_type {virtual void}
+  Function {SetHarmonicEnergyGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetHarmonicEnergyGUI()} {open return_type {virtual void}
+  Function {SetShapeEnergyGUI()=0} {open return_type virtual
   } {}
-  Function {SetShapeEnergyGUI()} {open return_type virtual
+  Function {SetANTSCCWeightGUI2nd()=0} {open return_type {virtual void}
   } {}
-  Function {MultiModalitySegmentationButtonChecked()} {open return_type {virtual void}
+  Function {SetANTSMIWeightGUI2nd()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSCCWeightGUI2nd()} {open return_type {virtual void}
+  Function {SetANTSMSQWeightGUI2nd()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSMIWeightGUI2nd()} {open return_type {virtual void}
+  Function {SetANTSMIBinsGUI2nd()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSMSQWeightGUI2nd()} {open return_type {virtual void}
+  Function {SetANTSCCRegionRadiusGUI2nd()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSMIBinsGUI2nd()} {open return_type {virtual void}
+  Function {SetT2ROIAtlasFileGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetANTSCCRegionRadiusGUI2nd()} {open return_type {virtual void}
+  Function {RecalculateAtlasTargetEnergyButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {SetT2ROIAtlasFileGUI()} {open return_type {virtual void}
+  Function {ABCANTSWarpButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {RecalculateAtlasTargetEnergyButtonChecked()} {open return_type {virtual void}
+  Function {RecalculateAtlasAtlasEnergyButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {ABCANTSWarpButtonChecked()} {open return_type {virtual void}
+  Function {Slicer4dot3ButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {RecalculateAtlasAtlasEnergyButtonChecked()} {open return_type {virtual void}
+  Function {Slicer4ButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {Slicer4dot3ButtonChecked()} {open return_type {virtual void}
+  Function {Slicer3ButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {Slicer4ButtonChecked()} {open return_type {virtual void}
+  Function {ANTSWithBrainmaskButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {Slicer3ButtonChecked()} {open return_type {virtual void}
+  Function {UseInitialAffineButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {ANTSWithBrainmaskButtonChecked()} {open return_type {virtual void}
+  Function {SetPrior6GUI()=0} {open return_type {virtual void}
   } {}
-  Function {UseInitialAffineButtonChecked()} {open return_type {virtual void}
+  Function {SetPrior7GUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetPrior6GUI()} {open return_type {virtual void}
+  Function {SetPrior8GUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetPrior7GUI()} {open return_type {virtual void}
+  Function {SetPrior9GUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetPrior8GUI()} {open return_type {virtual void}
+  Function {SetNumberOfThreadsGUI()=0} {open return_type {virtual void}
   } {}
-  Function {SetPrior9GUI()} {open return_type {virtual void}
+  Function {SingleAtlasSegmentationButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {SetNumberOfThreadsGUI()} {open return_type {virtual void}
+  Function {RandomizeSubjectsButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {SingleAtlasSegmentationButtonChecked()} {open return_type {virtual void}
+  Function {MultiModalitySingleSegmentationButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {RandomizeSubjectsButtonChecked()} {open return_type {virtual void}
+  Function {MultiAtlasSegmentationButtonChecked()=0} {open return_type {virtual void}
   } {}
-  Function {MultiModalitySingleSegmentationButtonChecked()} {open return_type {virtual void}
-  } {}
-  Function {MultiModalityMultiSegmentationButtonChecked()} {open return_type {virtual void}
+  Function {MultiModalityMultiSegmentationButtonChecked()=0} {open return_type {virtual void}
   } {}
 } 
