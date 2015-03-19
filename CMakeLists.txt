@@ -92,7 +92,7 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
   endif()
   set(proj NIRALUtilities)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/niral_utilities.git )
-  set( ${proj}_GIT_TAG debff5f9fbf41f7508e5d3988c33e56dee5cdcc6 )
+  set( ${proj}_GIT_TAG 132b3e996fa880117dfeb529339a17cf06db45f5 )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}
@@ -117,6 +117,7 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
       -DCOMPILE_POLYDATAMERGE:BOOL=OFF
       -DCOMPILE_CURVECOMPARE:BOOL=OFF
       -DCOMPILE_DTIAtlasBuilder:BOOL=OFF
+      -DCOMPILE_MULTIATLASSEG:BOOL=ON
     INSTALL_COMMAND ""
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
   )
