@@ -194,7 +194,7 @@ OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
 IF(COMPILE_EXTERNAL_ABC)
   set(proj abc)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/ABC.git )
-  set( ${proj}_GIT_TAG 99dc70a8fdf4ab87db049a89cff309393712a62b )
+  set( ${proj}_GIT_TAG 77ea0430fe42f2c7b808290f7bb5fea00710026d )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}
