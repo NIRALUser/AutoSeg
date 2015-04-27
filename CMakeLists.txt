@@ -92,7 +92,7 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
   endif()
   set(proj NIRALUtilities)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/niral_utilities.git )
-  set( ${proj}_GIT_TAG 132b3e996fa880117dfeb529339a17cf06db45f5 )
+  set( ${proj}_GIT_TAG 322fa34e4dbbfda26de96d92ae939203c6591404 )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}
@@ -116,7 +116,6 @@ IF(COMPILE_EXTERNAL_NIRAL_UTILITIES)
       -DCOMPILE_POLYDATATRANSFORM:BOOL=OFF
       -DCOMPILE_POLYDATAMERGE:BOOL=OFF
       -DCOMPILE_CURVECOMPARE:BOOL=OFF
-      -DCOMPILE_DTIAtlasBuilder:BOOL=OFF
       -DCOMPILE_MULTIATLASSEG:BOOL=ON
     INSTALL_COMMAND ""
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
@@ -128,7 +127,7 @@ OPTION(COMPILE_EXTERNAL_CORTTHICK "Compile CortThick." ON)
 IF(COMPILE_EXTERNAL_CORTTHICK)
   set(proj CortThick)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/ARCTIC.git )
-  set( ${proj}_GIT_TAG 69e47557717a3d95726bb550c31d2b7e9c4fcbb2 )
+  set( ${proj}_GIT_TAG 0cc38d92db43a3861e6e7491d516d5edb543bc4b )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}
@@ -156,7 +155,7 @@ OPTION(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP "Compile SegPostProcessCLP." ON)
 IF(COMPILE_EXTERNAL_SEGPOSTPROCESSCLP)
   set(proj SegPostProcessCLP)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/SPHARM-PDM.git )
-  set( ${proj}_GIT_TAG d7b3ce71b58d4e4ebacd153315fd6c957cf183b0 )
+  set( ${proj}_GIT_TAG b39be76d6bb5862b2db5555a02e267acd36c945a )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}
@@ -194,7 +193,7 @@ OPTION(COMPILE_EXTERNAL_ABC "Compile External ABC." ON)
 IF(COMPILE_EXTERNAL_ABC)
   set(proj abc)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/ABC.git )
-  set( ${proj}_GIT_TAG 77ea0430fe42f2c7b808290f7bb5fea00710026d )
+  set( ${proj}_GIT_TAG 32ed5f2d3d4c706efb81ff0745f9782a85fd8758 )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}

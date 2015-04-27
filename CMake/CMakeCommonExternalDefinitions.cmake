@@ -47,8 +47,9 @@ macro(PACKAGE_NEEDS_ITK LOCAL_CMAKE_BUILD_OPTIONS gen)
         -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
         -DBUILD_TESTING:BOOL=OFF
         -DITK_USE_REVIEW:BOOL=ON
-        -DITKV3_COMPATIBILITY:BOOL=ON
-        -DModule_ITKReview:BOOL=ON
+        -DITK_LEGACY_REMOVE:BOOL=OFF
+        -DITKV3_COMPATIBILITY:BOOL=ON #Necessary for IntensityRescaler (niral_utilities)
+        -DModule_ITKReview:BOOL=ON #Necessary for MultiAtlasSeg (niral_utilities)
 #        -DITK_USE_REVIEW_STATISTICS:BOOL=ON
         INSTALL_COMMAND ""
         INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
