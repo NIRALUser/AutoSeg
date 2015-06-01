@@ -76,6 +76,110 @@ AutoSegComputation::AutoSegComputation()
   m_IsAux7Image = false;
   m_IsAux8Image = false;
   m_AtlasLoop[0] = '\0';
+
+  ToolsPairType toolPair ;
+  std::vector< std::string > toolNames ;
+  //ResampleVolume2
+  toolNames.push_back( "ResampleScalarVectorDWIVolume" ) ;
+  toolNames.push_back( "ResampleVolume2" ) ;
+  toolPair = std::make_pair( "ResampleVolume2" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //convertITKformats
+  toolNames.push_back( "convertITKformats" ) ;
+  toolPair = std::make_pair( "convertITKformats" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //ABC
+  toolNames.push_back( "ABC" ) ;
+  toolPair = std::make_pair( "ABC" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //ANTS
+  toolNames.push_back( "ANTS" ) ;
+  toolPair = std::make_pair( "ANTS" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //WarpImageMultiTransform
+  toolNames.push_back( "WarpImageMultiTransform" ) ;
+  toolPair = std::make_pair( "WarpImageMultiTransform" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //BRAINSDemonWarp
+  toolNames.push_back( "BRAINSDemonWarp" ) ;
+  toolPair = std::make_pair( "BRAINSDemonWarp" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //BRAINSFit
+  toolNames.push_back( "BRAINSFit" ) ;
+  toolPair = std::make_pair( "BRAINSFit" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //BRAINSResample
+  toolNames.push_back( "BRAINSResample" ) ;
+  toolPair = std::make_pair( "BRAINSResample" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //CortThickCLP
+  toolNames.push_back( "CortThickCLP" ) ;
+  toolPair = std::make_pair( "CortThickCLP" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //ImageMath
+  toolNames.push_back( "ImageMath" ) ;
+  toolPair = std::make_pair( "ImageMath" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //ImageStat
+  toolNames.push_back( "ImageStat" ) ;
+  toolPair = std::make_pair( "ImageStat" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //IntensityRescaler
+  toolNames.push_back( "IntensityRescaler" ) ;
+  toolPair = std::make_pair( "IntensityRescaler" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //MultiAtlasSeg
+  toolNames.push_back( "MultiAtlasSeg" ) ;
+  toolPair = std::make_pair( "MultiAtlasSeg" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //N4ITKBiasFieldCorrection
+  toolNames.push_back( "N4ITKBiasFieldCorrection" ) ;
+  toolPair = std::make_pair( "N4ITKBiasFieldCorrection" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //neoseg
+  toolNames.push_back( "neoseg" ) ;
+  toolPair = std::make_pair( "neoseg" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //SegPostProcessCLP
+  toolNames.push_back( "SegPostProcessCLP" ) ;
+  toolPair = std::make_pair( "SegPostProcessCLP" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //WarpTool
+  toolNames.push_back( "WarpTool" ) ;
+  toolPair = std::make_pair( "WarpTool" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //imconvert3
+  toolNames.push_back( "imconvert3" ) ;
+  toolPair = std::make_pair( "imconvert3" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //fWarp
+  toolNames.push_back( "fWarp" ) ;
+  toolPair = std::make_pair( "fWarp" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
+  //txApply
+  toolNames.push_back( "txApply" ) ;
+  toolPair = std::make_pair( "txApply" , toolNames ) ;
+  m_RequiredTools.insert( toolPair ) ;
+  toolNames.clear() ;
 }
 
 AutoSegComputation::~AutoSegComputation()
@@ -1540,12 +1644,65 @@ void AutoSegComputation::RandomizeSubjects( int _GUIMode )
   // for (i = 0; i < GetNbData(); i++)
 }
 
+void AutoSegComputation::AddNotRequiredTools( std::string toolName )
+{
+  m_ToolsNotRequired.push_back(toolName);
+}
+
+int AutoSegComputation::FindTools()
+{
+  m_MissingTools.clear() ;
+  for( ToolsMapType::iterator it = m_RequiredTools.begin(); it != m_RequiredTools.end() ; ++it )
+  {
+    std::string name = it->first ;
+    std::vector< std::string > toolNames = it->second ;
+    std::string toolPath ;
+    for( size_t i = 0 ; i < toolNames.size() ; i++ )
+    {
+      toolPath = itksys::SystemTools::FindProgram( toolNames[ i ] );
+      if( !toolPath.empty() )
+      {
+        ToolsPairPathsType toolPathPair( name , toolPath ) ;
+        m_RequiredToolsPaths.insert( toolPathPair ) ;
+        break ;
+      }
+    }
+    if( toolPath.empty() )
+    {
+      if( find(m_ToolsNotRequired.begin(),m_ToolsNotRequired.end(),name) != m_ToolsNotRequired.end() )//If the tool is not required, we set its path to "" so that the software does not crash when writing the bms script.
+      {
+        toolPath = name ;
+        ToolsPairPathsType toolPathPair( name , toolPath ) ;
+        m_RequiredToolsPaths.insert( toolPathPair ) ;
+      }
+      else
+      {
+        m_MissingTools.push_back( name ) ;
+      }
+    }
+  }
+  return m_MissingTools.size() ;
+}
+
+std::vector< std::string > AutoSegComputation::GetMissingTools()
+{
+  return m_MissingTools ;
+}
+
 // Compute Automatic Segmentation
-void AutoSegComputation::Computation()
+int AutoSegComputation::Computation()
 {
   SetParameterFile();
   SetComputationFile();
-  RunPipeline(1);
+  if( !FindTools() )
+  {
+    RunPipeline(1);
+    return 0 ;
+  }
+  else
+  {
+    return 1 ;
+  }
 }
 
 // Compute Automatic Segmentation
@@ -1557,8 +1714,38 @@ void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, con
   LoadParameterFile(_parameterFile);
   SetComputationFile();
   SetParameterFile();
-  
-  RunPipeline(0);
+  if( !FindTools() )
+  {
+    try
+    {
+      RunPipeline(0);
+    }
+    catch(std::string err)
+    {
+      std::cerr << err << std::endl;
+    }
+    catch(...)
+    {
+      std::cerr << "Error during computation." << std::endl ;
+    }
+  }
+  else
+  {
+    std::cerr << "Some tools that are required were not found!" << std::endl ;
+    for( size_t i = 0 ; i < m_MissingTools.size() ; i++ )
+    {
+      std::vector< std::string > toolNames = m_RequiredTools.at( m_MissingTools[ i ] ) ;
+      for( size_t j = 0 ; j < toolNames.size() ; j++ )
+      {
+        if( j != 0 )
+        {
+          std::cerr << " or " ;
+        }
+        std::cerr << toolNames[ j ] ;
+      }
+      std::cerr << std::endl ;
+    }
+  }
 }
 
 void AutoSegComputation::RunPipeline( int _GUIMode )
@@ -2314,6 +2501,7 @@ void AutoSegComputation::WriteParameterFile(const char *_FileName)
   ParameterFile<<"Prior 7: "<<GetPrior7()<<std::endl;
   ParameterFile<<"Prior 8: "<<GetPrior8()<<std::endl;
   ParameterFile<<"Prior 9: "<<GetPrior9()<<std::endl;
+std::cout<<"EMS:" << GetEMSoftware()<<std::endl;
   if (std::strcmp(GetEMSoftware(), "ABC") == 0)
   {
     ParameterFile<<"Fluid Atlas Warp: "<<GetFluidAtlasWarp()<<std::endl;
@@ -2551,26 +2739,26 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"set (ComputeCorticalThickness "<<GetComputeCorticalThickness()<<")"<<std::endl;
   BMSAutoSegMainFile<<"set (RegistrationInitialization "<<GetRegistrationInitialization()<<")"<<std::endl;
 
-  BMSAutoSegMainFile<<"# Programs "<<std::endl;
-  BMSAutoSegMainFile<<"set (ABCCmd ABC)"<<std::endl;
-  BMSAutoSegMainFile<<"set (neosegCmd neoseg)"<<std::endl;
-  BMSAutoSegMainFile<<"set (warpCmd WarpTool)"<<std::endl;
-  BMSAutoSegMainFile<<"set (ImageMathCmd ImageMath)"<<std::endl;
-  BMSAutoSegMainFile<<"set (SegPostProcessCmd SegPostProcessCLP)"<<std::endl;
-  BMSAutoSegMainFile<<"set (IntensityRescalerCmd IntensityRescaler)"<<std::endl;
-  BMSAutoSegMainFile<<"set (convCmd convertITKformats)"<<std::endl;
-  BMSAutoSegMainFile<<"set (imconvert3Cmd imconvert3)"<<std::endl;
-  BMSAutoSegMainFile<<"set (ImageStatCmd ImageStat)"<<std::endl;
-  BMSAutoSegMainFile<<"set (fWarpCmd fWarp)"<<std::endl;
-  BMSAutoSegMainFile<<"set (txApplyCmd txApply)"<<std::endl;
-  BMSAutoSegMainFile<<"set (CortThickCLPCmd CortThickCLP)"<<std::endl;
-  BMSAutoSegMainFile<<"set (N4Cmd N4ITKBiasFieldCorrection)"<<std::endl;
-  BMSAutoSegMainFile<<"set (ResampleVolume2Cmd ResampleVolume2)"<<std::endl;
-  BMSAutoSegMainFile<<"set (BRAINSDemonWarpCmd BRAINSDemonWarp)"<<std::endl;
-  BMSAutoSegMainFile<<"set (BRAINSFitCmd BRAINSFit)"<<std::endl;
-  BMSAutoSegMainFile<<"set (BRAINSResampleCmd BRAINSResample)"<<std::endl;
-  BMSAutoSegMainFile<<"set (ANTSCmd ANTS)"<<std::endl;
-  BMSAutoSegMainFile<<"set (WarpImageMultiTransformCmd WarpImageMultiTransform)"<<std::endl<<std::endl;
+  BMSAutoSegMainFile << "# Programs "<<std::endl;
+  BMSAutoSegMainFile << "set (ABCCmd "<< m_RequiredToolsPaths.at("ABC") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (neosegCmd " << m_RequiredToolsPaths.at("neoseg") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (warpCmd "<< m_RequiredToolsPaths.at("WarpTool") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (ImageMathCmd " << m_RequiredToolsPaths.at("ImageMath") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (SegPostProcessCmd " << m_RequiredToolsPaths.at("SegPostProcessCLP") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (IntensityRescalerCmd " << m_RequiredToolsPaths.at("IntensityRescaler") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (convCmd " << m_RequiredToolsPaths.at("convertITKformats") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (imconvert3Cmd " << m_RequiredToolsPaths.at("imconvert3") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (ImageStatCmd " << m_RequiredToolsPaths.at("ImageStat") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (fWarpCmd " << m_RequiredToolsPaths.at("fWarp") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (txApplyCmd " << m_RequiredToolsPaths.at("txApply") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (CortThickCLPCmd " << m_RequiredToolsPaths.at("CortThickCLP") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (N4Cmd " << m_RequiredToolsPaths.at("N4ITKBiasFieldCorrection") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (ResampleVolume2Cmd " << m_RequiredToolsPaths.at("ResampleVolume2") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (BRAINSDemonWarpCmd " << m_RequiredToolsPaths.at("BRAINSDemonWarp") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (BRAINSFitCmd " << m_RequiredToolsPaths.at("BRAINSFit") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (BRAINSResampleCmd " << m_RequiredToolsPaths.at("BRAINSResample") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (ANTSCmd " << m_RequiredToolsPaths.at("ANTS") << ")" << std::endl ;
+  BMSAutoSegMainFile << "set (WarpImageMultiTransformCmd " << m_RequiredToolsPaths.at("WarpImageMultiTransform") << ")" << std::endl << std::endl ;
   BMSAutoSegMainFile<<"set (ANTSIterations "<<GetANTSIterations()<<")"<<std::endl;
   BMSAutoSegMainFile<<"set (ANTSCCWeight "<<GetANTSCCWeight()<<")"<<std::endl;
   BMSAutoSegMainFile<<"set (ANTSCCRegionRadius "<<GetANTSCCRegionRadius()<<")"<<std::endl;
@@ -3604,8 +3792,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     else
     {
-      std::cout<<"	               Error EM Software (itkEMS is no longer supported)!"<<std::endl;
-      exit(-2);
+      std::string errorMessage = "Tissue segmentation software: " ;
+      if( std::string( GetEMSoftware() ) == "" )
+      {
+        errorMessage += "None specified\n" ;
+      }
+      else
+      {
+        errorMessage += std::string( GetEMSoftware() ) + std::string( "\n" ) ;
+      }
+      errorMessage += "Error EM Software (itkEMS is no longer supported)!" ;
+      throw errorMessage ;
     }   
     // next lines are kept for historic reasons MRML settings 
     BMSAutoSegMainFile<<"	       set (OutputFileTail ${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;
@@ -6908,7 +7105,16 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"set (ImageMathCmd ImageMath)"<<std::endl;
   BMSAutoSegAuxFile<<"set (convCmd convertITKformats)"<<std::endl;
   BMSAutoSegAuxFile<<"set (ImageStatCmd ImageStat)"<<std::endl;
-  BMSAutoSegAuxFile<<"set (ResampleVolume2Cmd ResampleVolume2)"<<std::endl<<std::endl;
+  std::string pathResampleVolume = itksys::SystemTools::FindProgram("ResampleScalarVectorDWIVolume");
+  if( !pathResampleVolume.empty() )
+  {
+    BMSAutoSegAuxFile<<"set (ResampleVolume2Cmd "<< pathResampleVolume << ")"<<std::endl<<std::endl;
+  }
+  else
+  {
+    pathResampleVolume = itksys::SystemTools::FindProgram("ResampleVolume2");
+    BMSAutoSegAuxFile<<"set (ResampleVolume2Cmd "<< pathResampleVolume << ")"<<std::endl<<std::endl;
+  }
   BMSAutoSegAuxFile<<"set (BRAINSFitCmd BRAINSFit)"<<std::endl<<std::endl;
 
   if (GetAuxT1Image())
@@ -8998,7 +9204,10 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
     SetRegistrationInitialization("useCenterOfHeadAlign");
     SetInitRegUseT1InitTransform(0);
     // Init for atlas warping
-    SetANTSWarpingMethod(0);
+    SetANTSWarpingMethod(1);//We initialize to ANTS by default
+    SetBRAINSDemonWarpMethod(0);
+    SetCoarseToFineWarpingMethod(0);
+    SetClassicWarpingMethod(0);
   }
 
   if ((ParameterFile = fopen(_FileName,"r")) != NULL) 

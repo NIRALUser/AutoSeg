@@ -56,8 +56,9 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/fl_ask.H>
 
-//ITK Libraries
+//ITK System Libraries
 #include <itksys/Process.h>
+#include <itksys/SystemTools.hxx>
 
 #define NUMBER_OF_CASE 16
 #define NUMBER_OF_ATLAS 15
@@ -68,7 +69,7 @@ class AutoSegGUIControls : public AutoSegGUI
 {
   public:
   
-    AutoSegGUIControls(char *_AutoSegPath, const char *AutoSegVersion);
+    AutoSegGUIControls(std::string _AutoSegPath, const char *AutoSegVersion , const char* computationFile , const char* parameterFile);
     virtual ~AutoSegGUIControls();
 
   // Menu
@@ -281,6 +282,8 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetScale4NbIterationsGUI();
     void SetScale2NbIterationsGUI();
     void SetScale1NbIterationsGUI();
+    int FindTools( std::vector< std::string > listTools );
+    void RemoveRequiredTools( std::vector<std::string> &listTools );
     // - BRAINSDemonWarp
     void SetPyramidLevelsGUI();
     void SetMovingShrinkFactorsGUI();
@@ -336,7 +339,7 @@ class AutoSegGUIControls : public AutoSegGUI
   private:
 
   // Load Files
-    bool UpdateParameterGUI(const char *_FileName, enum Mode mode=file);
+    bool UpdateParameterGUI(const char *_FileName, enum Mode mode=file, bool showError = true ) ;
     void UpdateComputationGUI(const char *_FileName);
     void UpdateAuxComputationGUI(const char *_FileName);
   // Default Parameters Files
@@ -408,6 +411,8 @@ class AutoSegGUIControls : public AutoSegGUI
     char *m_ProcessDataDirectory;
     char *m_DataDirectory;
     char *m_CurrentDirectory;
+    bool m_OldFluidRegistration ;
+    bool m_ActivateReorientation ;
 };
 
 #endif

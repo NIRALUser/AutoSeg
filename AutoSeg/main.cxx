@@ -21,8 +21,9 @@
 
 #include "AutoSegGUIControls.h"
 #include "AutoSegComputation.h"
+#include <itksys/SystemTools.hxx>
 
-#define AUTOSEG_VERSION "3.1.0"
+#define AUTOSEG_VERSION "3.2.0"
 
 void PrintHelp(char* progname)
 {
@@ -52,28 +53,38 @@ int main(int argc, char *argv[])
 
   std::string logErrorFilename = std::string(logFilename) + ".err";
 
+  std::string executableFullPath = itksys::SystemTools::CollapseFullPath( argv[0] ).c_str() ;
+  std::string executableDirectory ;
+  std::string filename ;
+  itksys::SystemTools::SplitProgramPath( executableFullPath , executableDirectory , filename ) ;
+  std::string originalPATH ;
+  itksys::SystemTools::GetEnv("PATH", originalPATH );
+  #ifdef WIN32
+  itksys::SystemTools::PutEnv( std::string( "PATH=" ) + executableDirectory + ";" + originalPATH ) ;
+  #else
+  itksys::SystemTools::PutEnv( std::string( "PATH=" ) + executableDirectory + ":" + originalPATH ) ;
+  #endif
   if (gui)
   {
-    const char *AutoSegHome = "AUTOSEG_HOME";
-    char *AutoSegPath = NULL;
-    AutoSegPath = getenv(AutoSegHome);
-    if (AutoSegPath != NULL)
+    std::string AutoSegPath ;
+    itksys::SystemTools::GetEnv("AUTOSEG_HOME" , AutoSegPath ) ;
+    if( AutoSegPath.empty() )
     {
-        freopen(logFilename,"w",stdout); //redirect stdout
-        freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
-        AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath,AUTOSEG_VERSION);
-        Fl::scheme("plastic");
-        Fl::run();
-        delete MainWindow;
-        return 0;
+       AutoSegPath = executableDirectory.c_str() ;
+       std::cout << "The environment variable 'AUTOSEG_HOME' was not set." << std::endl ;
+       std::cout << "Using default value (directory containing current executable): "
+                 << AutoSegPath << std::endl ;
+       std::cout << "Instructions to set the environment variable:" << std::endl ;
+       std::cout << "bash usage : export AUTOSEG_HOME=<InputDirectory>" << std::endl ;
+       std::cout << "tcsh usage : setenv AUTOSEG_HOME <InputDirectory>" << std::endl ;
     }
-    else
-    {
-        std::cerr<<"The environment variable 'AUTOSEG_HOME' needs to be set"<<std::endl;
-        std::cerr<<"bash usage : export AUTOSEG_HOME=<InputDirectory>"<<std::endl;
-        std::cerr<<"tcsh usage : setenv AUTOSEG_HOME <InputDirectory>"<<std::endl;
-        return -1;
-    }
+    freopen(logFilename,"w",stdout); //redirect stdout
+    freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
+    AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath,AUTOSEG_VERSION , computationFile , parameterFile );
+    Fl::scheme("plastic");
+    Fl::run();
+    delete MainWindow;
+    return 0;
   }
   else if ( computationFile && parameterFile)
   {

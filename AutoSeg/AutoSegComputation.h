@@ -34,6 +34,7 @@
 #include <itksys/SystemTools.hxx>
 #include <math.h>
 #include <itkMultiThreader.h>
+#include <map>
 
 #include "TextDisplayGUIControls.h"
 
@@ -52,6 +53,11 @@ enum Mode
 class AutoSegComputation
 {
   public:
+    typedef std::map< std::string, std::vector< std::string > > ToolsMapType ;
+    typedef std::pair< std::string, std::vector< std::string > > ToolsPairType ;
+    typedef std::map< std::string, std::string > ToolsMapPathsType ;
+    typedef std::pair< std::string, std::string > ToolsPairPathsType ;
+
     AutoSegComputation();
     ~AutoSegComputation();
 
@@ -337,7 +343,10 @@ class AutoSegComputation
     void ComputeData();
 
     // Compute Automatic Segmentation
-    void Computation();
+    int FindTools() ;
+    std::vector< std::string > GetMissingTools() ;
+    void AddNotRequiredTools( std::string toolName ) ;
+    int Computation();
     void ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile);
     void RunPipeline(int _GUImode);
 
@@ -969,6 +978,10 @@ class AutoSegComputation
     //int m_stdOutListenerThreadID;
     int m_batchMakeThreadID;
     bm::ScriptParser m_Parser;
+    ToolsMapType m_RequiredTools ;
+    ToolsMapPathsType m_RequiredToolsPaths ;
+    std::vector< std::string > m_MissingTools ;
+    std::vector< std::string > m_ToolsNotRequired ;
 };
 
 #endif

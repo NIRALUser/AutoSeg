@@ -1275,7 +1275,7 @@ class AutoSegGUI {open
               tooltip {Bias field correction on intermediate skull-stripped image (when tissue loop enabled)} xywh {480 546 351 24} down_box DOWN_BOX labelsize 12
             }
           }
-          Fl_Group {} {
+          Fl_Group g_ReorientationGroup {
             label Reorientation open
             xywh {465 85 420 100} box UP_BOX labelfont 9 labelsize 12 align 17
           } {
@@ -1458,7 +1458,7 @@ class AutoSegGUI {open
             } {
               Fl_Group g_ANTSWarpingGroup {
                 label {ANTS Warping} open
-                xywh {174 465 601 420} labelfont 8 labelsize 12 align 10
+                xywh {174 465 601 420} labelfont 8 labelsize 12 align 10 hide
               } {
                 Fl_Group g_ANTS {open
                   xywh {210 487 565 398}
@@ -1649,7 +1649,7 @@ class AutoSegGUI {open
               }
               Fl_Group g_FluidWarpingGroup {
                 label {Fluid Warping} open
-                xywh {180 465 590 335} labelfont 8 labelsize 12 hide
+                xywh {180 465 590 335} labelfont 8 labelsize 12
               } {
                 Fl_Group {} {open
                   xywh {260 480 385 320}

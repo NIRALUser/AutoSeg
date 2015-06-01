@@ -167,7 +167,7 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
     return HE;
 }
 
-AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath,const char*AutoSegVersion)
+AutoSegGUIControls::AutoSegGUIControls(std::string _AutoSegPath,const char*AutoSegVersion, const char* computationFile , const char* parameterFile)
   : AutoSegGUI()
 {
   m_AutoSegVersion = std::string("Autoseg ") + AutoSegVersion ;
@@ -178,19 +178,22 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath,const char*AutoSegVers
   g_MainWindow->show();
   m_BrowserWidths = NULL;
   m_AuxBrowserWidths = NULL;
-	
-  // Set AutoSeg Environment
-  CheckDirectoryName(_AutoSegPath);
-  m_Computation.SetAutoSegPath(_AutoSegPath);
   
+  // Set AutoSeg Environment
+  char *autoSegPath = new char[ _AutoSegPath.size()+1 ] ;
+  std::strcpy(autoSegPath,_AutoSegPath.c_str()) ;
+  CheckDirectoryName(autoSegPath);
+  m_Computation.SetAutoSegPath(autoSegPath);
+  delete []autoSegPath ;
+
   // Initialization Computation Parameters
   m_Computation.SetT2Image(g_T2Button->value());
   m_Computation.SetPDImage(g_PDButton->value());
-	
+  
   m_Computation.SetAuxT1Image(g_AuxT1Button->value());
   m_Computation.SetAuxT2Image(g_AuxT2Button->value());
   m_Computation.SetAuxPDImage(g_AuxPDButton->value());
-	
+  
   m_Computation.SetAux1Image(g_Aux1Button->value());
   m_Computation.SetAux2Image(g_Aux2Button->value());
   m_Computation.SetAux3Image(g_Aux3Button->value());
@@ -220,19 +223,88 @@ AutoSegGUIControls::AutoSegGUIControls(char *_AutoSegPath,const char*AutoSegVers
   std::strcpy(DefaultParameterFile, m_Computation.GetAutoSegPath());
   std::strcat(DefaultParameterFile, "AutoSeg_DefaultParameters_Adult.txt");
   SetDefaultParameterFile(DefaultParameterFile);
-  IsDefaultParameterFile = m_Computation.LoadParameterFile(GetDefaultParameterFile());
-  IsDefaultParameterFile = UpdateParameterGUI(GetDefaultParameterFile());
-  if (!IsDefaultParameterFile)
+  if( parameterFile != NULL )
   {
-    InitializeParameters();
+    m_Computation.LoadParameterFile(parameterFile);
+    UpdateParameterGUI(parameterFile, file , true );
+  }
+  else
+  {
+    IsDefaultParameterFile = m_Computation.LoadParameterFile(GetDefaultParameterFile());
+    IsDefaultParameterFile = UpdateParameterGUI(GetDefaultParameterFile(), file , false );
+    if (!IsDefaultParameterFile)
+    {
+      InitializeParameters();
+    }
+  }
+  if( computationFile != NULL )
+  {
+    m_Computation.LoadComputationFile(computationFile);
+    UpdateComputationGUI(computationFile);
+  }
+  std::vector< std::string > listTools ;
+  listTools.push_back("WarpTool");
+  listTools.push_back("txApply");
+  listTools.push_back("fWarp");
+  if( FindTools( listTools ) )
+  {
+    m_OldFluidRegistration = false ;
+    g_ClassicWarpingButton->deactivate() ;
+    g_CoarseToFineWarpingButton->deactivate() ;
+    g_FluidWarpingGroup->deactivate() ;
+    RemoveRequiredTools(listTools);
+  }
+  else
+  {
+    m_OldFluidRegistration = true ;
+  }
+  listTools.clear() ;
+  listTools.push_back( "imconvert3" ) ;
+  if( FindTools( listTools ) )
+  {
+      g_ReorientationGroup->deactivate() ;
+      m_ActivateReorientation = false ;
+      RemoveRequiredTools(listTools);
+  }
+  else
+  {
+      m_ActivateReorientation = true ;
+  }
+  ABCButtonToggled();//This is necessary to initialize the tissue segmentation parameters in m_Computation
+  SetANTSRegistrationFilterTypeGUI();//This is necessary to initialize the "step" for ANTS registration (default registration)
+}
+
+
+void AutoSegGUIControls::RemoveRequiredTools( std::vector<std::string> &listTools )
+{
+  for( size_t pos = 0 ; pos < listTools.size() ; pos ++ )
+  {
+    m_Computation.AddNotRequiredTools(listTools[pos]) ;
   }
 }
+
+// Verify if old tools are on the system. They are not built by the Superbuild mechanism.
+// If they are not present, we just disable the radio buttons that allow to select them
+int AutoSegGUIControls::FindTools( std::vector< std::string > listTools )
+{
+  std::string result ;
+  for( size_t i = 0 ; i < listTools.size() ; i++ )
+  {
+    result = itksys::SystemTools::FindProgram( listTools[ i ] ) ;
+    if( result == "" )
+    {
+      return 1 ;
+    }
+  }
+  return 0 ;
+}
+
 
 AutoSegGUIControls::~AutoSegGUIControls()
 {
   if (m_BrowserWidths)
     delete[] m_BrowserWidths;
-	
+  
   if (m_AuxBrowserWidths)
     delete[] m_AuxBrowserWidths;
 }
@@ -477,9 +549,9 @@ void AutoSegGUIControls::LoadComputationFileGUI()
   //if a name has been set
       if(fc.count())
       {
-	g_DataBrowser->clear();
-	m_Computation.LoadComputationFile(fc.value());
-	UpdateComputationGUI(fc.value());
+  g_DataBrowser->clear();
+  m_Computation.LoadComputationFile(fc.value());
+  UpdateComputationGUI(fc.value());
       }
     m_CurrentDirectory = strdup(fc.directory());
 }
@@ -566,147 +638,147 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
 
       if ( (std::strncmp("Process Data Directory: ", Line, 24)) == 0)
       {
-	if (std::strlen(Line+24) != 0)
-	{
-	  g_ProcessDataDirectoryDisp->value(Line+24);
-	  g_ProcessDataDirectoryDisp->position(g_ProcessDataDirectoryDisp->size());
-	}
-	else
-	{
-	  g_ProcessDataDirectoryDisp->value("");
-	}
+  if (std::strlen(Line+24) != 0)
+  {
+    g_ProcessDataDirectoryDisp->value(Line+24);
+    g_ProcessDataDirectoryDisp->position(g_ProcessDataDirectoryDisp->size());
+  }
+  else
+  {
+    g_ProcessDataDirectoryDisp->value("");
+  }
       }
       else if ( (std::strncmp("Is T2 Image: ", Line, 13)) == 0)
       {
-	IsT2Image = atoi(Line+13);
-	if (IsT2Image == 0)
-	{
-	  g_T2Button->clear();
-	  g_T2Disp->deactivate();
-	  g_T2Disp->value(NULL);
-	}
-	else
-	{
-	  g_T2Button->set();	
-	  g_T2Disp->activate();
-	}
+  IsT2Image = atoi(Line+13);
+  if (IsT2Image == 0)
+  {
+    g_T2Button->clear();
+    g_T2Disp->deactivate();
+    g_T2Disp->value(NULL);
+  }
+  else
+  {
+    g_T2Button->set();  
+    g_T2Disp->activate();
+  }
       }
       else if ( (std::strncmp("Is PD Image: ", Line, 13)) == 0)
       {
-	IsPDImage = atoi(Line+13);
-	if (IsPDImage == 0)
-	{
-	  g_PDButton->clear();
-	  g_PDDisp->deactivate();
-	  g_PDDisp->value(NULL);
-	}
-	else
-	{
-	  g_PDButton->set();
-	  g_PDDisp->activate();
-	}
-	InitBrowser();
+  IsPDImage = atoi(Line+13);
+  if (IsPDImage == 0)
+  {
+    g_PDButton->clear();
+    g_PDDisp->deactivate();
+    g_PDDisp->value(NULL);
+  }
+  else
+  {
+    g_PDButton->set();
+    g_PDDisp->activate();
+  }
+  InitBrowser();
       }
       else if( (std::strncmp("Data AutoSeg Directory: ", Line, 24)) == 0)
       {
-	if (std::strlen(Line+24))
-	{
-	  g_DataAutoSegDirectoryDisp->value(Line+24);
-	}
-	else
-	{
-	  g_DataAutoSegDirectoryDisp->value(NULL);
-	}
+  if (std::strlen(Line+24))
+  {
+    g_DataAutoSegDirectoryDisp->value(Line+24);
+  }
+  else
+  {
+    g_DataAutoSegDirectoryDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Data Directory: ", Line, 16)) == 0)
       {
-	if (std::strlen(Line+16) != 0)
-	{
-	  g_DataDirectoryDisp->value(Line+16); 
-	  g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
-	}
-	else
-	{
-	  g_DataDirectoryDisp->value(NULL);
-	}
+  if (std::strlen(Line+16) != 0)
+  {
+    g_DataDirectoryDisp->value(Line+16); 
+    g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
+  }
+  else
+  {
+    g_DataDirectoryDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("T1 Files: ", Line, 10)) == 0)
       {
-	if (std::strlen(Line+10) != 0)
-	{
-	  g_T1Disp->value(Line+10);
-	  g_T1Disp->position(g_T1Disp->size());
-	}
-	else
-	{
-	  g_T1Disp->value(NULL);
-	}
+  if (std::strlen(Line+10) != 0)
+  {
+    g_T1Disp->value(Line+10);
+    g_T1Disp->position(g_T1Disp->size());
+  }
+  else
+  {
+    g_T1Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("T2 Files: ", Line, 10)) == 0)
       {
-	if (std::strlen(Line+10) != 0)
-	{
-	  g_T2Disp->value(Line+10);	 
-	  g_T2Disp->position(g_T2Disp->size());
-	}
-	else
-	{
-	  g_T2Disp->value(NULL);
-	}
+  if (std::strlen(Line+10) != 0)
+  {
+    g_T2Disp->value(Line+10);   
+    g_T2Disp->position(g_T2Disp->size());
+  }
+  else
+  {
+    g_T2Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("PD Files: ", Line, 10)) == 0)
       {
-	if (std::strlen(Line+10) != 0)        
-	{
-	  g_PDDisp->value(Line+10);	  
-	  g_PDDisp->position(g_PDDisp->size());
-	}
-	else
-	{
-	  g_PDDisp->value(NULL);
-	}     
+  if (std::strlen(Line+10) != 0)        
+  {
+    g_PDDisp->value(Line+10);    
+    g_PDDisp->position(g_PDDisp->size());
+  }
+  else
+  {
+    g_PDDisp->value(NULL);
+  }     
       }
       else if ( (std::strncmp("Compute Volume: ", Line, 16)) == 0)
       {
-	ComputeVolume = atoi(Line+16);
-	if (ComputeVolume == 1)
-	  g_ComputeVolumeButton->set();
-	else
-	  g_ComputeVolumeButton->clear();
+  ComputeVolume = atoi(Line+16);
+  if (ComputeVolume == 1)
+    g_ComputeVolumeButton->set();
+  else
+    g_ComputeVolumeButton->clear();
       }
       else if ( (std::strncmp("Compute cortical thickness: ", Line, 28)) == 0)
       {
-	ComputeCorticalThickness = atoi(Line+28);
-	if (ComputeCorticalThickness == 1)
-	  g_ComputeCorticalThicknessButton->set();
-	else
-	  g_ComputeCorticalThicknessButton->clear();
+  ComputeCorticalThickness = atoi(Line+28);
+  if (ComputeCorticalThickness == 1)
+    g_ComputeCorticalThicknessButton->set();
+  else
+    g_ComputeCorticalThicknessButton->clear();
       }
       else if ( (std::strncmp("Recompute: ", Line, strlen("Recompute: "))) == 0)
       {
-	Recompute = atoi(Line+strlen("Recompute: "));
-	if (Recompute == 1)
-	  g_RecomputeButton->set();
-	else
-	  g_RecomputeButton->clear();
+  Recompute = atoi(Line+strlen("Recompute: "));
+  if (Recompute == 1)
+    g_RecomputeButton->set();
+  else
+    g_RecomputeButton->clear();
       }
       else if ( (std::strncmp("Use Condor: ", Line, strlen("Use Condor: "))) == 0)
       {
-	UseCondor = atoi(Line+strlen("Use Condor: "));
-	if (UseCondor == 1)
-	  g_UseCondorButton->set();
-	else
-	  g_UseCondorButton->clear();
+  UseCondor = atoi(Line+strlen("Use Condor: "));
+  if (UseCondor == 1)
+    g_UseCondorButton->set();
+  else
+    g_UseCondorButton->clear();
       }
       else if ( (std::strncmp("Data: ", Line, strlen("Data: "))) == 0)
       {
-	RightJustifyData(Line+strlen("Data: "), Data);
-	g_DataBrowser->add(Data);
+  RightJustifyData(Line+strlen("Data: "), Data);
+  g_DataBrowser->add(Data);
       }
       else if ( (std::strncmp("Compute Multi-modality Single-atlas Segmentation: ", Line, strlen("Compute Multi-modality Single-atlas Segmentation: "))) == 0)
       {
         boolValue = atoi(Line + strlen("Compute Multi-modality Single-atlas Segmentation: "));
-	if (boolValue == 1) {
+  if (boolValue == 1) {
             g_MultiModalitySingleSegButton->set();
         }
         else
@@ -715,7 +787,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       else if ( (std::strncmp("Compute Multi-modality Multi-atlas Segmentation: ", Line, strlen("Compute Multi-modality Multi-atlas Segmentation: "))) == 0)
       {
         boolValue = atoi(Line + strlen("Compute Multi-modality Multi-atlas Segmentation: "));
-	if (boolValue == 1) {
+  if (boolValue == 1) {
             g_MultiModalityMultiSegButton->set();
         }
         else
@@ -724,7 +796,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       else if ( (std::strncmp("Compute Multi-atlas Segmentation: ", Line, strlen("Compute Multi-atlas Segmentation: "))) == 0)
       {
         ComputeMultiAtlas = atoi(Line + strlen("Compute Multi-atlas Segmentation: "));
-	if (ComputeMultiAtlas == 1) {
+  if (ComputeMultiAtlas == 1) {
             g_MultiAtlasSegButton->set();
             MultiAtlasSegmentationButtonChecked();
         }
@@ -734,9 +806,9 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       else if ( (std::strncmp("Compute Single-atlas Segmentation: ", Line, strlen("Compute Single-atlas Segmentation: "))) == 0)
       {
         boolValue = atoi(Line + strlen("Compute Single-atlas Segmentation: "));
-	if (boolValue == 1) {
+  if (boolValue == 1) {
             g_SingleAtlasSegButton->set();
-	    SingleAtlasSegmentationButtonChecked();
+      SingleAtlasSegmentationButtonChecked();
         }
         else
             g_SingleAtlasSegButton->clear();
@@ -744,16 +816,16 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       else if ( (std::strncmp("Randomize Subject Order: ", Line, 25)) == 0)
       {
         boolValue = atoi(Line + 25);
-	if (boolValue == 1) {
+  if (boolValue == 1) {
             g_RandomizeSubjectsButton->set();
-	    RandomizeSubjectsButtonChecked();
+      RandomizeSubjectsButtonChecked();
         }
         else
             g_RandomizeSubjectsButton->clear();
       }
       else if ( (std::strncmp("Conduct Atlas-Atlas Registration: ", Line, 34)) == 0)
       {
-	if (atoi(Line + 34) == 1) {
+  if (atoi(Line + 34) == 1) {
             g_AtlasAtlasRegButton->set();
         }
         else
@@ -761,7 +833,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       }
       else if ( (std::strncmp("Recalculate Atlas-Target Energy: ", Line, 33)) == 0)
       {
-	if (atoi(Line + 33) == 1) {
+  if (atoi(Line + 33) == 1) {
             g_RecalculateAtlasTargetEnergyButton->set();
         }
         else
@@ -769,7 +841,7 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
       }
       else if ( (std::strncmp("Recalculate Atlas-Atlas Energy: ", Line, 32)) == 0)
       {
-	if (atoi(Line + 32) == 1) {
+  if (atoi(Line + 32) == 1) {
             g_RecalculateAtlasAtlasEnergyButton->set();
         }
         else
@@ -788,12 +860,12 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
   char Line[1536];
   char Data[1536];
   int Length;
-	
+  
   // Computation Options
   int IsAux1Image, IsAux2Image, IsAux3Image, IsAux4Image, IsAux5Image, IsAux6Image, IsAux7Image, IsAux8Image;
   int IsAuxT1Image, IsAuxT2Image, IsAuxPDImage;
   int RigidTransformation, AffineTransformation, BsplineTransformation, AtlasSpaceImage, BiasCorrectedImage, SkullStrippedImage;
-  IsAux1Image = IsAux2Image = IsAux3Image = IsAux4Image = IsAux5Image = IsAux6Image = IsAux7Image = IsAux8Image	= 0;
+  IsAux1Image = IsAux2Image = IsAux3Image = IsAux4Image = IsAux5Image = IsAux6Image = IsAux7Image = IsAux8Image  = 0;
 
   if ((AuxComputationFile = fopen(_FileName,"r")) != NULL) 
   {
@@ -803,738 +875,738 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
       Line[Length-1] = '\0';
       if ( (std::strncmp("Is AuxT1 Image: ", Line, 16)) == 0)
       {
-	IsAuxT1Image = atoi(Line+16);
-	if (IsAuxT1Image == 1)
-	{
-	  g_AuxT1Button->setonly();
-	}
+  IsAuxT1Image = atoi(Line+16);
+  if (IsAuxT1Image == 1)
+  {
+    g_AuxT1Button->setonly();
+  }
       }
       else if ( (std::strncmp("Is AuxT2 Image: ", Line, 16)) == 0)
       {
-	IsAuxT2Image = atoi(Line+16);
-	if (IsAuxT2Image == 1)
-	{
-	  g_AuxT2Button->setonly();
-	}
+  IsAuxT2Image = atoi(Line+16);
+  if (IsAuxT2Image == 1)
+  {
+    g_AuxT2Button->setonly();
+  }
       }
       else
       {
-	IsAuxPDImage = atoi(Line+16);
-	if (IsAuxPDImage == 1)
-	{
-	  g_AuxPDButton->setonly();
-	}
+  IsAuxPDImage = atoi(Line+16);
+  if (IsAuxPDImage == 1)
+  {
+    g_AuxPDButton->setonly();
+  }
       }
       if ( (std::strncmp("Is Aux1 Image: ", Line, 15)) == 0)
       {
-	IsAux1Image = atoi(Line+15);	 
-	if (IsAux1Image == 0)
-	{
-	  g_Aux1Button->clear();
-	  g_Aux1LabelDisp->deactivate();
-	  g_Aux1LabelDisp->value(NULL);
-	  g_Aux1Disp->deactivate();
-	  g_Aux1Disp->value(NULL);
-	  g_Aux1Title->deactivate();
-					
-	  g_Aux2Button->clear();
-	  g_Aux2Button->deactivate();
-	  g_Aux2LabelDisp->deactivate();
-	  g_Aux2LabelDisp->value(NULL);
-	  g_Aux2Disp->deactivate();
-	  g_Aux2Disp->value(NULL);
-	  g_Aux2Title->deactivate();
-					
-	  g_Aux3Button->clear();
-	  g_Aux3Button->deactivate();
-	  g_Aux3LabelDisp->deactivate();
-	  g_Aux3LabelDisp->value(NULL);
-	  g_Aux3Disp->deactivate();
-	  g_Aux3Disp->value(NULL);
-	  g_Aux3Title->deactivate();
-					
-	  g_Aux4Button->clear();
-	  g_Aux4Button->deactivate();
-	  g_Aux4LabelDisp->deactivate();
-	  g_Aux4LabelDisp->value(NULL);
-	  g_Aux4Disp->deactivate();
-	  g_Aux4Disp->value(NULL);
-	  g_Aux4Title->deactivate();
-					
-	  g_Aux5Button->clear();
-	  g_Aux5Button->deactivate();
-	  g_Aux5LabelDisp->deactivate();
-	  g_Aux5LabelDisp->value(NULL);
-	  g_Aux5Disp->deactivate();
-	  g_Aux5Disp->value(NULL);
-	  g_Aux5Title->deactivate();
-					
-	  g_Aux6Button->clear();
-	  g_Aux6Button->deactivate();
-	  g_Aux6LabelDisp->deactivate();
-	  g_Aux6LabelDisp->value(NULL);
-	  g_Aux6Disp->deactivate();
-	  g_Aux6Disp->value(NULL);
-	  g_Aux6Title->deactivate();
-					
-	  g_Aux7Button->clear();
-	  g_Aux7Button->deactivate();
-	  g_Aux7LabelDisp->deactivate();
-	  g_Aux7LabelDisp->value(NULL);
-	  g_Aux7Disp->deactivate();
-	  g_Aux7Disp->value(NULL);
-	  g_Aux7Title->deactivate();
-					
-	  g_Aux8Button->clear();
-	  g_Aux8Button->deactivate();
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8Title->deactivate();
-	}
-	else
-	{
-	  g_Aux1Button->set();
-	  g_Aux1Title->activate();
-	  g_Aux1Disp->activate();
-	  g_Aux1LabelDisp->activate();
-	  g_Aux2Button->activate();
-	}
+  IsAux1Image = atoi(Line+15);   
+  if (IsAux1Image == 0)
+  {
+    g_Aux1Button->clear();
+    g_Aux1LabelDisp->deactivate();
+    g_Aux1LabelDisp->value(NULL);
+    g_Aux1Disp->deactivate();
+    g_Aux1Disp->value(NULL);
+    g_Aux1Title->deactivate();
+          
+    g_Aux2Button->clear();
+    g_Aux2Button->deactivate();
+    g_Aux2LabelDisp->deactivate();
+    g_Aux2LabelDisp->value(NULL);
+    g_Aux2Disp->deactivate();
+    g_Aux2Disp->value(NULL);
+    g_Aux2Title->deactivate();
+          
+    g_Aux3Button->clear();
+    g_Aux3Button->deactivate();
+    g_Aux3LabelDisp->deactivate();
+    g_Aux3LabelDisp->value(NULL);
+    g_Aux3Disp->deactivate();
+    g_Aux3Disp->value(NULL);
+    g_Aux3Title->deactivate();
+          
+    g_Aux4Button->clear();
+    g_Aux4Button->deactivate();
+    g_Aux4LabelDisp->deactivate();
+    g_Aux4LabelDisp->value(NULL);
+    g_Aux4Disp->deactivate();
+    g_Aux4Disp->value(NULL);
+    g_Aux4Title->deactivate();
+          
+    g_Aux5Button->clear();
+    g_Aux5Button->deactivate();
+    g_Aux5LabelDisp->deactivate();
+    g_Aux5LabelDisp->value(NULL);
+    g_Aux5Disp->deactivate();
+    g_Aux5Disp->value(NULL);
+    g_Aux5Title->deactivate();
+          
+    g_Aux6Button->clear();
+    g_Aux6Button->deactivate();
+    g_Aux6LabelDisp->deactivate();
+    g_Aux6LabelDisp->value(NULL);
+    g_Aux6Disp->deactivate();
+    g_Aux6Disp->value(NULL);
+    g_Aux6Title->deactivate();
+          
+    g_Aux7Button->clear();
+    g_Aux7Button->deactivate();
+    g_Aux7LabelDisp->deactivate();
+    g_Aux7LabelDisp->value(NULL);
+    g_Aux7Disp->deactivate();
+    g_Aux7Disp->value(NULL);
+    g_Aux7Title->deactivate();
+          
+    g_Aux8Button->clear();
+    g_Aux8Button->deactivate();
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8Title->deactivate();
+  }
+  else
+  {
+    g_Aux1Button->set();
+    g_Aux1Title->activate();
+    g_Aux1Disp->activate();
+    g_Aux1LabelDisp->activate();
+    g_Aux2Button->activate();
+  }
       }
       else if ( (std::strncmp("Is Aux2 Image: ", Line, 15)) == 0)
       {
-	IsAux2Image = atoi(Line+15);
-	if ((IsAux2Image == 0) || ((IsAux2Image == 1) && (IsAux1Image == 0)))
-	{
-	  g_Aux2Button->clear();
-	  g_Aux2Disp->deactivate();
-	  g_Aux2Disp->value(NULL);
-	  g_Aux2LabelDisp->deactivate();
-	  g_Aux2LabelDisp->value(NULL);
-	  g_Aux2Title->deactivate();
-					
-	  g_Aux3Button->clear();
-	  g_Aux3Button->deactivate();
-	  g_Aux3LabelDisp->deactivate();
-	  g_Aux3LabelDisp->value(NULL);
-	  g_Aux3Disp->deactivate();
-	  g_Aux3Disp->value(NULL);
-	  g_Aux3Title->deactivate();
-					
-	  g_Aux4Button->clear();
-	  g_Aux4Button->deactivate();
-	  g_Aux4LabelDisp->deactivate();
-	  g_Aux4LabelDisp->value(NULL);
-	  g_Aux4Disp->deactivate();
-	  g_Aux4Disp->value(NULL);
-	  g_Aux4Title->deactivate();
-					
-	  g_Aux5Button->clear();
-	  g_Aux5Button->deactivate();
-	  g_Aux5LabelDisp->deactivate();
-	  g_Aux5LabelDisp->value(NULL);
-	  g_Aux5Disp->deactivate();
-	  g_Aux5Disp->value(NULL);
-	  g_Aux5Title->deactivate();
-					
-	  g_Aux6Button->clear();
-	  g_Aux6Button->deactivate();
-	  g_Aux6LabelDisp->deactivate();
-	  g_Aux6LabelDisp->value(NULL);
-	  g_Aux6Disp->deactivate();
-	  g_Aux6Disp->value(NULL);
-	  g_Aux6Title->deactivate();
-					
-	  g_Aux7Button->clear();
-	  g_Aux7Button->deactivate();
-	  g_Aux7LabelDisp->deactivate();
-	  g_Aux7LabelDisp->value(NULL);
-	  g_Aux7Disp->deactivate();
-	  g_Aux7Disp->value(NULL);
-	  g_Aux7Title->deactivate();
-					
-	  g_Aux8Button->clear();
-	  g_Aux8Button->deactivate();
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8Title->deactivate();
-	}
-	else
-	{
-	  g_Aux2Button->set();
-	  g_Aux2Title->activate();
-	  g_Aux2Disp->activate();
-	  g_Aux2LabelDisp->activate();
-	  g_Aux3Button->activate();
-	}
+  IsAux2Image = atoi(Line+15);
+  if ((IsAux2Image == 0) || ((IsAux2Image == 1) && (IsAux1Image == 0)))
+  {
+    g_Aux2Button->clear();
+    g_Aux2Disp->deactivate();
+    g_Aux2Disp->value(NULL);
+    g_Aux2LabelDisp->deactivate();
+    g_Aux2LabelDisp->value(NULL);
+    g_Aux2Title->deactivate();
+          
+    g_Aux3Button->clear();
+    g_Aux3Button->deactivate();
+    g_Aux3LabelDisp->deactivate();
+    g_Aux3LabelDisp->value(NULL);
+    g_Aux3Disp->deactivate();
+    g_Aux3Disp->value(NULL);
+    g_Aux3Title->deactivate();
+          
+    g_Aux4Button->clear();
+    g_Aux4Button->deactivate();
+    g_Aux4LabelDisp->deactivate();
+    g_Aux4LabelDisp->value(NULL);
+    g_Aux4Disp->deactivate();
+    g_Aux4Disp->value(NULL);
+    g_Aux4Title->deactivate();
+          
+    g_Aux5Button->clear();
+    g_Aux5Button->deactivate();
+    g_Aux5LabelDisp->deactivate();
+    g_Aux5LabelDisp->value(NULL);
+    g_Aux5Disp->deactivate();
+    g_Aux5Disp->value(NULL);
+    g_Aux5Title->deactivate();
+          
+    g_Aux6Button->clear();
+    g_Aux6Button->deactivate();
+    g_Aux6LabelDisp->deactivate();
+    g_Aux6LabelDisp->value(NULL);
+    g_Aux6Disp->deactivate();
+    g_Aux6Disp->value(NULL);
+    g_Aux6Title->deactivate();
+          
+    g_Aux7Button->clear();
+    g_Aux7Button->deactivate();
+    g_Aux7LabelDisp->deactivate();
+    g_Aux7LabelDisp->value(NULL);
+    g_Aux7Disp->deactivate();
+    g_Aux7Disp->value(NULL);
+    g_Aux7Title->deactivate();
+          
+    g_Aux8Button->clear();
+    g_Aux8Button->deactivate();
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8Title->deactivate();
+  }
+  else
+  {
+    g_Aux2Button->set();
+    g_Aux2Title->activate();
+    g_Aux2Disp->activate();
+    g_Aux2LabelDisp->activate();
+    g_Aux3Button->activate();
+  }
       }
       else if ( (std::strncmp("Is Aux3 Image: ", Line, 15)) == 0)
       {
-	IsAux3Image = atoi(Line+15);
-	if ((IsAux3Image == 0) || ((IsAux3Image == 1) && ((IsAux2Image == 0) || (IsAux1Image == 0))))
-	{
-	  g_Aux3Button->clear();
-	  g_Aux3Title->deactivate();
-	  g_Aux3Disp->deactivate();
-	  g_Aux3Disp->value(NULL);
-	  g_Aux3LabelDisp->deactivate();
-	  g_Aux3LabelDisp->value(NULL);
-					
-	  g_Aux4Button->clear();
-	  g_Aux4Button->deactivate();
-	  g_Aux4LabelDisp->deactivate();
-	  g_Aux4LabelDisp->value(NULL);
-	  g_Aux4Disp->deactivate();
-	  g_Aux4Disp->value(NULL);
-	  g_Aux4Title->deactivate();
-					
-	  g_Aux5Button->clear();
-	  g_Aux5Button->deactivate();
-	  g_Aux5LabelDisp->deactivate();
-	  g_Aux5LabelDisp->value(NULL);
-	  g_Aux5Disp->deactivate();
-	  g_Aux5Disp->value(NULL);
-	  g_Aux5Title->deactivate();
-					
-	  g_Aux6Button->clear();
-	  g_Aux6Button->deactivate();
-	  g_Aux6LabelDisp->deactivate();
-	  g_Aux6LabelDisp->value(NULL);
-	  g_Aux6Disp->deactivate();
-	  g_Aux6Disp->value(NULL);
-	  g_Aux6Title->deactivate();
-					
-	  g_Aux7Button->clear();
-	  g_Aux7Button->deactivate();
-	  g_Aux7LabelDisp->deactivate();
-	  g_Aux7LabelDisp->value(NULL);
-	  g_Aux7Disp->deactivate();
-	  g_Aux7Disp->value(NULL);
-	  g_Aux7Title->deactivate();
-					
-	  g_Aux8Button->clear();
-	  g_Aux8Button->deactivate();
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8Title->deactivate();
-	}
-	else
-	{
-	  g_Aux3Button->set();
-	  g_Aux3Title->activate();
-	  g_Aux3Disp->activate();
-	  g_Aux3LabelDisp->activate();
-	  g_Aux4Button->activate();
-	}
+  IsAux3Image = atoi(Line+15);
+  if ((IsAux3Image == 0) || ((IsAux3Image == 1) && ((IsAux2Image == 0) || (IsAux1Image == 0))))
+  {
+    g_Aux3Button->clear();
+    g_Aux3Title->deactivate();
+    g_Aux3Disp->deactivate();
+    g_Aux3Disp->value(NULL);
+    g_Aux3LabelDisp->deactivate();
+    g_Aux3LabelDisp->value(NULL);
+          
+    g_Aux4Button->clear();
+    g_Aux4Button->deactivate();
+    g_Aux4LabelDisp->deactivate();
+    g_Aux4LabelDisp->value(NULL);
+    g_Aux4Disp->deactivate();
+    g_Aux4Disp->value(NULL);
+    g_Aux4Title->deactivate();
+          
+    g_Aux5Button->clear();
+    g_Aux5Button->deactivate();
+    g_Aux5LabelDisp->deactivate();
+    g_Aux5LabelDisp->value(NULL);
+    g_Aux5Disp->deactivate();
+    g_Aux5Disp->value(NULL);
+    g_Aux5Title->deactivate();
+          
+    g_Aux6Button->clear();
+    g_Aux6Button->deactivate();
+    g_Aux6LabelDisp->deactivate();
+    g_Aux6LabelDisp->value(NULL);
+    g_Aux6Disp->deactivate();
+    g_Aux6Disp->value(NULL);
+    g_Aux6Title->deactivate();
+          
+    g_Aux7Button->clear();
+    g_Aux7Button->deactivate();
+    g_Aux7LabelDisp->deactivate();
+    g_Aux7LabelDisp->value(NULL);
+    g_Aux7Disp->deactivate();
+    g_Aux7Disp->value(NULL);
+    g_Aux7Title->deactivate();
+          
+    g_Aux8Button->clear();
+    g_Aux8Button->deactivate();
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8Title->deactivate();
+  }
+  else
+  {
+    g_Aux3Button->set();
+    g_Aux3Title->activate();
+    g_Aux3Disp->activate();
+    g_Aux3LabelDisp->activate();
+    g_Aux4Button->activate();
+  }
       }
       else if ( (std::strncmp("Is Aux4 Image: ", Line, 15)) == 0)
       {
-	IsAux4Image = atoi(Line+15);
-	if ((IsAux4Image == 0) || ((IsAux4Image == 1) && ((IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
-	{
-	  g_Aux4Button->clear();
-	  g_Aux4Title->deactivate();
-	  g_Aux4Disp->deactivate();
-	  g_Aux4Disp->value(NULL);
-	  g_Aux4LabelDisp->deactivate();
-	  g_Aux4LabelDisp->value(NULL);
-					
-	  g_Aux5Button->clear();
-	  g_Aux5Button->deactivate();
-	  g_Aux5Disp->deactivate();
-	  g_Aux5Disp->value(NULL);
-	  g_Aux5Title->deactivate();
-	  g_Aux5LabelDisp->deactivate();
-	  g_Aux5LabelDisp->value(NULL);
-					
-	  g_Aux6Button->clear();
-	  g_Aux6Button->deactivate();
-	  g_Aux6Disp->deactivate();
-	  g_Aux6Disp->value(NULL);
-	  g_Aux6Title->deactivate();
-	  g_Aux6LabelDisp->deactivate();
-	  g_Aux6LabelDisp->value(NULL);
-					
-	  g_Aux7Button->clear();
-	  g_Aux7Button->deactivate();
-	  g_Aux7Disp->deactivate();
-	  g_Aux7Disp->value(NULL);
-	  g_Aux7Title->deactivate();
-	  g_Aux7LabelDisp->deactivate();
-	  g_Aux7LabelDisp->value(NULL);
-					
-	  g_Aux8Button->clear();
-	  g_Aux8Button->deactivate();
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8Title->deactivate();
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	}
-	else
-	{
-	  g_Aux4Button->set();
-	  g_Aux4Title->activate();
-	  g_Aux4Disp->activate();
-	  g_Aux4LabelDisp->activate();
-	  g_Aux5Button->activate();
-	}
+  IsAux4Image = atoi(Line+15);
+  if ((IsAux4Image == 0) || ((IsAux4Image == 1) && ((IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
+  {
+    g_Aux4Button->clear();
+    g_Aux4Title->deactivate();
+    g_Aux4Disp->deactivate();
+    g_Aux4Disp->value(NULL);
+    g_Aux4LabelDisp->deactivate();
+    g_Aux4LabelDisp->value(NULL);
+          
+    g_Aux5Button->clear();
+    g_Aux5Button->deactivate();
+    g_Aux5Disp->deactivate();
+    g_Aux5Disp->value(NULL);
+    g_Aux5Title->deactivate();
+    g_Aux5LabelDisp->deactivate();
+    g_Aux5LabelDisp->value(NULL);
+          
+    g_Aux6Button->clear();
+    g_Aux6Button->deactivate();
+    g_Aux6Disp->deactivate();
+    g_Aux6Disp->value(NULL);
+    g_Aux6Title->deactivate();
+    g_Aux6LabelDisp->deactivate();
+    g_Aux6LabelDisp->value(NULL);
+          
+    g_Aux7Button->clear();
+    g_Aux7Button->deactivate();
+    g_Aux7Disp->deactivate();
+    g_Aux7Disp->value(NULL);
+    g_Aux7Title->deactivate();
+    g_Aux7LabelDisp->deactivate();
+    g_Aux7LabelDisp->value(NULL);
+          
+    g_Aux8Button->clear();
+    g_Aux8Button->deactivate();
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8Title->deactivate();
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+  }
+  else
+  {
+    g_Aux4Button->set();
+    g_Aux4Title->activate();
+    g_Aux4Disp->activate();
+    g_Aux4LabelDisp->activate();
+    g_Aux5Button->activate();
+  }
       }
       else if ( (std::strncmp("Is Aux5 Image: ", Line, 15)) == 0)
       {
-	IsAux5Image = atoi(Line+15);
-	if ((IsAux5Image == 0) || ((IsAux5Image == 1) && ((IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
-	{
-	  g_Aux5Button->clear();
-	  g_Aux5Title->deactivate();
-	  g_Aux5Disp->deactivate();
-	  g_Aux5Disp->value(NULL);
-	  g_Aux5LabelDisp->deactivate();
-	  g_Aux5LabelDisp->value(NULL);
-					
-	  g_Aux6Button->clear();
-	  g_Aux6Button->deactivate();
-	  g_Aux6Disp->deactivate();
-	  g_Aux6Disp->value(NULL);
-	  g_Aux6Title->deactivate();
-	  g_Aux6LabelDisp->deactivate();
-	  g_Aux6LabelDisp->value(NULL);
-					
-	  g_Aux7Button->clear();
-	  g_Aux7Button->deactivate();
-	  g_Aux7Disp->deactivate();
-	  g_Aux7Disp->value(NULL);
-	  g_Aux7Title->deactivate();
-	  g_Aux7LabelDisp->deactivate();
-	  g_Aux7LabelDisp->value(NULL);
-					
-	  g_Aux8Button->clear();
-	  g_Aux8Button->deactivate();
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8Title->deactivate();
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	}
-	else
-	{
-	  g_Aux5Button->set();
-	  g_Aux5Title->activate();
-	  g_Aux5Disp->activate();
-	  g_Aux5LabelDisp->activate();
-	  g_Aux6Button->activate();
-	}
+  IsAux5Image = atoi(Line+15);
+  if ((IsAux5Image == 0) || ((IsAux5Image == 1) && ((IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
+  {
+    g_Aux5Button->clear();
+    g_Aux5Title->deactivate();
+    g_Aux5Disp->deactivate();
+    g_Aux5Disp->value(NULL);
+    g_Aux5LabelDisp->deactivate();
+    g_Aux5LabelDisp->value(NULL);
+          
+    g_Aux6Button->clear();
+    g_Aux6Button->deactivate();
+    g_Aux6Disp->deactivate();
+    g_Aux6Disp->value(NULL);
+    g_Aux6Title->deactivate();
+    g_Aux6LabelDisp->deactivate();
+    g_Aux6LabelDisp->value(NULL);
+          
+    g_Aux7Button->clear();
+    g_Aux7Button->deactivate();
+    g_Aux7Disp->deactivate();
+    g_Aux7Disp->value(NULL);
+    g_Aux7Title->deactivate();
+    g_Aux7LabelDisp->deactivate();
+    g_Aux7LabelDisp->value(NULL);
+          
+    g_Aux8Button->clear();
+    g_Aux8Button->deactivate();
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8Title->deactivate();
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+  }
+  else
+  {
+    g_Aux5Button->set();
+    g_Aux5Title->activate();
+    g_Aux5Disp->activate();
+    g_Aux5LabelDisp->activate();
+    g_Aux6Button->activate();
+  }
       }
       else if ( (std::strncmp("Is Aux6 Image: ", Line, 15)) == 0)
       {
-	IsAux6Image = atoi(Line+15);
-	if ((IsAux6Image == 0) || ((IsAux6Image == 1) && ((IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
-	{
-	  g_Aux6Button->clear();
-	  g_Aux6Title->deactivate();
-	  g_Aux6Disp->deactivate();
-	  g_Aux6Disp->value(NULL);
-	  g_Aux6LabelDisp->deactivate();
-	  g_Aux6LabelDisp->value(NULL);
-					
-	  g_Aux7Button->clear();
-	  g_Aux7Button->deactivate();
-	  g_Aux7Disp->deactivate();
-	  g_Aux7Disp->value(NULL);
-	  g_Aux7Title->deactivate();
-	  g_Aux7LabelDisp->deactivate();
-	  g_Aux7LabelDisp->value(NULL);
-					
-	  g_Aux8Button->clear();
-	  g_Aux8Button->deactivate();
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8Title->deactivate();
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	}
-	else
-	{
-	  g_Aux6Button->set();
-	  g_Aux6Title->activate();
-	  g_Aux6Disp->activate();
-	  g_Aux6LabelDisp->activate();
-	  g_Aux7Button->activate();
-	}
+  IsAux6Image = atoi(Line+15);
+  if ((IsAux6Image == 0) || ((IsAux6Image == 1) && ((IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
+  {
+    g_Aux6Button->clear();
+    g_Aux6Title->deactivate();
+    g_Aux6Disp->deactivate();
+    g_Aux6Disp->value(NULL);
+    g_Aux6LabelDisp->deactivate();
+    g_Aux6LabelDisp->value(NULL);
+          
+    g_Aux7Button->clear();
+    g_Aux7Button->deactivate();
+    g_Aux7Disp->deactivate();
+    g_Aux7Disp->value(NULL);
+    g_Aux7Title->deactivate();
+    g_Aux7LabelDisp->deactivate();
+    g_Aux7LabelDisp->value(NULL);
+          
+    g_Aux8Button->clear();
+    g_Aux8Button->deactivate();
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8Title->deactivate();
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+  }
+  else
+  {
+    g_Aux6Button->set();
+    g_Aux6Title->activate();
+    g_Aux6Disp->activate();
+    g_Aux6LabelDisp->activate();
+    g_Aux7Button->activate();
+  }
       }
       else if ( (std::strncmp("Is Aux7 Image: ", Line, 15)) == 0)
       {
-	IsAux7Image = atoi(Line+15);
-	if ((IsAux7Image == 0) || ((IsAux7Image == 1) && ((IsAux6Image == 0) || (IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
-	{
-	  g_Aux7Button->clear();
-	  g_Aux7Title->deactivate();
-	  g_Aux7Disp->deactivate();
-	  g_Aux7Disp->value(NULL);
-	  g_Aux7LabelDisp->deactivate();
-	  g_Aux7LabelDisp->value(NULL);
-					
-	  g_Aux8Button->clear();
-	  g_Aux8Button->deactivate();
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8Title->deactivate();
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	}
-	else
-	{
-	  g_Aux7Button->set();
-	  g_Aux7Title->activate();
-	  g_Aux7Disp->activate();
-	  g_Aux7LabelDisp->activate();
-	  g_Aux8Button->activate();
-	}
+  IsAux7Image = atoi(Line+15);
+  if ((IsAux7Image == 0) || ((IsAux7Image == 1) && ((IsAux6Image == 0) || (IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
+  {
+    g_Aux7Button->clear();
+    g_Aux7Title->deactivate();
+    g_Aux7Disp->deactivate();
+    g_Aux7Disp->value(NULL);
+    g_Aux7LabelDisp->deactivate();
+    g_Aux7LabelDisp->value(NULL);
+          
+    g_Aux8Button->clear();
+    g_Aux8Button->deactivate();
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8Title->deactivate();
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+  }
+  else
+  {
+    g_Aux7Button->set();
+    g_Aux7Title->activate();
+    g_Aux7Disp->activate();
+    g_Aux7LabelDisp->activate();
+    g_Aux8Button->activate();
+  }
       }
       else if ( (std::strncmp("Is Aux8 Image: ", Line, 15)) == 0)
       {
-	IsAux8Image = atoi(Line+15);
-	if ((IsAux8Image == 0) || ((IsAux8Image == 1) && ((IsAux7Image == 0) || (IsAux6Image == 0) || (IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
-	{
-	  g_Aux8Button->clear();
-	  g_Aux8Title->deactivate();
-	  g_Aux8Disp->deactivate();
-	  g_Aux8Disp->value(NULL);
-	  g_Aux8LabelDisp->deactivate();
-	  g_Aux8LabelDisp->value(NULL);
-	}
-	else
-	{
-	  g_Aux8Button->set();
-	  g_Aux8Title->activate();
-	  g_Aux8Disp->activate();
-	  g_Aux8LabelDisp->activate();
-	}
-	InitAuxBrowser();
+  IsAux8Image = atoi(Line+15);
+  if ((IsAux8Image == 0) || ((IsAux8Image == 1) && ((IsAux7Image == 0) || (IsAux6Image == 0) || (IsAux5Image == 0) || (IsAux4Image == 0) || (IsAux3Image == 0) || (IsAux2Image == 0) || (IsAux1Image == 0))))
+  {
+    g_Aux8Button->clear();
+    g_Aux8Title->deactivate();
+    g_Aux8Disp->deactivate();
+    g_Aux8Disp->value(NULL);
+    g_Aux8LabelDisp->deactivate();
+    g_Aux8LabelDisp->value(NULL);
+  }
+  else
+  {
+    g_Aux8Button->set();
+    g_Aux8Title->activate();
+    g_Aux8Disp->activate();
+    g_Aux8LabelDisp->activate();
+  }
+  InitAuxBrowser();
       }
       else if ( (std::strncmp("Data Directory: ", Line, 16)) == 0)
       {
-	if (std::strlen(Line+16) != 0)
-	{
-	  g_DataDirectoryDisp->value(Line+16); 
-	  g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
-	}
-	else
-	{
-	  g_DataDirectoryDisp->value(NULL);
-	}
+  if (std::strlen(Line+16) != 0)
+  {
+    g_DataDirectoryDisp->value(Line+16); 
+    g_DataDirectoryDisp->position(g_DataDirectoryDisp->size());
+  }
+  else
+  {
+    g_DataDirectoryDisp->value(NULL);
+  }
       }
-// 			else if ( (std::strncmp("AuxT1 Files: ", Line, 13)) == 0)
-// 			{
-// 				if (std::strlen(Line+13) != 0)
-// 				{
-// 					m_Computation.SetT1(Line+13);
-// 				}
-// 				else
-// 				{
-// 					m_Computation.SetT1("");
-// 				}
-// 			}
-// 			else if ( (std::strncmp("AuxT2 Files: ", Line, 13)) == 0)
-// 			{
-// 				if (std::strlen(Line+13) != 0)
-// 				{
-// 					m_Computation.SetT2(Line+13);
-// 				}
-// 				else
-// 				{
-// 					m_Computation.SetT2("");
-// 				}
-// 			}
-// 			else if ( (std::strncmp("AuxPD Files: ", Line, 13)) == 0)
-// 			{
-// 				if (std::strlen(Line+13) != 0)
-// 				{
-// 					m_Computation.SetPD(Line+13);
-// 				}
-// 				else
-// 				{
-// 					m_Computation.SetPD("");
-// 				}
-// 			}
+//       else if ( (std::strncmp("AuxT1 Files: ", Line, 13)) == 0)
+//       {
+//         if (std::strlen(Line+13) != 0)
+//         {
+//           m_Computation.SetT1(Line+13);
+//         }
+//         else
+//         {
+//           m_Computation.SetT1("");
+//         }
+//       }
+//       else if ( (std::strncmp("AuxT2 Files: ", Line, 13)) == 0)
+//       {
+//         if (std::strlen(Line+13) != 0)
+//         {
+//           m_Computation.SetT2(Line+13);
+//         }
+//         else
+//         {
+//           m_Computation.SetT2("");
+//         }
+//       }
+//       else if ( (std::strncmp("AuxPD Files: ", Line, 13)) == 0)
+//       {
+//         if (std::strlen(Line+13) != 0)
+//         {
+//           m_Computation.SetPD(Line+13);
+//         }
+//         else
+//         {
+//           m_Computation.SetPD("");
+//         }
+//       }
       else if ( (std::strncmp("Aux1 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux1Disp->value(Line+12);
-	  g_Aux1Disp->position(g_Aux1Disp->size());
-	}
-	else
-	{
-	  g_Aux1Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux1Disp->value(Line+12);
+    g_Aux1Disp->position(g_Aux1Disp->size());
+  }
+  else
+  {
+    g_Aux1Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux2 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux2Disp->value(Line+12);
-	  g_Aux2Disp->position(g_Aux2Disp->size());
-	}
-	else
-	{
-	  g_Aux2Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux2Disp->value(Line+12);
+    g_Aux2Disp->position(g_Aux2Disp->size());
+  }
+  else
+  {
+    g_Aux2Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux3 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux3Disp->value(Line+12);
-	  g_Aux3Disp->position(g_Aux3Disp->size());
-	}
-	else
-	{
-	  g_Aux3Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux3Disp->value(Line+12);
+    g_Aux3Disp->position(g_Aux3Disp->size());
+  }
+  else
+  {
+    g_Aux3Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux4 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux4Disp->value(Line+12);
-	  g_Aux4Disp->position(g_Aux4Disp->size());
-	}
-	else
-	{
-	  g_Aux4Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux4Disp->value(Line+12);
+    g_Aux4Disp->position(g_Aux4Disp->size());
+  }
+  else
+  {
+    g_Aux4Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux5 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux5Disp->value(Line+12);
-	  g_Aux5Disp->position(g_Aux5Disp->size());
-	}
-	else
-	{
-	  g_Aux5Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux5Disp->value(Line+12);
+    g_Aux5Disp->position(g_Aux5Disp->size());
+  }
+  else
+  {
+    g_Aux5Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux6 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux6Disp->value(Line+12);
-	  g_Aux6Disp->position(g_Aux6Disp->size());
-	}
-	else
-	{
-	  g_Aux6Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux6Disp->value(Line+12);
+    g_Aux6Disp->position(g_Aux6Disp->size());
+  }
+  else
+  {
+    g_Aux6Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux7 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux7Disp->value(Line+12);
-	  g_Aux7Disp->position(g_Aux7Disp->size());
-	}
-	else
-	{
-	  g_Aux7Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux7Disp->value(Line+12);
+    g_Aux7Disp->position(g_Aux7Disp->size());
+  }
+  else
+  {
+    g_Aux7Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux8 Files: ", Line, 12)) == 0)
       {
-	if (std::strlen(Line+12) != 0)
-	{
-	  g_Aux8Disp->value(Line+12);
-	  g_Aux8Disp->position(g_Aux8Disp->size());
-	}
-	else
-	{
-	  g_Aux8Disp->value(NULL);
-	}
+  if (std::strlen(Line+12) != 0)
+  {
+    g_Aux8Disp->value(Line+12);
+    g_Aux8Disp->position(g_Aux8Disp->size());
+  }
+  else
+  {
+    g_Aux8Disp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux1 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux1LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux1LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux1LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux1LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux2 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux2LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux2LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux2LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux2LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux3 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux3LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux3LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux3LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux3LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux4 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux4LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux4LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux4LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux4LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux5 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux5LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux5LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux5LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux5LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux6 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux6LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux6LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux6LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux6LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux7 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux7LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux7LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux7LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux7LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Aux8 Label: ", Line, 11)) == 0)
       {
-	if (std::strlen(Line+11) != 0)
-	{
-	  g_Aux8LabelDisp->value(Line+11);
-	}
-	else
-	{
-	  g_Aux8LabelDisp->value(NULL);
-	}
+  if (std::strlen(Line+11) != 0)
+  {
+    g_Aux8LabelDisp->value(Line+11);
+  }
+  else
+  {
+    g_Aux8LabelDisp->value(NULL);
+  }
       }
       else if ( (std::strncmp("Atlas Space Image: ", Line, 19)) == 0)
       {
-	AtlasSpaceImage = atoi(Line+19);
-	if (AtlasSpaceImage == 1)
-	{
-	  g_AtlasSpaceButton->set();
-	  g_StrippedButton->clear();
-	  g_BiasCorrectedButton->clear();
-	  BiasCorrectedImage = 0;
-	  SkullStrippedImage = 0;
-	}
-	else
-	  g_AtlasSpaceButton->clear();
+  AtlasSpaceImage = atoi(Line+19);
+  if (AtlasSpaceImage == 1)
+  {
+    g_AtlasSpaceButton->set();
+    g_StrippedButton->clear();
+    g_BiasCorrectedButton->clear();
+    BiasCorrectedImage = 0;
+    SkullStrippedImage = 0;
+  }
+  else
+    g_AtlasSpaceButton->clear();
       }
       else if ( (std::strncmp("Bias Corrected Image: ", Line, 22)) == 0)
       {
-	BiasCorrectedImage = atoi(Line+22);
-	if (BiasCorrectedImage == 1)
-	{
-	  g_BiasCorrectedButton->set();
-	  g_AtlasSpaceButton->clear();
-	  g_StrippedButton->clear();
-	  AtlasSpaceImage = 0;
-	  SkullStrippedImage = 0;
-	}
-	else
-	  g_BiasCorrectedButton->clear();
+  BiasCorrectedImage = atoi(Line+22);
+  if (BiasCorrectedImage == 1)
+  {
+    g_BiasCorrectedButton->set();
+    g_AtlasSpaceButton->clear();
+    g_StrippedButton->clear();
+    AtlasSpaceImage = 0;
+    SkullStrippedImage = 0;
+  }
+  else
+    g_BiasCorrectedButton->clear();
       }
       else if ( (std::strncmp("Skull Stripped Image: ", Line, 22)) == 0)
       {
-	SkullStrippedImage = atoi(Line+22);
-	if (SkullStrippedImage == 1)
-	{
-	  g_StrippedButton->set();
-	  g_BiasCorrectedButton->clear();
-	  g_AtlasSpaceButton->clear();
-	  AtlasSpaceImage = 0;
-	  BiasCorrectedImage = 0;
-	}
-	else
-	  g_StrippedButton->clear();
+  SkullStrippedImage = atoi(Line+22);
+  if (SkullStrippedImage == 1)
+  {
+    g_StrippedButton->set();
+    g_BiasCorrectedButton->clear();
+    g_AtlasSpaceButton->clear();
+    AtlasSpaceImage = 0;
+    BiasCorrectedImage = 0;
+  }
+  else
+    g_StrippedButton->clear();
       }
       else if ( (std::strncmp("Rigid Transformation: ", Line, 22)) == 0)
       {
-	RigidTransformation = atoi(Line+22);
-	if (RigidTransformation == 1)
-	{
-	  g_RigidTransformationButton->set();
-	  g_AffineTransformationButton->clear();
-	  g_BsplineTransformationButton->clear();
-	  AffineTransformation = 0;
-	  BsplineTransformation = 0;
-	}
-	else
-	  g_RigidTransformationButton->clear();
+  RigidTransformation = atoi(Line+22);
+  if (RigidTransformation == 1)
+  {
+    g_RigidTransformationButton->set();
+    g_AffineTransformationButton->clear();
+    g_BsplineTransformationButton->clear();
+    AffineTransformation = 0;
+    BsplineTransformation = 0;
+  }
+  else
+    g_RigidTransformationButton->clear();
       }
       else if ( (std::strncmp("Affine Transformation: ", Line, 23)) == 0)
       {
-	AffineTransformation = atoi(Line+23);
-	if (AffineTransformation == 1)
-	{
-	  g_AffineTransformationButton->set();
-	  g_RigidTransformationButton->clear();
-	  g_BsplineTransformationButton->clear();
-	  BsplineTransformation = 0;
-	  RigidTransformation = 0;
-	}
-	else
-	  g_AffineTransformationButton->clear();
+  AffineTransformation = atoi(Line+23);
+  if (AffineTransformation == 1)
+  {
+    g_AffineTransformationButton->set();
+    g_RigidTransformationButton->clear();
+    g_BsplineTransformationButton->clear();
+    BsplineTransformation = 0;
+    RigidTransformation = 0;
+  }
+  else
+    g_AffineTransformationButton->clear();
       }
       else if ( (std::strncmp("Bspline Transformation: ", Line, 24)) == 0)
       {
-	BsplineTransformation = atoi(Line+24);
-	if (BsplineTransformation == 1)
-	{
-	  g_BsplineTransformationButton->set();
-	  g_AffineTransformationButton->clear();
-	  g_RigidTransformationButton->clear();
-	  AffineTransformation = 0;
-	  RigidTransformation = 0;
-	}
-	else
-	  g_BsplineTransformationButton->clear();
+  BsplineTransformation = atoi(Line+24);
+  if (BsplineTransformation == 1)
+  {
+    g_BsplineTransformationButton->set();
+    g_AffineTransformationButton->clear();
+    g_RigidTransformationButton->clear();
+    AffineTransformation = 0;
+    RigidTransformation = 0;
+  }
+  else
+    g_BsplineTransformationButton->clear();
       }
       else if ( (std::strncmp("AuxData: ", Line, 9)) == 0)
       {
-	RightJustifyAuxData(Line+9, Data);
-	g_AuxDataBrowser->add(Data);	
-				
+  RightJustifyAuxData(Line+9, Data);
+  g_AuxDataBrowser->add(Data);  
+        
       }
     }
     fclose(AuxComputationFile);
@@ -1551,7 +1623,7 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
 // Mode = tissueSeg: Read only the tissue segmentation parameters
 // Mode = warping: Read only the warping parameters
 // Mode = N4biasFieldCorrection: Read only the N4 ITK Bias Field Correction parameters
-bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mode)
+bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mode , bool showError )
 {
   FILE* ParameterFile;
   char Line[512]; 
@@ -1594,7 +1666,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   if (mode ==file)
   {
     // INIT / default setting for backward comaptibility
-		
+    
     // Init for EMS loop
     g_LoopButton->clear();
     g_LoopIteration->deactivate();
@@ -1612,8 +1684,8 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
     // Init for Atlas Warping
     g_ANTSWarpingButton->clear();
   }
-  
-  if ((ParameterFile = fopen(_FileName,"r")) != NULL) 
+  _FileName = itksys::SystemTools::CollapseFullPath( _FileName ).c_str() ;
+  if ((ParameterFile = fopen(_FileName,"r")) != NULL)
   {
     IsParameterFileLoaded = true;
     while ( (fgets(Line,512,ParameterFile)) != NULL)
@@ -1623,1196 +1695,1223 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       
       if (mode == file)
       {
-	if ( (std::strncmp("Common Coordinate Image: ", Line, 25)) == 0)
-	{
-	  if (std::strlen(Line+25) != 0)
-	  {
-	    g_CommonCoordinateImageDisp->value(Line+25);
-	    g_CommonCoordinateImageDisp->position(g_CommonCoordinateImageDisp->size());
-	  }
-	  else
-	  {
-	    g_CommonCoordinateImageDisp->value(NULL);
-	  }
-	}
-	else if ( (std::strncmp("Common Coordinate Image Type: ", Line, 30)) == 0)
-	{
-	  m_Computation.SetCommonCoordinateImageType(Line+30);
-	  if (std::strcmp(Line+30, "T1") == 0)
-	  {
-	    g_CommonCoordinateImageT1Button->set();		
-	    g_CommonCoordinateImageT2Button->clear();
-	  }
-	  else
-	  {
-	    g_CommonCoordinateImageT1Button->clear();		
-	    g_CommonCoordinateImageT2Button->set();
-	  }
-	}
-	else if ( (std::strncmp("Tissue Segmentation Atlas Directory: ", Line, 37)) == 0)
-	{
-	  if (std::strlen(Line+37) != 0)
-	  {
-	    g_TissueSegmentationAtlasDirectoryDisp->value(Line+37); 
-	    g_TissueSegmentationAtlasDirectoryDisp->position(g_TissueSegmentationAtlasDirectoryDisp->size());
-	  }
-	  else
-	  {
-	    g_TissueSegmentationAtlasDirectoryDisp->value(NULL);
-	  }
-	}
-	else if ( (std::strncmp("Tissue Segmentation Atlas Type: ", Line, 32)) == 0)
-	{
-	  if (std::strcmp(Line+32, "T1") == 0)
-	  {
-	    g_TissueSegmentationAtlasT1Button->set();		
-	    g_TissueSegmentationAtlasT2Button->clear();
-	  }
-	  else
-	  {
-	    g_TissueSegmentationAtlasT1Button->clear();		
-	    g_TissueSegmentationAtlasT2Button->set();
-	  }	
-	}
-	else if ( (std::strncmp("ROI Atlas File: ", Line, 16)) == 0)
-	{
-	  if (std::strlen(Line+16) != 0)
-	  {
-	    g_ROIAtlasFileDisp->value(Line+16);
-	    g_ROIAtlasFileDisp->position(g_ROIAtlasFileDisp->size());
-	  }
-	  else
-	  {
-	    g_ROIAtlasFileDisp->value(NULL);
-	  }
-	}
+  if ( (std::strncmp("Common Coordinate Image: ", Line, 25)) == 0)
+  {
+    if (std::strlen(Line+25) != 0)
+    {
+      g_CommonCoordinateImageDisp->value(Line+25);
+      g_CommonCoordinateImageDisp->position(g_CommonCoordinateImageDisp->size());
+    }
+    else
+    {
+      g_CommonCoordinateImageDisp->value(NULL);
+    }
+  }
+  else if ( (std::strncmp("Common Coordinate Image Type: ", Line, 30)) == 0)
+  {
+    m_Computation.SetCommonCoordinateImageType(Line+30);
+    if (std::strcmp(Line+30, "T1") == 0)
+    {
+      g_CommonCoordinateImageT1Button->set();    
+      g_CommonCoordinateImageT2Button->clear();
+    }
+    else
+    {
+      g_CommonCoordinateImageT1Button->clear();    
+      g_CommonCoordinateImageT2Button->set();
+    }
+  }
+  else if ( (std::strncmp("Tissue Segmentation Atlas Directory: ", Line, 37)) == 0)
+  {
+    if (std::strlen(Line+37) != 0)
+    {
+      g_TissueSegmentationAtlasDirectoryDisp->value(Line+37); 
+      g_TissueSegmentationAtlasDirectoryDisp->position(g_TissueSegmentationAtlasDirectoryDisp->size());
+    }
+    else
+    {
+      g_TissueSegmentationAtlasDirectoryDisp->value(NULL);
+    }
+  }
+  else if ( (std::strncmp("Tissue Segmentation Atlas Type: ", Line, 32)) == 0)
+  {
+    if (std::strcmp(Line+32, "T1") == 0)
+    {
+      g_TissueSegmentationAtlasT1Button->set();    
+      g_TissueSegmentationAtlasT2Button->clear();
+    }
+    else
+    {
+      g_TissueSegmentationAtlasT1Button->clear();    
+      g_TissueSegmentationAtlasT2Button->set();
+    }  
+  }
+  else if ( (std::strncmp("ROI Atlas File: ", Line, 16)) == 0)
+  {
+    if (std::strlen(Line+16) != 0)
+    {
+      g_ROIAtlasFileDisp->value(Line+16);
+      g_ROIAtlasFileDisp->position(g_ROIAtlasFileDisp->size());
+    }
+    else
+    {
+      g_ROIAtlasFileDisp->value(NULL);
+    }
+  }
         else if ( (std::strncmp("ROI Second Atlas File: ", Line, 23)) == 0)
-	{
-	  if (std::strlen(Line+23) != 0)
-	  {
-	    g_ROIT2AtlasFileDisp->value(Line+23);
-	    g_ROIT2AtlasFileDisp->position(g_ROIAtlasFileDisp->size());
-	  }
-	  else
-	  {
-	    g_ROIT2AtlasFileDisp->value(NULL);
-	  }
-	}
-	else if ( (std::strncmp("Amygdala Left: ", Line, 15)) == 0)
-	{
-	  if (std::strlen(Line+15) != 0)
-	  {
-	    g_AmygdalaLeftButton->set();
-	    g_AmygdalaLeftDisp->activate();
-	    g_AmygdalaLeftDisp->value(Line+15); 
-	    g_AmygdalaLeftDisp->position(g_AmygdalaLeftDisp->size());
-	  }
-	  else
-	  {
-	    g_AmygdalaLeftButton->clear();
-	    g_AmygdalaLeftDisp->deactivate();
-	    g_AmygdalaLeftDisp->value(NULL);
-	  }
-	}         
-	else if ( (std::strncmp("Amygdala Right: ", Line, 16)) == 0)
-	{
-	  if (std::strlen(Line+16) != 0)
-	  {
-	    g_AmygdalaRightButton->set();
-	    g_AmygdalaRightDisp->activate();
-	    g_AmygdalaRightDisp->value(Line+16);   
-	    g_AmygdalaRightDisp->position(g_AmygdalaRightDisp->size());
-	  }
-	  else
-	  {
-	    g_AmygdalaRightButton->clear();
-	    g_AmygdalaRightDisp->deactivate();
-	    g_AmygdalaRightDisp->value(NULL);
-	  }
-	}     
-	else if ( (std::strncmp("Caudate Left: ", Line, 14)) == 0)
-	{
-	  if (std::strlen(Line+14) != 0)
-	  {
-	    g_CaudateLeftButton->set();
-	    g_CaudateLeftDisp->activate();
-	    g_CaudateLeftDisp->value(Line+14); 
-	    g_CaudateLeftDisp->position(g_CaudateLeftDisp->size());
-	  }
-	  else
-	  {
-	    g_CaudateLeftButton->clear();
-	    g_CaudateLeftDisp->deactivate();
-	    g_CaudateLeftDisp->value(NULL);  
-	  }
-	}     
-	else if ( (std::strncmp("Caudate Right: ", Line, 15)) == 0)
-	{
-	  if (std::strlen(Line+15) != 0)
-	  {
-	    g_CaudateRightButton->set();
-	    g_CaudateRightDisp->activate();
-	    g_CaudateRightDisp->value(Line+15); 
-	    g_CaudateRightDisp->position(g_CaudateRightDisp->size());
-	  }
-	  else
-	  {
-	    g_CaudateRightButton->clear();
-	    g_CaudateRightDisp->deactivate();
-	    g_CaudateRightDisp->value(NULL);
-	  }
-	}     
-	else if ( (std::strncmp("Hippocampus Left: ", Line, 18)) == 0)
-	{
-	  if (std::strlen(Line+18) != 0)
-	  {
-	    g_HippocampusLeftButton->set();
-	    g_HippocampusLeftDisp->activate();
-	    g_HippocampusLeftDisp->value(Line+18); 
-	    g_HippocampusLeftDisp->position(g_HippocampusLeftDisp->size());
-	  }
-	  else
-	  {
-	    g_HippocampusLeftButton->clear();
-	    g_HippocampusLeftDisp->deactivate();
-	    g_HippocampusLeftDisp->value(NULL);
-	  }
-	}     
-	else if ( (std::strncmp("Hippocampus Right: ", Line, 19)) == 0)
-	{
-	  if (std::strlen(Line+19) != 0)
-	  {
-	    g_HippocampusRightButton->set();
-	    g_HippocampusRightDisp->activate();
-	    g_HippocampusRightDisp->value(Line+19); 
-	    g_HippocampusRightDisp->position(g_HippocampusRightDisp->size());
-	  }
-	  else
-	  {
-	    g_HippocampusRightButton->clear();
-	    g_HippocampusRightDisp->deactivate();
-	    g_HippocampusRightDisp->value(NULL); 
-	  }
-	}     
-	else if ( (std::strncmp("Pallidus Left: ", Line, 15)) == 0)
-	{
-	  if (std::strlen(Line+15) != 0)
-	  {
-	    g_PallidusLeftButton->set();
-	    g_PallidusLeftDisp->activate();
-	    g_PallidusLeftDisp->value(Line+15);
-	    g_PallidusLeftDisp->position(g_PallidusLeftDisp->size());
-	  }
-	  else
-	  {
-	    g_PallidusLeftButton->clear();
-	    g_PallidusLeftDisp->deactivate();
-	    g_PallidusLeftDisp->value(NULL);
-	  }
-	}     
-	else if ( (std::strncmp("Pallidus Right: ", Line, 16)) == 0)
-	{
-	  if (std::strlen(Line+16) != 0)
-	  {
-	    g_PallidusRightButton->set();
-	    g_PallidusRightDisp->activate();
-	    g_PallidusRightDisp->value(Line+16);
-	    g_PallidusRightDisp->position(g_PallidusRightDisp->size());
-	  }
-	  else
-	  {
-	    g_PallidusRightButton->clear();
-	    g_PallidusRightDisp->deactivate();
-	    g_PallidusRightDisp->value(NULL); 
-	  }
-	}     
-	else if ( (std::strncmp("Putamen Left: ", Line, 14)) == 0)
-	{
-	  if (std::strlen(Line+14) != 0)
-	  {
-	    g_PutamenLeftButton->set();
-	    g_PutamenLeftDisp->activate();
-	    g_PutamenLeftDisp->value(Line+14); 
-	    g_PutamenLeftDisp->position(g_PutamenLeftDisp->size());
-	  }
-	  else
-	  {
-	    g_PutamenLeftButton->clear();
-	    g_PutamenLeftDisp->deactivate();
-	    g_PutamenLeftDisp->value(NULL);  
-	  }
-	}     
-	else if ( (std::strncmp("Putamen Right: ", Line, 15)) == 0)
-	{
-	  if (std::strlen(Line+15) != 0)
-	  {
-	    g_PutamenRightButton->set();
-	    g_PutamenRightDisp->activate();
-	    g_PutamenRightDisp->value(Line+15); 
-	    g_PutamenRightDisp->position(g_PutamenRightDisp->size());
-	  }
-	  else
-	  {
-	    g_PutamenRightButton->clear();
-	    g_PutamenRightDisp->deactivate();
-	    g_PutamenRightDisp->value(NULL); 
-	  }
-	}     
-	else if ( (std::strncmp("Lateral Ventricle Left: ", Line, 24)) == 0)
-	{
-	  if (std::strlen(Line+24) != 0)
-	  {
-	    g_LateralVentricleLeftButton->set();
-	    g_LateralVentricleLeftDisp->activate();
-	    g_LateralVentricleLeftDisp->value(Line+24); 
-	    g_LateralVentricleLeftDisp->position(g_LateralVentricleLeftDisp->size());
-	  }   
-	  else
-	  {
-	    g_LateralVentricleLeftButton->clear();
-	    g_LateralVentricleLeftDisp->deactivate();
-	    g_LateralVentricleLeftDisp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("Lateral Ventricle Right: ", Line, 25)) == 0)
-	{
-	  if (std::strlen(Line+25) != 0)
-	  {
-	    g_LateralVentricleRightButton->set();
-	    g_LateralVentricleRightDisp->activate();
-	    g_LateralVentricleRightDisp->value(Line+25); 
-	    g_LateralVentricleRightDisp->position(g_LateralVentricleRightDisp->size());
-	  }
-	  else
-	  {
-	    g_LateralVentricleRightButton->clear();
-	    g_LateralVentricleRightDisp->deactivate();
-	    g_LateralVentricleRightDisp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("ROI File 1: ", Line, 12)) == 0)
-	{
-	  if (std::strlen(Line+12) != 0)
-	  {
-	    g_ROIFile1Button->set();
-	    g_ROIFile1Disp->activate();
-	    g_ROIFile1Disp->value(Line+12); 
-	    g_ROIFile1Disp->position(g_ROIFile1Disp->size());
-	  }
-	  else
-	  {
-	    g_ROIFile1Button->clear();
-	    g_ROIFile1Disp->deactivate();
-	    g_ROIFile1Disp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("ROI File 2: ", Line, 12)) == 0)
-	{
-	  if (std::strlen(Line+12) != 0)
-	  {
-	    g_ROIFile2Button->set();
-	    g_ROIFile2Disp->activate();
-	    g_ROIFile2Disp->value(Line+12); 
-	    g_ROIFile2Disp->position(g_ROIFile2Disp->size());
-	  }
-	  else
-	  {
-	    g_ROIFile2Button->clear();
-	    g_ROIFile2Disp->deactivate();
-	    g_ROIFile2Disp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("ROI File 3: ", Line, 12)) == 0)
-	{
-	  if (std::strlen(Line+12) != 0)
-	  {
-	    g_ROIFile3Button->set();
-	    g_ROIFile3Disp->activate();
-	    g_ROIFile3Disp->value(Line+12); 
-	    g_ROIFile3Disp->position(g_ROIFile3Disp->size());
-	  }
-	  else
-	  {
-	    g_ROIFile3Button->clear();
-	    g_ROIFile3Disp->deactivate();
-	    g_ROIFile3Disp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("ROI File 4: ", Line, 12)) == 0)
-	{
-	  if (std::strlen(Line+12) != 0)
-	  {
-	    g_ROIFile4Button->set();
-	    g_ROIFile4Disp->activate();
-	    g_ROIFile4Disp->value(Line+12); 
-	    g_ROIFile4Disp->position(g_ROIFile4Disp->size());
-	  }
-	  else
-	  {
-	    g_ROIFile4Button->clear();
-	    g_ROIFile4Disp->deactivate();
-	    g_ROIFile4Disp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("ROI File 5: ", Line, 12)) == 0)
-	{
-	  if (std::strlen(Line+12) != 0)
-	  {
-	    g_ROIFile5Button->set();
-	    g_ROIFile5Disp->activate();
-	    g_ROIFile5Disp->value(Line+12); 
-	    g_ROIFile5Disp->position(g_ROIFile5Disp->size());
-	  }
-	  else
-	  {
-	    g_ROIFile5Button->clear();
-	    g_ROIFile5Disp->deactivate();
-	    g_ROIFile5Disp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("Tissue Map: ", Line, 12)) == 0)
-	{
-	  if (std::strcmp(Line+12, "Soft") == 0)
-	  {
-	    g_SoftTissueMapButton->set();
-	    g_HardTissueMapButton->clear();
-	  }
-	  else
-	  {
-	    g_SoftTissueMapButton->clear();
-	    g_HardTissueMapButton->set();
-	  }
-	}
-	else if ( (std::strncmp("Parcellation File 1: ", Line, 21)) == 0)
-	{
-	  if (std::strlen(Line+21) != 0)
-	  {
-	    g_ParcellationFile1Button->set();
-	    g_ParcellationFile1Disp->activate();
-	    g_ParcellationFile1Disp->value(Line+21); 
-	    g_ParcellationFile1Disp->position(g_ParcellationFile1Disp->size());
-	  }
-	  else
-	  {
-	    g_ParcellationFile1Button->clear();
-	    g_ParcellationFile1Disp->deactivate();
-	    g_ParcellationFile1Disp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("Parcellation File 2: ", Line, 21)) == 0)
-	{
-	  if (std::strlen(Line+21) != 0)
-	  {
-	    g_ParcellationFile2Button->set();
-	    g_ParcellationFile2Disp->activate();
-	    g_ParcellationFile2Disp->value(Line+21); 
-	    g_ParcellationFile2Disp->position(g_ParcellationFile2Disp->size());
-	  }
-	  else
-	  {
-	    g_ParcellationFile2Button->clear();
-	    g_ParcellationFile2Disp->deactivate();
-	    g_ParcellationFile2Disp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("Parcellation File 3: ", Line, 21)) == 0)
-	{
-	  if (std::strlen(Line+21) != 0)
-	  {
-	    g_ParcellationFile3Button->set();
-	    g_ParcellationFile3Disp->activate();
-	    g_ParcellationFile3Disp->value(Line+21); 
-	    g_ParcellationFile3Disp->position(g_ParcellationFile3Disp->size());
-	  }
-	  else
-	  {
-	    g_ParcellationFile3Button->clear();
-	    g_ParcellationFile3Disp->deactivate();
-	    g_ParcellationFile3Disp->value(NULL); 
-	  }
-	}
-	else if ((std::strncmp("Reorientation: ", Line, 15)) == 0)
-	{
-	  Reorientation = (atoi(Line+15));
-	  if (Reorientation == 1)
-	  {
-	    g_ReorientationButton->set();
-	    g_InputDataOrientationDisp->activate();
-	    g_OutputDataOrientationDisp->activate();
-	  }
-	  else
-	  {
-	    g_ReorientationButton->clear();
-	    g_InputDataOrientationDisp->deactivate();
-	    g_OutputDataOrientationDisp->deactivate();
-	  }
-	}
-	else if ( (std::strncmp("Input Orientation: ", Line, 19)) == 0)
-	{
-	  if (std::strlen(Line+19) != 0)
-	  {
-	    g_InputDataOrientationDisp->activate();
-	    g_InputDataOrientationDisp->value(Line+19); 
-	  }
-	  else
-	  {
-	    g_InputDataOrientationDisp->deactivate();
-	    g_InputDataOrientationDisp->value(NULL); 
-	  }
-	}
-	else if ( (std::strncmp("Output Orientation: ", Line, 20)) == 0)
-	{
-	  if (std::strlen(Line+20) != 0)
-	  {
-	    g_OutputDataOrientationDisp->activate();
-	    g_OutputDataOrientationDisp->value(Line+20); 
-	  }
-	  else
-	  {
-	    g_OutputDataOrientationDisp->deactivate();
-	    g_OutputDataOrientationDisp->value(NULL); 
-	  }
-	}
-	else if ((std::strncmp("Rigid Registration: ", Line, 20)) == 0)
-	{
-	  RigidRegistration = (atoi(Line+20));
-	  if (RigidRegistration == 1)
-	  {
-	    g_RigidRegistrationButton->set();
-	    g_RegridingRegistrationGroup->activate();
-	    g_RegistrationInitializationGroup->activate();
-	  }
-	  else
-	  {
-	    g_RigidRegistrationButton->clear();
-	    g_RegridingRegistrationGroup->deactivate();
-	    g_RegistrationInitializationGroup->deactivate();
-	  }
-	}	
-	else if ((std::strncmp("Use T1 initial transform: ", Line, 26)) == 0)
-	{
-	  InitRegUseT1InitTransform = atoi(Line+26);
-	  if (InitRegUseT1InitTransform)
-	    g_InitRegUseT1InitTransformButton->set();
-	  else
-	    g_InitRegUseT1InitTransformButton->clear();
-	}
-	else if ((std::strncmp("Is ROIAtlasGridTemplate: ", Line, 25)) == 0)
-	{
-	  IsROIAtlasGridTemplate = atoi(Line+25);
-	  if (IsROIAtlasGridTemplate)
-	  {
-	    g_GridTemplateAtlasButton->set();
-	    g_GridTemplateManualButton->clear();
-	    g_GridParametersGroup->deactivate();
-	  }
-	  else
-	  {
-	    g_GridTemplateAtlasButton->clear();
-	    g_GridTemplateManualButton->set();
-	    g_GridParametersGroup->activate();
-	  }
-	}
-	else if ((std::strncmp("GridTemplate SizeX: ", Line, 20)) == 0)
-	{
-	  GridTemplateSizeX = atoi(Line+20);
-	  g_GridTemplateSizeX->value(GridTemplateSizeX);
-	}
-	else if ((std::strncmp("GridTemplate SizeY: ", Line, 20)) == 0)
-	{
-	  GridTemplateSizeY = atoi(Line+20);
-	  g_GridTemplateSizeY->value(GridTemplateSizeY);
-	}
-	else if ((std::strncmp("GridTemplate SizeZ: ", Line, 20)) == 0)
-	{
-	  GridTemplateSizeZ = atoi(Line+20);
-	  g_GridTemplateSizeZ->value(GridTemplateSizeZ);
-	}
-	else if ((std::strncmp("GridTemplate SpacingX: ", Line, 23)) == 0)
-	{
-	  GridTemplateSpacingX = atof(Line+23);
-	  g_GridTemplateSpacingX->value(GridTemplateSpacingX);
-	}
-	else if ((std::strncmp("GridTemplate SpacingY: ", Line, 23)) == 0)
-	{
-	  GridTemplateSpacingY = atof(Line+23);
-	  g_GridTemplateSpacingY->value(GridTemplateSpacingY);
-	}
-	else if ((std::strncmp("GridTemplate SpacingZ: ", Line, 23)) == 0)
-	{
-	  GridTemplateSpacingZ = atof(Line+23);
-	  g_GridTemplateSpacingZ->value(GridTemplateSpacingZ);
-	}
-	else if ((std::strncmp("Registration Initialization: ", Line, 29)) == 0)
-	{
-	  if (std::strcmp(Line+29,"useCenterOfHeadAlign") == 0)
-	    {
-	      g_InitRegCenterOfHeadButton->set();
-	      g_InitRegMomentsButton->clear();
-	      g_InitRegGeometryButton->clear();
-	      g_InitRegOffButton->clear();
-	    }
-	  else if (std::strcmp(Line+29,"useMomentsAlign") == 0)
-	    {
-	      g_InitRegCenterOfHeadButton->clear();
-	      g_InitRegMomentsButton->set();
-	      g_InitRegGeometryButton->clear();
-	      g_InitRegOffButton->clear();
-	    }
-	  else if (std::strcmp(Line+29,"useGeometryAlign") == 0)
-	    {
-	      g_InitRegCenterOfHeadButton->clear();
-	      g_InitRegMomentsButton->clear();
-	      g_InitRegGeometryButton->set();
-	      g_InitRegOffButton->clear();
-	    }
-	  else if (std::strcmp(Line+29,"Off") == 0)
-	    {
-	      g_InitRegCenterOfHeadButton->clear();
-	      g_InitRegMomentsButton->clear();
-	      g_InitRegGeometryButton->clear();
-	      g_InitRegOffButton->set();
-	    }
-	}
-	else if ((std::strncmp("Delete Vessels: ", Line, 16)) == 0)
-	{
-	  DeleteVessels = (atoi(Line+16));
-	  if (DeleteVessels == 1)
-	    g_DeleteVesselsButton->set();
-	  else
-	    g_DeleteVesselsButton->clear();
-	}
-	else if ((std::strncmp("Intensity Rescaling: ", Line, 21)) == 0)
-	{
-	  if (std::strcmp(Line+21,"Histogram quantile") == 0)
-	  {
-	    g_HistogramQuantileButton->set();
-	    g_TissueMeanMatchButton->clear();
-	  }
-	  else
-	  {
-	    g_TissueMeanMatchButton->set();
-	    g_HistogramQuantileButton->clear();
-	  }
-	}
-	else if ( (std::strncmp("Quantiles: ", Line, 11)) == 0)
-	{
-	  g_QuantilesDisp->value(Line+11);		
-	}
-	else if ( (std::strncmp("Point Spacing: ", Line, 15)) == 0)
-	{
-	  PointSpacing = atof(Line+15);
-	  g_PointSpacingDisp->value(PointSpacing);
-	}
+  {
+    if (std::strlen(Line+23) != 0)
+    {
+      g_ROIT2AtlasFileDisp->value(Line+23);
+      g_ROIT2AtlasFileDisp->position(g_ROIAtlasFileDisp->size());
+    }
+    else
+    {
+      g_ROIT2AtlasFileDisp->value(NULL);
+    }
+  }
+  else if ( (std::strncmp("Amygdala Left: ", Line, 15)) == 0)
+  {
+    if (std::strlen(Line+15) != 0)
+    {
+      g_AmygdalaLeftButton->set();
+      g_AmygdalaLeftDisp->activate();
+      g_AmygdalaLeftDisp->value(Line+15); 
+      g_AmygdalaLeftDisp->position(g_AmygdalaLeftDisp->size());
+    }
+    else
+    {
+      g_AmygdalaLeftButton->clear();
+      g_AmygdalaLeftDisp->deactivate();
+      g_AmygdalaLeftDisp->value(NULL);
+    }
+  }         
+  else if ( (std::strncmp("Amygdala Right: ", Line, 16)) == 0)
+  {
+    if (std::strlen(Line+16) != 0)
+    {
+      g_AmygdalaRightButton->set();
+      g_AmygdalaRightDisp->activate();
+      g_AmygdalaRightDisp->value(Line+16);   
+      g_AmygdalaRightDisp->position(g_AmygdalaRightDisp->size());
+    }
+    else
+    {
+      g_AmygdalaRightButton->clear();
+      g_AmygdalaRightDisp->deactivate();
+      g_AmygdalaRightDisp->value(NULL);
+    }
+  }     
+  else if ( (std::strncmp("Caudate Left: ", Line, 14)) == 0)
+  {
+    if (std::strlen(Line+14) != 0)
+    {
+      g_CaudateLeftButton->set();
+      g_CaudateLeftDisp->activate();
+      g_CaudateLeftDisp->value(Line+14); 
+      g_CaudateLeftDisp->position(g_CaudateLeftDisp->size());
+    }
+    else
+    {
+      g_CaudateLeftButton->clear();
+      g_CaudateLeftDisp->deactivate();
+      g_CaudateLeftDisp->value(NULL);  
+    }
+  }     
+  else if ( (std::strncmp("Caudate Right: ", Line, 15)) == 0)
+  {
+    if (std::strlen(Line+15) != 0)
+    {
+      g_CaudateRightButton->set();
+      g_CaudateRightDisp->activate();
+      g_CaudateRightDisp->value(Line+15); 
+      g_CaudateRightDisp->position(g_CaudateRightDisp->size());
+    }
+    else
+    {
+      g_CaudateRightButton->clear();
+      g_CaudateRightDisp->deactivate();
+      g_CaudateRightDisp->value(NULL);
+    }
+  }     
+  else if ( (std::strncmp("Hippocampus Left: ", Line, 18)) == 0)
+  {
+    if (std::strlen(Line+18) != 0)
+    {
+      g_HippocampusLeftButton->set();
+      g_HippocampusLeftDisp->activate();
+      g_HippocampusLeftDisp->value(Line+18); 
+      g_HippocampusLeftDisp->position(g_HippocampusLeftDisp->size());
+    }
+    else
+    {
+      g_HippocampusLeftButton->clear();
+      g_HippocampusLeftDisp->deactivate();
+      g_HippocampusLeftDisp->value(NULL);
+    }
+  }     
+  else if ( (std::strncmp("Hippocampus Right: ", Line, 19)) == 0)
+  {
+    if (std::strlen(Line+19) != 0)
+    {
+      g_HippocampusRightButton->set();
+      g_HippocampusRightDisp->activate();
+      g_HippocampusRightDisp->value(Line+19); 
+      g_HippocampusRightDisp->position(g_HippocampusRightDisp->size());
+    }
+    else
+    {
+      g_HippocampusRightButton->clear();
+      g_HippocampusRightDisp->deactivate();
+      g_HippocampusRightDisp->value(NULL); 
+    }
+  }     
+  else if ( (std::strncmp("Pallidus Left: ", Line, 15)) == 0)
+  {
+    if (std::strlen(Line+15) != 0)
+    {
+      g_PallidusLeftButton->set();
+      g_PallidusLeftDisp->activate();
+      g_PallidusLeftDisp->value(Line+15);
+      g_PallidusLeftDisp->position(g_PallidusLeftDisp->size());
+    }
+    else
+    {
+      g_PallidusLeftButton->clear();
+      g_PallidusLeftDisp->deactivate();
+      g_PallidusLeftDisp->value(NULL);
+    }
+  }     
+  else if ( (std::strncmp("Pallidus Right: ", Line, 16)) == 0)
+  {
+    if (std::strlen(Line+16) != 0)
+    {
+      g_PallidusRightButton->set();
+      g_PallidusRightDisp->activate();
+      g_PallidusRightDisp->value(Line+16);
+      g_PallidusRightDisp->position(g_PallidusRightDisp->size());
+    }
+    else
+    {
+      g_PallidusRightButton->clear();
+      g_PallidusRightDisp->deactivate();
+      g_PallidusRightDisp->value(NULL); 
+    }
+  }     
+  else if ( (std::strncmp("Putamen Left: ", Line, 14)) == 0)
+  {
+    if (std::strlen(Line+14) != 0)
+    {
+      g_PutamenLeftButton->set();
+      g_PutamenLeftDisp->activate();
+      g_PutamenLeftDisp->value(Line+14); 
+      g_PutamenLeftDisp->position(g_PutamenLeftDisp->size());
+    }
+    else
+    {
+      g_PutamenLeftButton->clear();
+      g_PutamenLeftDisp->deactivate();
+      g_PutamenLeftDisp->value(NULL);  
+    }
+  }     
+  else if ( (std::strncmp("Putamen Right: ", Line, 15)) == 0)
+  {
+    if (std::strlen(Line+15) != 0)
+    {
+      g_PutamenRightButton->set();
+      g_PutamenRightDisp->activate();
+      g_PutamenRightDisp->value(Line+15); 
+      g_PutamenRightDisp->position(g_PutamenRightDisp->size());
+    }
+    else
+    {
+      g_PutamenRightButton->clear();
+      g_PutamenRightDisp->deactivate();
+      g_PutamenRightDisp->value(NULL); 
+    }
+  }     
+  else if ( (std::strncmp("Lateral Ventricle Left: ", Line, 24)) == 0)
+  {
+    if (std::strlen(Line+24) != 0)
+    {
+      g_LateralVentricleLeftButton->set();
+      g_LateralVentricleLeftDisp->activate();
+      g_LateralVentricleLeftDisp->value(Line+24); 
+      g_LateralVentricleLeftDisp->position(g_LateralVentricleLeftDisp->size());
+    }   
+    else
+    {
+      g_LateralVentricleLeftButton->clear();
+      g_LateralVentricleLeftDisp->deactivate();
+      g_LateralVentricleLeftDisp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("Lateral Ventricle Right: ", Line, 25)) == 0)
+  {
+    if (std::strlen(Line+25) != 0)
+    {
+      g_LateralVentricleRightButton->set();
+      g_LateralVentricleRightDisp->activate();
+      g_LateralVentricleRightDisp->value(Line+25); 
+      g_LateralVentricleRightDisp->position(g_LateralVentricleRightDisp->size());
+    }
+    else
+    {
+      g_LateralVentricleRightButton->clear();
+      g_LateralVentricleRightDisp->deactivate();
+      g_LateralVentricleRightDisp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("ROI File 1: ", Line, 12)) == 0)
+  {
+    if (std::strlen(Line+12) != 0)
+    {
+      g_ROIFile1Button->set();
+      g_ROIFile1Disp->activate();
+      g_ROIFile1Disp->value(Line+12); 
+      g_ROIFile1Disp->position(g_ROIFile1Disp->size());
+    }
+    else
+    {
+      g_ROIFile1Button->clear();
+      g_ROIFile1Disp->deactivate();
+      g_ROIFile1Disp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("ROI File 2: ", Line, 12)) == 0)
+  {
+    if (std::strlen(Line+12) != 0)
+    {
+      g_ROIFile2Button->set();
+      g_ROIFile2Disp->activate();
+      g_ROIFile2Disp->value(Line+12); 
+      g_ROIFile2Disp->position(g_ROIFile2Disp->size());
+    }
+    else
+    {
+      g_ROIFile2Button->clear();
+      g_ROIFile2Disp->deactivate();
+      g_ROIFile2Disp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("ROI File 3: ", Line, 12)) == 0)
+  {
+    if (std::strlen(Line+12) != 0)
+    {
+      g_ROIFile3Button->set();
+      g_ROIFile3Disp->activate();
+      g_ROIFile3Disp->value(Line+12); 
+      g_ROIFile3Disp->position(g_ROIFile3Disp->size());
+    }
+    else
+    {
+      g_ROIFile3Button->clear();
+      g_ROIFile3Disp->deactivate();
+      g_ROIFile3Disp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("ROI File 4: ", Line, 12)) == 0)
+  {
+    if (std::strlen(Line+12) != 0)
+    {
+      g_ROIFile4Button->set();
+      g_ROIFile4Disp->activate();
+      g_ROIFile4Disp->value(Line+12); 
+      g_ROIFile4Disp->position(g_ROIFile4Disp->size());
+    }
+    else
+    {
+      g_ROIFile4Button->clear();
+      g_ROIFile4Disp->deactivate();
+      g_ROIFile4Disp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("ROI File 5: ", Line, 12)) == 0)
+  {
+    if (std::strlen(Line+12) != 0)
+    {
+      g_ROIFile5Button->set();
+      g_ROIFile5Disp->activate();
+      g_ROIFile5Disp->value(Line+12); 
+      g_ROIFile5Disp->position(g_ROIFile5Disp->size());
+    }
+    else
+    {
+      g_ROIFile5Button->clear();
+      g_ROIFile5Disp->deactivate();
+      g_ROIFile5Disp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("Tissue Map: ", Line, 12)) == 0)
+  {
+    if (std::strcmp(Line+12, "Soft") == 0)
+    {
+      g_SoftTissueMapButton->set();
+      g_HardTissueMapButton->clear();
+    }
+    else
+    {
+      g_SoftTissueMapButton->clear();
+      g_HardTissueMapButton->set();
+    }
+  }
+  else if ( (std::strncmp("Parcellation File 1: ", Line, 21)) == 0)
+  {
+    if (std::strlen(Line+21) != 0)
+    {
+      g_ParcellationFile1Button->set();
+      g_ParcellationFile1Disp->activate();
+      g_ParcellationFile1Disp->value(Line+21); 
+      g_ParcellationFile1Disp->position(g_ParcellationFile1Disp->size());
+    }
+    else
+    {
+      g_ParcellationFile1Button->clear();
+      g_ParcellationFile1Disp->deactivate();
+      g_ParcellationFile1Disp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("Parcellation File 2: ", Line, 21)) == 0)
+  {
+    if (std::strlen(Line+21) != 0)
+    {
+      g_ParcellationFile2Button->set();
+      g_ParcellationFile2Disp->activate();
+      g_ParcellationFile2Disp->value(Line+21); 
+      g_ParcellationFile2Disp->position(g_ParcellationFile2Disp->size());
+    }
+    else
+    {
+      g_ParcellationFile2Button->clear();
+      g_ParcellationFile2Disp->deactivate();
+      g_ParcellationFile2Disp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("Parcellation File 3: ", Line, 21)) == 0)
+  {
+    if (std::strlen(Line+21) != 0)
+    {
+      g_ParcellationFile3Button->set();
+      g_ParcellationFile3Disp->activate();
+      g_ParcellationFile3Disp->value(Line+21); 
+      g_ParcellationFile3Disp->position(g_ParcellationFile3Disp->size());
+    }
+    else
+    {
+      g_ParcellationFile3Button->clear();
+      g_ParcellationFile3Disp->deactivate();
+      g_ParcellationFile3Disp->value(NULL); 
+    }
+  }
+  else if ((std::strncmp("Reorientation: ", Line, 15)) == 0)
+  {
+    Reorientation = (atoi(Line+15));
+      if (Reorientation == 1)
+    {
+        if( m_ActivateReorientation )
+        {
+          g_ReorientationButton->set();
+          g_InputDataOrientationDisp->activate();
+          g_OutputDataOrientationDisp->activate();
+        }
+        else
+        {
+          std::string message = "Reorientation not availabe: imconvert3 not found on the system " ;
+          if( showError )
+          {
+            fl_alert( message.c_str() ) ;
+          }
+          std::cerr << message << std::endl ;
+          g_ReorientationButton->clear();
+          //Forcing to "no reorientation"
+          m_Computation.SetReorientation(0);
+        }
+    }
+    else
+    {
+      g_ReorientationButton->clear();
+      g_InputDataOrientationDisp->deactivate();
+      g_OutputDataOrientationDisp->deactivate();
+    }
+  }
+  else if ( (std::strncmp("Input Orientation: ", Line, 19)) == 0)
+  {
+    if (std::strlen(Line+19) != 0)
+    {
+      g_InputDataOrientationDisp->activate();
+      g_InputDataOrientationDisp->value(Line+19); 
+    }
+    else
+    {
+      g_InputDataOrientationDisp->deactivate();
+      g_InputDataOrientationDisp->value(NULL); 
+    }
+  }
+  else if ( (std::strncmp("Output Orientation: ", Line, 20)) == 0)
+  {
+    if (std::strlen(Line+20) != 0)
+    {
+      g_OutputDataOrientationDisp->activate();
+      g_OutputDataOrientationDisp->value(Line+20); 
+    }
+    else
+    {
+      g_OutputDataOrientationDisp->deactivate();
+      g_OutputDataOrientationDisp->value(NULL); 
+    }
+  }
+  else if ((std::strncmp("Rigid Registration: ", Line, 20)) == 0)
+  {
+    RigidRegistration = (atoi(Line+20));
+    if (RigidRegistration == 1)
+    {
+      g_RigidRegistrationButton->set();
+      g_RegridingRegistrationGroup->activate();
+      g_RegistrationInitializationGroup->activate();
+    }
+    else
+    {
+      g_RigidRegistrationButton->clear();
+      g_RegridingRegistrationGroup->deactivate();
+      g_RegistrationInitializationGroup->deactivate();
+    }
+  }  
+  else if ((std::strncmp("Use T1 initial transform: ", Line, 26)) == 0)
+  {
+    InitRegUseT1InitTransform = atoi(Line+26);
+    if (InitRegUseT1InitTransform)
+      g_InitRegUseT1InitTransformButton->set();
+    else
+      g_InitRegUseT1InitTransformButton->clear();
+  }
+  else if ((std::strncmp("Is ROIAtlasGridTemplate: ", Line, 25)) == 0)
+  {
+    IsROIAtlasGridTemplate = atoi(Line+25);
+    if (IsROIAtlasGridTemplate)
+    {
+      g_GridTemplateAtlasButton->set();
+      g_GridTemplateManualButton->clear();
+      g_GridParametersGroup->deactivate();
+    }
+    else
+    {
+      g_GridTemplateAtlasButton->clear();
+      g_GridTemplateManualButton->set();
+      g_GridParametersGroup->activate();
+    }
+  }
+  else if ((std::strncmp("GridTemplate SizeX: ", Line, 20)) == 0)
+  {
+    GridTemplateSizeX = atoi(Line+20);
+    g_GridTemplateSizeX->value(GridTemplateSizeX);
+  }
+  else if ((std::strncmp("GridTemplate SizeY: ", Line, 20)) == 0)
+  {
+    GridTemplateSizeY = atoi(Line+20);
+    g_GridTemplateSizeY->value(GridTemplateSizeY);
+  }
+  else if ((std::strncmp("GridTemplate SizeZ: ", Line, 20)) == 0)
+  {
+    GridTemplateSizeZ = atoi(Line+20);
+    g_GridTemplateSizeZ->value(GridTemplateSizeZ);
+  }
+  else if ((std::strncmp("GridTemplate SpacingX: ", Line, 23)) == 0)
+  {
+    GridTemplateSpacingX = atof(Line+23);
+    g_GridTemplateSpacingX->value(GridTemplateSpacingX);
+  }
+  else if ((std::strncmp("GridTemplate SpacingY: ", Line, 23)) == 0)
+  {
+    GridTemplateSpacingY = atof(Line+23);
+    g_GridTemplateSpacingY->value(GridTemplateSpacingY);
+  }
+  else if ((std::strncmp("GridTemplate SpacingZ: ", Line, 23)) == 0)
+  {
+    GridTemplateSpacingZ = atof(Line+23);
+    g_GridTemplateSpacingZ->value(GridTemplateSpacingZ);
+  }
+  else if ((std::strncmp("Registration Initialization: ", Line, 29)) == 0)
+  {
+    if (std::strcmp(Line+29,"useCenterOfHeadAlign") == 0)
+      {
+        g_InitRegCenterOfHeadButton->set();
+        g_InitRegMomentsButton->clear();
+        g_InitRegGeometryButton->clear();
+        g_InitRegOffButton->clear();
+      }
+    else if (std::strcmp(Line+29,"useMomentsAlign") == 0)
+      {
+        g_InitRegCenterOfHeadButton->clear();
+        g_InitRegMomentsButton->set();
+        g_InitRegGeometryButton->clear();
+        g_InitRegOffButton->clear();
+      }
+    else if (std::strcmp(Line+29,"useGeometryAlign") == 0)
+      {
+        g_InitRegCenterOfHeadButton->clear();
+        g_InitRegMomentsButton->clear();
+        g_InitRegGeometryButton->set();
+        g_InitRegOffButton->clear();
+      }
+    else if (std::strcmp(Line+29,"Off") == 0)
+      {
+        g_InitRegCenterOfHeadButton->clear();
+        g_InitRegMomentsButton->clear();
+        g_InitRegGeometryButton->clear();
+        g_InitRegOffButton->set();
+      }
+  }
+  else if ((std::strncmp("Delete Vessels: ", Line, 16)) == 0)
+  {
+    DeleteVessels = (atoi(Line+16));
+    if (DeleteVessels == 1)
+      g_DeleteVesselsButton->set();
+    else
+      g_DeleteVesselsButton->clear();
+  }
+  else if ((std::strncmp("Intensity Rescaling: ", Line, 21)) == 0)
+  {
+    if (std::strcmp(Line+21,"Histogram quantile") == 0)
+    {
+      g_HistogramQuantileButton->set();
+      g_TissueMeanMatchButton->clear();
+    }
+    else
+    {
+      g_TissueMeanMatchButton->set();
+      g_HistogramQuantileButton->clear();
+    }
+  }
+  else if ( (std::strncmp("Quantiles: ", Line, 11)) == 0)
+  {
+    g_QuantilesDisp->value(Line+11);    
+  }
+  else if ( (std::strncmp("Point Spacing: ", Line, 15)) == 0)
+  {
+    PointSpacing = atof(Line+15);
+    g_PointSpacingDisp->value(PointSpacing);
+  }
       }
       if (mode == tissueSeg ||mode == advancedParameters||mode == file)
       {
-	if ((std::strncmp("EM Software: ", Line, 13)) == 0)
-	{
-	  if (std::strcmp(Line+13,"ABC") == 0)
-	  {
-	    g_ABCButton->set();
-	    g_NeosegButton->clear();
-	    g_FilterMethodChoice->activate();
-	    g_FluidAtlasWarpGroup->activate();
-	    g_BSplineAtlasWarpGroup->deactivate();
-	    g_NeosegParamGroup->deactivate();
-	    g_InitialDistributionEstimatorChoice->activate();
-	  }
-	  else if (std::strcmp(Line+13,"neoseg") == 0)
-	  {
-	    g_NeosegButton->set();
-	    g_ABCButton->clear();
-	    g_FilterMethodChoice->activate();
-	    g_FluidAtlasWarpGroup->deactivate();
-	    g_BSplineAtlasWarpGroup->activate();
-	    g_NeosegParamGroup->activate();
-	    g_InitialDistributionEstimatorChoice->deactivate();
-	  }
-	  else
-	    std::cout<<"No such EM Software (itkEMS no longer supported)!"<<std::endl;	      
-	}
-	else if ( (std::strncmp("Filter Iterations: ", Line, 19)) == 0)
-	{
-	  FilterIterations = atoi(Line+19);
-	  g_FilterIterations->value(FilterIterations);	
-	}
-	else if ( (std::strncmp("Filter TimeStep: ", Line, 17)) == 0)
-	{
-	  FilterTimeStep = atof(Line+17);
-	  g_FilterTimeStep->value(FilterTimeStep);	
-	}
-	else if ( (std::strncmp("Filter Method: ", Line, 15)) == 0)
-	{
-	  if (std::strcmp(Line+15, "Curvature flow") == 0)
-	    g_FilterMethodChoice->value(1);
-	  else
-	    g_FilterMethodChoice->value(0);
-	}
-	else if ( (std::strncmp("Max Bias Degree: ", Line, 17)) == 0)
-	{
-	  MaxBiasDegree = atoi(Line+17);
-	  g_MaxBiasDegree->value(MaxBiasDegree);	
-	}
-	else if ( (std::strncmp("Initial Distribution Estimator: ", Line, 32)) == 0)
-	{
-	  if (std::strcmp(Line+32, "standard") == 0)
-	    g_InitialDistributionEstimatorChoice->value(0);
-	  else
-	    g_InitialDistributionEstimatorChoice->value(1);
-	}
-	else if ( (std::strncmp("Prior 1: ", Line, 9)) == 0)
-	{
-	  Prior1 = atof(Line+9);
-	  g_Prior1->value(Prior1);	
-	}
-	else if ( (std::strncmp("Prior 2: ", Line, 9)) == 0)
-	{
-	  Prior2 = atof(Line+9);
-	  g_Prior2->value(Prior2);	
-	}
-	else if ( (std::strncmp("Prior 3: ", Line, 9)) == 0)
-	{
-	  Prior3 = atof(Line+9);
-	  g_Prior3->value(Prior3);	
-	}
-	else if ( (std::strncmp("Prior 4: ", Line, 9)) == 0)
-	{
-	  Prior4 = atof(Line+9);
-	  g_Prior4->value(Prior4);	
-	}
-	else if ( (std::strncmp("Prior 5: ", Line, 9)) == 0)
-	{
-	  Prior5 = atof(Line+9);
-	  g_Prior5->value(Prior5);	
-	}
+  if ((std::strncmp("EM Software: ", Line, 13)) == 0)
+  {
+    if (std::strcmp(Line+13,"ABC") == 0)
+    {
+      g_ABCButton->set();
+      g_NeosegButton->clear();
+      g_FilterMethodChoice->activate();
+      g_FluidAtlasWarpGroup->activate();
+      g_BSplineAtlasWarpGroup->deactivate();
+      g_NeosegParamGroup->deactivate();
+      g_InitialDistributionEstimatorChoice->activate();
+    }
+    else if (std::strcmp(Line+13,"neoseg") == 0)
+    {
+      g_NeosegButton->set();
+      g_ABCButton->clear();
+      g_FilterMethodChoice->activate();
+      g_FluidAtlasWarpGroup->deactivate();
+      g_BSplineAtlasWarpGroup->activate();
+      g_NeosegParamGroup->activate();
+      g_InitialDistributionEstimatorChoice->deactivate();
+    }
+    else
+    {
+      std::cerr << "Tissue segmentation software: " << Line+13 << std::endl ;
+      std::cerr << "No such EM Software (Beware, itkEMS is no longer supported)!"<<std::endl;        
+    }
+  }
+  else if ( (std::strncmp("Filter Iterations: ", Line, 19)) == 0)
+  {
+    FilterIterations = atoi(Line+19);
+    g_FilterIterations->value(FilterIterations);  
+  }
+  else if ( (std::strncmp("Filter TimeStep: ", Line, 17)) == 0)
+  {
+    FilterTimeStep = atof(Line+17);
+    g_FilterTimeStep->value(FilterTimeStep);  
+  }
+  else if ( (std::strncmp("Filter Method: ", Line, 15)) == 0)
+  {
+    if (std::strcmp(Line+15, "Curvature flow") == 0)
+      g_FilterMethodChoice->value(1);
+    else
+      g_FilterMethodChoice->value(0);
+  }
+  else if ( (std::strncmp("Max Bias Degree: ", Line, 17)) == 0)
+  {
+    MaxBiasDegree = atoi(Line+17);
+    g_MaxBiasDegree->value(MaxBiasDegree);  
+  }
+  else if ( (std::strncmp("Initial Distribution Estimator: ", Line, 32)) == 0)
+  {
+    if (std::strcmp(Line+32, "standard") == 0)
+      g_InitialDistributionEstimatorChoice->value(0);
+    else
+      g_InitialDistributionEstimatorChoice->value(1);
+  }
+  else if ( (std::strncmp("Prior 1: ", Line, 9)) == 0)
+  {
+    Prior1 = atof(Line+9);
+    g_Prior1->value(Prior1);  
+  }
+  else if ( (std::strncmp("Prior 2: ", Line, 9)) == 0)
+  {
+    Prior2 = atof(Line+9);
+    g_Prior2->value(Prior2);  
+  }
+  else if ( (std::strncmp("Prior 3: ", Line, 9)) == 0)
+  {
+    Prior3 = atof(Line+9);
+    g_Prior3->value(Prior3);  
+  }
+  else if ( (std::strncmp("Prior 4: ", Line, 9)) == 0)
+  {
+    Prior4 = atof(Line+9);
+    g_Prior4->value(Prior4);  
+  }
+  else if ( (std::strncmp("Prior 5: ", Line, 9)) == 0)
+  {
+    Prior5 = atof(Line+9);
+    g_Prior5->value(Prior5);  
+  }
         else if ( (std::strncmp("Prior 6: ", Line, 9)) == 0)
-	{
-	  Prior6 = atof(Line+9);
-	  g_Prior6->value(Prior6);	
-	}
+  {
+    Prior6 = atof(Line+9);
+    g_Prior6->value(Prior6);  
+  }
         else if ( (std::strncmp("Prior 7: ", Line, 9)) == 0)
-	{
-	  Prior7 = atof(Line+9);
-	  g_Prior7->value(Prior7);	
-	}
+  {
+    Prior7 = atof(Line+9);
+    g_Prior7->value(Prior7);  
+  }
         else if ( (std::strncmp("Prior 8: ", Line, 9)) == 0)
-	{
-	  Prior8 = atof(Line+9);
-	  g_Prior8->value(Prior8);	
-	}
+  {
+    Prior8 = atof(Line+9);
+    g_Prior8->value(Prior8);  
+  }
         else if ( (std::strncmp("Prior 9: ", Line, 9)) == 0)
-	{
-	  Prior9 = atof(Line+9);
-	  g_Prior9->value(Prior9);	
-	}
-	else if ( (std::strncmp("BSpline Atlas Warp: ", Line, 20)) == 0)
-	{
-	  BSplineAtlasWarp = atoi(Line+20);
-	  if (BSplineAtlasWarp == 1)
-	    g_BSplineAtlasWarpButton->set();
-	  else
-	    g_BSplineAtlasWarpButton->clear();	  	    
-	}
-	else if ( (std::strncmp("BSpline Atlas Warp Grid X: ", Line, 27)) == 0)
-	{
-	  BSplineAtlasWarpGridX = atof(Line+27);
-	  g_BSplineAtlasWarpGridX->value(BSplineAtlasWarpGridX);	
-	}	
-	else if ( (std::strncmp("BSpline Atlas Warp Grid Y: ", Line, 27)) == 0)
-	{
-	  BSplineAtlasWarpGridY = atof(Line+27);
-	  g_BSplineAtlasWarpGridY->value(BSplineAtlasWarpGridY);	
-	}	
-	else if ( (std::strncmp("BSpline Atlas Warp Grid Z: ", Line, 27)) == 0)
-	{
-	  BSplineAtlasWarpGridZ = atof(Line+27);
-	  g_BSplineAtlasWarpGridZ->value(BSplineAtlasWarpGridZ);	
-	}	
-	else if ( (std::strncmp("Fluid Atlas Warp: ", Line, 18)) == 0)
-	{
-	  FluidAtlasWarp = atoi(Line+18);
-	  if (FluidAtlasWarp == 1)
-	  {
-	    g_FluidAtlasWarpButton->set();
-	    g_FluidAtlasAffineButton->clear();
-	    g_FluidAtlasFATWButton->clear();
+  {
+    Prior9 = atof(Line+9);
+    g_Prior9->value(Prior9);  
+  }
+  else if ( (std::strncmp("BSpline Atlas Warp: ", Line, 20)) == 0)
+  {
+    BSplineAtlasWarp = atoi(Line+20);
+    if (BSplineAtlasWarp == 1)
+      g_BSplineAtlasWarpButton->set();
+    else
+      g_BSplineAtlasWarpButton->clear();          
+  }
+  else if ( (std::strncmp("BSpline Atlas Warp Grid X: ", Line, 27)) == 0)
+  {
+    BSplineAtlasWarpGridX = atof(Line+27);
+    g_BSplineAtlasWarpGridX->value(BSplineAtlasWarpGridX);  
+  }  
+  else if ( (std::strncmp("BSpline Atlas Warp Grid Y: ", Line, 27)) == 0)
+  {
+    BSplineAtlasWarpGridY = atof(Line+27);
+    g_BSplineAtlasWarpGridY->value(BSplineAtlasWarpGridY);  
+  }  
+  else if ( (std::strncmp("BSpline Atlas Warp Grid Z: ", Line, 27)) == 0)
+  {
+    BSplineAtlasWarpGridZ = atof(Line+27);
+    g_BSplineAtlasWarpGridZ->value(BSplineAtlasWarpGridZ);  
+  }  
+  else if ( (std::strncmp("Fluid Atlas Warp: ", Line, 18)) == 0)
+  {
+    FluidAtlasWarp = atoi(Line+18);
+    if (FluidAtlasWarp == 1)
+    {
+      g_FluidAtlasWarpButton->set();
+      g_FluidAtlasAffineButton->clear();
+      g_FluidAtlasFATWButton->clear();
             g_ABCANTSWarpButton->clear();
 
             m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
             m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
             m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
             m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
-	  }
-	  else
-	  {
-	    g_FluidAtlasWarpButton->clear();
-	  }	    
-	}
-	else if ( (std::strncmp("Fluid Atlas Affine: ", Line, 20)) == 0)
-	{
-	  FluidAtlasAffine = atoi(Line+20);
-	  if (FluidAtlasAffine == 1)
-	  {
-	    g_FluidAtlasAffineButton->set();
-	    g_FluidAtlasWarpButton->clear();
-	    g_FluidAtlasFATWButton->clear();
+    }
+    else
+    {
+      g_FluidAtlasWarpButton->clear();
+    }      
+  }
+  else if ( (std::strncmp("Fluid Atlas Affine: ", Line, 20)) == 0)
+  {
+    FluidAtlasAffine = atoi(Line+20);
+    if (FluidAtlasAffine == 1)
+    {
+      g_FluidAtlasAffineButton->set();
+      g_FluidAtlasWarpButton->clear();
+      g_FluidAtlasFATWButton->clear();
             g_ABCANTSWarpButton->clear();
 
             m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
             m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
             m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
             m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
-	  }
-	  else
-	  {
-	    g_FluidAtlasAffineButton->clear();
-	  }	    
-	}
-	else if ( (std::strncmp("Fluid Atlas FATW: ", Line, 18)) == 0)
-	{
-	  FluidAtlasFATW = atoi(Line+18);
-	  if (FluidAtlasFATW == 1)
-	  {
-	    g_FluidAtlasFATWButton->set();
-	    g_FluidAtlasWarpButton->clear();
-	    g_FluidAtlasAffineButton->clear();
+    }
+    else
+    {
+      g_FluidAtlasAffineButton->clear();
+    }      
+  }
+  else if ( (std::strncmp("Fluid Atlas FATW: ", Line, 18)) == 0)
+  {
+    FluidAtlasFATW = atoi(Line+18);
+    if (FluidAtlasFATW == 1)
+    {
+      g_FluidAtlasFATWButton->set();
+      g_FluidAtlasWarpButton->clear();
+      g_FluidAtlasAffineButton->clear();
             g_ABCANTSWarpButton->clear();
 
             m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
             m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
             m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
             m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
-	  }
-	  else
-	  {
-	    g_FluidAtlasFATWButton->clear();
-	  }	    
-	}
+    }
+    else
+    {
+      g_FluidAtlasFATWButton->clear();
+    }      
+  }
         else if ( (std::strncmp("ANTS Warp for ABC: ", Line, 19)) == 0)
-	{
-	  if (atoi(Line+19) == 1)
-	  {
-	    g_FluidAtlasFATWButton->clear();
-	    g_FluidAtlasWarpButton->clear();
-	    g_FluidAtlasAffineButton->clear();
+  {
+    if (atoi(Line+19) == 1)
+    {
+      g_FluidAtlasFATWButton->clear();
+      g_FluidAtlasWarpButton->clear();
+      g_FluidAtlasAffineButton->clear();
             g_ABCANTSWarpButton->set();
 
             m_Computation.SetFluidAtlasWarp(g_FluidAtlasWarpButton->value());
             m_Computation.SetFluidAtlasAffine(g_FluidAtlasAffineButton->value());
             m_Computation.SetFluidAtlasFATW(g_FluidAtlasFATWButton->value());
             m_Computation.SetANTSAtlasABC(g_ABCANTSWarpButton->value());
-	  }
-	  else
-	  {
+    }
+    else
+    {
             g_ABCANTSWarpButton->clear();
-	  }	    
-	}
-	else if ( (std::strncmp("Fluid Atlas Warp Iterations: ", Line, 29)) == 0)
-	{
-	  FluidAtlasWarpIterations = atoi(Line+29);
-	  g_FluidAtlasWarpIterations->value(FluidAtlasWarpIterations);	
-	}
-	else if ( (std::strncmp("Fluid Atlas Warp Max Step: ", Line, 27)) == 0)
-	{
-	  FluidAtlasWarpMaxStep = atof(Line+27);
-	  g_FluidAtlasWarpMaxStep->value(FluidAtlasWarpMaxStep);	
-	}
-	else if ( (std::strncmp("Atlas Linear Mapping: ", Line, 22)) == 0)
-	{
-	  if (std::strcmp(Line+22, "affine") == 0)
-	    g_AtlasLinearMappingChoice->value(0);
-	  else if (std::strcmp(Line+22, "id") == 0)
-	    g_AtlasLinearMappingChoice->value(1);
-	  else
-	    g_AtlasLinearMappingChoice->value(2);
-	}
-	else if ( (std::strncmp("Image Linear Mapping: ", Line, 22)) == 0)
-	{
-	  if (std::strcmp(Line+22, "id") == 0)
-	    g_ImageLinearMappingChoice->value(0);
-	  else if (std::strcmp(Line+22, "rigid") == 0)
-	    g_ImageLinearMappingChoice->value(1);
-	  else
-	    g_ImageLinearMappingChoice->value(2);
-	}
-	else if ( (std::strncmp("Prior Threshold: ", Line, 17)) == 0)
-	{
-	  NeosegPriorThreshold = atof(Line+17);
-	  g_NeosegPriorThreshold->value(NeosegPriorThreshold);	
-	}	
-	else if ( (std::strncmp("Parzen Kernel: ", Line, 15)) == 0)
-	{
-	  NeosegParzenKernel = atof(Line+15);
-	  g_NeosegParzenKernel->value(NeosegParzenKernel);	
-	}	
-	else if ( (std::strncmp("Mahalanobis Threshold: ", Line, 23)) == 0)
-	{
-	  NeosegMahalanobisThreshold = atof(Line+23);
-	  g_NeosegMahalanobisThreshold->value(NeosegMahalanobisThreshold);	
-	}	
-	else if ((std::strncmp("Loop: ", Line, 6)) == 0)
-	{
-	  Loop= atoi(Line+6);
-	  if (mode==tissueSeg)
-	  {
-	    g_LoopButton->set();
-	    g_AtlasLoopGroup->activate();
-	    g_LoopIteration->activate();
-	  }
-	  else
-	  {
-	    if (Loop == 1)
-	    {
-	      g_LoopButton->set();
-	      g_AtlasLoopGroup->activate();
-	      g_LoopIteration->activate();
-	    }
-	    else
-	    {
-	      g_LoopButton->clear();
-	      g_AtlasLoopGroup->deactivate();
-	      g_LoopIteration->deactivate();
-	    }
-	  }
-	}
-	else if ( (std::strncmp("Atlas Loop: ", Line, 12)) == 0)
-	{
-	  if (std::strlen(Line+12) != 0)
-	  {
-	    g_AtlasLoopDisp->value(Line+12);
-	    g_AtlasLoopDisp->position(g_AtlasLoopDisp->size());
-	  }
-	  else
-	  {
-	    g_AtlasLoopDisp->value(NULL);
-	  }
-	}
-	else if ( (std::strncmp("Loop - Number of iterations: ", Line, 29)) == 0)
-	{
-	  LoopIteration = atoi(Line+29);
-	  g_LoopIteration->value(LoopIteration);	
-	}
+    }      
+  }
+  else if ( (std::strncmp("Fluid Atlas Warp Iterations: ", Line, 29)) == 0)
+  {
+    FluidAtlasWarpIterations = atoi(Line+29);
+    g_FluidAtlasWarpIterations->value(FluidAtlasWarpIterations);  
+  }
+  else if ( (std::strncmp("Fluid Atlas Warp Max Step: ", Line, 27)) == 0)
+  {
+    FluidAtlasWarpMaxStep = atof(Line+27);
+    g_FluidAtlasWarpMaxStep->value(FluidAtlasWarpMaxStep);  
+  }
+  else if ( (std::strncmp("Atlas Linear Mapping: ", Line, 22)) == 0)
+  {
+    if (std::strcmp(Line+22, "affine") == 0)
+      g_AtlasLinearMappingChoice->value(0);
+    else if (std::strcmp(Line+22, "id") == 0)
+      g_AtlasLinearMappingChoice->value(1);
+    else
+      g_AtlasLinearMappingChoice->value(2);
+  }
+  else if ( (std::strncmp("Image Linear Mapping: ", Line, 22)) == 0)
+  {
+    if (std::strcmp(Line+22, "id") == 0)
+      g_ImageLinearMappingChoice->value(0);
+    else if (std::strcmp(Line+22, "rigid") == 0)
+      g_ImageLinearMappingChoice->value(1);
+    else
+      g_ImageLinearMappingChoice->value(2);
+  }
+  else if ( (std::strncmp("Prior Threshold: ", Line, 17)) == 0)
+  {
+    NeosegPriorThreshold = atof(Line+17);
+    g_NeosegPriorThreshold->value(NeosegPriorThreshold);  
+  }  
+  else if ( (std::strncmp("Parzen Kernel: ", Line, 15)) == 0)
+  {
+    NeosegParzenKernel = atof(Line+15);
+    g_NeosegParzenKernel->value(NeosegParzenKernel);  
+  }  
+  else if ( (std::strncmp("Mahalanobis Threshold: ", Line, 23)) == 0)
+  {
+    NeosegMahalanobisThreshold = atof(Line+23);
+    g_NeosegMahalanobisThreshold->value(NeosegMahalanobisThreshold);  
+  }  
+  else if ((std::strncmp("Loop: ", Line, 6)) == 0)
+  {
+    Loop= atoi(Line+6);
+    if (mode==tissueSeg)
+    {
+      g_LoopButton->set();
+      g_AtlasLoopGroup->activate();
+      g_LoopIteration->activate();
+    }
+    else
+    {
+      if (Loop == 1)
+      {
+        g_LoopButton->set();
+        g_AtlasLoopGroup->activate();
+        g_LoopIteration->activate();
+      }
+      else
+      {
+        g_LoopButton->clear();
+        g_AtlasLoopGroup->deactivate();
+        g_LoopIteration->deactivate();
+      }
+    }
+  }
+  else if ( (std::strncmp("Atlas Loop: ", Line, 12)) == 0)
+  {
+    if (std::strlen(Line+12) != 0)
+    {
+      g_AtlasLoopDisp->value(Line+12);
+      g_AtlasLoopDisp->position(g_AtlasLoopDisp->size());
+    }
+    else
+    {
+      g_AtlasLoopDisp->value(NULL);
+    }
+  }
+  else if ( (std::strncmp("Loop - Number of iterations: ", Line, 29)) == 0)
+  {
+    LoopIteration = atoi(Line+29);
+    g_LoopIteration->value(LoopIteration);  
+  }
       }
       if (mode == warping||mode == advancedParameters||mode == file)
       {
-	if ( (std::strncmp("Warping Method: ", Line, 16)) == 0)
-	{
-	  if (std::strcmp(Line+16, "Classic") == 0)
-	  {
-	    g_ClassicWarpingButton->set();
-	    g_CoarseToFineWarpingButton->clear();
-	    g_BRAINSDemonWarpButton->clear();
-	    g_ANTSWarpingButton->clear();
-	    g_ANTSWarpingGroup->hide();
-	    g_BRAINSDemonWarpGroup->hide();
-	    g_FluidWarpingGroup->show();
-	    g_NumBasis->activate();
-	    g_Scale4NbIterations->deactivate();
-	    g_Scale2NbIterations->deactivate();
-	  }
-	  else if (std::strcmp(Line+16, "Coarse-to-fine") == 0)
-	  {
-	    g_CoarseToFineWarpingButton->set();
-	    g_ClassicWarpingButton->clear();
-	    g_BRAINSDemonWarpButton->clear();
-	    g_ANTSWarpingButton->clear();
-	    g_ANTSWarpingGroup->hide();
-	    g_BRAINSDemonWarpGroup->hide();
-	    g_FluidWarpingGroup->show();	    
-	    g_NumBasis->deactivate();
-	    g_Scale4NbIterations->activate();
-	    g_Scale2NbIterations->activate();
-	  }
-	  else if (std::strcmp(Line+16, "BRAINSDemonWarp") == 0)
-	  {
-	    g_CoarseToFineWarpingButton->clear();
-	    g_ClassicWarpingButton->clear();
-	    g_BRAINSDemonWarpButton->set();
-	    g_ANTSWarpingButton->clear();
-	    g_ANTSWarpingGroup->hide();
-	    g_BRAINSDemonWarpGroup->show();
-	    g_FluidWarpingGroup->hide();
-	  }
-	  else if (std::strcmp(Line+16, "ANTS") == 0)
-	  {
-	    g_CoarseToFineWarpingButton->clear();
-	    g_ClassicWarpingButton->clear();
-	    g_BRAINSDemonWarpButton->clear();
-	    g_ANTSWarpingButton->set();
-	    g_ANTSWarpingGroup->show();
-	    g_BRAINSDemonWarpGroup->hide();
-	    g_FluidWarpingGroup->hide();
-	  }
-	  else
-	    std::cerr<<"Error while reading parameter file: warping method incorrect!"<<std::endl;
-	}
-	else if ( (std::strncmp("Alpha: ", Line, 7)) == 0)
-	{
-	  Alpha = atof(Line+7);
-	  g_Alpha->value(Alpha);	
-	}
-	else if ( (std::strncmp("Beta: ", Line, 6)) == 0)
-	{
-	  Beta = atof(Line+6);
-	  g_Beta->value(Beta);	
-	}
-	else if ( (std::strncmp("Gamma: ", Line, 7)) == 0)
-	{
-	  Gamma = atof(Line+7);
-	  g_Gamma->value(Gamma);	
-	}
-	else if ( (std::strncmp("Max Perturbation: ", Line, 18)) == 0)
-	{
-	  MaxPerturbation = atof(Line+18);
-	  g_MaxPerturbation->value(MaxPerturbation);	
-	}
-	else if ( (std::strncmp("Scale 4 - Number Of Iterations: ", Line, 32)) == 0)
-	{
-	  Scale4NbIterations = atoi(Line+32);
-	  g_Scale4NbIterations->value(Scale4NbIterations);	
-	}
-	else if ( (std::strncmp("Scale 2 - Number Of Iterations: ", Line, 32)) == 0)
-	{
-	  Scale2NbIterations = atoi(Line+32);
-	  g_Scale2NbIterations->value(Scale2NbIterations);	
-	}
-	else if ( (std::strncmp("Scale 1 - Number Of Iterations: ", Line, 32)) == 0)
-	{
-	  Scale1NbIterations = atoi(Line+32);
-	  g_Scale1NbIterations->value(Scale1NbIterations);	
-	}
-	else if ( (std::strncmp("Registration Filter Type: ", Line, 26)) == 0)
-	{
-	  RegistrationFilterType =Line+26;	
-	  if (RegistrationFilterType=="Demons"){
-	    g_RegistrationFilterType->value(0);
-	  }
-	  else if(RegistrationFilterType=="FastSymmetricForces"){
-	    g_RegistrationFilterType->value(1);
-	  }
-	  else if(RegistrationFilterType=="Diffeomorphic"){
-	    g_RegistrationFilterType->value(2);
-	  }
-	  else if(RegistrationFilterType=="LogDemons"){
-	    g_RegistrationFilterType->value(3);
-	  }
-	  else if(RegistrationFilterType=="SymmetricLogDemons"){
-	    g_RegistrationFilterType->value(4);
-	  }
-	}
-	else if ( (std::strncmp("Deformation Field Smoothing Sigma: ", Line, 35)) == 0)
-	{
-	  DeformationFieldSmoothingSigma = atof(Line+35);
-	  g_DeformationFieldSmoothingSigma->value(DeformationFieldSmoothingSigma);	
-	}
-	else if ( (std::strncmp("Pyramid Levels: ", Line, 16)) == 0)
-	{
-	  PyramidLevels = atoi(Line+16);
-	  g_PyramidLevels->value(PyramidLevels);	
-	}
-	else if ( (std::strncmp("Moving Shrink Factors: ", Line, 23)) == 0)
-	{
-	  MovingShrinkFactors =Line+23;
-	  g_MovingShrinkFactors->value(MovingShrinkFactors.c_str());	
-	}
-	else if ( (std::strncmp("Fixed Shrink Factors: ", Line, 22)) == 0)
-	{
-	  FixedShrinkFactors =Line+22;
-	  g_FixedShrinkFactors->value(FixedShrinkFactors.c_str());	
-	}
-	else if ( (std::strncmp("Iteration Count Pyramid Levels: ", Line, 32)) == 0)
-	{
-	  IterationCountPyramidLevels =Line+32;
-	  g_IterationCountPyramidLevels->value(IterationCountPyramidLevels.c_str());	
-	}
-	  // consistency with the first version of the tool
-	else if ( (std::strncmp("Number Of Iterations: ", Line, 22)) == 0)
-	{
-	  Scale1NbIterations = atoi(Line+22);
-	  g_Scale1NbIterations->value(Scale1NbIterations);	
-	}
-	else if ( (std::strncmp("NumBasis: ", Line, 10)) == 0)
-	{
-	  NumBasis = atof(Line+10);
-	  g_NumBasis->value(NumBasis);	
-	}
-	else if ( (std::strncmp("ANTS Iterations: ", Line, 17)) == 0)
-	{
-	  ANTSIterations = Line+17;
-	  g_ANTSIterations->value(ANTSIterations.c_str());	
-	}
-	else if ( (std::strncmp("ANTS CC weight: ", Line, 16)) == 0)
-	{
-	  ANTSCCWeight = atof(Line+16);
-	  g_ANTSCCWeight->value(ANTSCCWeight);	
-	}
-	else if ( (std::strncmp("ANTS CC region radius: ", Line, 23)) == 0)
-	{
-	  ANTSCCRegionRadius = atof(Line+23);
-	  g_ANTSCCRegionRadius->value(ANTSCCRegionRadius);	
-	}
-	else if ( (std::strncmp("ANTS MI weight: ", Line, 16)) == 0)
-	{
-	  ANTSMIWeight = atof(Line+16);
-	  g_ANTSMIWeight->value(ANTSMIWeight);	
-	}
-	else if ( (std::strncmp("ANTS MI bins: ", Line, 14)) == 0)
-	{
-	  ANTSMIBins = atoi(Line+14);
-	  g_ANTSMIBins->value(ANTSMIBins);	
-	}
-	else if ( (std::strncmp("ANTS MSQ weight: ", Line, 17)) == 0)
-	{
-	  ANTSMSQWeight = atof(Line+17);
-	  g_ANTSMSQWeight->value(ANTSMSQWeight);	
-	}
+  if ( (std::strncmp("Warping Method: ", Line, 16)) == 0)
+  {
+    if (std::strcmp(Line+16, "Classic") == 0 && m_OldFluidRegistration)
+    {
+      g_ClassicWarpingButton->set();
+      g_CoarseToFineWarpingButton->clear();
+      g_BRAINSDemonWarpButton->clear();
+      g_ANTSWarpingButton->clear();
+      g_ANTSWarpingGroup->hide();
+      g_BRAINSDemonWarpGroup->hide();
+      g_FluidWarpingGroup->show();
+      g_NumBasis->activate();
+      g_Scale4NbIterations->deactivate();
+      g_Scale2NbIterations->deactivate();
+    }
+    else if (std::strcmp(Line+16, "Coarse-to-fine") == 0 && m_OldFluidRegistration)
+    {
+      g_CoarseToFineWarpingButton->set();
+      g_ClassicWarpingButton->clear();
+      g_BRAINSDemonWarpButton->clear();
+      g_ANTSWarpingButton->clear();
+      g_ANTSWarpingGroup->hide();
+      g_BRAINSDemonWarpGroup->hide();
+      g_FluidWarpingGroup->show();      
+      g_NumBasis->deactivate();
+      g_Scale4NbIterations->activate();
+      g_Scale2NbIterations->activate();
+    }
+    else if (std::strcmp(Line+16, "BRAINSDemonWarp") == 0)
+    {
+      g_CoarseToFineWarpingButton->clear();
+      g_ClassicWarpingButton->clear();
+      g_BRAINSDemonWarpButton->set();
+      g_ANTSWarpingButton->clear();
+      g_ANTSWarpingGroup->hide();
+      g_BRAINSDemonWarpGroup->show();
+      g_FluidWarpingGroup->hide();
+    }
+      else
+    {
+        if( std::strcmp(Line+16, "ANTS") != 0 )
+        {
+          const char* message = "Error while reading parameter file: warping method incorrect or not supported on this computer!" ;
+          fl_alert( message ) ;
+          std::cerr << message << std::endl ;
+          //Forcing ANTS registration in m_Computation
+          m_Computation.SetClassicWarpingMethod(0);
+          m_Computation.SetCoarseToFineWarpingMethod(0);
+          m_Computation.SetBRAINSDemonWarpMethod(0);
+          m_Computation.SetANTSWarpingMethod(1);
+        }
+      g_CoarseToFineWarpingButton->clear();
+      g_ClassicWarpingButton->clear();
+      g_BRAINSDemonWarpButton->clear();
+      g_ANTSWarpingButton->set();
+      g_ANTSWarpingGroup->show();
+      g_BRAINSDemonWarpGroup->hide();
+      g_FluidWarpingGroup->hide();
+      }
+  }
+  else if ( (std::strncmp("Alpha: ", Line, 7)) == 0)
+  {
+    Alpha = atof(Line+7);
+    g_Alpha->value(Alpha);  
+  }
+  else if ( (std::strncmp("Beta: ", Line, 6)) == 0)
+  {
+    Beta = atof(Line+6);
+    g_Beta->value(Beta);  
+  }
+  else if ( (std::strncmp("Gamma: ", Line, 7)) == 0)
+  {
+    Gamma = atof(Line+7);
+    g_Gamma->value(Gamma);  
+  }
+  else if ( (std::strncmp("Max Perturbation: ", Line, 18)) == 0)
+  {
+    MaxPerturbation = atof(Line+18);
+    g_MaxPerturbation->value(MaxPerturbation);  
+  }
+  else if ( (std::strncmp("Scale 4 - Number Of Iterations: ", Line, 32)) == 0)
+  {
+    Scale4NbIterations = atoi(Line+32);
+    g_Scale4NbIterations->value(Scale4NbIterations);  
+  }
+  else if ( (std::strncmp("Scale 2 - Number Of Iterations: ", Line, 32)) == 0)
+  {
+    Scale2NbIterations = atoi(Line+32);
+    g_Scale2NbIterations->value(Scale2NbIterations);  
+  }
+  else if ( (std::strncmp("Scale 1 - Number Of Iterations: ", Line, 32)) == 0)
+  {
+    Scale1NbIterations = atoi(Line+32);
+    g_Scale1NbIterations->value(Scale1NbIterations);  
+  }
+  else if ( (std::strncmp("Registration Filter Type: ", Line, 26)) == 0)
+  {
+    RegistrationFilterType =Line+26;  
+    if (RegistrationFilterType=="Demons"){
+      g_RegistrationFilterType->value(0);
+    }
+    else if(RegistrationFilterType=="FastSymmetricForces"){
+      g_RegistrationFilterType->value(1);
+    }
+    else if(RegistrationFilterType=="Diffeomorphic"){
+      g_RegistrationFilterType->value(2);
+    }
+    else if(RegistrationFilterType=="LogDemons"){
+      g_RegistrationFilterType->value(3);
+    }
+    else if(RegistrationFilterType=="SymmetricLogDemons"){
+      g_RegistrationFilterType->value(4);
+    }
+  }
+  else if ( (std::strncmp("Deformation Field Smoothing Sigma: ", Line, 35)) == 0)
+  {
+    DeformationFieldSmoothingSigma = atof(Line+35);
+    g_DeformationFieldSmoothingSigma->value(DeformationFieldSmoothingSigma);  
+  }
+  else if ( (std::strncmp("Pyramid Levels: ", Line, 16)) == 0)
+  {
+    PyramidLevels = atoi(Line+16);
+    g_PyramidLevels->value(PyramidLevels);  
+  }
+  else if ( (std::strncmp("Moving Shrink Factors: ", Line, 23)) == 0)
+  {
+    MovingShrinkFactors =Line+23;
+    g_MovingShrinkFactors->value(MovingShrinkFactors.c_str());  
+  }
+  else if ( (std::strncmp("Fixed Shrink Factors: ", Line, 22)) == 0)
+  {
+    FixedShrinkFactors =Line+22;
+    g_FixedShrinkFactors->value(FixedShrinkFactors.c_str());  
+  }
+  else if ( (std::strncmp("Iteration Count Pyramid Levels: ", Line, 32)) == 0)
+  {
+    IterationCountPyramidLevels =Line+32;
+    g_IterationCountPyramidLevels->value(IterationCountPyramidLevels.c_str());  
+  }
+    // consistency with the first version of the tool
+  else if ( (std::strncmp("Number Of Iterations: ", Line, 22)) == 0)
+  {
+    Scale1NbIterations = atoi(Line+22);
+    g_Scale1NbIterations->value(Scale1NbIterations);  
+  }
+  else if ( (std::strncmp("NumBasis: ", Line, 10)) == 0)
+  {
+    NumBasis = atof(Line+10);
+    g_NumBasis->value(NumBasis);  
+  }
+  else if ( (std::strncmp("ANTS Iterations: ", Line, 17)) == 0)
+  {
+    ANTSIterations = Line+17;
+    g_ANTSIterations->value(ANTSIterations.c_str());  
+  }
+  else if ( (std::strncmp("ANTS CC weight: ", Line, 16)) == 0)
+  {
+    ANTSCCWeight = atof(Line+16);
+    g_ANTSCCWeight->value(ANTSCCWeight);  
+  }
+  else if ( (std::strncmp("ANTS CC region radius: ", Line, 23)) == 0)
+  {
+    ANTSCCRegionRadius = atof(Line+23);
+    g_ANTSCCRegionRadius->value(ANTSCCRegionRadius);  
+  }
+  else if ( (std::strncmp("ANTS MI weight: ", Line, 16)) == 0)
+  {
+    ANTSMIWeight = atof(Line+16);
+    g_ANTSMIWeight->value(ANTSMIWeight);  
+  }
+  else if ( (std::strncmp("ANTS MI bins: ", Line, 14)) == 0)
+  {
+    ANTSMIBins = atoi(Line+14);
+    g_ANTSMIBins->value(ANTSMIBins);  
+  }
+  else if ( (std::strncmp("ANTS MSQ weight: ", Line, 17)) == 0)
+  {
+    ANTSMSQWeight = atof(Line+17);
+    g_ANTSMSQWeight->value(ANTSMSQWeight);  
+  }
         else if ( (std::strncmp("ANTS CC weight for 2nd modality: ", Line, 33)) == 0)
-	{
-	  ANTSCCWeight = atof(Line+33);
-	  g_ANTSCCWeight2nd->value(ANTSCCWeight);	
-	}
-	else if ( (std::strncmp("ANTS CC region radius for 2nd modality: ", Line, 40)) == 0)
-	{
-	  ANTSCCRegionRadius = atof(Line+40);
-	  g_ANTSCCRegionRadius2nd->value(ANTSCCRegionRadius);	
-	}
-	else if ( (std::strncmp("ANTS MI weight for 2nd modality: ", Line, 33)) == 0)
-	{
-	  ANTSMIWeight = atof(Line+33);
-	  g_ANTSMIWeight2nd->value(ANTSMIWeight);	
-	}
-	else if ( (std::strncmp("ANTS MI bins for 2nd modality: ", Line, 31)) == 0)
-	{
-	  ANTSMIBins = atoi(Line+31);
-	  g_ANTSMIBins2nd->value(ANTSMIBins);	
-	}
-	else if ( (std::strncmp("ANTS MSQ weight for 2nd modality: ", Line, 34)) == 0)
-	{
-	  ANTSMSQWeight = atof(Line+34);
-	  g_ANTSMSQWeight2nd->value(ANTSMSQWeight);	
-	}
-	else if ( (std::strncmp("ANTS Registration Type: ", Line, 24)) == 0)
-	{
-	  ANTSRegistrationFilterType = Line+24;	
-	  if (ANTSRegistrationFilterType=="GreedyDiffeomorphism"){
-	    g_ANTSRegistrationFilterType->value(0);
-	  }
-	  else if(ANTSRegistrationFilterType=="SpatiotemporalDiffeomorphism"){
-	    g_ANTSRegistrationFilterType->value(1);
-	  }
-	  else if(ANTSRegistrationFilterType=="Elastic"){
-	    g_ANTSRegistrationFilterType->value(2);
-	  }
-	  else if(ANTSRegistrationFilterType=="Exponential"){
-	    g_ANTSRegistrationFilterType->value(3);
-	  }
-	}
-	else if ( (std::strncmp("ANTS Registration Step: ", Line, 24)) == 0)
-	{
-	  ANTSTransformationStep = Line+24;
-	  g_ANTSTransformationStep->value(ANTSTransformationStep.c_str());	
-	}
-	else if ( (std::strncmp("ANTS Gaussian Smoothing: ", Line, 25)) == 0)
-	{
-	  ANTSGaussianSmoothing = atoi(Line+25);
-	  g_ANTSGaussianSmoothingButton->value(ANTSGaussianSmoothing);	
-	}
-	else if ( (std::strncmp("ANTS Gaussian Sigma: ", Line, 21)) == 0)
-	{
-	  ANTSGaussianSigma = atof(Line+21);
-	  g_ANTSGaussianSigma->value(ANTSGaussianSigma);	
-	}
+  {
+    ANTSCCWeight = atof(Line+33);
+    g_ANTSCCWeight2nd->value(ANTSCCWeight);  
+  }
+  else if ( (std::strncmp("ANTS CC region radius for 2nd modality: ", Line, 40)) == 0)
+  {
+    ANTSCCRegionRadius = atof(Line+40);
+    g_ANTSCCRegionRadius2nd->value(ANTSCCRegionRadius);  
+  }
+  else if ( (std::strncmp("ANTS MI weight for 2nd modality: ", Line, 33)) == 0)
+  {
+    ANTSMIWeight = atof(Line+33);
+    g_ANTSMIWeight2nd->value(ANTSMIWeight);  
+  }
+  else if ( (std::strncmp("ANTS MI bins for 2nd modality: ", Line, 31)) == 0)
+  {
+    ANTSMIBins = atoi(Line+31);
+    g_ANTSMIBins2nd->value(ANTSMIBins);  
+  }
+  else if ( (std::strncmp("ANTS MSQ weight for 2nd modality: ", Line, 34)) == 0)
+  {
+    ANTSMSQWeight = atof(Line+34);
+    g_ANTSMSQWeight2nd->value(ANTSMSQWeight);  
+  }
+  else if ( (std::strncmp("ANTS Registration Type: ", Line, 24)) == 0)
+  {
+    ANTSRegistrationFilterType = Line+24;  
+    if (ANTSRegistrationFilterType=="GreedyDiffeomorphism"){
+      g_ANTSRegistrationFilterType->value(0);
+    }
+    else if(ANTSRegistrationFilterType=="SpatiotemporalDiffeomorphism"){
+      g_ANTSRegistrationFilterType->value(1);
+    }
+    else if(ANTSRegistrationFilterType=="Elastic"){
+      g_ANTSRegistrationFilterType->value(2);
+    }
+    else if(ANTSRegistrationFilterType=="Exponential"){
+      g_ANTSRegistrationFilterType->value(3);
+    }
+  }
+  else if ( (std::strncmp("ANTS Registration Step: ", Line, 24)) == 0)
+  {
+    ANTSTransformationStep = Line+24;
+    g_ANTSTransformationStep->value(ANTSTransformationStep.c_str());  
+  }
+  else if ( (std::strncmp("ANTS Gaussian Smoothing: ", Line, 25)) == 0)
+  {
+    ANTSGaussianSmoothing = atoi(Line+25);
+    g_ANTSGaussianSmoothingButton->value(ANTSGaussianSmoothing);  
+  }
+  else if ( (std::strncmp("ANTS Gaussian Sigma: ", Line, 21)) == 0)
+  {
+    ANTSGaussianSigma = atof(Line+21);
+    g_ANTSGaussianSigma->value(ANTSGaussianSigma);  
+  }
       }
       if(mode == N4biasFieldCorrection||mode == advancedParameters||mode == file)
-      {	
-	if ((std::strncmp("Bias Correction stripped image: ", Line, 32)) == 0)
-	{
-	  value = atoi(Line+32);
-	  if (value == 1)
-	    g_StrippedN4ITKBiasFieldCorrectionButton->set();
-	  else
-	    g_StrippedN4ITKBiasFieldCorrectionButton->clear();
-	}
-	if ((std::strncmp("N4 ITK Bias Field Correction: ", Line, 30)) == 0)
-	{
-	  N4ITKBiasFieldCorrection= atoi(Line+30);
-	  if(mode == N4biasFieldCorrection)
-	  {
-	    g_N4ITKBiasFieldCorrectionButton->set();
-	    g_N4ParametersGroup->activate();
-	    g_N4AdvancedParametersGroup->activate();
-	    g_StrippedN4ITKBiasFieldCorrectionButton->activate();
-	  }
-	  else
-	  {
-	    if (N4ITKBiasFieldCorrection == 1)
-	    {
-	      g_N4ITKBiasFieldCorrectionButton->set();
-	      g_N4ParametersGroup->activate();
-	      g_N4AdvancedParametersGroup->activate();
-	      g_StrippedN4ITKBiasFieldCorrectionButton->activate();
-	      
-	    }
-	    else
-	    {
-	      g_N4ITKBiasFieldCorrectionButton->clear();
-	      g_N4ParametersGroup->deactivate();
-	      g_N4AdvancedParametersGroup->deactivate();
-	      g_StrippedN4ITKBiasFieldCorrectionButton->deactivate();
-	      g_StrippedN4ITKBiasFieldCorrectionButton->clear();
-	    }
-	  }
-					
-	}
-	else if ( (std::strncmp("N4 Number of iterations: ", Line, 25)) == 0)
-	{
-	  NbOfIterations = Line+25;
-	  g_NbOfIterations->value(NbOfIterations.c_str());	
-	}
-	else if ( (std::strncmp("N4 Spline distance: ", Line, 20)) == 0)
-	{
-	  SplineDistance = atof(Line+20);
-	  g_SplineDistance->value(SplineDistance);	
-	}
-	else if ( (std::strncmp("N4 Shrink factor: ", Line, 18)) == 0)
-	{
-	  ShrinkFactor = atoi(Line+18);
-	  g_ShrinkFactor->value(ShrinkFactor);	
-	}
-	else if ( (std::strncmp("N4 Convergence threshold: ", Line, 26)) == 0)
-	{
-	  ConvergenceThreshold = atof(Line+26);
-	  g_ConvergenceThreshold->value(ConvergenceThreshold);	
-	}
-	else if ( (std::strncmp("N4 BSpline grid resolutions: ", Line, 29)) == 0)
-	{
-	  BSplineGridResolutions = Line+29;
-	  g_BSplineGridResolutions->value(BSplineGridResolutions.c_str());	
-	}
-	else if ( (std::strncmp("N4 BSpline alpha: ", Line, 18)) == 0)
-	{
-	  BSplineAlpha = atof(Line+18);
-	  //g_BSplineAlpha->value(BSplineAlpha);	
-	}
-	else if ( (std::strncmp("N4 BSpline beta: ", Line, 17)) == 0)
-	{
-	  BSplineBeta = atof(Line+17);
-	 // g_BSplineBeta->value(BSplineBeta);	
-	}
-	else if ( (std::strncmp("N4 Histogram sharpening: ", Line, 25)) == 0)
-	{
-	  HistogramSharpening = Line+25;
-	  g_HistogramSharpening->value(HistogramSharpening.c_str());	
-	}
-	else if ( (std::strncmp("N4 BSpline order: ", Line, 18)) == 0)
-	{
-	  BSplineOrder =atoi(Line+18);
-	  g_BSplineOrder->value(BSplineOrder);	
-	}
+      {  
+  if ((std::strncmp("Bias Correction stripped image: ", Line, 32)) == 0)
+  {
+    value = atoi(Line+32);
+    if (value == 1)
+      g_StrippedN4ITKBiasFieldCorrectionButton->set();
+    else
+      g_StrippedN4ITKBiasFieldCorrectionButton->clear();
+  }
+  if ((std::strncmp("N4 ITK Bias Field Correction: ", Line, 30)) == 0)
+  {
+    N4ITKBiasFieldCorrection= atoi(Line+30);
+    if(mode == N4biasFieldCorrection)
+    {
+      g_N4ITKBiasFieldCorrectionButton->set();
+      g_N4ParametersGroup->activate();
+      g_N4AdvancedParametersGroup->activate();
+      g_StrippedN4ITKBiasFieldCorrectionButton->activate();
+    }
+    else
+    {
+      if (N4ITKBiasFieldCorrection == 1)
+      {
+        g_N4ITKBiasFieldCorrectionButton->set();
+        g_N4ParametersGroup->activate();
+        g_N4AdvancedParametersGroup->activate();
+        g_StrippedN4ITKBiasFieldCorrectionButton->activate();
+        
+      }
+      else
+      {
+        g_N4ITKBiasFieldCorrectionButton->clear();
+        g_N4ParametersGroup->deactivate();
+        g_N4AdvancedParametersGroup->deactivate();
+        g_StrippedN4ITKBiasFieldCorrectionButton->deactivate();
+        g_StrippedN4ITKBiasFieldCorrectionButton->clear();
+      }
+    }
+          
+  }
+  else if ( (std::strncmp("N4 Number of iterations: ", Line, 25)) == 0)
+  {
+    NbOfIterations = Line+25;
+    g_NbOfIterations->value(NbOfIterations.c_str());  
+  }
+  else if ( (std::strncmp("N4 Spline distance: ", Line, 20)) == 0)
+  {
+    SplineDistance = atof(Line+20);
+    g_SplineDistance->value(SplineDistance);  
+  }
+  else if ( (std::strncmp("N4 Shrink factor: ", Line, 18)) == 0)
+  {
+    ShrinkFactor = atoi(Line+18);
+    g_ShrinkFactor->value(ShrinkFactor);  
+  }
+  else if ( (std::strncmp("N4 Convergence threshold: ", Line, 26)) == 0)
+  {
+    ConvergenceThreshold = atof(Line+26);
+    g_ConvergenceThreshold->value(ConvergenceThreshold);  
+  }
+  else if ( (std::strncmp("N4 BSpline grid resolutions: ", Line, 29)) == 0)
+  {
+    BSplineGridResolutions = Line+29;
+    g_BSplineGridResolutions->value(BSplineGridResolutions.c_str());  
+  }
+  else if ( (std::strncmp("N4 BSpline alpha: ", Line, 18)) == 0)
+  {
+    BSplineAlpha = atof(Line+18);
+    //g_BSplineAlpha->value(BSplineAlpha);  
+  }
+  else if ( (std::strncmp("N4 BSpline beta: ", Line, 17)) == 0)
+  {
+    BSplineBeta = atof(Line+17);
+   // g_BSplineBeta->value(BSplineBeta);  
+  }
+  else if ( (std::strncmp("N4 Histogram sharpening: ", Line, 25)) == 0)
+  {
+    HistogramSharpening = Line+25;
+    g_HistogramSharpening->value(HistogramSharpening.c_str());  
+  }
+  else if ( (std::strncmp("N4 BSpline order: ", Line, 18)) == 0)
+  {
+    BSplineOrder =atoi(Line+18);
+    g_BSplineOrder->value(BSplineOrder);  
+  }
         else if ( (std::strncmp("The Version of Slicer Used: ", Line, 27)) == 0)
-	{
-	    SlicerVersion =atof(Line+27);
+  {
+      SlicerVersion =atof(Line+27);
             if (SlicerVersion == 3.0){
                 g_Slicer4dot3Button->clear();
                 g_Slicer4Button->clear();
@@ -2829,17 +2928,17 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
                 g_Slicer3Button->clear();
               //  Slicer4dot3ButtonChecked();
             }
-	}
-	else if ( (std::strncmp("Stripped N4 ITK Bias Field Correction: ", Line, 39)) == 0)
-	{
-	  StrippedN4ITKBiasFieldCorrection =atoi(Line+39);
-	  if (StrippedN4ITKBiasFieldCorrection)
-	    g_StrippedN4ITKBiasFieldCorrectionButton->set();
-	  else
-	    g_StrippedN4ITKBiasFieldCorrectionButton->clear();
-	}	
+  }
+  else if ( (std::strncmp("Stripped N4 ITK Bias Field Correction: ", Line, 39)) == 0)
+  {
+    StrippedN4ITKBiasFieldCorrection =atoi(Line+39);
+    if (StrippedN4ITKBiasFieldCorrection)
+      g_StrippedN4ITKBiasFieldCorrectionButton->set();
+    else
+      g_StrippedN4ITKBiasFieldCorrectionButton->clear();
+  }  
         else if ( (std::strncmp("Label Fusion Algorithm: ", Line, 24)) == 0)
-	{
+  {
 
           if (std::strcmp(Line+24,"Majority Voting") == 0)
           {
@@ -2862,50 +2961,55 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
             g_StapleButton->set();
             m_Computation.SetLabelFusionAlgorithm("STAPLE");
           }
-	}
+  }
         else if ( (std::strncmp("Intensity Energy Weight: ", Line, 25)) == 0)
-	{
+  {
             g_IntensityEnergyWeight->value(atof(Line + 25));
-	}
+  }
         else if ( (std::strncmp("Harmonic Energy Weight: ", Line, 24)) == 0)
-	{
+  {
             g_HarmonicEnergyWeight->value(atof(Line + 24));
-	}
+  }
         else if ( (std::strncmp("Shape Energy Weight: ", Line, 21)) == 0)
-	{
+  {
             g_ShapeEnergyWeight->value(atof(Line + 21));
-	}
+  }
         else if ( (std::strncmp("ANTS with brainmask: ", Line, 21)) == 0)
-	{
+  {
             g_ANTSWithBrainmaskButton->value(atof(Line + 21));
-	}
+  }
         else if ( (std::strncmp("Use Initital Affine Transform: ", Line, 31)) == 0)
-	{
+  {
             g_UseInitialAffineButton->value(atof(Line + 31));
-	}
+  }
         else if ( (std::strncmp("ANTS Number of Threads: ", Line, 24)) == 0)
-	{
+  {
             g_NumberOfThreads->value(atof(Line + 24));
-	}
-	else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
-	{
-	  if (std::strlen(Line+23) != 0)
-	  {
-	    g_MultiAtlasDirectoryDisp->value(Line+23);
-	    SetMultiAtlasDirectoryInitialize(Line+23);
-	  }
-	  else
-	  {
-	    g_DataDirectoryDisp->value(NULL);
-	  }
-	}
+  }
+  else if ( (std::strncmp("Multi-atlas directory: ", Line, 23)) == 0)
+  {
+    if (std::strlen(Line+23) != 0)
+    {
+      g_MultiAtlasDirectoryDisp->value(Line+23);
+      SetMultiAtlasDirectoryInitialize(Line+23);
+    }
+    else
+    {
+      g_DataDirectoryDisp->value(NULL);
+    }
+  }
       }
     }
     fclose(ParameterFile);
   }
   else
+  {
+    std::string message = std::string( "Error Opening File: " ) + _FileName ;
+    if( showError )
     {
-    std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+      fl_alert( message.c_str() ) ;
+    }
+    std::cerr << message << std::endl ;
   }
   
   return IsParameterFileLoaded;
@@ -3165,7 +3269,7 @@ void AutoSegGUIControls::Aux1ButtonChecked()
     m_Computation.SetAux1Image(1);
     m_Computation.SetAux1Label(g_Aux1LabelDisp->value());
     g_Aux2Button->activate();
-		
+    
     if (g_Aux2Button->value())
     {
       g_Aux2Title->activate();
@@ -3228,49 +3332,49 @@ void AutoSegGUIControls::Aux1ButtonChecked()
     g_Aux1Disp->deactivate();
     g_Aux1LabelDisp->deactivate();
     m_Computation.SetAux1Image(0);
-		
+    
     g_Aux2Title->deactivate();
     g_Aux2Disp->deactivate();
     g_Aux2LabelDisp->deactivate();
     m_Computation.SetAux2Image(0);
     g_Aux2Button->deactivate();
     g_Aux2Button->clear();
-		
+    
     g_Aux3Title->deactivate();
     g_Aux3Disp->deactivate();
     g_Aux3LabelDisp->deactivate();
     m_Computation.SetAux3Image(0);
     g_Aux3Button->deactivate();
     g_Aux3Button->clear();
-		
+    
     g_Aux4Title->deactivate();
     g_Aux4Disp->deactivate();
     g_Aux4LabelDisp->deactivate();
     m_Computation.SetAux4Image(0);
     g_Aux4Button->deactivate();
     g_Aux4Button->clear();
-		
+    
     g_Aux5Title->deactivate();
     g_Aux5Disp->deactivate();
     g_Aux5LabelDisp->deactivate();
     m_Computation.SetAux5Image(0);
     g_Aux5Button->deactivate();
     g_Aux5Button->clear();
-		
+    
     g_Aux6Title->deactivate();
     g_Aux6Disp->deactivate();
     g_Aux6LabelDisp->deactivate();
     m_Computation.SetAux6Image(0);
     g_Aux6Button->deactivate();
     g_Aux6Button->clear();
-		
+    
     g_Aux7Title->deactivate();
     g_Aux7Disp->deactivate();
     g_Aux7LabelDisp->deactivate();
     m_Computation.SetAux7Image(0);
     g_Aux7Button->deactivate();
     g_Aux7Button->clear();
-		
+    
     g_Aux8Title->deactivate();
     g_Aux8Disp->deactivate();
     g_Aux8LabelDisp->deactivate();
@@ -3289,7 +3393,7 @@ void AutoSegGUIControls::Aux2ButtonChecked()
     g_Aux2LabelDisp->activate();
     m_Computation.SetAux2Image(1);
     g_Aux3Button->activate();
-		
+    
     if (g_Aux3Button->value())
     {
       g_Aux3Title->activate();
@@ -3344,42 +3448,42 @@ void AutoSegGUIControls::Aux2ButtonChecked()
     g_Aux2Disp->deactivate();
     g_Aux2LabelDisp->deactivate();
     m_Computation.SetAux2Image(0);
-		
+    
     g_Aux3Disp->deactivate();
     g_Aux3LabelDisp->deactivate();
     m_Computation.SetAux3Image(0);
     g_Aux3Button->deactivate();
     g_Aux3Button->clear();
     g_Aux3Title->deactivate();
-		
+    
     g_Aux4Disp->deactivate();
     g_Aux4LabelDisp->deactivate();
     m_Computation.SetAux4Image(0);
     g_Aux4Button->deactivate();
     g_Aux4Button->clear();
     g_Aux4Title->deactivate();
-		
+    
     g_Aux5Disp->deactivate();
     g_Aux5LabelDisp->deactivate();
     m_Computation.SetAux5Image(0);
     g_Aux5Button->deactivate();
     g_Aux5Button->clear();
     g_Aux5Title->deactivate();
-		
+    
     g_Aux6Disp->deactivate();
     g_Aux6LabelDisp->deactivate();
     m_Computation.SetAux6Image(0);
     g_Aux6Button->deactivate();
     g_Aux6Button->clear();
     g_Aux6Title->deactivate();
-		
+    
     g_Aux7Disp->deactivate();
     g_Aux7LabelDisp->deactivate();
     m_Computation.SetAux7Image(0);
     g_Aux7Button->deactivate();
     g_Aux7Button->clear();
     g_Aux7Title->deactivate();
-		
+    
     g_Aux8Disp->deactivate();
     g_Aux8LabelDisp->deactivate();
     m_Computation.SetAux8Image(0);
@@ -3398,7 +3502,7 @@ void AutoSegGUIControls::Aux3ButtonChecked()
     g_Aux3LabelDisp->activate();
     m_Computation.SetAux3Image(1);
     g_Aux4Button->activate();
-		
+    
     if (g_Aux4Button->value())
     {
       g_Aux4Title->activate();
@@ -3445,35 +3549,35 @@ void AutoSegGUIControls::Aux3ButtonChecked()
     g_Aux3Disp->deactivate();
     g_Aux3LabelDisp->deactivate();
     m_Computation.SetAux3Image(0);
-		
+    
     g_Aux4Disp->deactivate();
     g_Aux4LabelDisp->deactivate();
     m_Computation.SetAux4Image(0);
     g_Aux4Button->deactivate();
     g_Aux4Button->clear();
     g_Aux4Title->deactivate();
-		
+    
     g_Aux5Disp->deactivate();
     g_Aux5LabelDisp->deactivate();
     m_Computation.SetAux5Image(0);
     g_Aux5Button->deactivate();
     g_Aux5Button->clear();
     g_Aux5Title->deactivate();
-		
+    
     g_Aux6Disp->deactivate();
     g_Aux6LabelDisp->deactivate();
     m_Computation.SetAux6Image(0);
     g_Aux6Button->deactivate();
     g_Aux6Button->clear();
     g_Aux6Title->deactivate();
-		
+    
     g_Aux7Disp->deactivate();
     g_Aux7LabelDisp->deactivate();
     m_Computation.SetAux7Image(0);
     g_Aux7Button->deactivate();
     g_Aux7Button->clear();
     g_Aux7Title->deactivate();
-		
+    
     g_Aux8Disp->deactivate();
     g_Aux8LabelDisp->deactivate();
     m_Computation.SetAux8Image(0);
@@ -3492,7 +3596,7 @@ void AutoSegGUIControls::Aux4ButtonChecked()
     g_Aux4LabelDisp->activate();
     m_Computation.SetAux4Image(1);
     g_Aux5Button->activate();
-		
+    
     if (g_Aux5Button->value())
     {
       g_Aux5Title->activate();
@@ -3531,28 +3635,28 @@ void AutoSegGUIControls::Aux4ButtonChecked()
     g_Aux4Disp->deactivate();
     g_Aux4LabelDisp->deactivate();
     m_Computation.SetAux4Image(0);
-				
+        
     g_Aux5Disp->deactivate();
     g_Aux5LabelDisp->deactivate();
     m_Computation.SetAux5Image(0);
     g_Aux5Button->deactivate();
     g_Aux5Button->clear();
     g_Aux5Title->deactivate();
-		
+    
     g_Aux6Disp->deactivate();
     g_Aux6LabelDisp->deactivate();
     m_Computation.SetAux6Image(0);
     g_Aux6Button->deactivate();
     g_Aux6Button->clear();
     g_Aux6Title->deactivate();
-		
+    
     g_Aux7Disp->deactivate();
     g_Aux7LabelDisp->deactivate();
     m_Computation.SetAux7Image(0);
     g_Aux7Button->deactivate();
     g_Aux7Button->clear();
     g_Aux7Title->deactivate();
-		
+    
     g_Aux8Disp->deactivate();
     g_Aux8LabelDisp->deactivate();
     m_Computation.SetAux8Image(0);
@@ -3571,7 +3675,7 @@ void AutoSegGUIControls::Aux5ButtonChecked()
     g_Aux5LabelDisp->activate();
     m_Computation.SetAux5Image(1);
     g_Aux6Button->activate();
-		
+    
     if (g_Aux6Button->value())
     {
       g_Aux6Title->activate();
@@ -3602,21 +3706,21 @@ void AutoSegGUIControls::Aux5ButtonChecked()
     g_Aux5Disp->deactivate();
     g_Aux5LabelDisp->deactivate();
     m_Computation.SetAux5Image(0);
-		
+    
     g_Aux6Disp->deactivate();
     g_Aux6LabelDisp->deactivate();
     m_Computation.SetAux6Image(0);
     g_Aux6Button->deactivate();
     g_Aux6Button->clear();
     g_Aux6Title->deactivate();
-		
+    
     g_Aux7Disp->deactivate();
     g_Aux7LabelDisp->deactivate();
     m_Computation.SetAux7Image(0);
     g_Aux7Button->deactivate();
     g_Aux7Button->clear();
     g_Aux7Title->deactivate();
-		
+    
     g_Aux8Disp->deactivate();
     g_Aux8LabelDisp->deactivate();
     m_Computation.SetAux8Image(0);
@@ -3635,7 +3739,7 @@ void AutoSegGUIControls::Aux6ButtonChecked()
     g_Aux6LabelDisp->activate();
     m_Computation.SetAux6Image(1);
     g_Aux7Button->activate();
-		
+    
     if (g_Aux7Button->value())
     {
       g_Aux7Title->activate();
@@ -3658,14 +3762,14 @@ void AutoSegGUIControls::Aux6ButtonChecked()
     g_Aux6Disp->deactivate();
     g_Aux6LabelDisp->deactivate();
     m_Computation.SetAux6Image(0);
-				
+        
     g_Aux7Disp->deactivate();
     g_Aux7LabelDisp->deactivate();
     m_Computation.SetAux7Image(0);
     g_Aux7Button->deactivate();
     g_Aux7Button->clear();
     g_Aux7Title->deactivate();
-		
+    
     g_Aux8Disp->deactivate();
     g_Aux8LabelDisp->deactivate();
     m_Computation.SetAux8Image(0);
@@ -3684,7 +3788,7 @@ void AutoSegGUIControls::Aux7ButtonChecked()
     g_Aux7LabelDisp->activate();
     m_Computation.SetAux7Image(1);
     g_Aux8Button->activate();
-		
+    
     if (g_Aux8Button->value())
     {
       g_Aux8Title->activate();
@@ -3699,7 +3803,7 @@ void AutoSegGUIControls::Aux7ButtonChecked()
     g_Aux7Disp->deactivate();
     g_Aux7LabelDisp->deactivate();
     m_Computation.SetAux7Image(0);
-				
+        
     g_Aux8Disp->deactivate();
     g_Aux8LabelDisp->deactivate();
     m_Computation.SetAux8Image(0);
@@ -3954,9 +4058,9 @@ void AutoSegGUIControls::InitBrowser()
       g_DataBrowser->type(FL_MULTI_BROWSER);
       g_DataBrowser->clear();
       if (g_T2Button->value())
-	g_DataBrowser->add("@B20@b@cT1Image @B20@b@cT2Image");
+  g_DataBrowser->add("@B20@b@cT1Image @B20@b@cT2Image");
       else
-	g_DataBrowser->add("@B20@b@cT1Image @B20@b@cPDImage");
+  g_DataBrowser->add("@B20@b@cT1Image @B20@b@cPDImage");
     }
     else
     {
@@ -4003,137 +4107,137 @@ void AutoSegGUIControls::InitAuxBrowser()
     else{
       if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) && (g_Aux7Button->value()) )
       {
-	m_AuxBrowserWidths = new int [8];
-	m_AuxBrowserWidths[0] = 270;
-	m_AuxBrowserWidths[1] = 270;
-	m_AuxBrowserWidths[2] = 270;
-	m_AuxBrowserWidths[3] = 270;
-	m_AuxBrowserWidths[4] = 270;
-	m_AuxBrowserWidths[5] = 270;
-	m_AuxBrowserWidths[6] = 270;
-	m_AuxBrowserWidths[7] = 0;
-	g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	g_AuxDataBrowser->showcolsep(1);
-	g_AuxDataBrowser->column_char(' ');
-	g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	g_AuxDataBrowser->clear();
-	g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image @B20@b@cAux7Image");
+  m_AuxBrowserWidths = new int [8];
+  m_AuxBrowserWidths[0] = 270;
+  m_AuxBrowserWidths[1] = 270;
+  m_AuxBrowserWidths[2] = 270;
+  m_AuxBrowserWidths[3] = 270;
+  m_AuxBrowserWidths[4] = 270;
+  m_AuxBrowserWidths[5] = 270;
+  m_AuxBrowserWidths[6] = 270;
+  m_AuxBrowserWidths[7] = 0;
+  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+  g_AuxDataBrowser->showcolsep(1);
+  g_AuxDataBrowser->column_char(' ');
+  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+  g_AuxDataBrowser->clear();
+  g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image @B20@b@cAux7Image");
       }
       else
       {
-	if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) )
-	{
-	  m_AuxBrowserWidths = new int [7];
-	  m_AuxBrowserWidths[0] = 270;
-	  m_AuxBrowserWidths[1] = 270;
-	  m_AuxBrowserWidths[2] = 270;
-	  m_AuxBrowserWidths[3] = 270;
-	  m_AuxBrowserWidths[4] = 270;
-	  m_AuxBrowserWidths[5] = 270;
-	  m_AuxBrowserWidths[6] = 0;
-	  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	  g_AuxDataBrowser->showcolsep(1);
-	  g_AuxDataBrowser->column_char(' ');
-	  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	  g_AuxDataBrowser->clear();
-	  g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image");
-	}
-	else
-	{
-	  if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) )
-	  {
-	    m_AuxBrowserWidths = new int [6];
-	    m_AuxBrowserWidths[0] = 270;
-	    m_AuxBrowserWidths[1] = 270;
-	    m_AuxBrowserWidths[2] = 270;
-	    m_AuxBrowserWidths[3] = 270;
-	    m_AuxBrowserWidths[4] = 270;
-	    m_AuxBrowserWidths[5] = 0;
-	    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	    g_AuxDataBrowser->showcolsep(1);
-	    g_AuxDataBrowser->column_char(' ');
-	    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	    g_AuxDataBrowser->clear();
-	    g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image");
-	  }
-	  else
-	  {
-	    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) )
-	    {
-	      m_AuxBrowserWidths = new int [5];
-	      m_AuxBrowserWidths[0] = 270;
-	      m_AuxBrowserWidths[1] = 270;
-	      m_AuxBrowserWidths[2] = 270;
-	      m_AuxBrowserWidths[3] = 270;
-	      m_AuxBrowserWidths[4] = 0;
-	      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	      g_AuxDataBrowser->showcolsep(1);
-	      g_AuxDataBrowser->column_char(' ');
-	      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	      g_AuxDataBrowser->clear();
-	      g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image");
-	    }
-	    else
-	    {
-	      if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) )
-	      {
-		m_AuxBrowserWidths = new int [4];
-		m_AuxBrowserWidths[0] = 270;
-		m_AuxBrowserWidths[1] = 270;
-		m_AuxBrowserWidths[2] = 270;
-		m_AuxBrowserWidths[3] = 0;		
-		g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		g_AuxDataBrowser->showcolsep(1);
-		g_AuxDataBrowser->column_char(' ');
-		g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		g_AuxDataBrowser->clear();
-		g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image");
-	      }
-	      else
-	      {
-		if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) )
-		{
-		  m_AuxBrowserWidths = new int [3];
-		  m_AuxBrowserWidths[0] = 270;
-		  m_AuxBrowserWidths[1] = 270;
-		  m_AuxBrowserWidths[2] = 0;
-		  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		  g_AuxDataBrowser->showcolsep(1);
-		  g_AuxDataBrowser->column_char(' ');
-		  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		  g_AuxDataBrowser->clear();
-		  g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image");
-		}
-		else
-		{
-		  if ( (g_Aux1Button->value()) )
-		  {
-		    m_AuxBrowserWidths = new int [2];
-		    m_AuxBrowserWidths[0] = 400;
-		    m_AuxBrowserWidths[1] = 0;
-		    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		    g_AuxDataBrowser->showcolsep(1);
-		    g_AuxDataBrowser->column_char(' ');
-		    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		    g_AuxDataBrowser->clear();
-		    g_AuxDataBrowser->add("@B20@b@cTOrig1Image @B20@b@cAux1Image");
-		  }
-		  else
-		  {
-		    m_AuxBrowserWidths = new int [1];
-		    m_AuxBrowserWidths[0] = 0;
-		    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		    g_AuxDataBrowser->showcolsep(0);
-		    g_AuxDataBrowser->column_char(' ');
-		    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		    g_AuxDataBrowser->clear();
-		    g_AuxDataBrowser->add("@B20@b@cOrigT1Image");
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+  if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) )
+  {
+    m_AuxBrowserWidths = new int [7];
+    m_AuxBrowserWidths[0] = 270;
+    m_AuxBrowserWidths[1] = 270;
+    m_AuxBrowserWidths[2] = 270;
+    m_AuxBrowserWidths[3] = 270;
+    m_AuxBrowserWidths[4] = 270;
+    m_AuxBrowserWidths[5] = 270;
+    m_AuxBrowserWidths[6] = 0;
+    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+    g_AuxDataBrowser->showcolsep(1);
+    g_AuxDataBrowser->column_char(' ');
+    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+    g_AuxDataBrowser->clear();
+    g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image");
+  }
+  else
+  {
+    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) )
+    {
+      m_AuxBrowserWidths = new int [6];
+      m_AuxBrowserWidths[0] = 270;
+      m_AuxBrowserWidths[1] = 270;
+      m_AuxBrowserWidths[2] = 270;
+      m_AuxBrowserWidths[3] = 270;
+      m_AuxBrowserWidths[4] = 270;
+      m_AuxBrowserWidths[5] = 0;
+      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+      g_AuxDataBrowser->showcolsep(1);
+      g_AuxDataBrowser->column_char(' ');
+      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+      g_AuxDataBrowser->clear();
+      g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image");
+    }
+    else
+    {
+      if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) )
+      {
+        m_AuxBrowserWidths = new int [5];
+        m_AuxBrowserWidths[0] = 270;
+        m_AuxBrowserWidths[1] = 270;
+        m_AuxBrowserWidths[2] = 270;
+        m_AuxBrowserWidths[3] = 270;
+        m_AuxBrowserWidths[4] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(1);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image");
+      }
+      else
+      {
+        if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) )
+        {
+    m_AuxBrowserWidths = new int [4];
+    m_AuxBrowserWidths[0] = 270;
+    m_AuxBrowserWidths[1] = 270;
+    m_AuxBrowserWidths[2] = 270;
+    m_AuxBrowserWidths[3] = 0;    
+    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+    g_AuxDataBrowser->showcolsep(1);
+    g_AuxDataBrowser->column_char(' ');
+    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+    g_AuxDataBrowser->clear();
+    g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image");
+        }
+        else
+        {
+    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) )
+    {
+      m_AuxBrowserWidths = new int [3];
+      m_AuxBrowserWidths[0] = 270;
+      m_AuxBrowserWidths[1] = 270;
+      m_AuxBrowserWidths[2] = 0;
+      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+      g_AuxDataBrowser->showcolsep(1);
+      g_AuxDataBrowser->column_char(' ');
+      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+      g_AuxDataBrowser->clear();
+      g_AuxDataBrowser->add("@B20@b@cOrigT1Image @B20@b@cAux1Image @B20@b@cAux2Image");
+    }
+    else
+    {
+      if ( (g_Aux1Button->value()) )
+      {
+        m_AuxBrowserWidths = new int [2];
+        m_AuxBrowserWidths[0] = 400;
+        m_AuxBrowserWidths[1] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(1);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cTOrig1Image @B20@b@cAux1Image");
+      }
+      else
+      {
+        m_AuxBrowserWidths = new int [1];
+        m_AuxBrowserWidths[0] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(0);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigT1Image");
+      }
+    }
+        }
+      }
+    }
+  }
       }
     }
   }
@@ -4161,137 +4265,137 @@ void AutoSegGUIControls::InitAuxBrowser()
     else{
       if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) && (g_Aux7Button->value()) )
       {
-	m_AuxBrowserWidths = new int [8];
-	m_AuxBrowserWidths[0] = 270;
-	m_AuxBrowserWidths[1] = 270;
-	m_AuxBrowserWidths[2] = 270;
-	m_AuxBrowserWidths[3] = 270;
-	m_AuxBrowserWidths[4] = 270;
-	m_AuxBrowserWidths[5] = 270;
-	m_AuxBrowserWidths[6] = 270;
-	m_AuxBrowserWidths[7] = 0;
-	g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	g_AuxDataBrowser->showcolsep(1);
-	g_AuxDataBrowser->column_char(' ');
-	g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	g_AuxDataBrowser->clear();
-	g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image @B20@b@cAux7Image");
+  m_AuxBrowserWidths = new int [8];
+  m_AuxBrowserWidths[0] = 270;
+  m_AuxBrowserWidths[1] = 270;
+  m_AuxBrowserWidths[2] = 270;
+  m_AuxBrowserWidths[3] = 270;
+  m_AuxBrowserWidths[4] = 270;
+  m_AuxBrowserWidths[5] = 270;
+  m_AuxBrowserWidths[6] = 270;
+  m_AuxBrowserWidths[7] = 0;
+  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+  g_AuxDataBrowser->showcolsep(1);
+  g_AuxDataBrowser->column_char(' ');
+  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+  g_AuxDataBrowser->clear();
+  g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image @B20@b@cAux7Image");
       }
       else
       {
-	if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) )
-	{
-	  m_AuxBrowserWidths = new int [7];
-	  m_AuxBrowserWidths[0] = 270;
-	  m_AuxBrowserWidths[1] = 270;
-	  m_AuxBrowserWidths[2] = 270;
-	  m_AuxBrowserWidths[3] = 270;
-	  m_AuxBrowserWidths[4] = 270;
-	  m_AuxBrowserWidths[5] = 270;
-	  m_AuxBrowserWidths[6] = 0;
-	  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	  g_AuxDataBrowser->showcolsep(1);
-	  g_AuxDataBrowser->column_char(' ');
-	  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	  g_AuxDataBrowser->clear();
-	  g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image");
-	}
-	else
-	{
-	  if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) )
-	  {
-	    m_AuxBrowserWidths = new int [6];
-	    m_AuxBrowserWidths[0] = 270;
-	    m_AuxBrowserWidths[1] = 270;
-	    m_AuxBrowserWidths[2] = 270;
-	    m_AuxBrowserWidths[3] = 270;
-	    m_AuxBrowserWidths[4] = 270;
-	    m_AuxBrowserWidths[5] = 0;
-	    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	    g_AuxDataBrowser->showcolsep(1);
-	    g_AuxDataBrowser->column_char(' ');
-	    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	    g_AuxDataBrowser->clear();
-	    g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image");
-	  }
-	  else
-	  {
-	    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) )
-	    {
-	      m_AuxBrowserWidths = new int [5];
-	      m_AuxBrowserWidths[0] = 270;
-	      m_AuxBrowserWidths[1] = 270;
-	      m_AuxBrowserWidths[2] = 270;
-	      m_AuxBrowserWidths[3] = 270;
-	      m_AuxBrowserWidths[4] = 0;
-	      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	      g_AuxDataBrowser->showcolsep(1);
-	      g_AuxDataBrowser->column_char(' ');
-	      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	      g_AuxDataBrowser->clear();
-	      g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image");
-	    }
-	    else
-	    {
-	      if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) )
-	      {
-		m_AuxBrowserWidths = new int [4];
-		m_AuxBrowserWidths[0] = 270;
-		m_AuxBrowserWidths[1] = 270;
-		m_AuxBrowserWidths[2] = 270;
-		m_AuxBrowserWidths[3] = 0;		
-		g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		g_AuxDataBrowser->showcolsep(1);
-		g_AuxDataBrowser->column_char(' ');
-		g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		g_AuxDataBrowser->clear();
-		g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image");
-	      }
-	      else
-	      {
-		if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) )
-		{
-		  m_AuxBrowserWidths = new int [3];
-		  m_AuxBrowserWidths[0] = 270;
-		  m_AuxBrowserWidths[1] = 270;
-		  m_AuxBrowserWidths[2] = 0;
-		  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		  g_AuxDataBrowser->showcolsep(1);
-		  g_AuxDataBrowser->column_char(' ');
-		  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		  g_AuxDataBrowser->clear();
-		  g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image");
-		}
-		else
-		{
-		  if ( (g_Aux1Button->value()) )
-		  {
-		    m_AuxBrowserWidths = new int [2];
-		    m_AuxBrowserWidths[0] = 400;
-		    m_AuxBrowserWidths[1] = 0;
-		    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		    g_AuxDataBrowser->showcolsep(1);
-		    g_AuxDataBrowser->column_char(' ');
-		    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		    g_AuxDataBrowser->clear();
-		    g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image");
-		  }
-		  else
-		  {
-		    m_AuxBrowserWidths = new int [1];
-		    m_AuxBrowserWidths[0] = 0;
-		    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		    g_AuxDataBrowser->showcolsep(0);
-		    g_AuxDataBrowser->column_char(' ');
-		    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		    g_AuxDataBrowser->clear();
-		    g_AuxDataBrowser->add("@B20@b@cOrigT2Image");
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+  if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) )
+  {
+    m_AuxBrowserWidths = new int [7];
+    m_AuxBrowserWidths[0] = 270;
+    m_AuxBrowserWidths[1] = 270;
+    m_AuxBrowserWidths[2] = 270;
+    m_AuxBrowserWidths[3] = 270;
+    m_AuxBrowserWidths[4] = 270;
+    m_AuxBrowserWidths[5] = 270;
+    m_AuxBrowserWidths[6] = 0;
+    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+    g_AuxDataBrowser->showcolsep(1);
+    g_AuxDataBrowser->column_char(' ');
+    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+    g_AuxDataBrowser->clear();
+    g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image");
+  }
+  else
+  {
+    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) )
+    {
+      m_AuxBrowserWidths = new int [6];
+      m_AuxBrowserWidths[0] = 270;
+      m_AuxBrowserWidths[1] = 270;
+      m_AuxBrowserWidths[2] = 270;
+      m_AuxBrowserWidths[3] = 270;
+      m_AuxBrowserWidths[4] = 270;
+      m_AuxBrowserWidths[5] = 0;
+      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+      g_AuxDataBrowser->showcolsep(1);
+      g_AuxDataBrowser->column_char(' ');
+      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+      g_AuxDataBrowser->clear();
+      g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image");
+    }
+    else
+    {
+      if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) )
+      {
+        m_AuxBrowserWidths = new int [5];
+        m_AuxBrowserWidths[0] = 270;
+        m_AuxBrowserWidths[1] = 270;
+        m_AuxBrowserWidths[2] = 270;
+        m_AuxBrowserWidths[3] = 270;
+        m_AuxBrowserWidths[4] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(1);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image");
+      }
+      else
+      {
+        if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) )
+        {
+    m_AuxBrowserWidths = new int [4];
+    m_AuxBrowserWidths[0] = 270;
+    m_AuxBrowserWidths[1] = 270;
+    m_AuxBrowserWidths[2] = 270;
+    m_AuxBrowserWidths[3] = 0;    
+    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+    g_AuxDataBrowser->showcolsep(1);
+    g_AuxDataBrowser->column_char(' ');
+    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+    g_AuxDataBrowser->clear();
+    g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image");
+        }
+        else
+        {
+    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) )
+    {
+      m_AuxBrowserWidths = new int [3];
+      m_AuxBrowserWidths[0] = 270;
+      m_AuxBrowserWidths[1] = 270;
+      m_AuxBrowserWidths[2] = 0;
+      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+      g_AuxDataBrowser->showcolsep(1);
+      g_AuxDataBrowser->column_char(' ');
+      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+      g_AuxDataBrowser->clear();
+      g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image @B20@b@cAux2Image");
+    }
+    else
+    {
+      if ( (g_Aux1Button->value()) )
+      {
+        m_AuxBrowserWidths = new int [2];
+        m_AuxBrowserWidths[0] = 400;
+        m_AuxBrowserWidths[1] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(1);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigT2Image @B20@b@cAux1Image");
+      }
+      else
+      {
+        m_AuxBrowserWidths = new int [1];
+        m_AuxBrowserWidths[0] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(0);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigT2Image");
+      }
+    }
+        }
+      }
+    }
+  }
       }
     }
   }
@@ -4319,137 +4423,137 @@ void AutoSegGUIControls::InitAuxBrowser()
     else{
       if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) && (g_Aux7Button->value()) )
       {
-	m_AuxBrowserWidths = new int [8];
-	m_AuxBrowserWidths[0] = 270;
-	m_AuxBrowserWidths[1] = 270;
-	m_AuxBrowserWidths[2] = 270;
-	m_AuxBrowserWidths[3] = 270;
-	m_AuxBrowserWidths[4] = 270;
-	m_AuxBrowserWidths[5] = 270;
-	m_AuxBrowserWidths[6] = 270;
-	m_AuxBrowserWidths[7] = 0;
-	g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	g_AuxDataBrowser->showcolsep(1);
-	g_AuxDataBrowser->column_char(' ');
-	g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	g_AuxDataBrowser->clear();
-	g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image @B20@b@cAux7Image");
+  m_AuxBrowserWidths = new int [8];
+  m_AuxBrowserWidths[0] = 270;
+  m_AuxBrowserWidths[1] = 270;
+  m_AuxBrowserWidths[2] = 270;
+  m_AuxBrowserWidths[3] = 270;
+  m_AuxBrowserWidths[4] = 270;
+  m_AuxBrowserWidths[5] = 270;
+  m_AuxBrowserWidths[6] = 270;
+  m_AuxBrowserWidths[7] = 0;
+  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+  g_AuxDataBrowser->showcolsep(1);
+  g_AuxDataBrowser->column_char(' ');
+  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+  g_AuxDataBrowser->clear();
+  g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image @B20@b@cAux7Image");
       }
       else
       {
-	if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) )
-	{
-	  m_AuxBrowserWidths = new int [7];
-	  m_AuxBrowserWidths[0] = 270;
-	  m_AuxBrowserWidths[1] = 270;
-	  m_AuxBrowserWidths[2] = 270;
-	  m_AuxBrowserWidths[3] = 270;
-	  m_AuxBrowserWidths[4] = 270;
-	  m_AuxBrowserWidths[5] = 270;
-	  m_AuxBrowserWidths[6] = 0;
-	  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	  g_AuxDataBrowser->showcolsep(1);
-	  g_AuxDataBrowser->column_char(' ');
-	  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	  g_AuxDataBrowser->clear();
-	  g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image");
-	}
-	else
-	{
-	  if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) )
-	  {
-	    m_AuxBrowserWidths = new int [6];
-	    m_AuxBrowserWidths[0] = 270;
-	    m_AuxBrowserWidths[1] = 270;
-	    m_AuxBrowserWidths[2] = 270;
-	    m_AuxBrowserWidths[3] = 270;
-	    m_AuxBrowserWidths[4] = 270;
-	    m_AuxBrowserWidths[5] = 0;
-	    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	    g_AuxDataBrowser->showcolsep(1);
-	    g_AuxDataBrowser->column_char(' ');
-	    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	    g_AuxDataBrowser->clear();
-	    g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image");
-	  }
-	  else
-	  {
-	    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) )
-	    {
-	      m_AuxBrowserWidths = new int [5];
-	      m_AuxBrowserWidths[0] = 270;
-	      m_AuxBrowserWidths[1] = 270;
-	      m_AuxBrowserWidths[2] = 270;
-	      m_AuxBrowserWidths[3] = 270;
-	      m_AuxBrowserWidths[4] = 0;
-	      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-	      g_AuxDataBrowser->showcolsep(1);
-	      g_AuxDataBrowser->column_char(' ');
-	      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-	      g_AuxDataBrowser->clear();
-	      g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image");
-	    }
-	    else
-	    {
-	      if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) )
-	      {
-		m_AuxBrowserWidths = new int [4];
-		m_AuxBrowserWidths[0] = 270;
-		m_AuxBrowserWidths[1] = 270;
-		m_AuxBrowserWidths[2] = 270;
-		m_AuxBrowserWidths[3] = 0;		
-		g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		g_AuxDataBrowser->showcolsep(1);
-		g_AuxDataBrowser->column_char(' ');
-		g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		g_AuxDataBrowser->clear();
-		g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image");
-	      }
-	      else
-	      {
-		if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) )
-		{
-		  m_AuxBrowserWidths = new int [3];
-		  m_AuxBrowserWidths[0] = 270;
-		  m_AuxBrowserWidths[1] = 270;
-		  m_AuxBrowserWidths[2] = 0;
-		  g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		  g_AuxDataBrowser->showcolsep(1);
-		  g_AuxDataBrowser->column_char(' ');
-		  g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		  g_AuxDataBrowser->clear();
-		  g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image");
-		}
-		else
-		{
-		  if ( (g_Aux1Button->value()) )
-		  {
-		    m_AuxBrowserWidths = new int [2];
-		    m_AuxBrowserWidths[0] = 400;
-		    m_AuxBrowserWidths[1] = 0;
-		    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		    g_AuxDataBrowser->showcolsep(1);
-		    g_AuxDataBrowser->column_char(' ');
-		    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		    g_AuxDataBrowser->clear();
-		    g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image");
-		  }
-		  else
-		  {
-		    m_AuxBrowserWidths = new int [1];
-		    m_AuxBrowserWidths[0] = 0;
-		    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
-		    g_AuxDataBrowser->showcolsep(0);
-		    g_AuxDataBrowser->column_char(' ');
-		    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
-		    g_AuxDataBrowser->clear();
-		    g_AuxDataBrowser->add("@B20@b@cOrigPDImage");
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+  if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) )
+  {
+    m_AuxBrowserWidths = new int [7];
+    m_AuxBrowserWidths[0] = 270;
+    m_AuxBrowserWidths[1] = 270;
+    m_AuxBrowserWidths[2] = 270;
+    m_AuxBrowserWidths[3] = 270;
+    m_AuxBrowserWidths[4] = 270;
+    m_AuxBrowserWidths[5] = 270;
+    m_AuxBrowserWidths[6] = 0;
+    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+    g_AuxDataBrowser->showcolsep(1);
+    g_AuxDataBrowser->column_char(' ');
+    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+    g_AuxDataBrowser->clear();
+    g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image @B20@b@cAux6Image");
+  }
+  else
+  {
+    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) )
+    {
+      m_AuxBrowserWidths = new int [6];
+      m_AuxBrowserWidths[0] = 270;
+      m_AuxBrowserWidths[1] = 270;
+      m_AuxBrowserWidths[2] = 270;
+      m_AuxBrowserWidths[3] = 270;
+      m_AuxBrowserWidths[4] = 270;
+      m_AuxBrowserWidths[5] = 0;
+      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+      g_AuxDataBrowser->showcolsep(1);
+      g_AuxDataBrowser->column_char(' ');
+      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+      g_AuxDataBrowser->clear();
+      g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image @B20@b@cAux5Image");
+    }
+    else
+    {
+      if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) )
+      {
+        m_AuxBrowserWidths = new int [5];
+        m_AuxBrowserWidths[0] = 270;
+        m_AuxBrowserWidths[1] = 270;
+        m_AuxBrowserWidths[2] = 270;
+        m_AuxBrowserWidths[3] = 270;
+        m_AuxBrowserWidths[4] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(1);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image @B20@b@cAux4Image");
+      }
+      else
+      {
+        if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) )
+        {
+    m_AuxBrowserWidths = new int [4];
+    m_AuxBrowserWidths[0] = 270;
+    m_AuxBrowserWidths[1] = 270;
+    m_AuxBrowserWidths[2] = 270;
+    m_AuxBrowserWidths[3] = 0;    
+    g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+    g_AuxDataBrowser->showcolsep(1);
+    g_AuxDataBrowser->column_char(' ');
+    g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+    g_AuxDataBrowser->clear();
+    g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image @B20@b@cAux3Image");
+        }
+        else
+        {
+    if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) )
+    {
+      m_AuxBrowserWidths = new int [3];
+      m_AuxBrowserWidths[0] = 270;
+      m_AuxBrowserWidths[1] = 270;
+      m_AuxBrowserWidths[2] = 0;
+      g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+      g_AuxDataBrowser->showcolsep(1);
+      g_AuxDataBrowser->column_char(' ');
+      g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+      g_AuxDataBrowser->clear();
+      g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image @B20@b@cAux2Image");
+    }
+    else
+    {
+      if ( (g_Aux1Button->value()) )
+      {
+        m_AuxBrowserWidths = new int [2];
+        m_AuxBrowserWidths[0] = 400;
+        m_AuxBrowserWidths[1] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(1);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigPDImage @B20@b@cAux1Image");
+      }
+      else
+      {
+        m_AuxBrowserWidths = new int [1];
+        m_AuxBrowserWidths[0] = 0;
+        g_AuxDataBrowser->column_widths(m_AuxBrowserWidths);
+        g_AuxDataBrowser->showcolsep(0);
+        g_AuxDataBrowser->column_char(' ');
+        g_AuxDataBrowser->type(FL_MULTI_BROWSER);
+        g_AuxDataBrowser->clear();
+        g_AuxDataBrowser->add("@B20@b@cOrigPDImage");
+      }
+    }
+        }
+      }
+    }
+  }
       }
     }
   }
@@ -4472,10 +4576,10 @@ void AutoSegGUIControls::AddBrowserAutoData()
       Line[Length-1] = '\0';
       if (std::strncmp(Line, "// ", 2) != 0)
       {
-	CheckData(Line);
-	CheckData2(Line);
-	RightJustifyData(Line, Data);
-	g_DataBrowser->add(Data);
+  CheckData(Line);
+  CheckData2(Line);
+  RightJustifyData(Line, Data);
+  g_DataBrowser->add(Data);
       }
     }
     fclose(AutoDataFile);
@@ -4503,11 +4607,11 @@ void AutoSegGUIControls::AddAuxBrowserAutoData()
       Line[Length-1] = '\0';
       if (std::strncmp(Line, "// ", 2) != 0)
       {
-	CheckData(Line);
-	CheckData2(Line);
-	RightJustifyAuxData(Line, Data);
-	g_AuxDataBrowser->add(Data);
-	CheckData2(Line);
+  CheckData(Line);
+  CheckData2(Line);
+  RightJustifyAuxData(Line, Data);
+  g_AuxDataBrowser->add(Data);
+  CheckData2(Line);
       }
     }
     fclose(AutoAuxDataFile);
@@ -4557,7 +4661,7 @@ void AutoSegGUIControls::CheckData2(char *_Line)
       tmp2.assign(Line,loc1+4,Line.size()-loc1-4);
       loc2 = tmp1.find_last_of("/",tmp1.size());
       tmp1.append("/");
-      tmp1.replace(loc2+1,tmp2.size(),tmp2);	  
+      tmp1.replace(loc2+1,tmp2.size(),tmp2);    
       Line = tmp1;
     }
     else
@@ -4572,12 +4676,12 @@ void AutoSegGUIControls::AddDataGUI()
   char Line[1536]; 
 
   std::strcpy(Line, "");
-	
+  
   AddDataGUIControls AddData(g_T2Button->value(), g_PDButton->value());
   AddData.g_MainWindow->show();
   while(AddData.g_MainWindow->shown())
     Fl::wait();
-	
+  
   if ( (!g_T2Button->value()) && (!g_PDButton->value()) && (std::strlen(AddData.GetT1File())!= 0) ) 
     std::strcpy(Line, AddData.GetT1File());
   else if (std::strlen(AddData.GetT1File())!= 0)
@@ -4617,14 +4721,14 @@ void AutoSegGUIControls::AddAuxDataGUI()
   char Line[1536];
 
   m_Computation.SetManually(1);
-	
+  
   std::strcpy(Line, "");
-	
+  
   AddAuxDataGUIControls AddAuxData(g_AuxT1Button->value(), g_AuxT2Button->value(), g_AuxPDButton->value(), g_Aux1Button->value(), g_Aux2Button->value(), g_Aux3Button->value(), g_Aux4Button->value(), g_Aux5Button->value(), g_Aux6Button->value(), g_Aux7Button->value(), g_Aux8Button->value());
   AddAuxData.g_MainWindow->show();
   while(AddAuxData.g_MainWindow->shown())
     Fl::wait();
-	
+  
   if ( (!g_Aux1Button->value()) && (!g_Aux2Button->value()) && (!g_Aux3Button->value()) && (!g_Aux4Button->value()) && (!g_Aux5Button->value())  && (!g_Aux6Button->value()) && (!g_Aux7Button->value()) && (!g_Aux8Button->value()) && (std::strlen(AddAuxData.GetAuxT1File())!= 0) ) 
     if (g_AuxT1Button->value())
       std::strcpy(Line, AddAuxData.GetAuxT1File());
@@ -4668,7 +4772,7 @@ void AutoSegGUIControls::AddAuxDataGUI()
   }
   else if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) && (g_Aux7Button->value()) && (std::strlen(AddAuxData.GetAux1File())!= 0)  && (std::strlen(AddAuxData.GetAux2File())!= 0)  && (std::strlen(AddAuxData.GetAux3File())!= 0)   && (std::strlen(AddAuxData.GetAux4File())!= 0)  && (std::strlen(AddAuxData.GetAux5File())!= 0)  && (std::strlen(AddAuxData.GetAux6File())!= 0)  && (std::strlen(AddAuxData.GetAux7File())!= 0)  )
   {
-    std::strcat(Line, " @r");	
+    std::strcat(Line, " @r");  
     std::strcat(Line, AddAuxData.GetAux1File());
     std::strcat(Line, " @r");
     std::strcat(Line, AddAuxData.GetAux2File());
@@ -4731,7 +4835,7 @@ void AutoSegGUIControls::AddAuxDataGUI()
     std::strcat(Line, " ");
     std::strcat(Line, AddAuxData.GetAux3File());
   }
-	
+  
   else if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (std::strlen(AddAuxData.GetAux1File())!= 0)  && (std::strlen(AddAuxData.GetAux2File())!= 0)  )
   {
     std::strcat(Line, " @r");
@@ -5512,7 +5616,7 @@ void AutoSegGUIControls::ShowDisplayButtonPressed()
 
 void AutoSegGUIControls::AtlasSpaceButtonChecked()
 {
-	
+  
   if (g_AtlasSpaceButton->value())
   {
     m_Computation.SetAtlasSpaceImage(1);
@@ -5525,7 +5629,7 @@ void AutoSegGUIControls::AtlasSpaceButtonChecked()
 
 void AutoSegGUIControls::BiasCorrectedButtonChecked()
 {
-	
+  
   if (g_BiasCorrectedButton->value())
   {
     m_Computation.SetBiasCorrectedImage(1);
@@ -5538,7 +5642,7 @@ void AutoSegGUIControls::BiasCorrectedButtonChecked()
 
 void AutoSegGUIControls::StrippedButtonChecked()
 {
-	
+  
   if (g_StrippedButton->value())
   {
     m_Computation.SetSkullStrippedImage(1);
@@ -5551,7 +5655,7 @@ void AutoSegGUIControls::StrippedButtonChecked()
 
 void AutoSegGUIControls::RigidTransformationButtonChecked()
 {
-	
+  
   if (g_RigidTransformationButton->value())
   {
     m_Computation.SetRigidTransformation(1);
@@ -5597,26 +5701,26 @@ void AutoSegGUIControls::ShowMRMLSceneButtonPressed()
       std::string pathSlicer;
       std::string pathSlicerString;
       pathSlicerString= itksys::SystemTools::FindProgram("Slicer3");
-			//if path not found
+      //if path not found
       if(pathSlicerString.empty()==true)
       {
-	Fl_File_Chooser fc(".","*",Fl_File_Chooser::SINGLE,"Select the folder where Slicer3* is saved");	
-	fc.show();
-	while(fc.shown())
-	  Fl::wait();	
-	if(fc.count())
-	  pathSlicer=fc.value();
+  Fl_File_Chooser fc(".","*",Fl_File_Chooser::SINGLE,"Select the folder where Slicer3* is saved");  
+  fc.show();
+  while(fc.shown())
+    Fl::wait();  
+  if(fc.count())
+    pathSlicer=fc.value();
       }
       else
       {
-	//if the Slicer found is in /Slicer/bin/
-	std::string key ("bin/Slicer3");
-	size_t found;
-	found=pathSlicerString.rfind(key);
-	if (found!=std::string::npos)
-	  pathSlicerString.replace (found,key.length(),"Slicer3");
-	
-	pathSlicer = pathSlicerString.c_str() ;
+  //if the Slicer found is in /Slicer/bin/
+  std::string key ("bin/Slicer3");
+  size_t found;
+  found=pathSlicerString.rfind(key);
+  if (found!=std::string::npos)
+    pathSlicerString.replace (found,key.length(),"Slicer3");
+  
+  pathSlicer = pathSlicerString.c_str() ;
       }
       m_Computation.ExecuteSlicer3withScene(pathSlicer);
     }
@@ -5636,7 +5740,7 @@ void AutoSegGUIControls::ComputeGUI()
 
   if (m_Computation.GetIsAutoSegInProcess())
     fl_message("Automatic Segmentation already in process...");
-	
+  
   else
   {
     UpdateParameters();
@@ -5663,20 +5767,41 @@ void AutoSegGUIControls::ComputeGUI()
 
       if (CheckStudy())
       {
-	if (g_RecomputeButton->value())
-	  ComputeStudy = fl_choice("A study already exists. Do you really want to recompute your dataset (and delete current results)?", "No", "Yes", NULL);
-	else
-	  ComputeStudy = fl_choice("A study already exists. Do you really want to compute this study with this set of parameters?", "No", "Yes", NULL);
+        if (g_RecomputeButton->value())
+        {
+          ComputeStudy = fl_choice("A study already exists. Do you really want to recompute your dataset (and delete current results)?", "No", "Yes", NULL);
+        }
+        else
+        {
+          ComputeStudy = fl_choice("A study already exists. Do you really want to compute this study with this set of parameters?", "No", "Yes", NULL);
+        }
       }
       if (ComputeStudy)
       {
-	m_Computation.SetIsAutoSegInProcess(true);   
-	while (m_Computation.GetIsAutoSegInProcess())
-	{
-	  m_Computation.Computation();
-	  Fl::check();
-	  std::cout << "finally done!!" << std::endl;
-	}
+        m_Computation.SetIsAutoSegInProcess(true);   
+        while (m_Computation.GetIsAutoSegInProcess())
+        {
+          try
+          {
+            m_Computation.Computation() ;
+          }
+          catch(...)
+          {
+            fl_alert( "Error during computation. Check log files." ) ;
+          }
+          Fl::check();
+          std::cout << "finally done!!" << std::endl;
+        }
+        std::vector< std::string > missingTools = m_Computation.GetMissingTools() ;
+        if( !missingTools.empty() )
+        {
+         std::string message = "Some tools required for computation were not found on the system:" ;
+         for( size_t i = 0 ; i < missingTools.size() ; i++ )
+         {
+           message += std::string( "\n" ) + missingTools[ i ] ;
+         }
+         fl_alert( message.c_str() ) ;
+        }
       }
     }
   }
@@ -6162,7 +6287,7 @@ bool AutoSegGUIControls::CheckInputAutoSeg()
     {
       fl_message("Please, set the auxiliary 8 directory name...");
       Warning = true;
-    }		
+    }    
     else if (g_AuxDataBrowser->size() < 2)
     {
       fl_message("Please, set the auxiliary data to be computed...");
@@ -6735,7 +6860,7 @@ void AutoSegGUIControls::SetDeformationFieldSmoothingSigmaGUI()
 }
 
 void AutoSegGUIControls::SetRegistrationFilterTypeGUI()
-{	
+{  
   if(g_RegistrationFilterType->value()==0)
     m_Computation.SetRegistrationFilterType("Demons");
   if(g_RegistrationFilterType->value()==1)
@@ -7288,7 +7413,7 @@ void AutoSegGUIControls::InitializeParameters()
   g_TissueMeanMatchButton->clear();
   m_Computation.SetIntensityRescalingMethod(1);
 
-  // Regional histogram	
+  // Regional histogram  
   g_QuantilesDisp->value("1,5,33,50,66,95,99");
   m_Computation.SetQuantiles("1,5,33,50,66,95,99");
 
@@ -7442,7 +7567,7 @@ void AutoSegGUIControls::RightJustifyAuxData(const char *_Input, char *_Output)
 
   if ( (!g_Aux1Button->value()) && (!g_Aux2Button->value()) && (!g_Aux3Button->value()) && (!g_Aux4Button->value()) && (!g_Aux5Button->value()) && (!g_Aux6Button->value()) && (!g_Aux7Button->value()) && (!g_Aux8Button->value()) )
     std::strcpy(_Output, _Input);
-	
+  
   else if ( (g_Aux1Button->value()) && (g_Aux2Button->value()) && (g_Aux3Button->value()) && (g_Aux4Button->value()) && (g_Aux5Button->value()) && (g_Aux6Button->value()) && (g_Aux7Button->value()) && (g_Aux8Button->value()) )
   {
     while (std::strncmp(" ", _Input+Char1, 1) != 0)
