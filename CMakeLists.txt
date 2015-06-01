@@ -83,6 +83,21 @@ if(NOT USE_GIT_PROTOCOL)
   set(git_protocol "http")
 endif()
 
+#-----------------------------------------------------------------------------
+# Set a default build type if none was specified
+#-----------------------------------------------------------------------------
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+#-----------------------------------------------------------------------------
+# Common CMake options
+#-----------------------------------------------------------------------------
+
 set(LOCAL_CMAKE_BUILD_OPTIONS
   -DMAKECOMMAND:STRING=${MAKECOMMAND}
   -DCMAKE_SKIP_RPATH:BOOL=ON
