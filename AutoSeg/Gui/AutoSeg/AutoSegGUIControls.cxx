@@ -180,7 +180,9 @@ AutoSegGUIControls::AutoSegGUIControls(std::string _AutoSegPath,const char*AutoS
   m_AuxBrowserWidths = NULL;
   
   // Set AutoSeg Environment
-  char *autoSegPath = new char[ _AutoSegPath.size()+1 ] ;
+  // size +1 for final string character '\0' and +1 if we need space in CheckDirectoryName() to add an extra '/',
+  // therefore size +2
+  char *autoSegPath = new char[ _AutoSegPath.size()+2 ] ;
   std::strcpy(autoSegPath,_AutoSegPath.c_str()) ;
   CheckDirectoryName(autoSegPath);
   m_Computation.SetAutoSegPath(autoSegPath);

@@ -23,7 +23,7 @@
 #include "AutoSegComputation.h"
 #include <itksys/SystemTools.hxx>
 
-#define AUTOSEG_VERSION "3.2.0"
+#define AUTOSEG_VERSION "3.2.1"
 
 void PrintHelp(char* progname)
 {
