@@ -5780,29 +5780,34 @@ void AutoSegGUIControls::ComputeGUI()
       }
       if (ComputeStudy)
       {
-        m_Computation.SetIsAutoSegInProcess(true);   
-        while (m_Computation.GetIsAutoSegInProcess())
+        m_Computation.SetIsAutoSegInProcess(true);
+        try
         {
-          try
+          if( !m_Computation.Computation() )
           {
-            m_Computation.Computation() ;
+            while (m_Computation.GetIsAutoSegInProcess())
+            {
+              Fl::check();
+            }
+            std::cout << "finally done!!" << std::endl;
           }
-          catch(...)
+          else
           {
-            fl_alert( "Error during computation. Check log files." ) ;
+            std::vector< std::string > missingTools = m_Computation.GetMissingTools() ;
+            if( !missingTools.empty() )
+            {
+              std::string message = "Some tools required for computation were not found on the system:" ;
+              for( size_t i = 0 ; i < missingTools.size() ; i++ )
+              {
+                message += std::string( "\n" ) + missingTools[ i ] ;
+              }
+              fl_alert( message.c_str() ) ;
+            }
           }
-          Fl::check();
-          std::cout << "finally done!!" << std::endl;
         }
-        std::vector< std::string > missingTools = m_Computation.GetMissingTools() ;
-        if( !missingTools.empty() )
+        catch(...)
         {
-         std::string message = "Some tools required for computation were not found on the system:" ;
-         for( size_t i = 0 ; i < missingTools.size() ; i++ )
-         {
-           message += std::string( "\n" ) + missingTools[ i ] ;
-         }
-         fl_alert( message.c_str() ) ;
+          fl_alert( "Error during computation. Check log files." ) ;
         }
       }
     }

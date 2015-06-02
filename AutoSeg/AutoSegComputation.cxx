@@ -1701,6 +1701,7 @@ int AutoSegComputation::Computation()
   }
   else
   {
+    m_IsAutoSegInProcess = 0 ;
     return 1 ;
   }
 }
