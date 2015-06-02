@@ -18,6 +18,7 @@
 # ifndef AUTOSEGCOMPUTATION_H
 # define AUTOSEGCOMPUTATION_H
 
+#include <stdexcept>
 #include <iostream>
 #include <cstring>
 #include <fstream>
@@ -315,8 +316,8 @@ class AutoSegComputation
     void SetNbDeformationField(int _NbDeformationField){m_NbDeformationField = _NbDeformationField; m_DeformationFieldList = new char *[m_NbDeformationField];};
     void SetNbDeformationFieldTrainToTrain(int _NbDeformationFieldTrainToTrain){m_NbDeformationFieldTrainToTrain = _NbDeformationFieldTrainToTrain; m_DeformationFieldTrainToTrainList = new char *[m_NbDeformationFieldTrainToTrain];};
     void SetNbAuxData(int _NbAuxData){m_NbAuxData = _NbAuxData;};
-    void SetNbTissueClass(const char *_Directory);
-    void SetNbStrippedTissueClass(const char *_Directory);
+    int SetNbTissueClass(const char *_Directory);
+    int SetNbStrippedTissueClass(const char *_Directory);
     void SetNbANTSThreads(int _NbANTSThreads) {m_NbANTSThreads = _NbANTSThreads;};
     void AllocateDataList();
     void AllocateAuxDataList();

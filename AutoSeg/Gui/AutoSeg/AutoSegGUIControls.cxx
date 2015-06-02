@@ -5805,10 +5805,15 @@ void AutoSegGUIControls::ComputeGUI()
             }
           }
         }
+        catch(const std::exception& ex)
+        {
+            fl_alert( ex.what() ) ;
+        }
         catch(...)
         {
-          fl_alert( "Error during computation. Check log files." ) ;
+            fl_alert( "Error during computation. Check log files." ) ;
         }
+        m_Computation.SetIsAutoSegInProcess(false);//Just in case there was an error during computation.
       }
     }
   }

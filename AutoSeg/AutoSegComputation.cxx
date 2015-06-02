@@ -737,48 +737,69 @@ void AutoSegComputation::SetAtlasParcellationList(const char *_Data, int _DataNu
         m_AtlasParcellationList[_DataNumber][j] = ' ';
     SetData(_Data, m_AtlasParcellationList[_DataNumber]);
 }
-void AutoSegComputation::SetNbTissueClass(const char *_Directory)
+
+int AutoSegComputation::SetNbTissueClass(const char *_Directory)
 {
     DIR *dir;
     struct dirent *ent;
 
     m_NbTissueClass = 0;
-    if ((dir = opendir (_Directory)) != NULL) {
+    if ((dir = opendir (_Directory)) != NULL)
+    {
         std::string filename;
-        while ((ent = readdir (dir)) != NULL) {
-	  filename = std::string(ent->d_name);
-	  int nbClass = 0;
-	  char extension[100];
-	  int numVal = sscanf(filename.c_str(),"%d.%s",&nbClass, extension);
-	  if( numVal == 2 && nbClass != 0 && !strcmp(extension,"mha"))  { 
-	    m_NbTissueClass++;
-	  }
+        while ((ent = readdir (dir)) != NULL)
+        {
+            filename = std::string(ent->d_name);
+            int nbClass = 0;
+            char extension[100];
+            int numVal = sscanf(filename.c_str(),"%d.%s",&nbClass, extension);
+            if( numVal == 2 && nbClass != 0 && !strcmp(extension,"mha"))
+            {
+                m_NbTissueClass++;
+            }
         }
+        closedir (dir);
     }
-    closedir (dir);
-    std::cout << "number of Tissues: " << m_NbTissueClass << std::endl; 
+    else
+    {
+        return 1 ;
+    }
+    if( m_NbTissueClass == 0 )
+    {
+        return 2 ;
+    }
+    std::cout << "number of Tissues: " << m_NbTissueClass << std::endl;
+    return 0 ;
 }
 
-void AutoSegComputation::SetNbStrippedTissueClass(const char *_Directory)
+int AutoSegComputation::SetNbStrippedTissueClass(const char *_Directory)
 {
     DIR *dir;
     struct dirent *ent;
 
     m_NbStrippedTissueClass = 0;
-    if ((dir = opendir (_Directory)) != NULL) {
+    if ((dir = opendir (_Directory)) != NULL)
+    {
         std::string filename;
-        while ((ent = readdir (dir)) != NULL) {
-	  filename = std::string(ent->d_name);
-	  int nbClass = 0;
-	  char extension[100];
-	  int numVal = sscanf(filename.c_str(),"%d.%s",&nbClass, extension);
-	  if( numVal == 2 && nbClass != 0 && !strcmp(extension,"mha"))  { 
-	    m_NbStrippedTissueClass++;
-	  }
+        while ((ent = readdir (dir)) != NULL)
+        {
+            filename = std::string(ent->d_name);
+            int nbClass = 0;
+            char extension[100];
+            int numVal = sscanf(filename.c_str(),"%d.%s",&nbClass, extension);
+            if( numVal == 2 && nbClass != 0 && !strcmp(extension,"mha"))
+            {
+                m_NbStrippedTissueClass++;
+            }
         }
+        closedir (dir);
     }
-    closedir (dir);
-    std::cout << "number of Stripped Tissues: " << m_NbStrippedTissueClass << std::endl; 
+    else
+    {
+        return 1 ;
+    }
+    std::cout << "number of Stripped Tissues: " << m_NbStrippedTissueClass << std::endl;
+    return 0 ;
 }
 
 void AutoSegComputation::SetWarpedAtlasList(const char *_Directory )
@@ -1721,9 +1742,9 @@ void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, con
     {
       RunPipeline(0);
     }
-    catch(std::string err)
+    catch(const std::exception& ex)
     {
-      std::cerr << err << std::endl;
+      std::cerr << ex.what() << std::endl;
     }
     catch(...)
     {
@@ -3455,7 +3476,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       if (GetStrippedN4ITKBiasFieldCorrection()) {
         BMSAutoSegMainFile<<"      set (StrippedBias '_Bias')"<<std::endl;
       }
-      SetNbStrippedTissueClass(GetAtlasLoop());
+      if( SetNbStrippedTissueClass(GetAtlasLoop()) )
+      {
+          BMSAutoSegMainFile.close();
+          throw std::runtime_error( "Could not read tissue seg loop directory, or directory did not contain any tissue file.") ;
+      }
     }
     else
     {
@@ -3481,7 +3506,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
        
         std::cout << "Tissue Atlas: " << GetTissueSegmentationAtlasDirectory() << std::endl;
         std::cout << "Stripped Tissue Atlas: " << GetAtlasLoop() << std::endl;
-        SetNbTissueClass(GetTissueSegmentationAtlasDirectory());
+        if( SetNbTissueClass(GetTissueSegmentationAtlasDirectory()) )
+        {
+          BMSAutoSegMainFile.close();
+          throw std::runtime_error( "Could not read tissue segmentation atlas directory, or directory did not contain any tissue file.") ;
+        }
         
     }
 
@@ -3803,7 +3832,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         errorMessage += std::string( GetEMSoftware() ) + std::string( "\n" ) ;
       }
       errorMessage += "Error EM Software (itkEMS is no longer supported)!" ;
-      throw errorMessage ;
+      throw std::runtime_error( errorMessage ) ;
     }   
     // next lines are kept for historic reasons MRML settings 
     BMSAutoSegMainFile<<"	       set (OutputFileTail ${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;

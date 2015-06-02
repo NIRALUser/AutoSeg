@@ -18,6 +18,7 @@
 #ifndef AUTOSEGGUICONTROLS_H
 #define AUTOSEGGUICONTROLS_H
 
+#include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <cstdio>
