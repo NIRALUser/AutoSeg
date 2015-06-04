@@ -1686,8 +1686,8 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
     // Init for Atlas Warping
     g_ANTSWarpingButton->clear();
   }
-  _FileName = itksys::SystemTools::CollapseFullPath( _FileName ).c_str() ;
-  if ((ParameterFile = fopen(_FileName,"r")) != NULL)
+  std::string FileNameStr = itksys::SystemTools::CollapseFullPath( _FileName ).c_str() ;
+  if ((ParameterFile = fopen(FileNameStr.c_str(),"r")) != NULL)
   {
     IsParameterFileLoaded = true;
     while ( (fgets(Line,512,ParameterFile)) != NULL)
@@ -3006,12 +3006,12 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   }
   else
   {
-    std::string message = std::string( "Error Opening File: " ) + _FileName ;
+    std::string message = std::string( "Error Opening File: " ) + FileNameStr ;
     if( showError )
     {
       fl_alert( message.c_str() ) ;
+      std::cerr << message << std::endl ;
     }
-    std::cerr << message << std::endl ;
   }
   
   return IsParameterFileLoaded;
