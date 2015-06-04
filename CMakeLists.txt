@@ -142,16 +142,8 @@ PACKAGE_NEEDS_FLTK("${LOCAL_CMAKE_BUILD_OPTIONS}" "${gen}")
 set(proj niral_utilities)
 COMPILE_EXTERNAL_TOOLS( TOOL_NAMES ImageMath ImageStat convertITKformats IntensityRescaler MultiAtlasSeg TOOL_PROJECT_NAME ${proj} )
 IF(COMPILE_EXTERNAL_${proj})
-  if( COMPILE_EXTERNAL_IntensityRescaler )
-    set(DESIRED_QT_VERSION 4 CACHE STRING "Pick a version of Qt to use: 3 or 4" )
-    set_property(CACHE DESIRED_QT_VERSION PROPERTY STRINGS "3" "4")
-    find_package( Qt REQUIRED )
-    if( NOT QT_FOUND )
-      message( FATAL_ERROR "Qt not found" )
-    endif()
-  endif()
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/NIRALUser/niral_utilities.git )
-  set( ${proj}_GIT_TAG 8eca11390d1f142748b28147972e9eda41b932ff )
+  set( ${proj}_GIT_TAG e0572efb335d3720560dfd7d9fba362a0fbd7ccf )
   ExternalProject_Add(${proj}
     GIT_REPOSITORY ${${proj}_REPOSITORY}
     GIT_TAG ${${proj}_GIT_TAG}
@@ -172,8 +164,6 @@ IF(COMPILE_EXTERNAL_${proj})
       -DCOMPILE_Unsupported:BOOL=ON
       -DCOMPILE_TRANSFORMDEFORMATIONFIELD:BOOL=OFF
       -DCOMPILE_CROPTOOLS:BOOL=OFF
-      -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
-      -DDESIRED_QT_VERSION:STRING=${DESIRED_QT_VERSION}
       -DCOMPILE_DWI_NIFTINRRDCONVERSION:BOOL=OFF
       -DCOMPILE_POLYDATATRANSFORM:BOOL=OFF
       -DCOMPILE_POLYDATAMERGE:BOOL=OFF
