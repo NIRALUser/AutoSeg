@@ -70,7 +70,13 @@ class AutoSegGUIControls : public AutoSegGUI
 {
   public:
   
-    AutoSegGUIControls(std::string _AutoSegPath, const char *AutoSegVersion , const char* computationFile , const char* parameterFile);
+    AutoSegGUIControls(std::string _AutoSegPath,
+                       const char *AutoSegVersion ,
+                       const char* computationFile ,
+                       const char* parameterFile ,
+                       std::string logOutFileName ,
+                       std::string logErrFileName
+                       );
     virtual ~AutoSegGUIControls();
 
   // Menu
@@ -414,6 +420,8 @@ class AutoSegGUIControls : public AutoSegGUI
     char *m_CurrentDirectory;
     bool m_OldFluidRegistration ;
     bool m_ActivateReorientation ;
+    std::string m_logOutFileName ;
+    std::string m_logErrFileName ;
 };
 
 #endif

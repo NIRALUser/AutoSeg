@@ -23,7 +23,7 @@
 #include "AutoSegComputation.h"
 #include <itksys/SystemTools.hxx>
 
-#define AUTOSEG_VERSION "3.2.1"
+#define AUTOSEG_VERSION "3.3.0"
 
 void PrintHelp(char* progname)
 {
@@ -49,9 +49,12 @@ int main(int argc, char *argv[])
   bool version = ipExistsArgument(argv, "-version");
   const char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);
   const char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
-  const char *logFilename = ipGetStringArgument(argv, "-logFile", "/dev/null");
-
-  std::string logErrorFilename = std::string(logFilename) + ".err";
+  std::string logFilename = ipGetStringArgument(argv, "-logFile", "");
+  std::string logErrorFilename ;
+  if( !logFilename.empty() )
+  {
+    logErrorFilename = std::string(logFilename) + ".err";
+  }
 
   std::string executableFullPath = itksys::SystemTools::CollapseFullPath( argv[0] ).c_str() ;
   std::string executableDirectory ;
@@ -78,9 +81,13 @@ int main(int argc, char *argv[])
        std::cout << "bash usage : export AUTOSEG_HOME=<InputDirectory>" << std::endl ;
        std::cout << "tcsh usage : setenv AUTOSEG_HOME <InputDirectory>" << std::endl ;
     }
-    freopen(logFilename,"w",stdout); //redirect stdout
-    freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
-    AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath,AUTOSEG_VERSION , computationFile , parameterFile );
+    AutoSegGUIControls *MainWindow = new AutoSegGUIControls(AutoSegPath,
+                                                            AUTOSEG_VERSION ,
+                                                            computationFile ,
+                                                            parameterFile,
+                                                            logFilename,
+                                                            logErrorFilename
+                                                            );
     Fl::scheme("plastic");
     Fl::run();
     delete MainWindow;
@@ -88,9 +95,9 @@ int main(int argc, char *argv[])
   }
   else if ( computationFile && parameterFile)
   {
-    freopen(logFilename,"w",stdout); //redirect stdout
-    freopen(logErrorFilename.c_str(),"w",stderr); //redirect stdout
     AutoSegComputation m_Computation;
+    m_Computation.SetStdOutLogFile( logFilename ) ;
+    m_Computation.SetStdErrLogFile( logErrorFilename ) ;
     m_Computation.ComputationWithoutGUI(computationFile, parameterFile);
   }
   else if (version)
