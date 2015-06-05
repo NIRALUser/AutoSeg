@@ -22,7 +22,7 @@
 //char *AtlasDirectory = NULL;
 //char *TargetDirectory = NULL;
 
-float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDirectory, const std::string filename)
+float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDirectory, const std::string filename )
 {
     typedef   unsigned short  PixelType;
     // does this really need to be char, switched to short by MST Mar 14,2014
@@ -167,7 +167,13 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
     return HE;
 }
 
-AutoSegGUIControls::AutoSegGUIControls(std::string _AutoSegPath,const char*AutoSegVersion, const char* computationFile , const char* parameterFile)
+AutoSegGUIControls::AutoSegGUIControls(std::string _AutoSegPath,
+                                       const char*AutoSegVersion ,
+                                       const char* computationFile ,
+                                       const char* parameterFile ,
+                                       std::string logOutFileName ,
+                                       std::string logErrFileName
+                                       )
   : AutoSegGUI()
 {
   m_AutoSegVersion = std::string("Autoseg ") + AutoSegVersion ;
@@ -189,6 +195,10 @@ AutoSegGUIControls::AutoSegGUIControls(std::string _AutoSegPath,const char*AutoS
   delete []autoSegPath ;
 
   // Initialization Computation Parameters
+  m_Computation.SetStdOutLogFile(logOutFileName);
+  m_logOutFileName = logOutFileName ;
+  m_Computation.SetStdErrLogFile(logErrFileName);
+  m_logErrFileName = logErrFileName ;
   m_Computation.SetT2Image(g_T2Button->value());
   m_Computation.SetPDImage(g_PDButton->value());
   
@@ -853,7 +863,9 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
     fclose(ComputationFile);
   }
   else
-    std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+  {
+    std::cerr<<"Error Opening File: "<<_FileName<<std::endl;
+  }
 }
 
 void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
@@ -1615,7 +1627,7 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
   }
   else
   {
-    std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+    std::cerr<<"Error Opening File: "<<_FileName<<std::endl;
   }
 }
 
@@ -2320,8 +2332,15 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
     }
     else
     {
+      std::string softwareName = "Tissue segmentation software: " ;
+      softwareName += Line+13 ;
+      softwareName += "\nNo such EM Software (Beware, itkEMS is no longer supported)!" ;
+      if( showError )
+      {
+        fl_alert( softwareName.c_str() ) ;
+      }
       std::cerr << "Tissue segmentation software: " << Line+13 << std::endl ;
-      std::cerr << "No such EM Software (Beware, itkEMS is no longer supported)!"<<std::endl;        
+      std::cerr << "No such EM Software (Beware, itkEMS is no longer supported)!"<<std::endl;
     }
   }
   else if ( (std::strncmp("Filter Iterations: ", Line, 19)) == 0)
@@ -2631,7 +2650,10 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
         if( std::strcmp(Line+16, "ANTS") != 0 )
         {
           const char* message = "Error while reading parameter file: warping method incorrect or not supported on this computer!" ;
-          fl_alert( message ) ;
+          if( showError )
+          {
+            fl_alert( message ) ;
+          }
           std::cerr << message << std::endl ;
           //Forcing ANTS registration in m_Computation
           m_Computation.SetClassicWarpingMethod(0);
@@ -3010,8 +3032,8 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
     if( showError )
     {
       fl_alert( message.c_str() ) ;
-      std::cerr << message << std::endl ;
     }
+    std::cerr << message << std::endl ;
   }
   
   return IsParameterFileLoaded;
@@ -4588,7 +4610,7 @@ void AutoSegGUIControls::AddBrowserAutoData()
   }
   else
   {
-    std::cout<<"Error Opening File: "<<m_Computation.GetDataFile()<<std::endl;
+    std::cerr<<"Error Opening File: "<<m_Computation.GetDataFile()<<std::endl;
     exit(-1);
   }
 }
@@ -4620,7 +4642,7 @@ void AutoSegGUIControls::AddAuxBrowserAutoData()
   }
   else
   {
-    std::cout<<"Error Opening File: "<<m_Computation.GetAuxDataFile()<<std::endl;
+    std::cerr<<"Error Opening File: "<<m_Computation.GetAuxDataFile()<<std::endl;
     exit(-1);
   }
 }
@@ -5789,7 +5811,7 @@ void AutoSegGUIControls::ComputeGUI()
             {
               Fl::check();
             }
-            std::cout << "finally done!!" << std::endl;
+            std::cout << "Done!!" << std::endl;
           }
           else
           {

@@ -262,8 +262,16 @@ void AutoSegComputation::SetComputationFile(const char *_ComputationFile)
 
 void AutoSegComputation::SetLogFile()
 {
-  std::strcpy(m_LogFile, GetProcessDataDirectory());
-  std::strcat(m_LogFile, "AutoSeg.log");
+  /* std::strcpy(m_LogFile, GetProcessDataDirectory());
+  std::strcat(m_LogFile, "AutoSeg.log");*/
+  if( m_outLogFileName.empty() )
+  {
+    m_outLogFileName = std::string( GetProcessDataDirectory() ) + "AutoSeg.log" ;
+  }
+  if( m_errLogFileName.empty() )
+  {
+    m_errLogFileName = m_outLogFileName + ".err" ;
+  }
 }
 
 void AutoSegComputation::AllocateDataList()
@@ -1839,22 +1847,23 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
   // Execute BatchMake
   
   m_GUImode = (bool) _GUIMode;
+  m_TextBuf.text("");//Initialize the buffer
   if (GetGUIMode())
-  {                
-    TextDisplay.g_TextDisp->buffer(m_TextBuf); 
-    TextDisplay.g_MainWindow->show(); 
-  }  
+  {
+    TextDisplay.g_TextDisp->buffer(m_TextBuf);
+    TextDisplay.g_MainWindow->show();
+  }
 
   typedef itk::MultiThreader  ThreaderType;
 
   ThreaderType::Pointer threader = ThreaderType::New();
 
-  std::string logFilename = std::string(GetLogFile());
-  std::string logErrorFilename = logFilename + ".err";
+  //std::string logFilename = std::string(GetLogFile());
+  //std::string logErrorFilename = logFilename + ".err";
 
-  std::cout << "starting to listen and logging to : " << logFilename << std::endl;
-  FILE *fp1 = freopen(logFilename.c_str(),"w",stdout);
-  FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr);
+  //std::cout << "starting to listen and logging to : " << logFilename << std::endl;
+  //FILE *fp1 = freopen(logFilename.c_str(),"w",stdout);
+  //FILE *fp2 = freopen(logErrorFilename.c_str(),"w",stderr);
 
   m_GUImode = (bool) _GUIMode;
   m_currentBMS = _Input;
@@ -1871,92 +1880,92 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
 
   while (GetIsAutoSegInProcess() && !m_KillProcess) {
     if (GetGUIMode())
-      {
-	Fl::check();
-      }
+    {
+      Fl::check();
+    }
     
     itksys::SystemTools::Delay(100);
 
     if (GetGUIMode())
-      {
-	Fl::check();
-	int length = itksys::SystemTools::FileLength(logFilename.c_str());
-	if (length != curFileLength) {
-	  curFileLength = length;
-	  ifstream logInput (GetLogFile());
-	  
-	  if (logInput) {
-	    std::string log((std::istreambuf_iterator<char>(logInput)), std::istreambuf_iterator<char>());
-	    
-	    m_output = log;
-	    
-	    m_TextBuf.text(m_output.c_str());
-	    TextDisplay.g_TextDisp->scroll(100000,0);
-	  }
-	  logInput.close();
-	}
+    {
+      Fl::check();
+      int length = itksys::SystemTools::FileLength(GetStdOutLogFile().c_str());
+      if (length != curFileLength) {
+        curFileLength = length;
+        ifstream logInput (GetStdOutLogFile().c_str());
+
+        if (logInput) {
+          std::string log((std::istreambuf_iterator<char>(logInput)), std::istreambuf_iterator<char>());
+
+          m_output = log;
+
+          m_TextBuf.text(m_output.c_str());
+          TextDisplay.g_TextDisp->scroll(100000,0);
+        }
+        logInput.close();
       }
+    }
 
     if(m_KillProcess)
-      {
-	std::cout << "Killing BatchMake process " << std::endl;
-	m_IsAutoSegInProcess = false;
+    {
+      std::cout << "Killing BatchMake process " << std::endl;
+      m_IsAutoSegInProcess = false;
 
 #ifdef _POSIX_SOURCE
-	//set progress manager to stop
-	m_Parser.GetScriptActionManager()->GetProgressManager()->Stop();
+      //set progress manager to stop
+      m_Parser.GetScriptActionManager()->GetProgressManager()->Stop();
 
-	// kill all processes with this process as parent       
-	pid_t processID = getpid();
-	char processIDstring[100];
-	sprintf(processIDstring,"%d",processID);
-	std::vector<const char*> args;
-	args.push_back("pkill");
-	args.push_back("-P");
-	args.push_back(processIDstring);
-	// don't forget this line at the end of the argument list
-	args.push_back(0);
-	
-	m_Process = itksysProcess_New();
-	itksysProcess_SetCommand(m_Process, &*args.begin());
-	itksysProcess_SetOption(m_Process,itksysProcess_Option_HideWindow,1);
-	itksysProcess_Execute(m_Process);
-	//itksysProcess_WaitForExit(m_Process, 0);
+      // kill all processes with this process as parent
+      pid_t processID = getpid();
+      char processIDstring[100];
+      sprintf(processIDstring,"%d",processID);
+      std::vector<const char*> args;
+      args.push_back("pkill");
+      args.push_back("-P");
+      args.push_back(processIDstring);
+      // don't forget this line at the end of the argument list
+      args.push_back(0);
 
-	threader->TerminateThread(m_batchMakeThreadID);
-	SetIsAutoSegInProcess(false); 
+      m_Process = itksysProcess_New();
+      itksysProcess_SetCommand(m_Process, &*args.begin());
+      itksysProcess_SetOption(m_Process,itksysProcess_Option_HideWindow,1);
+      itksysProcess_Execute(m_Process);
+      //itksysProcess_WaitForExit(m_Process, 0);
+
+      threader->TerminateThread(m_batchMakeThreadID);
+      SetIsAutoSegInProcess(false);
 #endif
-	std::cout << "Killing BatchMake process done" << std::endl;
-	break;
-      }
+      std::cout << "Killing BatchMake process done" << std::endl;
+      break;
+    }
 
   }
 
   if (GetGUIMode())
-    {
-      Fl::check();
-      int length = itksys::SystemTools::FileLength(logFilename.c_str());
-      if (length != curFileLength) {
-	curFileLength = length;
-	ifstream logInput (GetLogFile());
-	
-	if (logInput) {
-	  std::string log((std::istreambuf_iterator<char>(logInput)), std::istreambuf_iterator<char>());
-	  
-	  m_output = log;
-	  
-	  m_TextBuf.text(m_output.c_str());
-	  TextDisplay.g_TextDisp->scroll(100000,0);
-	}
-	logInput.close();
+  {
+    Fl::check();
+    int length = itksys::SystemTools::FileLength(GetStdOutLogFile().c_str());
+    if (length != curFileLength) {
+      curFileLength = length;
+      ifstream logInput (GetStdOutLogFile().c_str());
+
+      if (logInput) {
+        std::string log((std::istreambuf_iterator<char>(logInput)), std::istreambuf_iterator<char>());
+
+        m_output = log;
+
+        m_TextBuf.text(m_output.c_str());
+        TextDisplay.g_TextDisp->scroll(100000,0);
       }
+      logInput.close();
     }
+  }
 
-  fclose(fp1);
-  fclose(fp2);
+//  fclose(fp1);
+//  fclose(fp2);
 
-  freopen("/dev/null","w",stdout);
-  freopen("/dev/null","w",stderr);
+//  freopen("/dev/null","w",stdout);
+//  freopen("/dev/null","w",stderr);
 
 }
 
@@ -2651,16 +2660,19 @@ void AutoSegComputation::WriteBMSAutoSegFile()
 {
   std::ofstream BMSAutoSegFile(GetBMSAutoSegFile());
   BMSAutoSegFile<<"set (ProcessingDir "<<GetProcessDataDirectory()<<")"<<std::endl;
-  BMSAutoSegFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegFile<<"echo ('MAIN COMPUTATION...')"<<std::endl;
+  BMSAutoSegFile<<"set (logOutFile "<<GetStdOutLogFile()<<")"<<std::endl;
+  BMSAutoSegFile<<"set (logErrFile "<<GetStdErrLogFile()<<")"<<std::endl;
+  BMSAutoSegFile<<"WriteFile( ${logErrFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegFile<<"WriteFile( ${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegFile<<"AppendFile (${logOutFile} 'MAIN COMPUTATION...\\n')"<<std::endl;
   BMSAutoSegFile<<"Include(${ProcessingDir}MainAutoSeg.bms)"<<std::endl;
 	
   if (GetAux1Image())
   {
-    BMSAutoSegFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegFile<<"echo ('AUXILIARY COMPUTATION...')"<<std::endl;
+    BMSAutoSegFile<<"AppendFile (${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegFile<<"AppendFile (${logOutFile} 'AUXILIARY COMPUTATION...\\n')"<<std::endl;
     BMSAutoSegFile<<"Include(${ProcessingDir}AuxAutoSeg.bms)"<<std::endl;
-    BMSAutoSegFile<<"echo (*************************************************)"<<std::endl;
+    BMSAutoSegFile<<"AppendFile (${logOutFile} '*************************************************\\n')"<<std::endl;
 
     /*std::string CaudateLeft=GetCaudateLeft();
     std::string CaudateRight=GetCaudateRight();
@@ -2670,17 +2682,17 @@ void AutoSegComputation::WriteBMSAutoSegFile()
     std::string PutamenRight=GetPutamenRight();
     if (CaudateLeft!="" || CaudateRight!="" || HippocampusLeft!="" || HippocampusRight!="" || PutamenLeft!="" ||PutamenRight!="")
     {
-    BMSAutoSegFile<<"echo (*************************************************)"<<std::endl;
+    BMSAutoSegFile<<"AppendFile (${logOutFile} '*************************************************\\n')"<<std::endl;
   }*/
     BMSAutoSegFile<<"set (ProcessDataDirectoryPath "<<GetProcessDataDirectory()<<")"<<std::endl;
     BMSAutoSegFile<<"set (WarpROIDir ${ProcessDataDirectoryPath}WarpROI/)"<<std::endl;
     BMSAutoSegFile<<"ListFileInDir(AllROICase ${WarpROIDir} *AllROI.nrrd)"<<std::endl;
-    BMSAutoSegFile<<"If (${AllROICase} != '')"<<std::endl;
-    BMSAutoSegFile<<"  echo (*************************************************)"<<std::endl;
+    BMSAutoSegFile<<"If (${AllROICase} != '\n')"<<std::endl;
+    BMSAutoSegFile<<"  AppendFile (${logOutFile} '*************************************************\\n')"<<std::endl;
     BMSAutoSegFile<<"EndIf (${AllROICase})"<<std::endl;
-    BMSAutoSegFile<<"  echo ()"<<std::endl;
-    BMSAutoSegFile<<"  echo (*************************************************)"<<std::endl;
-    BMSAutoSegFile<<"  echo ('AUXILIARY COMPUTATION: DONE!')"<<std::endl;
+    BMSAutoSegFile<<"  AppendFile (${logOutFile} '\\n')"<<std::endl;
+    BMSAutoSegFile<<"  AppendFile (${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegFile<<"  AppendFile (${logOutFile} 'AUXILIARY COMPUTATION: DONE!\\n')"<<std::endl;
   }
   BMSAutoSegFile.close();
 }
@@ -2700,10 +2712,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
 
   BMSAutoSegMainFile<<"set (OrigT1CasesList "<<m_T1List[0]<<")"<<std::endl;
-  //BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
+  //BMSAutoSegMainFile<<"  AppendFile (${logOutFile} ${OrigT1CasesList}'\\n')"<<std::endl;
   for (DataNumber = 1; DataNumber < GetNbData(); DataNumber++) {
         BMSAutoSegMainFile<<"set (OrigT1CasesList ${OrigT1CasesList} "<<m_T1List[DataNumber]<<")"<<std::endl;
-        //BMSAutoSegMainFile<<"  echo (${OrigT1CasesList})"<<std::endl;
+        //BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${OrigT1CasesList}'\\n')"<<std::endl;
   }
 
   if (GetT2Image())
@@ -2797,35 +2809,47 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"set (ANTSTransformationStep "<<GetANTSTransformationStep()<<")"<<std::endl;
   BMSAutoSegMainFile<<"set (ANTSGaussianSigma "<<GetANTSGaussianSigma()<<")"<<std::endl;
   
-  BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('CHECKING FILES...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-  BMSAutoSegMainFile<<"echo ('OrigT1CasesList: '${OrigT1CasesList})"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'CHECKING FILES...\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'OrigT1CasesList: '${OrigT1CasesList}'\\n')"<<std::endl;
   if (GetT2Image())
-    BMSAutoSegMainFile<<"echo ('OrigT2CasesList: '${OrigT2CasesList})"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'OrigT2CasesList: '${OrigT2CasesList}'\\n')"<<std::endl;
   if (GetPDImage())
-    BMSAutoSegMainFile<<"echo ('OrigPDCasesList: '${OrigPDCasesList})"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('CHECKING FILES: DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'OrigPDCasesList: '${OrigPDCasesList}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'CHECKING FILES: DONE!\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   if (GetRecompute())
   {
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('RECOMPUTE ALL...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'RECOMPUTE ALL...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"#  Delete files in the process data directory"<<std::endl;
     BMSAutoSegMainFile<<"DeleteFile(${ProcessingDir}GridTemplate.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"set(command_line rm -r ${ProcessingDir}AutoSeg_Volume/)"<<std::endl;
-    BMSAutoSegMainFile<<"Run(output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"Run(output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"set(command_line rm -r ${ProcessingDir}AutoSeg_CorticalThickness/)"<<std::endl;
-    BMSAutoSegMainFile<<"Run(output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"Run(output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"#  Delete files in the data directory"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (OrigCase ${OrigT1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"   GetFilename (Path ${OrigCase} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"   set(command_line rm -r ${Path}/${AutoSegDir}/)"<<std::endl;  
-    BMSAutoSegMainFile<<"   Run(output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   Run(output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach(OrigCase)"<<std::endl<<std::endl; 
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   
   BMSAutoSegMainFile<<"# Pipeline "<<std::endl;
@@ -2861,54 +2885,54 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     
   BMSAutoSegMainFile<<"# Checking Image Image"<<std::endl;
-  BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('CHECKING IMAGE TYPE...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'CHECKING IMAGE TYPE...\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegMainFile<<"GetParam(Case ${OrigT1CasesList} 0)"<<std::endl;
   BMSAutoSegMainFile<<"GetFilename (T1ImageExtension ${Case} EXTENSION)"<<std::endl;
 
   BMSAutoSegMainFile<<"set (Mode -1)"<<std::endl;
   BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.gipl')"<<std::endl;
   BMSAutoSegMainFile<<"   set (Mode 1)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo ('Gipl Format')"<<std::endl;
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Gipl Format\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
   BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.gipl.gz')"<<std::endl;
   BMSAutoSegMainFile<<"   set (Mode 1)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo ('Zipped Gipl Format')"<<std::endl;
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Zipped Gipl Format\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
   BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.mhd')"<<std::endl;
   BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo ('Meta Format')"<<std::endl;
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Meta Format\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
   BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.hdr')"<<std::endl;
   BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo ('Analyse Format')"<<std::endl;
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Analyse Format\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;  
   BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.mha')"<<std::endl;
   BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo ('Meta Format')"<<std::endl;
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Meta Format\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
   BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.nhdr')"<<std::endl;
   BMSAutoSegMainFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo ('NRRD Format')"<<std::endl;  
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'NRRD Format\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;  
   BMSAutoSegMainFile<<"If (${T1ImageExtension} == '.nrrd')"<<std::endl;
   BMSAutoSegMainFile<<"   set (Mode 1)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo ('NRRD Format')"<<std::endl;  
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'NRRD Format\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;  
   BMSAutoSegMainFile<<"If ( ${Mode} == -1)"<<std::endl;
-  BMSAutoSegMainFile<<"   echo(Unknown format ${T1ImageExtension})"<<std::endl;
+  BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Unknown format '${T1ImageExtension}'\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndIf (${T1ImageExtension})"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('CHECKING IMAGE TYPE: DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'CHECKING IMAGE TYPE: DONE!\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
   BMSAutoSegMainFile<<"set (T1CasesList ${OrigT1CasesList})"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('T1 case List:: ' ${T1CasesList})"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'T1 case List:: ' ${T1CasesList}'\\n')"<<std::endl;
 
   
   BMSAutoSegMainFile<<"ForEach (T1CasesListShow ${T1CasesList})"<<std::endl;
-  BMSAutoSegMainFile<<"      echo ('T1 show cases: '${T1CasesListShow})"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'T1 show cases: '${T1CasesListShow}'\\n')"<<std::endl;
   BMSAutoSegMainFile<<"EndForEach (T1CasesListShow)"<<std::endl;
 
   std::ostringstream ssNumberOfThreads ;
@@ -2922,7 +2946,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"GetFilename (T2ImageExtension ${Case} EXTENSION)"<<std::endl;
 
     BMSAutoSegMainFile<<"ForEach (T2CasesListShow ${T2CasesList})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo ('T2 show cases: '${T2CasesListShow})"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'T2 show cases: '${T2CasesListShow}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (T2CasesListShow)"<<std::endl;
   }
   if (GetPDImage())
@@ -2932,7 +2956,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"GetFilename (PDImageExtension ${Case} EXTENSION)"<<std::endl;
 
     BMSAutoSegMainFile<<"ForEach (PDCasesListShow ${PDCasesList})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo ('PD show cases: '${PDCasesListShow})"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'PD show cases: '${PDCasesListShow}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (PDCasesListShow)"<<std::endl;
   }
 
@@ -2951,35 +2975,47 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"   set (SpacingY "<<GetGridTemplateSpacingY()<<")"<<std::endl;
     BMSAutoSegMainFile<<"   set (SpacingZ "<<GetGridTemplateSpacingZ()<<")"<<std::endl;
     BMSAutoSegMainFile<<"   set (command_line ${ImageMathCmd} ${atlasROIFile} -outfile ${GridTemplate} -createIm ${SizeX},${SizeY},${SizeZ},${SpacingX},${SpacingY},${SpacingZ})"<<std::endl;
-    BMSAutoSegMainFile<<"   Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"EndIf (${GridTemplateList})"<<std::endl<<std::endl;
   }
 
   BMSAutoSegMainFile<<"#Creating AutoSeg Directory and writing parameter files"<<std::endl;
-  BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('WRITING PARAMETER FILES...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'WRITING PARAMETER FILES...\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl;
   BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
   BMSAutoSegMainFile<<"      GetFilename (Path ${T1Case} PATH)"<<std::endl;
   BMSAutoSegMainFile<<"      # Creating Directory if necessary"<<std::endl;
   BMSAutoSegMainFile<<"      set (AutoSegPath ${Path}/${AutoSegDir}/)"<<std::endl;
   BMSAutoSegMainFile<<"      ListDirInDir (AutoSegList ${Path} ${AutoSegDir})"<<std::endl;
-  BMSAutoSegMainFile<<"      If (${AutoSegList} == '')"<<std::endl;  
+  BMSAutoSegMainFile<<"      If (${AutoSegList} == '')"<<std::endl;
   BMSAutoSegMainFile<<"          MakeDirectory (${AutoSegPath})"<<std::endl; 
   BMSAutoSegMainFile<<"      EndIf (${AutoSegList})"<<std::endl;  
   BMSAutoSegMainFile<<"      Set (copyCommand cp "<<GetParameterFile()<<" ${AutoSegPath})"<<std::endl;
-  BMSAutoSegMainFile<<"      Run(output ${copyCommand})"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${copyCommand}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      Run(output ${copyCommand} error)"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
   BMSAutoSegMainFile<<"      Set (copyCommand cp "<<GetComputationFile()<<" ${AutoSegPath})"<<std::endl;
-  BMSAutoSegMainFile<<"      Run(output ${copyCommand})"<<std::endl; 
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${copyCommand}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      Run(output ${copyCommand})"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
   BMSAutoSegMainFile<<"      Inc ({CaseNumber} 1)"<<std::endl;
   BMSAutoSegMainFile<<"      Int ({CaseNumber})"<<std::endl;
   BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('WRITING PARAMETER FILES: DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;  
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'WRITING PARAMETER FILES: DONE!\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
-  BMSAutoSegMainFile<<"echo (***********************************************)"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '***********************************************\\n')"<<std::endl;
 
 
   BMSAutoSegMainFile<<"Set(ProcessExtension '')"<<std::endl;
@@ -2992,10 +3028,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('Image reorientation...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Image reorientation...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
     BMSAutoSegMainFile<<"set (InputOrientation "<<GetInputDataOrientation()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (OutputOrientation "<<GetOutputDataOrientation()<<")"<<std::endl;
@@ -3029,22 +3065,30 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"  If (${ReorientedCaseList} == '')"<<std::endl;
     BMSAutoSegMainFile<<"    set (NRRDCase ${ReorientationPath}${CaseHead}.nrrd)"<<std::endl;
 
-    BMSAutoSegMainFile<<"    set (command_line ${convCmd} ${Case} ${NRRDCase})"<<std::endl; 
+    BMSAutoSegMainFile<<"    set (command_line ${convCmd} ${Case} ${NRRDCase})"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    Run (output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 
     BMSAutoSegMainFile<<"    set (command_line ${imconvert3Cmd} ${GiplCase} ${GiplReorientedCase} -setorient ${InputOrientation}-${OutputOrientation})"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    Run (output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 
     BMSAutoSegMainFile<<"    DeleteFile(${NRRDCase})"<<std::endl;
 
     BMSAutoSegMainFile<<"  Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"    echo ('Reoriented image already exists!')"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} 'Reoriented image already exists!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"  EndIf (${ReorientedCaseList})"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (Case)"<<std::endl<<std::endl;
 
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('Image reorientation: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Image reorientation: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
 
   
@@ -3078,14 +3122,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('N4 ITK Bias Field Correction...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'N4 ITK Bias Field Correction...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
     
     //BMSAutoSegMainFile<<"ForEach (CaseN4Show ${T1CasesList})"<<std::endl;
-    //BMSAutoSegMainFile<<"echo ('T1 Cases List: '${CaseN4Show})"<<std::endl;
+    //BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'T1 Cases List: '${CaseN4Show}'\\n')"<<std::endl;
     //BMSAutoSegMainFile<<"EndForEach (CaseN4Show)"<<std::endl;
 
     BMSAutoSegMainFile<<"set (CasesListN4 ${T1CasesList})"<<std::endl;
@@ -3122,7 +3166,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     // is the input there??
     //    BMSAutoSegMainFile<<"  FileExists(N4InputExists ${CaseN4})"<<std::endl;
     //    BMSAutoSegMainFile<<"  If (${N4InputExists} == 1)"<<std::endl;
-    //    BMSAutoSegMainFile<<"    echo ('N4 input exists:  ${CaseN4})"<<std::endl;
+    //    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} 'N4 input exists:  '${CaseN4}'\\n')"<<std::endl;
     //    BMSAutoSegMainFile<<"  EndIf (${N4InputExists})"<<std::endl;
     
     // is the output already there??
@@ -3139,19 +3183,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${CaseN4} ${my_output} ${SlicerN4parameters})"<<std::endl;
     }
 
-
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line} ${parameters}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    Run (prog_output ${command_line} ${parameters} prog_error)"<<std::endl;
-
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 
     BMSAutoSegMainFile<<"   Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"     echo ('Bias field corrected file already exists!')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} 'Bias field corrected file already exists!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"   EndIf (${OutputFileN4List})"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (CaseN4)"<<std::endl;
 
     BMSAutoSegMainFile<<"Set(ProcessExtension ${NewProcessExtension})"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('N4 ITK Bias Field Correction: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'N4 ITK Bias Field Correction: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
   }
 
@@ -3164,10 +3210,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('REGISTERING CASES TO A TEMPLATE...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'REGISTERING CASES TO A TEMPLATE...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
     bool IsT1FirstFile;
     if ( (std::strcmp(GetCommonCoordinateImageType(),"T2") == 0) && (GetT2Image()))
@@ -3199,15 +3245,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (GetPDImage())
       BMSAutoSegMainFile<<"Set(PDImageExtension '.nrrd')"<<std::endl;
 		
-    BMSAutoSegMainFile<<"echo(${FirstFile}' registration...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${FirstFile}' registration...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (FirstCase ${FirstCasesList})  "<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (OrigFirstCasePath ${FirstCase} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"      set (OrigFirstCasePathList ${OrigFirstCasePathList} ${OrigFirstCasePath})"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (OrigFirstCaseHead ${FirstCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo ('Case Number: '${OrigFirstCaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;  
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${OrigFirstCaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"      set (AtlasIsoPath ${OrigFirstCasePath}/${AutoSegDir}/atlasIso/)"<<std::endl;
     BMSAutoSegMainFile<<"      # Creating atlasIso Directory if necessary"<<std::endl;
     BMSAutoSegMainFile<<"      ListDirInDir (AtlasIsoList ${OrigFirstCasePath}/${AutoSegDir}/ atlasIso)"<<std::endl;
@@ -3240,7 +3286,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"          # Parameter File"<<std::endl;
     BMSAutoSegMainFile<<"         set (TxtOutFile ${AtlasIsoPath}${FirstCaseHead}.txt)"<<std::endl;
     BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (ReportFile ${AtlasIsoPath}${FirstCaseHead}_out.txt)"<<std::endl;
+   // BMSAutoSegMainFile<<"         set (ReportFile ${AtlasIsoPath}${FirstCaseHead}_out.txt)"<<std::endl;
     BMSAutoSegMainFile<<"          # Output File"<<std::endl;
     BMSAutoSegMainFile<<"         set (OutputFileTail ${FirstCaseHead}_regAtlas.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"         set (OutputFile ${AtlasIsoPath}${OutputFileTail})"<<std::endl;
@@ -3248,29 +3294,46 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         If (${TxtOutFileList} == '')"<<std::endl;
     BMSAutoSegMainFile<<"            # Computing Transformation"<<std::endl;
     BMSAutoSegMainFile<<"            ListFileInDir(TxtInitFileList ${AtlasIsoPath} ${TxtInitFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"            If (${TxtInitFileList} == '')"<<std::endl;  
-    BMSAutoSegMainFile<<"               echo ('Computing rigid transformation T1 to Atlas ...')"<<std::endl;
+    BMSAutoSegMainFile<<"            If (${TxtInitFileList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"               AppendFile(${logOutFile} 'Computing rigid transformation T1 to Atlas ...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
 
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+
+    //BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"               echo ('Computing rigid transformation T1 to Atlas with initial transform...')"<<std::endl;
+    BMSAutoSegMainFile<<"               AppendFile(${logOutFile} 'Computing rigid transformation T1 to Atlas with initial transform...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${AtlasIsoTemplate} --movingVolume ${FirstCase} --transformType Rigid --initialTransform ${TxtInitFile} --outputTransform ${TxtOutFile} --outputVolume ${OutputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"            EndIf (${TxtInitFileList})"<<std::endl;
     BMSAutoSegMainFile<<"         EndIf (${TxtOutFileList})"<<std::endl;
     BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Applying rigid transformation...')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Applying rigid transformation...\\n')"<<std::endl;
 
     BMSAutoSegMainFile<<"       set (command_line ${ResampleVolume2Cmd} ${FirstCase} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${OutputFile} -threshMask 0,1000000 -outfile ${OutputFile})"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"       Run (prog_output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Registration already Done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (FirstCase)"<<std::endl<<std::endl;
 
@@ -3300,10 +3363,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     if (!IsCasesListEmpty)
     {
       BMSAutoSegMainFile<<"If (${CasesList} != '')"<<std::endl;
-      BMSAutoSegMainFile<<"   echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"   echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"   echo('Registration...')"<<std::endl;
-      BMSAutoSegMainFile<<"   echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Registration...\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"   set (CaseNumber 0)"<<std::endl;
       BMSAutoSegMainFile<<"   set (CaseNumberLimit "<<GetNbData()-1<<")"<<std::endl;
       BMSAutoSegMainFile<<"   ForEach (Case ${CasesList})"<<std::endl;
@@ -3311,9 +3374,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      GetParam (FirstCase ${FirstCasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (FirstCaseHead ${FirstCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (Path ${FirstCase} PATH)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo ('Case Number ' ${CaseNumber} ' : '${CaseHead} ${FirstCase} ${FirstCasesList})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number ' ${CaseNumber} ' : '${CaseHead} ${FirstCase} ${FirstCasesList}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"      set (AtlasIsoPath ${Path}/${AutoSegDir}/atlasIso/)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${AtlasIsoPath} ${CaseHead}${ProcessExtension}_reg${FirstFile}_regAtlas.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
@@ -3340,7 +3403,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"          # Parameter File"<<std::endl;
       BMSAutoSegMainFile<<"         set (TxtOutFile ${AtlasIsoPath}${CaseHead}.txt)"<<std::endl;
       BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
-      BMSAutoSegMainFile<<"         set (ReportFile ${AtlasIsoPath}${CaseHead}_out.txt)"<<std::endl;
+      //BMSAutoSegMainFile<<"         set (ReportFile ${AtlasIsoPath}${CaseHead}_out.txt)"<<std::endl;
       BMSAutoSegMainFile<<"          # registered first Image"<<std::endl;
       BMSAutoSegMainFile<<"         set (FirstCaseregAtlas ${AtlasIsoPath}${FirstCaseHead}_regAtlas.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"          # Output File"<<std::endl;
@@ -3351,39 +3414,59 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     BMSAutoSegMainFile<<"             # Computing Transformation"<<std::endl;
     BMSAutoSegMainFile<<"             ListFileInDir(TxtInitFileList ${AtlasIsoPath} ${TxtInitFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"             If (${TxtInitFileList} == '')"<<std::endl; 
+    BMSAutoSegMainFile<<"             If (${TxtInitFileList} == '')"<<std::endl;
 
     if (!GetInitRegUseT1InitTransform())
       {
-	BMSAutoSegMainFile<<"               echo ('Computing rigid transformation within case ...')"<<std::endl;
+  BMSAutoSegMainFile<<"               AppendFile(${logOutFile} 'Computing rigid transformation within case ...\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"    	    set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"      	    Run (output ${command_line} prog_error)"<<std::endl;
-	BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;    
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output}'\\n')"<<std::endl;
       }
     else
       {	
-	BMSAutoSegMainFile<<"               echo ('Computing rigid transformation within case using T1 transform file as initialization...')"<<std::endl;
+  BMSAutoSegMainFile<<"               AppendFile(${logOutFile} 'Computing rigid transformation within case using T1 transform file as initialization...\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"               set (FirstCaseTransformFile ${AtlasIsoPath}${FirstCaseHead}.txt)"<<std::endl;
 	BMSAutoSegMainFile<<"    	    set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"      	    Run (output ${command_line} prog_error)"<<std::endl;
-	BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;    
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output}'\\n')"<<std::endl;
       }
     BMSAutoSegMainFile<<"             Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"               echo ('Computing rigid transformation within case with initial transform...')"<<std::endl;
+    BMSAutoSegMainFile<<"               AppendFile(${logOutFile} 'Computing rigid transformation within case with initial transform...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    	        set (command_line ${BRAINSFitCmd} --fixedVolume ${FirstCaseregAtlas} --movingVolume ${Case} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtOutFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+    BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      	        Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"               AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //  BMSAutoSegMainFile<<"               WriteFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"             EndIf (${TxtInitFileList})"<<std::endl;
     
     BMSAutoSegMainFile<<"         EndIf (${TxtOutFileList})"<<std::endl;
       BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Applying rigid transformation...')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Applying rigid transformation...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         set (command_line ${ResampleVolume2Cmd} ${Case} ${OutputFile} --transformationFile ${TxtOutFile} -i bs --Reference ${GridTemplate})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${OutputFile} -threshMask 0,1000000 -outfile ${OutputFile})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Registration already Done!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
       BMSAutoSegMainFile<<"   If (${CaseNumber} != ${CaseNumberLimit})"<<std::endl;
       BMSAutoSegMainFile<<"     Inc (${CaseNumber} 1)"<<std::endl;
@@ -3395,9 +3478,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"EndIf(${CasesList})"<<std::endl<<std::endl; 
     }
 
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('REGISTERING CASES TO A TEMPLATE: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'REGISTERING CASES TO A TEMPLATE: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   else
   {
@@ -3427,9 +3510,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"# ---------------------------------------------------------------------"<<std::endl;
 	
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('TISSUE SEGMENTATION...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'TISSUE SEGMENTATION...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
         
     BMSAutoSegMainFile<<"      set (stripEMS '')"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedBias '')"<<std::endl;
@@ -3446,9 +3529,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      set (TissueSegAtlas ${T1Path}/${AutoSegDir}/TissueSegAtlas/)"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedTissueSegAtlas ${T1Path}/${AutoSegDir}/StrippedTissueSegAtlas/)"<<std::endl;
-    BMSAutoSegMainFile<<"      echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo ('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
     SuffixIteration=iteration+1;
     SuffixIteration_2=iteration+2;
@@ -3471,7 +3554,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       else
           BMSAutoSegMainFile<<"      set (Atlas ${atlasSegLocLoop})"<<std::endl;
 
-      BMSAutoSegMainFile<<"      echo ('The Atlas is '${Atlas})"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'The Atlas is '${Atlas}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      set (stripEMS _stripEMS${StrippedBias})"<<std::endl;
       if (GetStrippedN4ITKBiasFieldCorrection()) {
         BMSAutoSegMainFile<<"      set (StrippedBias '_Bias')"<<std::endl;
@@ -3554,12 +3637,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     // check if inputs exist
     //    BMSAutoSegMainFile<<"         FileExists(EMST1InputExists ${T1InputCase})"<<std::endl;
     //    BMSAutoSegMainFile<<"         If (${EMST1InputExists} == 1)"<<std::endl;
-    //    BMSAutoSegMainFile<<"           echo ('EMS T1 input exists:  ${T1InputCase})"<<std::endl;
+    //    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} 'EMS T1 input exists: ' ${T1InputCase}'\\n')"<<std::endl;
     //    BMSAutoSegMainFile<<"         EndIf (${EMST1InputExists})"<<std::endl;
 
     // check if T1 EMS corrected file already exists, if not compute
     BMSAutoSegMainFile<<"         ListFileInDir(EMSFileList ${EMSPath} ${T1InputCaseHead}${SuffixCorrected}.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"         If (${EMSFileList} == '')"<<std::endl;  
+    BMSAutoSegMainFile<<"         If (${EMSFileList} == '')"<<std::endl;
     BMSAutoSegMainFile<<"           set (EMSComputed 1)"<<std::endl;
 	
     BMSAutoSegMainFile<<"            # create EMS file"<<std::endl;
@@ -3695,28 +3778,52 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
             if (GetLoop() && iteration != 0) {
 	      // not the first iteration
-	      BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasBrainMaskList} == '')" << std::endl; //if don't have brainmask in stripped tissue seg atlas
-	      BMSAutoSegMainFile<<"        If (${StrippedTissueSegAtlasTemplateList} == '')" << std::endl;
+        BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasBrainMaskList} == '')" << std::endl; //if don't have brainmask in stripped tissue seg atlas
+        BMSAutoSegMainFile<<"        If (${StrippedTissueSegAtlasTemplateList} == '')" << std::endl;
 	      //changed by Yundi Shi to use ${ANTSGaussianSigma} instead of default 3
 	      BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i ${ANTSIterations} -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[${ANTSGaussianSigma},0])"<<std::endl;
-	      BMSAutoSegMainFile<<"          Run (output ${ANTSRegStrippedTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${ANTSRegStrippedTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          Run (output ${ANTSRegStrippedTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"          ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
 	      BMSAutoSegMainFile<<"            set (WarpStrippedTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLocLoop}${TissueSegAtlasImage} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${StrippedTissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${StrippedTissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
-	      BMSAutoSegMainFile<<"            Run (output ${WarpStrippedTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${WarpStrippedTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            Run (output ${WarpStrippedTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"            set (command_line ${ImageMathCmd} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${StrippedTissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"            Run (prog_output ${command_line} prog_error)"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"          EndForEach(TissueSegAtlasImage)"<<std::endl;
 	      BMSAutoSegMainFile<<"        EndIf (${StrippedTissueSegAtlasTemplateList})" << std::endl;
 	      BMSAutoSegMainFile<<"      Else () " << std::endl;    // brainmask exist
 
-	      BMSAutoSegMainFile<<"        If (   ${StrippedTissueSegAtlasTemplateList} == '')" << std::endl;
+        BMSAutoSegMainFile<<"        If (   ${StrippedTissueSegAtlasTemplateList} == '')" << std::endl;
 	      BMSAutoSegMainFile<<"          set (ANTSRegStrippedTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLocLoop}template.mha,1,2] -i ${ANTSIterations} -o ${StrippedTissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[${ANTSGaussianSigma},0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
-	      BMSAutoSegMainFile<<"          Run (output ${ANTSRegStrippedTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${ANTSRegStrippedTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          Run (output ${ANTSRegStrippedTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"          ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
 	      BMSAutoSegMainFile<<"            set (WarpStrippedTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLocLoop}${TissueSegAtlasImage} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${StrippedTissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${StrippedTissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
-	      BMSAutoSegMainFile<<"            Run (output ${WarpStrippedTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${WarpStrippedTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            Run (output ${WarpStrippedTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${StrippedTissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${StrippedTissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"           Run (prog_output ${command_line} prog_error)"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"          EndForEach(TissueSegAtlasImage)"<<std::endl;
 	      BMSAutoSegMainFile<<"        EndIf (${StrippedTissueSegAtlasTemplateList})" << std::endl;
 	      BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
@@ -3726,41 +3833,65 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	      // first iteration
 	      // prepare the Tissue Seg Atlas
 	      BMSAutoSegMainFile<<"      ListDirInDir (TissueSegAtlasList ${T1Path}/${AutoSegDir}/ TissueSegAtlas)"<<std::endl;
-	      BMSAutoSegMainFile<<"      If (${TissueSegAtlasList} == '')"<<std::endl;
+        BMSAutoSegMainFile<<"      If (${TissueSegAtlasList} == '')"<<std::endl;
 	      BMSAutoSegMainFile<<"          MakeDirectory (${TissueSegAtlas})"<<std::endl;
 	      BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasList})"<<std::endl;
 	      
 	      // prepare the Stripped Tissue Seg Atlas
 	      BMSAutoSegMainFile<<"      ListDirInDir (StrippedTissueSegAtlasList ${T1Path}/${AutoSegDir}/ StrippedTissueSegAtlas)"<<std::endl;
-	      BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasList} == '')"<<std::endl;
+        BMSAutoSegMainFile<<"      If (${StrippedTissueSegAtlasList} == '')"<<std::endl;
 	      BMSAutoSegMainFile<<"          MakeDirectory (${StrippedTissueSegAtlas})"<<std::endl;
 	      BMSAutoSegMainFile<<"      EndIf (${StrippedTissueSegAtlasList})"<<std::endl;
 
-	      BMSAutoSegMainFile<<"      If (${TissueSegAtlasBrainMaskList} == '')" << std::endl;   //if don't have brainmask in tissue seg atlas
-	      BMSAutoSegMainFile<<"        If (${TissueSegAtlasTemplateList} == '')" << std::endl;  //if tissue seg atlas template doesn't exist -> do registration
+        BMSAutoSegMainFile<<"      If (${TissueSegAtlasBrainMaskList} == '')" << std::endl;   //if don't have brainmask in tissue seg atlas
+        BMSAutoSegMainFile<<"        If (${TissueSegAtlasTemplateList} == '')" << std::endl;  //if tissue seg atlas template doesn't exist -> do registration
 	      
 	      BMSAutoSegMainFile<<"          set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[${ANTSGaussianSigma},0])"<<std::endl;
-	      BMSAutoSegMainFile<<"          Run (output ${ANTSRegTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${ANTSRegTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          Run (output ${ANTSRegTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      
 	      BMSAutoSegMainFile<<"          ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
 	      BMSAutoSegMainFile<<"            set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
-	      BMSAutoSegMainFile<<"            Run (output ${WarpTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${WarpTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            Run (output ${WarpTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"            set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"            Run (prog_output ${command_line} prog_error)"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"          EndForEach(TissueSegAtlasImage)"<<std::endl;
 	      BMSAutoSegMainFile<<"        EndIf (${TissueSegAtlasTemplateList})" << std::endl;
 	      BMSAutoSegMainFile<<"      Else () " << std::endl;    // brainmask exist
 	      BMSAutoSegMainFile<<"        ListFileInDir (AffineBrainMaskList ${TissueSegAtlas} brainmask_affine.nrrd)" << std::endl;  // check if warped brainmask already exist
-	      BMSAutoSegMainFile<<"        If (   ${AffineBrainMaskList} == '')" << std::endl;
+        BMSAutoSegMainFile<<"        If (   ${AffineBrainMaskList} == '')" << std::endl;
 	      BMSAutoSegMainFile<<"          set (AffineTissueSegAtlasTemplate ${BRAINSFitCmd} --useAffine --outputTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${TissueSegAtlas}template_affine.nrrd --movingVolume ${atlasSegLoc}template.mha --fixedVolume ${T1InputCase} --initializeTransformMode ${RegistrationInitialization})"<<std::endl;
 	      BMSAutoSegMainFile<<"          set (AffineTissueSegAtlasResample ${BRAINSResampleCmd} --warpTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${TissueSegAtlas}brainmask_affine.nrrd --inputVolume ${atlasSegLoc}brainmask.nrrd --referenceVolume ${T1InputCase})"<<std::endl;
 	      BMSAutoSegMainFile<<"          set (AffineStrippedTissueSegAtlasResample ${BRAINSResampleCmd} --warpTransform ${TissueSegAtlas}template_affine_transform.txt --outputVolume ${StrippedTissueSegAtlas}brainmask_affine.nrrd --inputVolume ${atlasSegLocLoop}brainmask.nrrd --referenceVolume ${T1InputCase})"<<std::endl;
-	      BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasTemplate})"<<std::endl;
-	      BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasResample})"<<std::endl;
-	      BMSAutoSegMainFile<<"          Run (output ${AffineStrippedTissueSegAtlasResample})"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${AffineTissueSegAtlasTemplate}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasTemplate} error)"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${AffineTissueSegAtlasResample}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          Run (output ${AffineTissueSegAtlasResample} error)"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${AffineStrippedTissueSegAtlasResample}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          Run (output ${AffineStrippedTissueSegAtlasResample} error)"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"        EndIf (${AffineBrainMaskList})" << std::endl;
  
-	      BMSAutoSegMainFile<<"        If (   ${TissueSegAtlasTemplateList} == '')" << std::endl;
+        BMSAutoSegMainFile<<"        If (   ${TissueSegAtlasTemplateList} == '')" << std::endl;
 	      if (GetANTSWithBrainmask())  {
 		if (GetUseInitialAffine())  {
 		  BMSAutoSegMainFile<<"         set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -x ${TissueSegAtlas}brainmask_affine.nrrd -r Gauss[${ANTSGaussianSigma},0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine false)"<<std::endl;
@@ -3774,12 +3905,24 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 		  BMSAutoSegMainFile<<"         set (ANTSRegTissueSegAtals ANTS 3 -m CC[${T1InputCase},${atlasSegLoc}template.mha,1,2] -i ${ANTSIterations} -o ${TissueSegAtlas}Atlas_T1Total.nii.gz -t SyN[0.25] -r Gauss[${ANTSGaussianSigma},0] -a ${TissueSegAtlas}template_affine_transform.txt --continue-affine true)"<<std::endl;
 		}
 	      }
-	      BMSAutoSegMainFile<<"         Run (output ${ANTSRegTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${ANTSRegTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"         Run (output ${ANTSRegTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"         ForEach (TissueSegAtlasImage ${TissueSegAtlasImageList})"<<std::endl;
 	      BMSAutoSegMainFile<<"           set (WarpTissueSegAtals WarpImageMultiTransform 3 ${atlasSegLoc}${TissueSegAtlasImage} ${TissueSegAtlas}${TissueSegAtlasImage} -R ${T1InputCase} ${TissueSegAtlas}Atlas_T1TotalWarp.nii.gz ${TissueSegAtlas}Atlas_T1TotalAffine.txt)"<<std::endl;
-	      BMSAutoSegMainFile<<"           Run (output ${WarpTissueSegAtals})"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${WarpTissueSegAtals}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"           Run (output ${WarpTissueSegAtals} error)"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${TissueSegAtlas}${TissueSegAtlasImage} -constOper 2,1 -outfile ${TissueSegAtlas}${TissueSegAtlasImage})"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"           Run (prog_output ${command_line} prog_error)"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 	      BMSAutoSegMainFile<<"         EndForEach(TissueSegAtlasImage)"<<std::endl;
 	      BMSAutoSegMainFile<<"        EndIf (${TissueSegAtlasTemplateList})" << std::endl;
 	      BMSAutoSegMainFile<<"      EndIf (${TissueSegAtlasBrainMaskList})" << std::endl;
@@ -3813,12 +3956,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     {	
       
       BMSAutoSegMainFile<<"               set ( command_line ${ABCCmd} ${EMSfile})"<<std::endl;
-      BMSAutoSegMainFile<<"               Run (output ${command_line})"<<std::endl;	  
+      BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"               Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"               AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
     else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
     {
       BMSAutoSegMainFile<<"               set (command_line ${neosegCmd} ${EMSfile})"<<std::endl;
-      BMSAutoSegMainFile<<"               Run (output ${command_line})"<<std::endl;	 
+      BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"               Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"               AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
     else
     {
@@ -3840,15 +3991,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"	       set (LabelTail ${T1InputCaseHead}${SuffixLabel}.nrrd)"<<std::endl;
 
     BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"            echo ('EMS Segmentation already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'EMS Segmentation already Done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"         EndIf (${EMSFileList})"<<std::endl;
     BMSAutoSegMainFile<<"   Inc (${CaseNumber} 1)"<<std::endl;
     BMSAutoSegMainFile<<"   Int (${CaseNumber})"<<std::endl;
 
     BMSAutoSegMainFile<<"EndForEach(T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('EMS SEGMENTATION: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'EMS SEGMENTATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -3858,17 +4009,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl<<std::endl;
 
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('SKULL STRIPPING...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'SKULL STRIPPING...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl;
 
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;  
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;  
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 	
     BMSAutoSegMainFile<<"      set (stripEMS _corrected_EMS-stripped)"<<std::endl;
 
@@ -3963,38 +4114,62 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"              # Creating the binary mask"<<std::endl;  
     if (std::strcmp(GetEMSoftware(), "ABC") == 0) {
       BMSAutoSegMainFile<<"              set (command_line ${ImageMathCmd} ${SegmentedCase} -threshold 1,10000 -outfile ${TmpMask})"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     } else {
       BMSAutoSegMainFile<<"              set (command_line ${ImageMathCmd} ${SegmentedCase} -threshold 1,4 -outfile ${TmpMask})"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
     BMSAutoSegMainFile<<"	         #In order to make sur that the binary mask is fine (without holes and smoothed)"<<std::endl;
 	
     if (GetDeleteVessels())
     {
       BMSAutoSegMainFile<<"              set (command_line ${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask} --deleteVessels)"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 
       BMSAutoSegMainFile<<"              set (command_line ${ImageMathCmd} ${FinalTarget} -constOper 2,1 -outfile ${FinalTarget})"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
     else
     {
       BMSAutoSegMainFile<<"              set (command_line ${SegPostProcessCmd} ${TmpMask} ${FinalTarget} --skullstripping ${CurrentCase} --mask ${FinalMask})"<<std::endl;	
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"              set (command_line ${ImageMathCmd} ${FinalTarget} -constOper 2,1 -outfile ${FinalTarget})"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
 
 
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"              echo ('Binary mask already exists!')"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'Binary mask already exists!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"            EndIf (${FinalMaskList})"<<std::endl;
 
     if (GetT2Image())
     {
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Skull stripping T2w image...')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Skull stripping T2w image...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(T2FinalTargetList ${StrippedPath} ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
@@ -4009,15 +4184,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"        set (T2FinalTarget ${StrippedPath}${T2FinalTargetTail})"<<std::endl;
 
       BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${T2CurrentCase} -mask ${FinalMask} -outfile ${T2FinalTarget})"<<std::endl; 
-      BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Stripped Image already exists!')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Stripped Image already exists!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${T2FinalTargetList})"<<std::endl;
     }
     if (GetPDImage())
     {
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Skull stripping PDw image...')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Skull stripping PDw image...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      GetParam (PDCase ${PDCasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (PDCaseHead ${PDCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(PDFinalTargetList ${StrippedPath} ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
@@ -4030,9 +4209,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"        set (PDFinalTargetTail ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"        set (PDFinalTarget ${StrippedPath}${PDFinalTargetTail})"<<std::endl;
       BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${PDCurrentCase} -mask ${FinalMask} -outfile ${PDFinalTarget})"<<std::endl; 
-      BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Stripped Image already exists!')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Stripped Image already exists!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${PDFinalTargetList})"<<std::endl;
     }
     BMSAutoSegMainFile<<"            # Deleting temporary file"<<std::endl;
@@ -4041,9 +4224,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     // optional Bias Field correction on stripped data
     if (GetStrippedN4ITKBiasFieldCorrection() && GetLoop() && iteration !=finalLoop)
     {
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Bias field correction...')"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Bias field correction...\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"      set(StrippedBias _${Bias})"<<std::endl;
 
       BMSAutoSegMainFile<<"	 Set (my_output ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${StrippedBias}.nrrd)"<<std::endl;
@@ -4054,8 +4237,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       else { // >= 4.3
         BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${FinalTarget} ${my_output} ${SlicerN4parameters})"<<std::endl;
       }
-
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      Set (FinalTarget ${my_output})"<<std::endl;
 	
       if (GetT2Image())
@@ -4068,7 +4254,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	else { // >= 4.3
 	  BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${T2FinalTarget} ${my_output} ${SlicerN4parameters})"<<std::endl;
 	}
-	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;	
+  BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"     AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       }
       if (GetPDImage())
       {
@@ -4079,22 +4269,26 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	else { // >= 4.3
 	  BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${PDFinalTarget} ${my_output} ${SlicerN4parameters})"<<std::endl;
 	}
+  BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       }		
     }
 
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Stripped Image already exists!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Stripped Image already exists!\\n')"<<std::endl;
     if (GetT2Image())
     {
       BMSAutoSegMainFile<<"        GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(T2FinalTargetList ${StrippedPath} ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${T2FinalTargetList} != '')"<<std::endl;
-      BMSAutoSegMainFile<<"         echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"         echo('T2 Case Number: '${T2CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"         echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Stripped Image already exists!')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'T2 Case Number: '${T2CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Stripped Image already exists!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${T2FinalTargetList})"<<std::endl;
     }
     if (GetPDImage())
@@ -4103,10 +4297,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      GetFilename (PDCaseHead ${PDCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(PDFinalTargetList ${StrippedPath} ${PDCaseHead}${ProcessExtension}${PDRegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${PDFinalTargetList} != '')"<<std::endl;
-      BMSAutoSegMainFile<<"         echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"         echo('Case Number: '${PDCaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"         echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Stripped Image already exists!')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Case Number: '${PDCaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Stripped Image already exists!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${PDFinalTargetList})"<<std::endl;
     }
     BMSAutoSegMainFile<<"      EndIf (${FinalTargetList})"<<std::endl;
@@ -4115,9 +4309,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
 
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('SKULL STRIPPING: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'SKULL STRIPPING: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
     if (GetLoop())
       iteration++;
 
@@ -4156,15 +4350,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"set (ANTSGaussianSigma "<<GetANTSGaussianSigma()<<")"<<std::endl;
     BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl;
 
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('ATLAS WARPING...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'ATLAS WARPING...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedCaseHead ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS})"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedCaseTail ${StrippedCaseHead}.nrrd)"<<std::endl;
@@ -4183,9 +4377,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      GetParam (T2Case ${T2CasesList} ${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2Path ${T2Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T2CaseHead ${T2Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${T2CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T2CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"      set (T2StrippedPath ${T2Path}/${AutoSegDir}/Stripped/)"<<std::endl;
       BMSAutoSegMainFile<<"      set (T2StrippedCaseHead ${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${stripEMS})"<<std::endl;
       BMSAutoSegMainFile<<"      set (T2StrippedCaseTail ${T2StrippedCaseHead}.nrrd)"<<std::endl;
@@ -4196,8 +4390,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"Inc(${CaseNumber} 1)"<<std::endl;
 
     BMSAutoSegMainFile<<"      ListFileInDir(DeformationFieldList ${WarpROIPath} AtlasWarpReg-${StrippedCaseHead}_Warp.nii.gz)"<<std::endl;
-    BMSAutoSegMainFile<<"      If (${DeformationFieldList} == '')"<<std::endl;        
-    BMSAutoSegMainFile<<"         echo ('Computing deformation field...')"<<std::endl;  
+    BMSAutoSegMainFile<<"      If (${DeformationFieldList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Computing deformation field...\\n')"<<std::endl;
     //if (GetROIT2Atlas()) {
     if (GetMultiModalitySingleSegmentation()) {
         BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3)"<<std::endl;
@@ -4249,45 +4443,57 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
       }
     BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"      	set(ANTSLogFile ${WarpROIPath}AtlasWarpReg-${WarpROIPath}${StrippedCaseHead}_ANTS.log)"<<std::endl;
-    BMSAutoSegMainFile<<"      	WriteFile(${ANTSLogFile} ${prog_output})"<<std::endl;
-    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-    BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
-    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegMainFile<<"      	set(ANTSLogFile ${WarpROIPath}AtlasWarpReg-${WarpROIPath}${StrippedCaseHead}_ANTS.log)"<<std::endl;
+    //BMSAutoSegMainFile<<"      	WriteFile(${ANTSLogFile} ${prog_output}'\\n')"<<std::endl;
+    //BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+    //BMSAutoSegMainFile<<"      	  AppendFile(${logOutFile} 'ANTS Error: '${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Registration already Done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${DeformationFieldList})"<<std::endl;
 
     BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${WarpROIPath} AtlasWarpReg-${StrippedCaseHead}_warp.nrrd)"<<std::endl;
-    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;        
-    BMSAutoSegMainFile<<"        echo ('Applying deformation to grayscale image...')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} 'Applying deformation to grayscale image...\\n')"<<std::endl;
 
     BMSAutoSegMainFile<<"        set (WarpedAtlas ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_warp.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"        set (DeformationField ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_Warp.nii.gz)"<<std::endl;
     BMSAutoSegMainFile<<"        set (AffineTransform ${WarpROIPath}AtlasWarpReg-${StrippedCaseHead}_Affine.txt)"<<std::endl;
     BMSAutoSegMainFile<<"        set (command_line ${WarpImageMultiTransformCmd} 3 ${atlasROIFile} ${WarpedAtlas} -R ${StrippedCase} --use-BSpline ${DeformationField} ${AffineTransform})"<<std::endl;
 
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-    BMSAutoSegMainFile<<"      	  echo('WarpImageMultiTransform Error: '${prog_error})"<<std::endl;
-    BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+    //BMSAutoSegMainFile<<"      	  AppendFile(${logOutFile} 'WarpImageMultiTransform Error: '${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
 
   // Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
 	BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${WarpedAtlas} -constOper 2,1 -outfile ${WarpedAtlas})"<<std::endl;
- 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-	BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
-	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	  AppendFile(${logOutFile} 'ImageMath Error: '${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
 
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Warping already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Warping already Done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
 
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'WARPING COMPUTATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   // Registration performed via fWarp or BRAINSDemonWarp -> intensity rescaling, affine registration via BRAINSFit, then warping.
   // only if single atlas segmentation is requested
@@ -4303,15 +4509,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   
     BMSAutoSegMainFile<<"set (IRescaled '-irescaled')"<<std::endl;
 
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo (INTENSITY CALIBRATION)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'INTENSITY CALIBRATION\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList}) "<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;    
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (StrippedCaseHead ${StrippedCase} NAME_WITHOUT_EXTENSION)"<<std::endl;  
@@ -4326,7 +4532,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       {
 	
 	BMSAutoSegMainFile<<"          set (command_line ${ImageMathCmd} ${StrippedCase} -matchHistogram ${atlasROIFile} -outfile ${OutputFile})"<<std::endl;
-	BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl;
+  BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"          Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       }
     // Intensity rescaling based on tissue mean matching (Intensity Rescaler)
     else
@@ -4351,7 +4561,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 	BMSAutoSegMainFile<<"         set (IntRescalerParameterFile ${StrippedPath}${StrippedCaseHead}_intRescale.txt)"<<std::endl;
 	BMSAutoSegMainFile<<"         ListFileInDir(IntRescalerParameterFileList ${StrippedPath} ${StrippedCaseHead}_intRescale.txt)"<<std::endl;
-	BMSAutoSegMainFile<<"         If (${IntRescalerParameterFileList} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"         If (${IntRescalerParameterFileList} == '')"<<std::endl;
 	
 	BMSAutoSegMainFile<<"            # create Intensity Rescaler parameter file"<<std::endl;
 	BMSAutoSegMainFile<<"	           WriteFile (${IntRescalerParameterFile} '# Target image: One image which is the reference\\n')"<<std::endl;
@@ -4382,23 +4592,31 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	
 	
 	BMSAutoSegMainFile<<"              set (command_line ${IntensityRescalerCmd} -i ${IntRescalerParameterFile} -v)"<<std::endl;
-	BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       }
     BMSAutoSegMainFile<<"          If(${IsAtlasROIFileZipped} == 1)"<<std::endl;
     BMSAutoSegMainFile<<"              set (command_line gzip ${atlasROIFile})"<<std::endl;
-    BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"             set (atlasROIFile ${atlasROIFile}.gz)"<<std::endl;
     BMSAutoSegMainFile<<"          Endif(${IsAtlasROIFileZipped})"<<std::endl;
 
 
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"          echo ('Intensity Calibration already done!')"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} 'Intensity Calibration already done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
     
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('INTENSITY CALIBRATION DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'INTENSITY CALIBRATION DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -4408,15 +4626,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('AFFINE REGISTRATION...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'AFFINE REGISTRATION...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedPath ${T1Path}/${AutoSegDir}/Stripped/)"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedCaseTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"      set (StrippedCase ${StrippedPath}${StrippedCaseTail})"<<std::endl;
@@ -4439,14 +4657,18 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     BMSAutoSegMainFile<<"            set (TransformInputFile ${WarpROIPath}${OutputFileHead}_initializetransform.txt)"<<std::endl;
     BMSAutoSegMainFile<<"    	set (command_line ${BRAINSFitCmd} --fixedVolume ${StrippedCase} --movingVolume ${atlasROIFile} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --useAffine --outputVolume ${OutputFile} --outputTransform ${TransformInputFile} --interpolationMode BSpline --outputVolumePixelType short)"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Registration already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Registration already Done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('AFFINE REGISTRATION: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'AFFINE REGISTRATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
 
     BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
@@ -4457,15 +4679,15 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#-------------------------------------------------------------------------"<<std::endl;
     
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'WARPING COMPUTATION...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;      
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
     BMSAutoSegMainFile<<"      set (AtlasAffRegCase ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)" <<std::endl;
     BMSAutoSegMainFile<<"      GetFilename (AtlasAffRegCaseHead ${AtlasAffRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
@@ -4477,25 +4699,25 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         set (OutputFileHead AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled})"<<std::endl;
     BMSAutoSegMainFile<<"         set (OutputFileTail ${OutputFileHead}.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"         set (OutputFile ${WarpROIPath}${OutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
-    BMSAutoSegMainFile<<"         set (ReportFile ${WarpROIPath}${OutputFileHead}_out.txt)"<<std::endl;
+    //BMSAutoSegMainFile<<"          # Report File (process)"<<std::endl;
+    //BMSAutoSegMainFile<<"         set (ReportFile ${WarpROIPath}${OutputFileHead}_out.txt)"<<std::endl;
     
     if (GetClassicWarpingMethod())
       {
 	BMSAutoSegMainFile<<"         ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-	BMSAutoSegMainFile<<"         If (${SkullStrippedList} != '')"<<std::endl;
+  BMSAutoSegMainFile<<"         If (${SkullStrippedList} != '')"<<std::endl;
 	BMSAutoSegMainFile<<"            set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
 	BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-	BMSAutoSegMainFile<<"            echo ('Error:No Skull Stripped File!')"<<std::endl;		
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'Error:No Skull Stripped File!\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"         EndIf (${SkullStrippedList})"<<std::endl;
 	BMSAutoSegMainFile<<"         set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
 	
 	BMSAutoSegMainFile<<"         set (DofOutWarpFileTail ${OutputFileHead}_warp.hfield)"<<std::endl;
 	BMSAutoSegMainFile<<"         set (DofOutWarpFile ${WarpROIPath}${DofOutWarpFileTail})"<<std::endl;
 	BMSAutoSegMainFile<<"         ListFileInDir(DofOutWarpFileList ${WarpROIPath} ${DofOutWarpFileTail}.gz)"<<std::endl;
-	BMSAutoSegMainFile<<"         If (${DofOutWarpFileList} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"         If (${DofOutWarpFileList} == '')"<<std::endl;
 	
-	BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'Computing transformation...\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Alpha "<<GetAlpha()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Beta "<<GetBeta()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Gamma "<<GetGamma()<<")"<<std::endl;
@@ -4505,32 +4727,44 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"            set (NumIteration "<<GetScale1NbIterations()<<")"<<std::endl;
 	
 	BMSAutoSegMainFile<<"            set (command_line ${warpCmd} -c ${AtlasAffRegCase} ${SkullStrippedFile} ${DofOutWarpFile} ${Alpha} ${Beta} ${Gamma} ${MaxPerturbation} ${NumIteration} ${NumBasis})"<<std::endl;
-	BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
-	BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl<<std::endl;
 	BMSAutoSegMainFile<<"         EndIf (${DofOutWarpFileList})"<<std::endl;
 	
 	BMSAutoSegMainFile<<"         # Applying Transformation"<<std::endl;
 	BMSAutoSegMainFile<<"         # Transforming all volumes, by default uses cspline interpolation"<<std::endl;
-	BMSAutoSegMainFile<<"            echo ('Applying transformation...')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'Applying transformation...\\n')"<<std::endl;
 	
 	BMSAutoSegMainFile<<"         set (command_line ${warpCmd} -a ${AtlasAffRegCase} ${DofOutWarpFile} ${OutputFile} -linear)"<<std::endl;
-	BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
-	BMSAutoSegMainFile<<"         AppendFile(${ReportFile} ${output})"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"         Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"         AppendFile(${ReportFile} ${output}'\\n')"<<std::endl<<std::endl;
 	
 	BMSAutoSegMainFile<<"         set (command_line gzip ${DofOutWarpFile})"<<std::endl;
-	BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"         Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       }
     else if (GetBRAINSDemonWarpMethod())
       {
 	BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-	BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
+  BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
 	BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
 	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	BMSAutoSegMainFile<<"               echo ('Error:No Skull Stripped File!')"<<std::endl;
+  BMSAutoSegMainFile<<"               AppendFile(${logOutFile} 'Error:No Skull Stripped File!\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"            EndIf (${SkullStrippedList})"<<std::endl;
 	BMSAutoSegMainFile<<"            set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
 	
-	BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'Computing transformation...\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"            set (RegistrationFilterType "<<GetRegistrationFilterType()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"            set (DeformationFieldSmoothingSigma "<<GetDeformationFieldSmoothingSigma()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"            set (PyramidLevels "<<GetPyramidLevels()<<")"<<std::endl;
@@ -4544,25 +4778,33 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"            set (Input -f ${SkullStrippedFile} -m ${atlasROIFile} --inputPixelType short --initializeWithTransform ${TransformInputFile})"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Output -o ${OutputFile} -O ${TransformOutputFile} --outputPixelType short)"<<std::endl;
 	BMSAutoSegMainFile<<"    	set (command_line ${BRAINSDemonWarpCmd} ${Input} ${Output} ${parameters})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"    	set (command_line ${ResampleVolume2Cmd} ${atlasROIFile} ${OutputFile} --hfieldtype displacement -i bs -H ${TransformOutputFile} --Reference ${SkullStrippedFile})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"      	Run (prog_output_2 ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       }
     else if (GetCoarseToFineWarpingMethod())
       {
 	
 	BMSAutoSegMainFile<<"            ListFileInDir (SkullStrippedList ${T1Path}/${AutoSegDir}/Stripped/ ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}.nrrd)"<<std::endl;
-	BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
+  BMSAutoSegMainFile<<"            If (${SkullStrippedList} != '')"<<std::endl;
 	BMSAutoSegMainFile<<"               set (SkullStrippedFileTail ${SkullStrippedList})"<<std::endl;
 	BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	BMSAutoSegMainFile<<"               echo ('Error:No Skull Stripped File!')"<<std::endl;
+  BMSAutoSegMainFile<<"               AppendFile(${logOutFile} 'Error:No Skull Stripped File!\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"         	 EndIf (${SkullStrippedList})"<<std::endl;
 	BMSAutoSegMainFile<<"            set (SkullStrippedFile ${T1Path}/${AutoSegDir}/Stripped/${SkullStrippedFileTail})"<<std::endl;
 	
 	BMSAutoSegMainFile<<"            set (DofOutWarpFileTail ${OutputFileHead}_deformationfield)"<<std::endl;
 	BMSAutoSegMainFile<<"            set (DofOutWarpFile ${WarpROIPath}${DofOutWarpFileTail})"<<std::endl;
 	
-	BMSAutoSegMainFile<<"            echo ('Computing transformation...')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'Computing transformation...\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Alpha "<<GetAlpha()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Beta "<<GetBeta()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Gamma "<<GetGamma()<<")"<<std::endl;
@@ -4572,10 +4814,18 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	BMSAutoSegMainFile<<"            set (Scale2NbIterations "<<GetScale2NbIterations()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"            set (Scale1NbIterations "<<GetScale1NbIterations()<<")"<<std::endl;
 	BMSAutoSegMainFile<<"    	     set (command_line ${fWarpCmd} --outputImageFilenamePrefix=${WarpROIPath}${OutputFileHead} --outputHFieldFilenamePrefix=${DofOutWarpFile} --scaleLevel=4 --numberOfIterations=${Scale4NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=2 --numberOfIterations=${Scale2NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} --scaleLevel=1 --numberOfIterations=${Scale1NbIterations} --alpha=${Alpha} --beta=${Beta} --gamma=${Gamma} --maxPerturbation=${MaxPerturbation} ${SkullStrippedFile} ${AtlasAffRegCase})"<<std::endl;
-	BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
-	BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output})"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"            WriteFile(${ReportFile} ${output}'\\n')"<<std::endl<<std::endl;
 	BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${WarpROIPath}${OutputFileHead}2.mhd -constOper 2,1000 -outfile ${OutputFile})"<<std::endl;
-	BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	
 	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.mhd)"<<std::endl;
 	BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${OutputFileHead}2.raw)"<<std::endl;
@@ -4587,13 +4837,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Warping already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Warping already Done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
     
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('WARPING COMPUTATION: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'WARPING COMPUTATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
 
   bool IsStructureListEmpty = true;
@@ -4617,9 +4867,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   
-  BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('ROI TRANSFORMATION...')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'ROI TRANSFORMATION...\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
     
   BMSAutoSegMainFile<<"set (VentricleListLength 0)"<<std::endl;
 
@@ -4911,9 +5161,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
   BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
   BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-  BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-  BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegMainFile<<"      set (Case: ${T1CaseHead})"<<std::endl;  
   BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
 
@@ -4970,8 +5220,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         # Subcortical Structure Segmentation (except Lateral Ventricles)"<<std::endl;
     BMSAutoSegMainFile<<"         ForEach (Structure ${StructureList})"<<std::endl;  
     BMSAutoSegMainFile<<"           GetFilename(StructureName ${Structure} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"           echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"	          echo ('Registering '${StructureName}...)"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"	          AppendFile(${logOutFile} 'Registering '${StructureName}'...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           set (StructureAffTail ${Case}--${StructureName}-AffReg.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"           set (StructureWarpTail ${Case}--${StructureName}-WarpReg.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"           set (StructureWarpHead ${Case}--${StructureName}-WarpReg)"<<std::endl;
@@ -4979,7 +5229,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"	    set (StructureWarp ${WarpROIPath}${StructureWarpTail})"<<std::endl;
     BMSAutoSegMainFile<<"           # Applying Affine transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(AffFileList ${WarpROIPath} ${StructureAffTail})"<<std::endl;
-    BMSAutoSegMainFile<<"                echo (${AffFileList})"<<std::endl;
+    BMSAutoSegMainFile<<"                AppendFile(${logOutFile} ${AffFileList}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           If (${AffFileList} == '')"<<std::endl;
 
     //if (!GetBRAINSDemonWarpMethod())
@@ -4987,10 +5237,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       {
 	BMSAutoSegMainFile<<"              set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_initializetransform.txt)"<<std::endl; 
 	BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureAff} --transformationFile ${TransformInputFile} -i bs --Reference ${SkullStrippedFile})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       }
     BMSAutoSegMainFile<<"	          Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"              echo ('File already exists: '${StructureAffTail})"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'File already exists: '${StructureAffTail}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${AffFileList})"<<std::endl;
     BMSAutoSegMainFile<<"	    # Applying Warping transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(WarpFileList ${WarpROIPath} ${StructureWarpTail})"<<std::endl;
@@ -5001,30 +5255,54 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"              If (${IsHFieldFileZipped} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"                 # Unzipping HField File "<<std::endl;
       BMSAutoSegMainFile<<"                 set (command_line gunzip -f ${ZippedHFieldFile})"<<std::endl;
-      BMSAutoSegMainFile<<"                 Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"                 set(IsHFieldFileZipped 0)"<<std::endl;
       BMSAutoSegMainFile<<"              EndIf (${IsHFieldFileZipped})"<<std::endl;
 
       BMSAutoSegMainFile<<"                 set (command_line ${warpCmd} -a ${StructureAff} ${HFieldFile} ${StructureWarp} -linear)"<<std::endl;
-      BMSAutoSegMainFile<<"                 Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
     else if (GetBRAINSDemonWarpMethod())
     {
       BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Structure} ${StructureWarp} -H ${NrrdFile} -i linear --hfieldtype displacement --Reference ${SkullStrippedFile})"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      	 Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
     }
     else if (GetCoarseToFineWarpingMethod())
     {
       BMSAutoSegMainFile<<"              If (${IsRAWFieldFileZipped} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"	             # Unzipping deformation field"<<std::endl;
       BMSAutoSegMainFile<<"                  set (command_line gunzip ${ZippedRAWFieldFile})"<<std::endl;
-      BMSAutoSegMainFile<<"                  Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                  Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"                  set(IsRAWFieldFileZipped 0)"<<std::endl;
       BMSAutoSegMainFile<<"	         EndIf (${IsRAWFieldFileZipped})"<<std::endl;
       BMSAutoSegMainFile<<"              set (command_line ${txApplyCmd} -h ${MHDFieldFile} -b -i ${StructureAff} -o ${WarpROIPath}${StructureWarpHead})"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"              set (command_line ${convCmd} ${WarpROIPath}${StructureWarpHead}.mhd ${StructureWarp})"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"              Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"              DeleteFile (${WarpROIPath}${StructureWarpHead}.mhd)"<<std::endl;
       BMSAutoSegMainFile<<"              DeleteFile (${WarpROIPath}${StructureWarpHead}.raw)"<<std::endl;
     }
@@ -5032,24 +5310,32 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       {
 	BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
 	BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Structure} ${StructureWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-BSpline)"<<std::endl;
-	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-	BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
-	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	  AppendFile(${logOutFile} 'ANTS Error: '${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
 
   // Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
 	BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${StructureWarp} -constOper 2,1 -outfile ${StructureWarp})"<<std::endl;
- 	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-	BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
-	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	  AppendFile(${logOutFile} 'ImageMath Error: '${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
       }
 
     BMSAutoSegMainFile<<"              set(StructureComputed 1)"<<std::endl;
     BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"              echo ('File already exists: '${StructureWarpTail})"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'File already exists: '${StructureWarpTail}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"            EndIf (${WarpFileList})"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Registering '${StructureName}': DONE!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Registering '${StructureName}': DONE!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"         EndForEach(Structure)"<<std::endl<<std::endl;  
   }  
     
@@ -5061,8 +5347,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         set (LabelNumber 0)"<<std::endl;   
     BMSAutoSegMainFile<<"         ForEach (Label ${LabelList})"<<std::endl;  
     BMSAutoSegMainFile<<"           GetFilename(LabelName ${Label} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"           echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"	    echo ('Registering '${LabelName}...)"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"	    AppendFile(${logOutFile} 'Registering '${LabelName}'...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           Inc (${LabelNumber} 1)"<<std::endl;
     BMSAutoSegMainFile<<"	    Int(${LabelNumber})"<<std::endl;
   
@@ -5097,17 +5383,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     {
       BMSAutoSegMainFile<<"             set (TransformInputFile ${WarpROIPath}AtlasAffReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_initializetransform.txt)"<<std::endl; 
       BMSAutoSegMainFile<<"             set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelAff} --transformationFile ${TransformInputFile} -i nn --Reference ${SkullStrippedFile})"<<std::endl;
+      BMSAutoSegMainFile<<"             AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"             Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"             AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"             AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"             AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
     }
   
     BMSAutoSegMainFile<<"	    Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"             echo ('File already exists: '${LabelAffTail})"<<std::endl;
+    BMSAutoSegMainFile<<"             AppendFile(${logOutFile} 'File already exists: '${LabelAffTail}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${AffFileList})"<<std::endl;
 
     BMSAutoSegMainFile<<"           set (flag 0)"<<std::endl;	  
     BMSAutoSegMainFile<<"	    # Applying Warping transformation"<<std::endl;
     BMSAutoSegMainFile<<"           ListFileInDir(WarpFileList ${WarpROIPath} ${LabelWarpTail})"<<std::endl;
-    BMSAutoSegMainFile<<"           If (${WarpFileList} == '')"<<std::endl;	  
+    BMSAutoSegMainFile<<"           If (${WarpFileList} == '')"<<std::endl;
     BMSAutoSegMainFile<<"               set (flag 1)"<<std::endl;	  
 
     if (GetClassicWarpingMethod())
@@ -5115,30 +5405,54 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"              If (${IsHFieldFileZipped} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"                 # Unzipping HField File "<<std::endl;
       BMSAutoSegMainFile<<"                 set (command_line gunzip -f ${ZippedHFieldFile})"<<std::endl;
-      BMSAutoSegMainFile<<"                 Run (output $command_line)"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                 AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 
       BMSAutoSegMainFile<<"                 set(IsHFieldFileZipped 0)"<<std::endl;
       BMSAutoSegMainFile<<"              EndIf (${IsHFieldFileZipped})"<<std::endl;
       BMSAutoSegMainFile<<"              set (command_line ${warpCmd} -a ${LabelAff} ${HFieldFile} ${LabelWarp} -nearest)"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output $command_line)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
     else if (GetBRAINSDemonWarpMethod())
     {
       BMSAutoSegMainFile<<"              set (command_line ${ResampleVolume2Cmd} ${Label} ${LabelWarp} -H ${NrrdFile} -i nn --hfieldtype displacement --Reference ${SkullStrippedFile})"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      	   Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
     }
     else if (GetCoarseToFineWarpingMethod())
     {
       BMSAutoSegMainFile<<"              If (${IsRAWFieldFileZipped} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"	             # Unzipping deformation field"<<std::endl;
       BMSAutoSegMainFile<<"                  set (command_line gunzip ${ZippedRAWFieldFile})"<<std::endl;
-      BMSAutoSegMainFile<<"                  Run (output $command_line)"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                  Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"                  AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"                  set(IsRAWFieldFileZipped 0)"<<std::endl;
       BMSAutoSegMainFile<<"	         EndIf (${IsRAWFieldFileZipped})"<<std::endl;
       BMSAutoSegMainFile<<"              set (command_line ${txApplyCmd} -h ${MHDFieldFile} -b -i ${LabelAff} -o ${WarpROIPath}${LabelWarpHead} -n)"<<std::endl;
-      BMSAutoSegMainFile<<"              Run (output $command_line)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"           set (command_line ${convCmd} ${WarpROIPath}${LabelWarpHead}.mhd ${LabelWarp})"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"           Run (prog_output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${LabelWarpHead}.mhd)"<<std::endl;
       BMSAutoSegMainFile<<"           DeleteFile(${WarpROIPath}${LabelWarpHead}.raw)"<<std::endl;
     }
@@ -5146,17 +5460,26 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       {
 	BMSAutoSegMainFile<<"           set (AffineTransformFile ${WarpROIPath}AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}_Affine.txt)"<<std::endl; 
 	BMSAutoSegMainFile<<"           set (command_line ${WarpImageMultiTransformCmd} 3 ${Label} ${LabelWarp} -R ${SkullStrippedFile} ${DeformationField} ${AffineTransformFile} --use-NN)"<<std::endl;
-	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-	BMSAutoSegMainFile<<"      	  echo('ANTS Error: '${prog_error})"<<std::endl;
-	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+//	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+//  BMSAutoSegMainFile<<"      	  AppendFile(${logOutFile} 'ANTS Error: '${prog_error}'\\n')"<<std::endl;
+//  BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+//	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
 	
 	// Extra step to compress the nrrd images (not done automatically with WarpImageMultiTransform...)
 	BMSAutoSegMainFile<<"       set (command_line ${ImageMathCmd} ${LabelWarp} -constOper 2,1 -outfile ${LabelWarp})"<<std::endl;
-	BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;	
-	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
-	BMSAutoSegMainFile<<"      	  echo('ImageMath Error: '${prog_error})"<<std::endl;
-	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl; 
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"      	Run (prog_output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+//	BMSAutoSegMainFile<<"      	If(${prog_error} !=  '')"<<std::endl;
+//  BMSAutoSegMainFile<<"      	  AppendFile(${logOutFile} 'ImageMath Error: '${prog_error}'\\n')"<<std::endl;
+//	BMSAutoSegMainFile<<"      	EndIf(${prog_error})"<<std::endl;
       }
   
    
@@ -5167,9 +5490,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"                  set (ParcellationMapComputed 1)"<<std::endl; 
     BMSAutoSegMainFile<<"                EndIf (${LabelNumber})"<<std::endl; 
     BMSAutoSegMainFile<<"              EndIf (${LabelNumber})"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Registering '${LabelName}': DONE!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Registering '${LabelName}': DONE!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"              echo ('File already exists: '${LabelWarpTail})"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'File already exists: '${LabelWarpTail}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${WarpFileList})"<<std::endl;
     BMSAutoSegMainFile<<"         EndForEach(Label)"<<std::endl<<std::endl;
 
@@ -5197,16 +5520,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"           If (${IsHFieldFileZipped} == 0)"<<std::endl;  
     BMSAutoSegMainFile<<"              # Zipping HField File "<<std::endl;
     BMSAutoSegMainFile<<"              set (command_line gzip -f ${HFieldFile})"<<std::endl;
-    BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${IsHFieldFileZipped})"<<std::endl;
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Error:No Hfield File!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Error:No Hfield File!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${ZippedHFieldList})"<<std::endl;
   }
   else if (GetBRAINSDemonWarpMethod())
   {
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Error:No Nrrd File!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Error:No Nrrd File!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${NrrdList})"<<std::endl;
   }
   else if (GetCoarseToFineWarpingMethod())
@@ -5214,23 +5541,27 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"           If (${IsRAWFieldFileZipped} == 0)"<<std::endl;  
     BMSAutoSegMainFile<<"               # Zipping deformationfield File "<<std::endl;
     BMSAutoSegMainFile<<"               set (command_line gzip -f ${RAWFieldFile})"<<std::endl;
-    BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"           EndIf (${IsRAWFieldFileZipped})"<<std::endl;
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Error:No deformationfield file!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Error:No deformationfield file!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${MHDFieldList})"<<std::endl;
   }
   else if (GetANTSWarpingMethod())
     {
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Error:No Deformation file!')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Error:No Deformation file!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${DeformationFileList})"<<std::endl;
     }
     
   BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('ROI TRANSFORMATION DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'ROI TRANSFORMATION DONE!\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   
   if (!IsVentricleListEmpty)
   {
@@ -5246,21 +5577,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('LATERAL VENTRICULES COMPUTATION...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'LATERAL VENTRICULES COMPUTATION...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
   
     if (std::strlen(GetLateralVentricleRight()) != 0)
     {
-      BMSAutoSegMainFile<<"echo (Right Lateral Ventricle:)"<<std::endl;
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Right Lateral Ventricle:\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl; 
       BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList}) "<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;  
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
 	
       BMSAutoSegMainFile<<"      set (LatVentRightOutputTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}--${RightVentricleName}-WarpReg.nrrd)"<<std::endl;
@@ -5271,7 +5602,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set (coeff 128)"<<std::endl;
       BMSAutoSegMainFile<<"      ListFileInDir(LatVentRightOutputList ${WarpROIPath} ${LatVentRightOutputTail})"<<std::endl;
       BMSAutoSegMainFile<<"      If (${LatVentRightOutputList} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Masking CSF probabilistic map with the right ventricle segmentation...')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Masking CSF probabilistic map with the right ventricle segmentation...\\n')"<<std::endl;
 
       BMSAutoSegMainFile<<"         set (TmpFile ${WarpROIPath}tmp.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"         set (LatVentRight ${WarpROIPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}--${RightVentricleName}-WarpReg-BinMask.nrrd)"<<std::endl;
@@ -5302,15 +5633,23 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       }  
       
       BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${CSFProbMap} -mask ${LatVentRight} -outfile ${TmpFile})"<<std::endl;
-      BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         #And then rescale it to 256"<<std::endl;
 
       BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TmpFile} -constOper 3,${coeff} -outfile ${LatVentRightOutput})"<<std::endl;
-      BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         # Deleting temporary files"<<std::endl;
       BMSAutoSegMainFile<<"         DeleteFile (${TmpFile})"<<std::endl;  
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('File already exists: '${LatVentRightOutputTail})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'File already exists: '${LatVentRightOutputTail}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${LatVentRightOutputList})"<<std::endl;	 
       BMSAutoSegMainFile<<"      Inc (${CaseNumber} 1)"<<std::endl;	
       BMSAutoSegMainFile<<"      Int (${CaseNumber})"<<std::endl;	
@@ -5319,17 +5658,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     if (std::strlen(GetLateralVentricleLeft()) != 0)
     { 
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"echo ('Left Lateral Ventricle:')"<<std::endl;
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Left Lateral Ventricle:\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"set (CaseNumber 0)"<<std::endl; 
       BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList}) "<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl; 
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 	  
       BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
       BMSAutoSegMainFile<<"      set (LatVentLeftOutputTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}--${LeftVentricleName}-WarpReg.nrrd)"<<std::endl;
@@ -5340,7 +5679,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set (coeff 128)"<<std::endl;  
       BMSAutoSegMainFile<<"      ListFileInDir(LatVentLeftOutputList ${WarpROIPath} ${LatVentLeftOutputTail})"<<std::endl;
       BMSAutoSegMainFile<<"      If (${LatVentLeftOutputList} == '')"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('Masking CSF probabilistic map with the left ventricle segmentation...')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Masking CSF probabilistic map with the left ventricle segmentation...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         set (LatVentLeft ${WarpROIPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}--${LeftVentricleName}-WarpReg-BinMask.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"         set (TmpFile ${WarpROIPath}tmp.nrrd)"<<std::endl;  
   			
@@ -5370,22 +5709,30 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       }	  
 
       BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${CSFProbMap} -mask ${LatVentLeft} -outfile ${TmpFile})"<<std::endl;
-      BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         #And then rescale it to 256"<<std::endl;
 
       BMSAutoSegMainFile<<"         set (command_line ${ImageMathCmd} ${TmpFile} -constOper 3,${coeff} -outfile ${LatVentLeftOutput})"<<std::endl;
-      BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         DeleteFile (${TmpFile})"<<std::endl;  
       BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-      BMSAutoSegMainFile<<"         echo ('File already exists: '${LatVentLeftOutputTail})"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'File already exists: '${LatVentLeftOutputTail}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf (${LatVentLeftOutputList})"<<std::endl;  
       BMSAutoSegMainFile<<"      Inc (${CaseNumber} 1)"<<std::endl;	
       BMSAutoSegMainFile<<"      Int (${CaseNumber})"<<std::endl;	
       BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl; 
     }      
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('LATERAL VENTRICULES COMPUTATION: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'LATERAL VENTRICULES COMPUTATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }  
   
   if ( (!IsStructureListEmpty) || (!IsVentricleListEmpty) )
@@ -5402,9 +5749,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('PROBABILISTIC VOLUME THRESHOLDING...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'PROBABILISTIC VOLUME THRESHOLDING...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
     bool IsProbaListEmpty = true;
     if (!IsStructureListEmpty)
@@ -5432,9 +5779,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList})"<<std::endl;
     BMSAutoSegMainFile<<"   GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"   echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"   echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"   echo( )"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"   set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
     BMSAutoSegMainFile<<"   set (ProbaFileNumber 0)"<<std::endl;
     BMSAutoSegMainFile<<"   ForEach (ProbaFile ${ProbaList})"<<std::endl;
@@ -5442,7 +5789,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"     set(FileTail ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}--${ProbaFileName}-WarpReg.nrrd)"<<std::endl;
 
     BMSAutoSegMainFile<<"     ListFileInDir(FileList ${WarpROIPath} ${FileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"     If (${FileList} != '') "<<std::endl;     
+    BMSAutoSegMainFile<<"     If (${FileList} != '') "<<std::endl;
     BMSAutoSegMainFile<<"         GetFilename(FileHead ${FileTail} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"         set (File ${WarpROIPath}${FileTail})"<<std::endl;
 
@@ -5452,16 +5799,24 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"         ListFileInDir(OutputList ${WarpROIPath} ${OutputFileTail})"<<std::endl;
     BMSAutoSegMainFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegMainFile<<"            #Thresholding ${FileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"            echo ('Thresholding '${FileTail}...)"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'Thresholding '${FileTail}'...\\n')"<<std::endl;
     
     BMSAutoSegMainFile<<"            set (command_line ${ImageMathCmd} ${File} -threshold 127,256 -outfile ${OutputFile})"<<std::endl;
-    BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"            #Labeling ${OutputFileTail})"<<std::endl;
-    BMSAutoSegMainFile<<"            echo ('Labeling '${OutputFileTail}...)"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'Labeling '${OutputFileTail}'...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"            GetParam(LabelValue ${ProbaLabelList} ${ProbaFileNumber})"<<std::endl;
 
     BMSAutoSegMainFile<<"            set (command_line ${ImageMathCmd} ${OutputFile} -constOper 2,${LabelValue} -outfile ${OutputFile})"<<std::endl;
-    BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       
     if (std::strlen(GetLateralVentricleLeft()) != 0)
     {
@@ -5477,19 +5832,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
 
     BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
 	
     BMSAutoSegMainFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegMainFile<<"     Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"        echo ('Error:No Probabilistic File!')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} 'Error:No Probabilistic File!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"     EndIf (${FileList})"<<std::endl;
     BMSAutoSegMainFile<<"     Inc (${ProbaFileNumber} 1)"<<std::endl;	
     BMSAutoSegMainFile<<"     Int (${ProbaFileNumber})"<<std::endl;	  
     BMSAutoSegMainFile<<"   EndForEach(ProbaFile)"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('PROBABILISTIC VOLUME THRESHOLDING: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl; 
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'PROBABILISTIC VOLUME THRESHOLDING: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
    
   
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -5502,16 +5857,16 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
   
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('ROI GATHERING...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'ROI GATHERING...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
   
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList}) "<<std::endl;
     BMSAutoSegMainFile<<"   GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"   echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"   echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"   echo( )"<<std::endl; 	  
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"   set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
     BMSAutoSegMainFile<<"   set (AllROIFileTail AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}-AllROI.nrrd)"<<std::endl;
     BMSAutoSegMainFile<<"   set (AllROIFile ${WarpROIPath}${AllROIFileTail})"<<std::endl;
@@ -5525,11 +5880,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"               set (ROIFile ${WarpROIPath}${ROIFileTail})"<<std::endl;
     BMSAutoSegMainFile<<"               If (${FileNumber} == 1)"<<std::endl;
     BMSAutoSegMainFile<<"                  set (command_line cp ${ROIFile} ${AllROIFile})"<<std::endl;
-    BMSAutoSegMainFile<<"                  Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"                  Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"               Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"                  echo ('Adding '${ROIFileTail}...)"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} 'Adding '${ROIFileTail}'...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"                  set (command_line ${ImageMathCmd} ${AllROIFile} -combine ${ROIFile} -outfile ${AllROIFile})"<<std::endl;
-    BMSAutoSegMainFile<<"                  Run (output ${command_line})"<<std::endl;; 
+    BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"                  Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"                  AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"               EndIf (${FileNumber})"<<std::endl;
     BMSAutoSegMainFile<<"               Inc (${FileNumber} 1)"<<std::endl;
     BMSAutoSegMainFile<<"               Int (${FileNumber})"<<std::endl;
@@ -5540,12 +5903,12 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"   set (StripIrescaled ${T1Path}/${AutoSegDir}/Stripped/${StripIrescaledTail})"<<std::endl;
 
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('File already exists: '${AllROIFileTail})"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'File already exists: '${AllROIFileTail}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${AllROIList})"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('ROI GATHERING: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'ROI GATHERING: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   }
 
@@ -5559,16 +5922,16 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;  
 
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('CORTICAL THICKNESS COMPUTATION...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'CORTICAL THICKNESS COMPUTATION...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
   
     BMSAutoSegMainFile<<"ForEach (T1Case ${T1CasesList}) "<<std::endl;
     BMSAutoSegMainFile<<"   GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
     BMSAutoSegMainFile<<"   GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-    BMSAutoSegMainFile<<"   echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"   echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"   echo( )"<<std::endl; 	  
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
       
     BMSAutoSegMainFile<<"      # Creating CortThick Directory if necessary"<<std::endl;
     BMSAutoSegMainFile<<"      set (CortThickPath ${T1Path}/${AutoSegDir}/CortThick/)"<<std::endl;
@@ -5595,7 +5958,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      set(GMCortThickFile ${CortThickPath}${GMCortThickFileHead})"<<std::endl;
       
     BMSAutoSegMainFile<<"      ListFileInDir(OutputFileList ${CortThickPath} ${WMCortThickFileHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;  
+    BMSAutoSegMainFile<<"      If (${OutputFileList} == '')"<<std::endl;
 
     if (GetParcellationMapSegmentation())
     {
@@ -5606,32 +5969,49 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  
 
       BMSAutoSegMainFile<<"            set (command_line ${CortThickCLPCmd} ${CortThickPath} --inputSeg ${SegmentedCase} --par ${ParcellationFile} --SaveWM ${WMCortThickFile} --SaveGM ${GMCortThickFile})"<<std::endl;
-      BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  
       BMSAutoSegMainFile<<"            set (OutputCSVFile ${CortThickPath}${SegmentedCaseHead}-WhiteMatDistanceMap_par.csv)"<<std::endl;
       BMSAutoSegMainFile<<"            set (OutputArrayCSVFile ${CortThickPath}${SegmentedCaseHead}-WhiteMatDistanceMap_par_array.csv)"<<std::endl;
       BMSAutoSegMainFile<<"            set (NewOutputCSVFile ${CortThickPath}${SegmentedCaseHead}--${ParcellationMapName}-WhiteMatDistanceMap_par.csv)"<<std::endl;
       BMSAutoSegMainFile<<"            set (NewOutputArrayCSVFile ${CortThickPath}${SegmentedCaseHead}--${ParcellationMapName}-WhiteMatDistanceMap_par_array.csv)"<<std::endl;
       BMSAutoSegMainFile<<"            set (command_line mv ${OutputCSVFile} ${NewOutputCSVFile})"<<std::endl;
-      BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+
       BMSAutoSegMainFile<<"            set (command_line mv ${OutputArrayCSVFile} ${NewOutputArrayCSVFile})"<<std::endl;
-      BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 
       BMSAutoSegMainFile<<"         EndForEach(ParcellationMap)"<<std::endl;
     }
     else
     {
       BMSAutoSegMainFile<<"            set (command_line ${CortThickCLPCmd} ${CortThickPath} --inputSeg ${SegmentedCase} --SaveWM ${WMCortThickFile} --SaveGM ${GMCortThickFile})"<<std::endl;  
-      BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
 
     BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-    BMSAutoSegMainFile<<"         echo ('Cortical Thickness already Done!')"<<std::endl;
+    BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Cortical Thickness already Done!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf (${OutputFileList})"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('CORTICAL THICKNESS COMPUTATION: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'CORTICAL THICKNESS COMPUTATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
     
   if (GetMultiAtlasSegmentation()) {
@@ -5643,9 +6023,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
         BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;  
 
-        BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-        BMSAutoSegMainFile<<"echo ('MULTI-ATLAS SEGMENTATION...')"<<std::endl;
-        BMSAutoSegMainFile<<"echo ( )"<<std::endl;
+        BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'MULTI-ATLAS SEGMENTATION...\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
  
         BMSAutoSegMainFile<<"set (ANTSCCWeight "<<GetANTSCCWeight()<<")"<<std::endl;
         BMSAutoSegMainFile<<"set (ANTSCCRegionRadius "<<GetANTSCCRegionRadius()<<")"<<std::endl;
@@ -5698,7 +6078,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
         BMSAutoSegMainFile<<"GetFilename (TargetCasePath ${TargetCaseFile} PATH)"<<std::endl;
         BMSAutoSegMainFile<<"set (TargetPath "<< targetDirectory.c_str()<<"/${AutoSegDir}/Stripped/)"<<std::endl;
-        BMSAutoSegMainFile<<"echo('Target Case Path: '${TargetCasePath} )"<<std::endl;
+        BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Target Case Path: '${TargetCasePath}'\\n' )"<<std::endl;
         BMSAutoSegMainFile<<"set (SuffixStrippedNRRD -stripped.nrrd)"<<std::endl;
         BMSAutoSegMainFile<<"set (PrefixMultiAtlas Rescaled_)"<<std::endl;
 
@@ -5712,22 +6092,30 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             BMSAutoSegMainFile<<"set (MultiAtlasT2TargetFile ${MultiAtlasT2TargetList})"<<std::endl;
             BMSAutoSegMainFile<<"set (MultiAtlasTargetHead ${TargetPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected})"<<std::endl;
 	    
-            BMSAutoSegMainFile<<"echo('MULTIATLAS TARGET FILES:  '${MultiAtlasTargetFile} ' ' ${MultiAtlasT2TargetList})"<<std::endl;
+            BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'MULTIATLAS TARGET FILES:  '${MultiAtlasTargetFile} ' ' ${MultiAtlasT2TargetList}'\\n')"<<std::endl;
 
             BMSAutoSegMainFile<<"ListFileInDir(RescaleOutputFileList ${TargetPath} ${PrefixMultiAtlas}${MultiAtlasTargetFile})"<<std::endl;
             BMSAutoSegMainFile<<"If (${RescaleOutputFileList} == '')"<<std::endl;
             BMSAutoSegMainFile<<"  set (command_line ${ImageMathCmd} ${TargetPath}${MultiAtlasTargetFile} -rescale 0,8192 -outfile ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile})"<<std::endl; 
-	    BMSAutoSegMainFile<<"  Run (output ${command_line})"<<std::endl;
+            BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+            BMSAutoSegMainFile<<"  Run (output ${command_line} error)"<<std::endl;
+            BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+            BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+            BMSAutoSegMainFile<<"  AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
             BMSAutoSegMainFile<<"Else ()"<<std::endl;
-            BMSAutoSegMainFile<<"  echo ('Rescaling T1 already Done!')"<<std::endl;
+            BMSAutoSegMainFile<<"  AppendFile(${logOutFile} 'Rescaling T1 already Done!\\n')"<<std::endl;
             BMSAutoSegMainFile<<"EndIf (${RescaleOutputFileList})"<<std::endl;
 
             BMSAutoSegMainFile<<"ListFileInDir(RescaleOutputFileList ${TargetPath} ${PrefixMultiAtlas}${MultiAtlasT2TargetFile})"<<std::endl;
             BMSAutoSegMainFile<<"If (${RescaleOutputFileList} == '')"<<std::endl;
             BMSAutoSegMainFile<<"  set (command_line ${ImageMathCmd} ${TargetPath}${MultiAtlasT2TargetFile} -rescale 0,8192 -outfile ${TargetPath}${PrefixMultiAtlas}${MultiAtlasT2TargetFile})"<<std::endl;
-	    BMSAutoSegMainFile<<"  Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"  Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
             BMSAutoSegMainFile<<"Else ()"<<std::endl;
-            BMSAutoSegMainFile<<"  echo ('Rescaling T2 already Done!')"<<std::endl;
+            BMSAutoSegMainFile<<"  AppendFile(${logOutFile} 'Rescaling T2 already Done!\\n')"<<std::endl;
             BMSAutoSegMainFile<<"EndIf (${RescaleOutputFileList})"<<std::endl;
             
         }
@@ -5736,13 +6124,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
             BMSAutoSegMainFile<<"      ListFileInDir(MultiAtlasTargetList ${TargetPath} ${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}${SuffixStrippedNRRD})"<<std::endl;
             BMSAutoSegMainFile<<"      set (MultiAtlasTargetFile ${MultiAtlasTargetList})"<<std::endl;
             BMSAutoSegMainFile<<"set (MultiAtlasTargetHead ${TargetPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected})"<<std::endl;
-            BMSAutoSegMainFile<<"      echo('MULTIATLAS TARGET FILE:  '${MultiAtlasTargetFile} )"<<std::endl;
+            BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'MULTIATLAS TARGET FILE:  '${MultiAtlasTargetFile}'\\n' )"<<std::endl;
             BMSAutoSegMainFile<<"      ListFileInDir(RescaleOutputFileList ${TargetPath} ${PrefixMultiAtlas}${MultiAtlasTargetFile})"<<std::endl;
-            BMSAutoSegMainFile<<"      If (${RescaleOutputFileList} == '')"<<std::endl;  
+            BMSAutoSegMainFile<<"      If (${RescaleOutputFileList} == '')"<<std::endl;
             BMSAutoSegMainFile<<"        set (command_line ${ImageMathCmd} ${TargetPath}${MultiAtlasTargetFile} -rescale 0,8192 -outfile ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile})"<<std::endl; 
-	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
             BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-            BMSAutoSegMainFile<<"         echo ('Rescaling already Done!')"<<std::endl;
+            BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'Rescaling already Done!\\n')"<<std::endl;
             BMSAutoSegMainFile<<"      EndIf (${RescaleOutputFileList})"<<std::endl;
         }
 
@@ -5753,7 +6145,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"      EndIf (${FolderList})"<<std::endl;
 
         BMSAutoSegMainFile<<"      set (DeformationFieldDir "<<targetDirectory.c_str()<<"${AutoSegDir}/displacement_field/)"<<std::endl;
-        BMSAutoSegMainFile<<"      echo('Deformation Case Path: '${DeformationFieldDir} )"<<std::endl;
+        BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Deformation Case Path: '${DeformationFieldDir}'\\n' )"<<std::endl;
 
         BMSAutoSegMainFile<<"      ListDirInDir (FolderList "<<targetDirectory.c_str()<<"${AutoSegDir} warped-atlas-images)"<<std::endl;
         BMSAutoSegMainFile<<"      If (${FolderList} == '')"<<std::endl;
@@ -5821,7 +6213,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
         //set up atlas case ID list 
         BMSAutoSegMainFile<<"Set(AtlasHead 'atlas_')"<<std::endl;
-        BMSAutoSegMainFile<<"echo('atlas head: ' ${AtlasHead})"<<std::endl; 
+        BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'atlas head: ' ${AtlasHead}'\\n')"<<std::endl;
 
 	std::string tmpAtlasCaseIDFilename;
 	std::string tmpAtlasCaseExtension = itksys::SystemTools::GetFilenameExtension(m_AtlasList[0]);
@@ -5854,10 +6246,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         }
 
         //set up gray-level atlas image list
-        BMSAutoSegMainFile<<"   echo('atlas directory: ' ${MultiAtlasDir})"<<std::endl; 	  
-        BMSAutoSegMainFile<<"   echo('atlas list: ' ${AtlasList})"<<std::endl; 	  
-        BMSAutoSegMainFile<<"   echo('atlas extension: ' ${AtlasCaseExtension})"<<std::endl; 	  
-        BMSAutoSegMainFile<<"   echo('atlas case ID list: ' ${AtlasCaseIDList})"<<std::endl; 	  
+        BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'atlas directory: ' ${MultiAtlasDir}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'atlas list: ' ${AtlasList}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'atlas extension: ' ${AtlasCaseExtension}'\\n')"<<std::endl;
+        BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'atlas case ID list: ' ${AtlasCaseIDList}'\\n')"<<std::endl;
 
         //set up atlas label list
 	std::string tmpAtlasLabelExt = itksys::SystemTools::GetFilenameExtension(m_AtlasLabelList[0]);
@@ -5875,7 +6267,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	//    tmpAtlasLabelFilename = tmpAtlasLabelName.substr(0, sizeOfFilename - 1); // remove dot
         //    BMSAutoSegMainFile<<"   set (AtlasLabelList ${AtlasLabelList} "<<tmpAtlasLabelFilename.c_str()<<")"<<std::endl;
 	//}
-        //BMSAutoSegMainFile<<"   echo('label list: ' ${AtlasLabelList})"<<std::endl; 	  
+        //BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'label list: ' ${AtlasLabelList}'\\n')"<<std::endl;
 
         //set up target list 
 
@@ -5990,22 +6382,42 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
 	  }
 	BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
-	BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; // calculate intensity energy
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl; // calculate intensity energy
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"      EndIf (${DisplacementExistList})"<<std::endl;
-	//BMSAutoSegMainFile<<"echo('atlas warp: ' ${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl;
+  //BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'atlas warp: ' ${WarpedCase}x${WarpedCaseForTarget}'Warped.nii.gz\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"ListFileInDir(WarpedAtlasExistList ${WarpedAtlasTrainToTrainDir} ${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl;
-	BMSAutoSegMainFile<<"If (${WarpedAtlasExistList} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"If (${WarpedAtlasExistList} == '')"<<std::endl;
 	if (GetMultiModalityMultiSegmentation()){ 
 	  BMSAutoSegMainFile<<"set (command_line WarpImageMultiTransform 3 ${MultiAtlasDir}atlas_image/${WarpedCase}_t1w${AtlasCaseExtension} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -R ${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}_t1w${AtlasCaseExtension} ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalAffine.txt --use-BSpline)"<<std::endl; 
-	  BMSAutoSegMainFile<<"Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"set (command_line ${ImageMathCmd} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -rescale 0,8192 -outfile ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl; 
-	  BMSAutoSegMainFile<<"Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	}
 	else{
 	  BMSAutoSegMainFile<<"set (command_line WarpImageMultiTransform 3 ${MultiAtlasDir}atlas_image/${WarpedCase}${AtlasCaseExtension} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -R ${MultiAtlasDir}atlas_image/${WarpedCaseForTarget}${AtlasCaseExtension} ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalWarp.nii.gz ${DeformationFieldTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}TotalAffine.txt --use-BSpline)"<<std::endl;  
-	  BMSAutoSegMainFile<<"Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"set (command_line ${ImageMathCmd} ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz -rescale 0,8192 -outfile ${WarpedAtlasTrainToTrainDir}${WarpedCase}x${WarpedCaseForTarget}Warped.nii.gz)"<<std::endl;  
-	  BMSAutoSegMainFile<<"Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	}
 	BMSAutoSegMainFile<<"      EndIf (${WarpedAtlasExistList})"<<std::endl;
 	BMSAutoSegMainFile<<"      EndIf (${WarpedCase})"<<std::endl;
@@ -6015,7 +6427,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         // ANTS registration target-atlas
         BMSAutoSegMainFile<<"set (Path ${DisplacementFieldDirectory})"<<std::endl;
         BMSAutoSegMainFile<<"ListFileInDir(ANTSOutputDisplacementFieldList ${Path})"<<std::endl;
-        BMSAutoSegMainFile<<"   echo('atlas-atlas displacement directory; ' ${Path})"<<std::endl; 	  
+        BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'atlas-atlas displacement directory; ' ${Path}'\\n')"<<std::endl;
 
         BMSAutoSegMainFile<<"set (WarpCmd WarpImageMultiTransform)"<<std::endl;
         BMSAutoSegMainFile<<"ForEach (AtlasCase ${AtlasCaseIDList}) "<<std::endl;
@@ -6025,7 +6437,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"    	set (FileExist 1)"<<std::endl;
         BMSAutoSegMainFile<<"    	set (FileExistFlag 0)"<<std::endl;
         BMSAutoSegMainFile<<"   ListFileInDir(WarpedFileExistList ${DisplacementFieldDirectory} ${outputfilenameForCheck})"<<std::endl;
-        //BMSAutoSegMainFile<<"   echo(${DisplacementFieldDirectory} ${outputfilenameForCheck})"<<std::endl;
+        //BMSAutoSegMainFile<<"   AppendFile(${logOutFile} ${DisplacementFieldDirectory} ${outputfilenameForCheck}'\\n')"<<std::endl;
         BMSAutoSegMainFile<<"   If (${WarpedFileExistList} == '')"<<std::endl;
 	if (GetMultiModalityMultiSegmentation()) {
 	  BMSAutoSegMainFile<<"    set (command_line ${ANTSCmd} 3)"<<std::endl;
@@ -6083,7 +6495,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	      BMSAutoSegMainFile<<"    	set (command_line ${command_line} -r Gauss[0,${ANTSGaussianSigma}])"<<std::endl;
 	  }
 	BMSAutoSegMainFile<<"    	set (command_line ${command_line} --use-all-metrics-for-convergence)"<<std::endl;
-	BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; // calculate intensity energy
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl; // calculate intensity energy
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
         BMSAutoSegMainFile<<"      EndIf (${WarpedFileExistList})"<<std::endl;
         BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
         
@@ -6104,16 +6520,33 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	if (GetMultiModalityMultiSegmentation()) {
 	  
 	  BMSAutoSegMainFile<<"    	set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/atlas_${AtlasCase}_t1w${AtlasCaseExtension} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -R ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"    	Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    	Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  
 	  BMSAutoSegMainFile<<"    	set (command_line ${ImageMathCmd} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -rescale 0,8192 -outfile ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz)"<<std::endl;  
-	  BMSAutoSegMainFile<<"    	Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    	Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+
 	}
 	else {
 	  BMSAutoSegMainFile<<"      set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/atlas_${AtlasCase}${AtlasCaseExtension} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -R ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"      set (command_line ${ImageMathCmd} ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz -rescale 0,8192 -outfile ${WarpedAtlasDir}atlas_${AtlasCase}_warped.nii.gz)"<<std::endl; 
-	  BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	}
 	BMSAutoSegMainFile<<"      EndIf (${WarpedFileExistList})"<<std::endl;
         BMSAutoSegMainFile<<"EndForEach (AtlasCase)"<<std::endl;
@@ -6137,7 +6570,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	
 	BMSAutoSegMainFile<<"     If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
 	BMSAutoSegMainFile<<"       set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/label_${AtlasCase}${AtlasLabelExtension} ${WarpedLabelDir}label_${AtlasCase}_warped.nii.gz -R ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt --use-NN)"<<std::endl;
-	BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"     EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
 	BMSAutoSegMainFile<<"   EndIf (${WarpedFileExistList})"<<std::endl;
 	
@@ -6155,7 +6592,11 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	
 	BMSAutoSegMainFile<<"     If (${OriginalAtlasImageExistFlag} == ${FileExist})"<<std::endl;
 	BMSAutoSegMainFile<<"       set (command_line ${WarpCmd} 3 ${MultiAtlasDir}atlas_image/parcellation_${AtlasCase}${AtlasCaseExtension} ${WarpedParcellationDir}parcellation_${AtlasCase}_warped.nii.gz -R ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile} ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalWarp.nii.gz ${DeformationFieldDir}atlas_${AtlasCase}x${TargetList}TotalAffine.txt --use-NN)"<<std::endl;
-	BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"     EndIf (${OriginalAtlasImageExistFlag})"<<std::endl;
 	BMSAutoSegMainFile<<"   EndIf (${WarpedFileExistList})"<<std::endl;
 
@@ -6171,30 +6612,54 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  if (GetRecalculateAtlasTargetMultiAtlasEnergy()){
             BMSAutoSegMainFile<<"      ForEach (AtlasCase ${AtlasList}) "<<std::endl;
 	    BMSAutoSegMainFile<<"    	 set (command_line rm ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
             BMSAutoSegMainFile<<"      EndForEach (AtlasCase)"<<std::endl;
             BMSAutoSegMainFile<<"      ForEach (AtlasCase ${AtlasList}) "<<std::endl;
 	    BMSAutoSegMainFile<<"    	 set (command_line rm ${HarmonicEnergyDir}${AtlasCase}HarmonicEnergy.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
             BMSAutoSegMainFile<<"      EndForEach (AtlasCase)"<<std::endl;
             BMSAutoSegMainFile<<"      set (command_line rm ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
             BMSAutoSegMainFile<<"      set (command_line rm ${IntEnergyDir}IntensityEnergyNormalized.txt)"<<std::endl;
-            BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl;
+            BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+            BMSAutoSegMainFile<<"      Run (output ${command_line} errpr)"<<std::endl;
+            BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+            BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+            BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  }
 
 	  // Calculate energy atlas-atlas intensity
 	  BMSAutoSegMainFile<<"    ForEach (AtlasCase ${AtlasList}) "<<std::endl;
 	  BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${IntEnergyDir} ${AtlasCase}IntensityEnergy.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        ForEach (IntEnergyCaseTrainToTrain ${AtlasList}) "<<std::endl;
 	  BMSAutoSegMainFile<<"          If (${IntEnergyCaseTrainToTrain} != ${AtlasCase})"<<std::endl;
 	  if (GetMultiModalityMultiSegmentation()) {
 	    BMSAutoSegMainFile<<"          set (command_line ${MultiAtlasSegCmd} -p ${WarpedAtlasTrainToTrainDir}${IntEnergyCaseTrainToTrain}x${AtlasCase}Warped.nii.gz ${MultiAtlasDir}atlas_image/${AtlasCase}_t1w${AtlasCaseExtension} ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	    BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  } else {
 	    BMSAutoSegMainFile<<"          set (command_line ${MultiAtlasSegCmd} -p ${WarpedAtlasTrainToTrainDir}${IntEnergyCaseTrainToTrain}x${AtlasCase}Warped.nii.gz ${MultiAtlasDir}atlas_image/${AtlasCase}${AtlasCaseExtension} ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	    BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  }
 	  BMSAutoSegMainFile<<"          EndIf (${IntEnergyCaseTrainToTrain})"<<std::endl;
 	  BMSAutoSegMainFile<<"        EndForEach (IntEnergyCaseTrainToTrain)"<<std::endl;
@@ -6206,15 +6671,23 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  // Calculate energy atlas-atlas harmonic
 	  BMSAutoSegMainFile<<"   ForEach (TargetCase ${AtlasList}) "<<std::endl;
 	  BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${HarmonicEnergyDir} ${TargetCase}HarmonicEnergy.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        ForEach (AtlasCase ${AtlasList}) "<<std::endl;
 	  BMSAutoSegMainFile<<"          If (${AtlasCase} != ${TargetCase})"<<std::endl;
 	  if (GetMultiModalityMultiSegmentation()) {
 	    BMSAutoSegMainFile<<"          set (command_line ${MultiAtlasSegCmd} -e ${DeformationFieldTrainToTrainDir}${TargetCase}x${AtlasCase}TotalWarp.nii.gz ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	    BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  } else {
 	    BMSAutoSegMainFile<<"          set (command_line ${MultiAtlasSegCmd} -e ${DeformationFieldTrainToTrainDir}${TargetCase}x${AtlasCase}TotalWarp.nii.gz ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	    BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  }
 	  BMSAutoSegMainFile<<"          EndIf (${AtlaseCase})"<<std::endl;
 	  BMSAutoSegMainFile<<"        EndForEach (AtlasCase)"<<std::endl;
@@ -6223,98 +6696,154 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  
 	  if (GetRecalculateAtlasTargetMultiAtlasEnergy()){
 	    BMSAutoSegMainFile<<"    set (command_line rm ${IntEnergyDir}intensityEnergy.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"    Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	    
 	    BMSAutoSegMainFile<<"    set (command_line rm ${HarmonicEnergyDir}harmonicEnergy.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"    Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"    set (command_line rm ${TemplateDir}${TargetList}template.txt)"<<std::endl;
-	    BMSAutoSegMainFile<<"    Run (output ${command_line})"<<std::endl; // calculate intensity energy
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    Run (output ${command_line} error)"<<std::endl; // calculate intensity energy
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  }
 	  
 	  // Calculate energy atlas-target intensity
 	  BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${IntEnergyDir} intensityEnergy.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        ForEach (IntEnergyCase ${AtlasCaseIDList}) "<<std::endl;
 	  BMSAutoSegMainFile<<"          set (command_line ${MultiAtlasSegCmd} -p ${TargetPath}${PrefixMultiAtlas}${MultiAtlasTargetFile} ${WarpedAtlasDir}atlas_${IntEnergyCase}_warped.nii.gz ${IntEnergyDir}intensityEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"        EndForEach (IntEnergyCase)"<<std::endl;
 	  BMSAutoSegMainFile<<"      EndIf (${EnergyList})"<<std::endl;
 	  
 	  // normalize energy atlas-atlas intensity; 
 	  BMSAutoSegMainFile<<"    ListFileInDir(EnergyList ${IntEnergyDir} IntensityEnergyNormalized.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"    If (${EnergyList} == '')"<<std::endl; 
+    BMSAutoSegMainFile<<"    If (${EnergyList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        ForEach (AtlasCase ${AtlasList}) "<<std::endl;
 	  
 	  BMSAutoSegMainFile<<"          set (command_line ${MultiAtlasSegCmd} -n ${IntEnergyDir}${AtlasCase}IntensityEnergy.txt  ${IntEnergyDir}IntensityEnergyNormalized.txt ${NumberAtlas} ${NumberCase})"<<std::endl;
  
-	  BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"        EndForEach (AtlasCase)"<<std::endl;
 	  BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -n ${IntEnergyDir}intensityEnergy.txt  ${IntEnergyDir}IntensityEnergyNormalized.txt ${NumberAtlas} ${NumberCase})"<<std::endl;
  
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"    EndIf (${EnergyList})"<<std::endl;
 	  
 	  // Calculate energy  harmonic
 	  BMSAutoSegMainFile<<"      ListFileInDir(EnergyList ${HarmonicEnergyDir} harmonicEnergy.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${EnergyList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        ForEach (HarmonicEnergyCase ${AtlasCaseIDList}) "<<std::endl;
 	  BMSAutoSegMainFile<<"          set (command_line ${MultiAtlasSegCmd} -e ${DeformationFieldDir}atlas_${HarmonicEnergyCase}x${TargetCaseIDList}TotalWarp.nii.gz ${HarmonicEnergyDir}harmonicEnergy.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"          Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"          AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"        EndForEach (HarmonicEnergyCase)"<<std::endl;
 	  BMSAutoSegMainFile<<"      EndIf (${EnergyList})"<<std::endl;
 	  
 	  // normalize energy  harmonic; 
 	  BMSAutoSegMainFile<<"    ListFileInDir(EnergyList ${HarmonicEnergyDir} HarmonicEnergyNormalized.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"    If (${EnergyList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"    If (${EnergyList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"      ForEach (TargetCase ${AtlasList}) "<<std::endl;
 	  BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -n ${HarmonicEnergyDir}${TargetCase}HarmonicEnergy.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"      EndForEach (TargetCase)"<<std::endl;
 	  BMSAutoSegMainFile<<"      set (command_line ${MultiAtlasSegCmd} -n ${HarmonicEnergyDir}harmonicEnergy.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"    EndIf (${EnergyList})"<<std::endl;
 	  
 	  // Template selection
 	  BMSAutoSegMainFile<<"      ListFileInDir(TemplateList ${TemplateDir} ${TargetList}template.txt)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${TemplateList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${TemplateList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -g ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"      EndIf (${TemplateList})"<<std::endl;
 	}
           
 	// Label Fusion
 	if (!strcmp(GetLabelFusionAlgorithm(), "Weighted Majority Voting")) {
 	  BMSAutoSegMainFile<<"      ListFileInDir(FusionList ${FusedLabelDir} ${TargetList}_label.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -v ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedLabelDir} ${FusedLabelDir} ${TargetList}_label.nrrd label ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-	  BMSAutoSegMainFile<<"        echo ('File already exists: '${TargetList}_label.nrrd)"<<std::endl; 
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} 'File already exists: '${TargetList}'_label.nrrd\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"      EndIf (${FusionList})"<<std::endl;
 	  
 	  if (GetNbAtlasParcellation() > 0 ) {
 	    BMSAutoSegMainFile<<"      ListFileInDir(FusionList ${FusedLabelDir} ${TargetList}_parcellation.nrrd)"<<std::endl;
-	    BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
 	    BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -v ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedParcellationDir} ${FusedLabelDir} ${TargetList}_parcellation.nrrd parce ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"      EndIf (${FusionList})"<<std::endl;
 	  }
 	}
 
 	if (!strcmp(GetLabelFusionAlgorithm(), "Majority Voting")) {
 	  BMSAutoSegMainFile<<"      ListFileInDir(FusionList ${FusedLabelDir} ${TargetList}_label.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -m ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedLabelDir} ${FusedLabelDir} ${TargetList}_label.nrrd label ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase})"<<std::endl; 
-	  BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"      Else ()"<<std::endl;
-	  BMSAutoSegMainFile<<"        echo ('File already exists: '${TargetList}_label.nrrd)"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} 'File already exists: '${TargetList}'_label.nrrd\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"      EndIf (${FusionList})"<<std::endl;
 
 	  if (GetNbAtlasParcellation() > 0 ) {
 	    BMSAutoSegMainFile<<"      ListFileInDir(FusionList ${FusedLabelDir} ${TargetList}_parcellation.nrrd)"<<std::endl;
-	    BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"      If (${FusionList} == '')"<<std::endl;
 	    BMSAutoSegMainFile<<"        set (command_line ${MultiAtlasSegCmd} -m ${IntEnergyDir}IntensityEnergyNormalized.txt ${HarmonicEnergyDir}HarmonicEnergyNormalized.txt ${TemplateDir}${TargetList}template.txt ${WarpedParcellationDir} ${FusedLabelDir} ${TargetList}_parcellation.nrrd parce ${WeightIntensityEnergy} ${WeightHarmonicEnergy} ${WeightShapeEnergy} ${NumberAtlas} ${NumberCase})"<<std::endl;
-	    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"      EndIf (${FusionList})"<<std::endl; 
 	  }
 	}
@@ -6332,10 +6861,10 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;
     BMSAutoSegMainFile<<"#---------------------------------------------------------------------"<<std::endl;  
-    BMSAutoSegMainFile<<"echo (*************************************************)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('VOLUME COMPUTATION...')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'VOLUME COMPUTATION...\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
       
     BMSAutoSegMainFile<<"set (VolumeDir ${ProcessingDir}AutoSeg_Volume/)"<<std::endl;
     BMSAutoSegMainFile<<"ListDirInDir(VolumeDirList ${ProcessingDir} AutoSeg_Volume)"<<std::endl;
@@ -6343,7 +6872,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"  MakeDirectory(${VolumeDir})"<<std::endl;
     BMSAutoSegMainFile<<"EndIf (${VolumeDirList})"<<std::endl;    
 
-    BMSAutoSegMainFile<<"echo ('Tissue segmentation volume analysis:')"<<std::endl;  
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Tissue segmentation volume analysis:\\n')"<<std::endl;
     BMSAutoSegMainFile<<"set (VolumeFile ${VolumeDir}AutoSeg_TissueSegmentationVolume.csv)"<<std::endl;  
     BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFile} PATH)"<<std::endl; 
     BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFile} NAME)"<<std::endl;
@@ -6366,7 +6895,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 	  tissueClassString = tissueClassString + std::string(",") + std::string(classIDstring);
 	}
-	tissueClassString = tissueClassString + std::string("\\n')");
+  tissueClassString = tissueClassString + std::string("\\n')");
 	BMSAutoSegMainFile<<"AppendFile(${VolumeFile} " << tissueClassString <<std::endl;
       }
 
@@ -6387,9 +6916,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      set (MultiAtlasTargetHead ${TargetPath}${T1CaseHead}_label)"<<std::endl;
     }
 
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-    BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-    BMSAutoSegMainFile<<"      echo( )"<<std::endl;	  
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegMainFile<<"      set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
 
     if(GetLoop() && std::strcmp(GetEMSoftware(), "neoseg") != 0)
@@ -6409,13 +6938,17 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     }
     BMSAutoSegMainFile<<"      GetFilename (SegmentedFileHead ${SegmentedFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegMainFile<<"      #Computing Statistics"<<std::endl;
-    BMSAutoSegMainFile<<"      echo ('Computing Volume information...')"<<std::endl;
+    BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Computing Volume information...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      set (CSVFile ${EMSPath}${SegmentedFileHead}_volumeSummary.csv)"<<std::endl;
     BMSAutoSegMainFile<<"      ListFileInDir(FileList ${EMSPath} ${SegmentedFileHead}_volumeSummary.csv)"<<std::endl;
     BMSAutoSegMainFile<<"      If (${FileList} == '')"<<std::endl;
     
     BMSAutoSegMainFile<<"        set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${SegmentedFile} -volumeSummary  -outbase ${EMSPath}${SegmentedFileHead})"<<std::endl;
-    BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"      EndIf(${FileList})"<<std::endl<<std::endl<<std::endl;
     BMSAutoSegMainFile<<"      If (${files_to_cat} == '')"<<std::endl;
     BMSAutoSegMainFile<<"         set (files_to_cat ${CSVFile})"<<std::endl;
@@ -6426,14 +6959,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
     BMSAutoSegMainFile<<"      Inc(${CaseNumber} 1)"<<std::endl;
     BMSAutoSegMainFile<<"      Int(${CaseNumber})"<<std::endl;
     BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('Gathering tissue volume information for the whole dataset...')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Gathering tissue volume information for the whole dataset...\\n')"<<std::endl;
     BMSAutoSegMainFile<<"If (${files_to_cat} == '')"<<std::endl;
-    BMSAutoSegMainFile<<"     echo ('no volume files!!')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} 'no volume files!!\\n')"<<std::endl;
     BMSAutoSegMainFile<<"Else (${files_to_cat})"<<std::endl;
     BMSAutoSegMainFile<<"     set (command_line cat ${files_to_cat})"<<std::endl;
-    BMSAutoSegMainFile<<"     Run (output ${command_line})"<<std::endl; 
-    BMSAutoSegMainFile<<"     AppendFile(${VolumeFile} ${output})"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"     Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"     AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+
+    BMSAutoSegMainFile<<"     AppendFile(${VolumeFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"EndIf(${files_to_cat})"<<std::endl<<std::endl<<std::endl;	  
     
       
@@ -6453,9 +6991,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	IsListEmpty = false;	
       }
 	  
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"echo ('Subcortical Structures volume analysis:')"<<std::endl;  
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Subcortical Structures volume analysis:\\n')"<<std::endl;
       BMSAutoSegMainFile<<"set (VolumeFile ${VolumeDir}AutoSeg_SubcorticalStructureVolume.csv)"<<std::endl;  
       BMSAutoSegMainFile<<"GetFileName(Path ${VolumeFile} PATH)"<<std::endl; 
       BMSAutoSegMainFile<<"GetFileName(VolumeFileTail ${VolumeFile} NAME)"<<std::endl;
@@ -6472,22 +7010,26 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"   ForEach (T1Case ${T1CasesList})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"      set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
       BMSAutoSegMainFile<<"      set (AllROIFileTail AtlasWarpReg-${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}${IRescaled}-AllROI.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"      set (AllROIFile ${WarpROIPath}${AllROIFileTail})"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (AllROIFileHead ${AllROIFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
 
       BMSAutoSegMainFile<<"      #Computing Statistics"<<std::endl;
-      BMSAutoSegMainFile<<"      echo ('Computing Volume information...')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Computing Volume information...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       
       BMSAutoSegMainFile<<"      ListFileInDir(FileList ${WarpROIPath} ${AllROIFileHead}_volumeSummary.csv)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${FileList} == '')"<<std::endl;
       BMSAutoSegMainFile<<"        set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${AllROIFile} -volumeSummary -outbase ${WarpROIPath}${AllROIFileHead})"<<std::endl;	
-      BMSAutoSegMainFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf(${FileList})"<<std::endl<<std::endl<<std::endl;
       BMSAutoSegMainFile<<"      set (CSVFile ${WarpROIPath}${AllROIFileHead}_volumeSummary.csv)"<<std::endl;
       BMSAutoSegMainFile<<"      If (${files_to_cat} == '')"<<std::endl;
@@ -6496,32 +7038,36 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"         set (files_to_cat ${files_to_cat} ${CSVFile})"<<std::endl;
       BMSAutoSegMainFile<<"      EndIf(${files_to_cat})"<<std::endl<<std::endl<<std::endl;
       BMSAutoSegMainFile<<"   EndForEach (T1Case)"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ('Gathering subcortical volume information for the whole dataset...')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Gathering subcortical volume information for the whole dataset...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   If (${files_to_cat} != '')"<<std::endl;
       BMSAutoSegMainFile<<"     set (command_line cat ${files_to_cat})"<<std::endl;
-      BMSAutoSegMainFile<<"     Run (output ${command_line})"<<std::endl; 
-      BMSAutoSegMainFile<<"     AppendFile(${VolumeFile} ${output})"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"     AppendFile(${VolumeFile} ${output}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"   EndIf(${files_to_cat})"<<std::endl<<std::endl<<std::endl;
 
       //BMSAutoSegMainFile<<"Else ()"<<std::endl;
-      //     BMSAutoSegMainFile<<"   echo ('Volume File already exists!')"<<std::endl;
+      //     BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Volume File already exists!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"EndIf()"<<std::endl<<std::endl<<std::endl;
     }
 
     if (GetGenericROISegmentation())
     {
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-      BMSAutoSegMainFile<<"echo ('Generic ROI map volume analysis:')"<<std::endl;  
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Generic ROI map volume analysis:\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
       BMSAutoSegMainFile<<"ForEach(GenericROIMap ${GenericROIMapList})"<<std::endl;
       BMSAutoSegMainFile<<"  GetFilename (GenericROIMapName ${GenericROIMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"  set (VolumeFile ${VolumeDir}AutoSeg_${GenericROIMapName}_Volume.csv)"<<std::endl;  
       BMSAutoSegMainFile<<"  GetFileName(Path ${VolumeFile} PATH)"<<std::endl; 
       BMSAutoSegMainFile<<"  GetFileName(VolumeFileTail ${VolumeFile} NAME)"<<std::endl;
-      BMSAutoSegMainFile<<"  echo (Generic ROI File: ${GenericROIMapName}:)"<<std::endl;
+      BMSAutoSegMainFile<<"  AppendFile(${logOutFile} 'Generic ROI File: '${GenericROIMapName}':\\n')"<<std::endl;
       BMSAutoSegMainFile<<"  ListFileInDir(FileList ${Path} ${VolumeFileTail})"<<std::endl;
       BMSAutoSegMainFile<<"  If (${FileList} == '' || ${GenericROIMapComputed} == 1)"<<std::endl;
       BMSAutoSegMainFile<<"     WriteFile(${VolumeFile} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
@@ -6533,20 +7079,24 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"       GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"       GetFilename (T1Dir ${T1Path} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"       GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"       echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"       echo('Case Number: '${T1CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"       echo( )"<<std::endl;	  
+      BMSAutoSegMainFile<<"       AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"       AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"       AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"       set (WarpROIPath ${T1Path}/${AutoSegDir}/WarpROI/)"<<std::endl;
       BMSAutoSegMainFile<<"       set (File ${WarpROIPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}_corrected_EMS--${GenericROIMapName}-WarpReg.nrrd )"<<std::endl;
 
       BMSAutoSegMainFile<<"       GetFilename (FileHead ${File} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"       #Computing Statistics"<<std::endl;
-      BMSAutoSegMainFile<<"       echo ('Computing Volume information...')"<<std::endl;
+      BMSAutoSegMainFile<<"       AppendFile(${logOutFile} 'Computing Volume information...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"       set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"       ListFileInDir(VolList ${WarpROIPath} ${FileHead}_volumeSummary.csv)"<<std::endl;
       BMSAutoSegMainFile<<"       If (${VolList} == '')"<<std::endl;
       BMSAutoSegMainFile<<"         set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${File} -volumeSummary  -outbase ${WarpROIPath}${FileHead})"<<std::endl;
-      BMSAutoSegMainFile<<"         Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"         AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"       EndIf(${VolList})"<<std::endl<<std::endl<<std::endl;
       BMSAutoSegMainFile<<"       set (CSVFile ${WarpROIPath}${FileHead}_volumeSummary.csv)"<<std::endl;
       BMSAutoSegMainFile<<"       If (${files_to_cat} == '')"<<std::endl;
@@ -6556,15 +7106,19 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"       EndIf(${files_to_cat})"<<std::endl<<std::endl<<std::endl;
 
       BMSAutoSegMainFile<<"     EndForEach (T1Case)"<<std::endl;
-      BMSAutoSegMainFile<<"    echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"    echo ('Gathering volume information for the whole dataset...')"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"    AppendFile(${logOutFile} 'Gathering volume information for the whole dataset...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"    If (${files_to_cat} != '')"<<std::endl;
       BMSAutoSegMainFile<<"      set (command_line cat ${files_to_cat})"<<std::endl;
-      BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
-      BMSAutoSegMainFile<<"      AppendFile(${VolumeFile} ${output})"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${VolumeFile} ${output}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"    EndIf(${files_to_cat})"<<std::endl<<std::endl<<std::endl;
       //     BMSAutoSegMainFile<<"  Else ()"<<std::endl;
-      //     BMSAutoSegMainFile<<"    echo (${VolumeFileTail} already exists!)"<<std::endl;
+      //     BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${VolumeFileTail}' already exists!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"  EndIf(${FileList})"<<std::endl<<std::endl<<std::endl;
       BMSAutoSegMainFile<<"EndForEach(GenericROIMap)"<<std::endl;
     }
@@ -6572,14 +7126,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
     if (GetParcellationMapSegmentation())
     {
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
-      BMSAutoSegMainFile<<"echo ('Parcellation map volume analysis:')"<<std::endl;
-      BMSAutoSegMainFile<<"echo ( )"<<std::endl;  
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Parcellation map volume analysis:\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
       BMSAutoSegMainFile<<"ForEach(ParcellationMap ${ParcellationMapList})"<<std::endl;
       BMSAutoSegMainFile<<" GetFilename (ParcellationMapName ${ParcellationMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<" echo ('Parcellation File: '${ParcellationMapName})"<<std::endl;
+      BMSAutoSegMainFile<<" AppendFile(${logOutFile} 'Parcellation File: '${ParcellationMapName}'\\n')"<<std::endl;
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0) 
 	{
 	  BMSAutoSegMainFile<<" set (VolumeFileMWM ${VolumeDir}AutoSeg_${ParcellationMapName}_Volume_MWM.csv)"<<std::endl;
@@ -6635,59 +7189,59 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       }
 
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)	{
-	BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListMWM} == '' || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;	
+  BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListMWM} == '' || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
 	
-	BMSAutoSegMainFile<<"  If (${FileListMWM} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"  If (${FileListMWM} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (flagMWM 1)"<<std::endl;
 	BMSAutoSegMainFile<<"   WriteFile(${VolumeFileMWM} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileMWM} '################################################\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileMWM} '# Parcellation map volume analysis: Myelinated White Matter\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileMWM} '################################################\\n\\n')"<<std::endl;
-	BMSAutoSegMainFile<<"   set (files_to_cat_MWM '')"<<std::endl;
+  BMSAutoSegMainFile<<"   set (files_to_cat_MWM '')"<<std::endl;
 	BMSAutoSegMainFile<<"  EndIf (${FileListMWM})"<<std::endl;  
       } else {
-	BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
+  BMSAutoSegMainFile<<" If (${ParcellationMapComputed} == 1 || ${FileListWM} == '' || ${FileListGM} == '' || ${FileListCSF} == '')"<<std::endl;
       }
 
       if (m_NbTissueClass == 4 || (std::strcmp(GetEMSoftware(), "neoseg") == 0)) {
-	BMSAutoSegMainFile<<"  If (${FileListWM} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"  If (${FileListWM} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (flagWM 1)"<<std::endl;
 	BMSAutoSegMainFile<<"   WriteFile(${VolumeFileWM} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileWM} '################################################\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileWM} '# Parcellation map volume analysis: White Matter\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileWM} '################################################\\n\\n')"<<std::endl;
-	BMSAutoSegMainFile<<"   set (files_to_cat_WM '')"<<std::endl;
+  BMSAutoSegMainFile<<"   set (files_to_cat_WM '')"<<std::endl;
 	BMSAutoSegMainFile<<"  EndIf (${FileListWM})"<<std::endl;
 	
-	BMSAutoSegMainFile<<"  If (${FileListGM} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"  If (${FileListGM} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (flagGM 1)"<<std::endl;
 	BMSAutoSegMainFile<<"   WriteFile(${VolumeFileGM} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileGM} '################################################\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileGM} '# Parcellation map volume analysis: Grey Matter\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileGM} '################################################\\n\\n')"<<std::endl;
-	BMSAutoSegMainFile<<"   set (files_to_cat_GM '')"<<std::endl;
+  BMSAutoSegMainFile<<"   set (files_to_cat_GM '')"<<std::endl;
 	BMSAutoSegMainFile<<"  EndIf (${FileListGM})"<<std::endl;
 	
-	BMSAutoSegMainFile<<"  If (${FileListCSF} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"  If (${FileListCSF} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"   set (flagCSF 1)"<<std::endl;
 	BMSAutoSegMainFile<<"   WriteFile(${VolumeFileCSF} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '################################################\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '# Parcellation map volume analysis: CSF\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"   AppendFile(${VolumeFileCSF} '################################################\\n\\n')"<<std::endl;
-	BMSAutoSegMainFile<<"   set (files_to_cat_CSF '')"<<std::endl;
+  BMSAutoSegMainFile<<"   set (files_to_cat_CSF '')"<<std::endl;
 	BMSAutoSegMainFile<<"  EndIf (${FileListCSF})"<<std::endl;
       } 
       if (m_NbTissueClass > 4) 	{
 	for (int classID = 1; classID < m_NbTissueClass; classID++) {
 	  char classIDstring[100];
 	  sprintf(classIDstring,"label_%d",classID);
-	  BMSAutoSegMainFile<<"  If (${FileList" << classIDstring <<"} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"  If (${FileList" << classIDstring <<"} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"   set (flag" << classIDstring <<" 1)"<<std::endl;
 	  BMSAutoSegMainFile<<"   WriteFile(${VolumeFile" << classIDstring <<"} 'Volume analysis in cubic mm\\n\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"   AppendFile(${VolumeFile" << classIDstring <<"} '################################################\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"   AppendFile(${VolumeFile" << classIDstring <<"} '# Parcellation map volume analysis: " << classIDstring << "\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"   AppendFile(${VolumeFile" << classIDstring <<"} '################################################\\n\\n')"<<std::endl;
-	  BMSAutoSegMainFile<<"   set (files_to_cat_" << classIDstring <<" '')"<<std::endl;
+    BMSAutoSegMainFile<<"   set (files_to_cat_" << classIDstring <<" '')"<<std::endl;
 	  BMSAutoSegMainFile<<"  EndIf (${FileList" << classIDstring <<"})"<<std::endl;
 	}
       }
@@ -6698,9 +7252,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1Dir ${T1Path} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number: '${T1CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number: '${T1CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 	
       if(GetLoop() && std::strcmp(GetEMSoftware(), "neoseg") != 0)
 	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
@@ -6749,7 +7303,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      ForEach(Label ${LabelList})"<<std::endl;
       BMSAutoSegMainFile<<"            set (LabelFileTail ${SegmentedFileHead}_${Label}.nrrd)"<<std::endl;
       BMSAutoSegMainFile<<"            set (LabelFile ${EMSPath}${LabelFileTail})"<<std::endl;
-      //BMSAutoSegMainFile<<"            echo (${LabelFile})"<<std::endl;
+      //BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${LabelFile}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"            set (File ${WarpROIPath}${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${SuffixCorrected}--${ParcellationMapName}-WarpReg.nrrd )"<<std::endl;
       BMSAutoSegMainFile<<"            GetFilename (FileName ${File} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"            set(FileMaskedRoot ${FileName}_${Label})"<<std::endl;
@@ -6800,35 +7354,53 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  BMSAutoSegMainFile<<"             set (ProbMap ${EMSPath}${T2CaseHead}${ProcessExtension}${T2RegistrationExtension}${SuffixPosterior}.nrrd)"<<std::endl;
 	}	
 	BMSAutoSegMainFile<<"             ListFileInDir(List ${WarpROIPath} ${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
-	BMSAutoSegMainFile<<"             If (${List} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"             If (${List} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"               set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${File} -probabilityMap ${ProbMap} -volumeSummary  -outbase ${WarpROIPath}${FileMaskedRoot})"<<std::endl;
-	BMSAutoSegMainFile<<"               Run (output ${command_line})"<<std::endl; 
+  BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"               Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"               AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+
 	//BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	//BMSAutoSegMainFile<<"              echo('File already exists: '${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl; 
+  //BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'File already exists: '${WarpROIPath}${FileMaskedRoot}'_volumeSummary.csv\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"             Endif(${List})"<<std::endl;		
       } else {
 	BMSAutoSegMainFile<<"            ListFileInDir(List ${EMSPath} ${LabelFileTail})"<<std::endl;
-	BMSAutoSegMainFile<<"            If (${List} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"            If (${List} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"              set (command_line ${ImageMathCmd} ${SegmentedFile} -extractLabel ${TissueNumber} -outfile ${LabelFile})"<<std::endl;
-	BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+
 	//BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	//BMSAutoSegMainFile<<"              echo('File already exists: '${EMSPath}${LabelFileTail})"<<std::endl;
+  //BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'File already exists: '${EMSPath}${LabelFileTail}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"            Endif(${List})"<<std::endl;	
 
 	BMSAutoSegMainFile<<"            ListFileInDir(List ${WarpROIPath} ${FileMaskedTail})"<<std::endl;
-	BMSAutoSegMainFile<<"            If (${List} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"            If (${List} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"              set (command_line ${ImageMathCmd} ${File} -mask ${LabelFile} -outfile ${FileMasked})"<<std::endl;
-	BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	//BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	//BMSAutoSegMainFile<<"              echo('File already exists: '${FileMaskedTail})"<<std::endl;
+  //BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'File already exists: '${FileMaskedTail}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"            Endif(${List})"<<std::endl;
 
 	BMSAutoSegMainFile<<"            ListFileInDir(List ${WarpROIPath} ${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
-	BMSAutoSegMainFile<<"            If (${List} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"            If (${List} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"              set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${FileMasked} -volumeSummary -outbase ${WarpROIPath}${FileMaskedRoot})"<<std::endl;
-	BMSAutoSegMainFile<<"              Run (output ${command_line})"<<std::endl; 
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	//BMSAutoSegMainFile<<"            Else ()"<<std::endl;
-	//BMSAutoSegMainFile<<"              echo('File already exists: '${WarpROIPath}${FileMaskedRoot}_volumeSummary.csv)"<<std::endl;
+  //BMSAutoSegMainFile<<"              AppendFile(${logOutFile} 'File already exists: '${WarpROIPath}${FileMaskedRoot}'_volumeSummary.csv\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"            Endif(${List})"<<std::endl;
       }
 
@@ -6837,7 +7409,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
 	  {
 	    BMSAutoSegMainFile<<"              If (${Label} == 'MWM' && ${flagMWM} == 1)"<<std::endl;
-	    BMSAutoSegMainFile<<"                  If (${files_to_cat_MWM} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"                  If (${files_to_cat_MWM} == '')"<<std::endl;
 	    BMSAutoSegMainFile<<"                     set (files_to_cat_MWM ${CSVFile})"<<std::endl;
 	    BMSAutoSegMainFile<<"                  Else ()"<<std::endl;
 	    BMSAutoSegMainFile<<"                     set (files_to_cat_MWM ${files_to_cat_MWM} ${CSVFile})"<<std::endl;
@@ -6845,21 +7417,21 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;	  
 	  }
 	BMSAutoSegMainFile<<"              If (${Label} == 'WM' && ${flagWM} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"                  If (${files_to_cat_WM} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"                  If (${files_to_cat_WM} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"                     set (files_to_cat_WM ${CSVFile})"<<std::endl;
 	BMSAutoSegMainFile<<"                  Else ()"<<std::endl;
 	BMSAutoSegMainFile<<"                     set (files_to_cat_WM ${files_to_cat_WM} ${CSVFile})"<<std::endl;
 	BMSAutoSegMainFile<<"                  EndIf(${files_to_cat_WM})"<<std::endl<<std::endl<<std::endl;
 	BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
 	BMSAutoSegMainFile<<"              If (${Label} == 'GM' && ${flagGM} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"                  If (${files_to_cat_GM} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"                  If (${files_to_cat_GM} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"                     set (files_to_cat_GM ${CSVFile})"<<std::endl;
 	BMSAutoSegMainFile<<"                  Else ()"<<std::endl;
 	BMSAutoSegMainFile<<"                     set (files_to_cat_GM ${files_to_cat_GM} ${CSVFile})"<<std::endl;
 	BMSAutoSegMainFile<<"                  EndIf(${files_to_cat_GM})"<<std::endl<<std::endl<<std::endl;
 	BMSAutoSegMainFile<<"              EndIf (${Label})"<<std::endl;
 	BMSAutoSegMainFile<<"              If (${Label} == 'CSF' && ${flagCSF} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"                  If (${files_to_cat_CSF} == '')"<<std::endl;
+  BMSAutoSegMainFile<<"                  If (${files_to_cat_CSF} == '')"<<std::endl;
 	BMSAutoSegMainFile<<"                     set (files_to_cat_CSF ${CSVFile})"<<std::endl;
 	BMSAutoSegMainFile<<"                  Else ()"<<std::endl;
 	BMSAutoSegMainFile<<"                     set (files_to_cat_CSF ${files_to_cat_CSF} ${CSVFile})"<<std::endl;
@@ -6870,7 +7442,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  char classIDstring[100];
 	  sprintf(classIDstring,"label_%d",classID);
 	  BMSAutoSegMainFile<<"              If (${Label} == '"<< classIDstring <<"' && ${flag"<< classIDstring <<"} == 1)"<<std::endl;
-	  BMSAutoSegMainFile<<"                  If (${files_to_cat_"<< classIDstring <<"} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"                  If (${files_to_cat_"<< classIDstring <<"} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"                     set (files_to_cat_"<< classIDstring <<" ${CSVFile})"<<std::endl;
 	  BMSAutoSegMainFile<<"                  Else ()"<<std::endl;
 	  BMSAutoSegMainFile<<"                     set (files_to_cat_"<< classIDstring <<" ${files_to_cat_"<< classIDstring <<"} ${CSVFile})"<<std::endl;
@@ -6879,45 +7451,63 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	}
       }
 
-      //BMSAutoSegMainFile<<"           echo ( )  "<<std::endl;
+      //BMSAutoSegMainFile<<"           AppendFile(${logOutFile} '\\n' )  "<<std::endl;
       BMSAutoSegMainFile<<"           Inc(${TissueNumber} 1)"<<std::endl;
       BMSAutoSegMainFile<<"           Int(${TissueNumber})"<<std::endl;
       BMSAutoSegMainFile<<"         EndForEach(Label)"<<std::endl;
       BMSAutoSegMainFile<<"      Inc(${CaseNumber} 1)"<<std::endl;
       BMSAutoSegMainFile<<"      Int(${CaseNumber})"<<std::endl;
       BMSAutoSegMainFile<<"   EndForEach (T1Case)"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ( )"<<std::endl;
-      BMSAutoSegMainFile<<"   echo ('Gathering volume information for the whole dataset...')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Gathering volume information for the whole dataset...\\n')"<<std::endl;
       if (m_NbTissueClass == 4 || (std::strcmp(GetEMSoftware(), "neoseg") == 0)) {
 	if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
 	  {
 	    BMSAutoSegMainFile<<"   If (${flagMWM} == 1)"<<std::endl;
-	    BMSAutoSegMainFile<<"     If (${files_to_cat_MWM} != '')"<<std::endl;
+      BMSAutoSegMainFile<<"     If (${files_to_cat_MWM} != '')"<<std::endl;
 	    BMSAutoSegMainFile<<"       set (command_line cat ${files_to_cat_MWM})"<<std::endl;
-	    BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 	
-	    BMSAutoSegMainFile<<"       AppendFile(${VolumeFileMWM} ${output})"<<std::endl;
+      BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"       Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+
+      BMSAutoSegMainFile<<"       AppendFile(${VolumeFileMWM} ${output}'\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"     EndIf (${files_to_cat_MWM})"<<std::endl;
 	    BMSAutoSegMainFile<<"   EndIf (${flagMWM})"<<std::endl;
 	  }
 	BMSAutoSegMainFile<<"   If (${flagWM} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"     If (${files_to_cat_WM} != '')"<<std::endl;
+  BMSAutoSegMainFile<<"     If (${files_to_cat_WM} != '')"<<std::endl;
 	BMSAutoSegMainFile<<"       set (command_line cat ${files_to_cat_WM})"<<std::endl;
-	BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 	
-	BMSAutoSegMainFile<<"       AppendFile(${VolumeFileWM} ${output})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${VolumeFileWM} ${output}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"     EndIf (${files_to_cat_WM})"<<std::endl;
 	BMSAutoSegMainFile<<"   EndIf (${flagWM})"<<std::endl;
 	BMSAutoSegMainFile<<"   If (${flagGM} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"     If (${files_to_cat_GM} != '')"<<std::endl;
+  BMSAutoSegMainFile<<"     If (${files_to_cat_GM} != '')"<<std::endl;
 	BMSAutoSegMainFile<<"       set (command_line cat ${files_to_cat_GM})"<<std::endl;
-	BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 		
-	BMSAutoSegMainFile<<"       AppendFile(${VolumeFileGM} ${output})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+
+  BMSAutoSegMainFile<<"       AppendFile(${VolumeFileGM} ${output}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"     EndIf (${files_to_cat_GM})"<<std::endl;
 	BMSAutoSegMainFile<<"   EndIf (${flagGM})"<<std::endl;
 	BMSAutoSegMainFile<<"   If (${flagCSF} == 1)"<<std::endl;
-	BMSAutoSegMainFile<<"     If (${files_to_cat_CSF} != '')"<<std::endl;
+  BMSAutoSegMainFile<<"     If (${files_to_cat_CSF} != '')"<<std::endl;
 	BMSAutoSegMainFile<<"       set (command_line cat ${files_to_cat_CSF})"<<std::endl;
-	BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 		
-	BMSAutoSegMainFile<<"       AppendFile(${VolumeFileCSF} ${output})"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"       AppendFile(${VolumeFileCSF} ${output}'\\n')"<<std::endl;
 	BMSAutoSegMainFile<<"     EndIf (${files_to_cat_CSF})"<<std::endl; 
 	BMSAutoSegMainFile<<"   EndIf (${flagCSF})"<<std::endl;
       } else {
@@ -6925,10 +7515,14 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	  char classIDstring[100];
 	  sprintf(classIDstring,"label_%d",classID);
 	  BMSAutoSegMainFile<<"   If (${flag"<< classIDstring <<"} == 1)"<<std::endl;
-	  BMSAutoSegMainFile<<"     If (${files_to_cat_"<< classIDstring <<"} != '')"<<std::endl;
+    BMSAutoSegMainFile<<"     If (${files_to_cat_"<< classIDstring <<"} != '')"<<std::endl;
 	  BMSAutoSegMainFile<<"       set (command_line cat ${files_to_cat_"<< classIDstring <<"})"<<std::endl;
-	  BMSAutoSegMainFile<<"       Run (output ${command_line})"<<std::endl; 		
-	  BMSAutoSegMainFile<<"       AppendFile(${VolumeFile"<< classIDstring <<"} ${output})"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${logErrFile} ${error}'\n')"<<std::endl;
+    BMSAutoSegMainFile<<"       AppendFile(${VolumeFile"<< classIDstring <<"} ${output}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"     EndIf (${files_to_cat_"<< classIDstring <<"})"<<std::endl; 
 	  BMSAutoSegMainFile<<"   EndIf (${flag"<< classIDstring <<"})"<<std::endl;
 	}
@@ -6936,7 +7530,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       }
 
       BMSAutoSegMainFile<<"  Else ()"<<std::endl; // else (${ParcellationMapComputed})
-      BMSAutoSegMainFile<<"   echo ('Volume file already exists!')"<<std::endl;
+      BMSAutoSegMainFile<<"   AppendFile(${logOutFile} 'Volume file already exists!\\n')"<<std::endl;
       BMSAutoSegMainFile<<"  EndIf(${ParcellationMapComputed})"<<std::endl;
 	
       BMSAutoSegMainFile<<"EndForEach(ParcellationMap)"<<std::endl;
@@ -6952,9 +7546,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"      GetFilename (T1Path ${T1Case} PATH)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1Dir ${T1Path} NAME_WITHOUT_EXTENSION)"<<std::endl;
       BMSAutoSegMainFile<<"      GetFilename (T1CaseHead ${T1Case} NAME_WITHOUT_EXTENSION)"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
-      BMSAutoSegMainFile<<"      echo('Case Number - multi atlas: '${T1CaseHead})"<<std::endl;
-      BMSAutoSegMainFile<<"      echo( )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} 'Case Number - multi atlas: '${T1CaseHead}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
       BMSAutoSegMainFile<<"      set (SkullStrippedImage ${T1Path}/${AutoSegDir}/Stripped/${T1CaseHead}${ProcessExtension}${T1RegistrationExtension}${stripEMS}.nrrd)"<<std::endl;
       if(GetLoop() && std::strcmp(GetEMSoftware(), "neoseg") != 0)
 	BMSAutoSegMainFile<<"         set (EMSPath ${T1Path}/${AutoSegDir}/ems_"<<SuffixIteration<<"/)"<<std::endl;
@@ -6981,9 +7575,13 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_volumeSummary.csv)"<<std::endl;
       BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
       BMSAutoSegMainFile<<"           set (command_line ${ImageStatCmd} ${SkullStrippedImage}  -label ${MultiAtlasTarget} -volumeSummary -outbase ${FusedLabelDir}${MultiAtlasTargetHead})"<<std::endl;
-      BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       //BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-      //BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_volumeSummary.csv)"<<std::endl; 
+      //BMSAutoSegMainFile<<"           AppendFile(${logOutFile} 'File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}'_volumeSummary.csv\\n')"<<std::endl;
       BMSAutoSegMainFile<<"         EndIf (${List})"<<std::endl;
 
       // adding cat file stuff
@@ -6999,33 +7597,49 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 
 	if (m_NbTissueClass == 4 || (std::strcmp(GetEMSoftware(), "neoseg") == 0)) {
 	  BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_GM.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_GM.nrrd  -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_GM.nrrd)"<<std::endl; 
-	  BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-	  BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_GM.nrrd )"<<std::endl; 
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} 'File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}'_GM.nrrd\\n' )"<<std::endl;
 	  BMSAutoSegMainFile<<"         EndIf (${List})"<<std::endl;
 	  BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_WM.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_WM -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_WM.nrrd)"<<std::endl; 
-	  BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-	  BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_WM.nrrd )"<<std::endl; 
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} 'File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}'_WM.nrrd\\n' )"<<std::endl;
 	  BMSAutoSegMainFile<<"         EndIf (${List})"<<std::endl;
 	  BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_CSF.nrrd)"<<std::endl;
-	  BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
 	  BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_CSG -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_CSF.nrrd)"<<std::endl; 
-	  BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-	  BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_CSF.nrrd )"<<std::endl; 
+    BMSAutoSegMainFile<<"           AppendFile(${logOutFile} 'File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}'_CSF.nrrd\\n')"<<std::endl;
 	  BMSAutoSegMainFile<<"         EndIf (${List})"<<std::endl; 
 	  if (std::strcmp(GetEMSoftware(), "neoseg") == 0)  {
 	    BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasTargetHead}_MWM.nrrd)"<<std::endl;
-	    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
 	    BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}_MWM -outfile ${FusedLabelDir}${MultiAtlasTargetHead}_MWM.nrrd)"<<std::endl; 
-	    BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-	    BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}_MWM.nrrd )"<<std::endl; 
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} 'File already exists: ' ${FusedLabelDir}${MultiAtlasTargetHead}'_MWM.nrrd\\n' )"<<std::endl;
 	    BMSAutoSegMainFile<<"         EndIf (${List})"<<std::endl;
 	  }
 	} else {
@@ -7034,25 +7648,33 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
 	    sprintf(parcellationSuffix,"_label_%d.nrrd",classID);
 	    
 	    
-	    //BMSAutoSegMainFile<<"         echo('ext: '${FusedLabelDir}${MultiAtlasTargetHead}.nrrd' -mask '${EMSPath}${SegmentedFileHead}" << parcellationSuffix << ")" << std::endl;
+      //BMSAutoSegMainFile<<"         AppendFile(${logOutFile} 'ext: '${FusedLabelDir}${MultiAtlasTargetHead}.nrrd' -mask '${EMSPath}${SegmentedFileHead}" << parcellationSuffix << ")" << std::endl;
 	    BMSAutoSegMainFile<<"         set (MultiAtlasParcFile ${MultiAtlasTargetHead}"<< parcellationSuffix << ")" << std::endl;
 	    BMSAutoSegMainFile<<"         GetFilename (MultiAtlasParcHead ${MultiAtlasParcFile} NAME_WITHOUT_EXTENSION)" << std::endl;
 
 	    BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasParcFile})" << std::endl;
-	    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
 	    BMSAutoSegMainFile<<"           set (command_line ${ImageMathCmd} ${FusedLabelDir}${MultiAtlasTargetHead}.nrrd -mask ${EMSPath}${SegmentedFileHead}" << parcellationSuffix << " -outfile ${FusedLabelDir}${MultiAtlasParcFile})"<<std::endl; 
-	    BMSAutoSegMainFile<<"           Run (output ${command_line})"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"           AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-	    BMSAutoSegMainFile<<"           echo('File already exists: ' ${FusedLabelDir}${MultiAtlasParcFile})"<<std::endl; 
+      BMSAutoSegMainFile<<"           AppendFile(${logOutFile} 'File already exists: ' ${FusedLabelDir}${MultiAtlasParcFile}'\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"         Endif(${List})"<<std::endl;
 
 
 	    BMSAutoSegMainFile<<"         ListFileInDir(List ${FusedLabelDir} ${MultiAtlasParcHead}_volumeSummary.csv)"<<std::endl;
-	    BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
+      BMSAutoSegMainFile<<"         If (${List} == '')"<<std::endl;
 	    BMSAutoSegMainFile<<"             set (command_line ${ImageStatCmd} ${SkullStrippedImage} -label ${FusedLabelDir}${MultiAtlasParcFile} -volumeSummary -outbase ${FusedLabelDir}${MultiAtlasParcHead})"<<std::endl;
-	    BMSAutoSegMainFile<<"             Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegMainFile<<"             AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"             Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"             AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"             AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"             AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	    //BMSAutoSegMainFile<<"         Else ()"<<std::endl;
-	    //BMSAutoSegMainFile<<"            echo('File already exists: '${FusedLabelDir}${MultiAtlasParcHead}_volumeSummary.csv)"<<std::endl;
+      //BMSAutoSegMainFile<<"            AppendFile(${logOutFile} 'File already exists: '${FusedLabelDir}${MultiAtlasParcHead}'_volumeSummary.csv\\n')"<<std::endl;
 	    BMSAutoSegMainFile<<"         Endif(${List})"<<std::endl;
 	  }
 	}
@@ -7067,16 +7689,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"AppendFile(${VolumeFile} '##################################\\n')"<<std::endl;
       BMSAutoSegMainFile<<"AppendFile(${VolumeFile} '# Multiatlas segmentation volume analysis:\\n')"<<std::endl;
       BMSAutoSegMainFile<<"AppendFile(${VolumeFile} '##################################\\n\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"echo ('Gathering multiatlas volume information for the whole dataset...')"<<std::endl;
+      BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'Gathering multiatlas volume information for the whole dataset...\\n')"<<std::endl;
       BMSAutoSegMainFile<<"If (${files_to_cat} != '')"<<std::endl;
       BMSAutoSegMainFile<<"      set (command_line cat ${files_to_cat})"<<std::endl;
-      BMSAutoSegMainFile<<"      Run (output ${command_line})"<<std::endl; 
-      BMSAutoSegMainFile<<"      AppendFile(${VolumeFile} ${output})"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegMainFile<<"      AppendFile(${VolumeFile} ${output}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"EndIf(${files_to_cat})"<<std::endl<<std::endl<<std::endl;
     }
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-    BMSAutoSegMainFile<<"echo ('VOLUME COMPUTATION: DONE!')"<<std::endl;
-    BMSAutoSegMainFile<<"echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'VOLUME COMPUTATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   // TODO: add cat-ing of multi-atlas files when more than 3 clases
 
@@ -7087,9 +7713,9 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"	   #Sanity check for zipped images"<<std::endl;
   BMSAutoSegMainFile<<"      # -------------------------------"<<std::endl;
   BMSAutoSegMainFile<<"      # -------------------------------"<<std::endl;
-  BMSAutoSegMainFile<<"	   echo (*************************************************)"<<std::endl;
-  BMSAutoSegMainFile<<"	   echo ('ZIP SANITY CHECK...')"<<std::endl;
-  BMSAutoSegMainFile<<"	   echo ( )"<<std::endl;
+  BMSAutoSegMainFile<<"	   AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"	   AppendFile(${logOutFile} 'ZIP SANITY CHECK...\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"	   AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegMainFile<<"      ForEach(UnzippedFile ${UnzippedFileList})"<<std::endl;
   BMSAutoSegMainFile<<"         set (ZippedFile ${UnzippedFile}.gz)"<<std::endl;
   BMSAutoSegMainFile<<"         GetFilename(Path ${UnzippedFile} PATH)"<<std::endl;
@@ -7098,16 +7724,20 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
   BMSAutoSegMainFile<<"            DeleteFile(${UnzippedFile})"<<std::endl;
   BMSAutoSegMainFile<<"         Else ()"<<std::endl;
   BMSAutoSegMainFile<<"            set (command_line gzip -f ${UnzippedFile})"<<std::endl;
-  BMSAutoSegMainFile<<"            Run (output ${command_line})"<<std::endl; 	
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            Run (output ${command_line} error)"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"            AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
   BMSAutoSegMainFile<<"         EndIf (${ZippedFileList})"<<std::endl;
   BMSAutoSegMainFile<<"      EndForEach (UnzippedFile)"<<std::endl;
-  BMSAutoSegMainFile<<"      echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"	   echo ('ZIP SANITY CHECK: DONE!')"<<std::endl;
-  BMSAutoSegMainFile<<"	   echo ( )"<<std::endl;
+  BMSAutoSegMainFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"	   AppendFile(${logOutFile} 'ZIP SANITY CHECK: DONE!\\n')"<<std::endl;
+  BMSAutoSegMainFile<<"	   AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegMainFile<<"   EndIf (${UnzippedFileList}) "<<std::endl;
   BMSAutoSegMainFile<<"EndForEach (T1Case)"<<std::endl;
-  BMSAutoSegMainFile<<"echo ( )"<<std::endl;
-  BMSAutoSegMainFile<<"echo ('End of Automatic Segmentation!')"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegMainFile<<"AppendFile(${logOutFile} 'End of Automatic Segmentation!\\n')"<<std::endl;
 
   BMSAutoSegMainFile.close();
 }
@@ -7403,31 +8033,31 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     }
   }
   
-  BMSAutoSegAuxFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ('CHECKING FILES...')"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl;  
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'CHECKING FILES...\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
 
-  BMSAutoSegAuxFile<<"echo ('OrigSourceCasesList: '${OrigSourceCasesList})"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ('SourceCasesList: '${SourceCasesList})"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigSourceCasesList: '${OrigSourceCasesList}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'SourceCasesList: '${SourceCasesList}'\\n')"<<std::endl;
   if (GetAux1Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux1CasesList: '${OrigAux1CasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux1CasesList: '${OrigAux1CasesList}'\\n')"<<std::endl;
   if (GetAux2Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux2CasesList: '${OrigAux2CasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux2CasesList: '${OrigAux2CasesList}'\\n')"<<std::endl;
   if (GetAux3Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux3CasesList: '${OrigAux3CasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux3CasesList: '${OrigAux3CasesList}'\\n')"<<std::endl;
   if (GetAux4Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux4CasesList: '${OrigAux4CasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux4CasesList: '${OrigAux4CasesList}'\\n')"<<std::endl;
   if (GetAux5Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux5CasesList: '${OrigAux5CasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux5CasesList: '${OrigAux5CasesList}'\\n')"<<std::endl;
   if (GetAux6Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux6CasesList: '${OrigAux6CasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux6CasesList: '${OrigAux6CasesList}'\\n')"<<std::endl;
   if (GetAux7Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux7CasesList: '${OrigAux7CasesList})"<<std::endl;
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux7CasesList: '${OrigAux7CasesList}'\\n')"<<std::endl;
   if (GetAux8Image())
-    BMSAutoSegAuxFile<<"echo ('OrigAux8CasesList: '${OrigAux8CasesList})"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ('CHECKING FILES: DONE!')"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl<<std::endl;  
+    BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'OrigAux8CasesList: '${OrigAux8CasesList}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'CHECKING FILES: DONE!\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 	
   BMSAutoSegAuxFile<<"# Pipeline "<<std::endl;
   BMSAutoSegAuxFile<<"# 1. Checking format"<<std::endl;
@@ -7444,58 +8074,58 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl<<std::endl;
 
   BMSAutoSegAuxFile<<"# Checking Image"<<std::endl;
-  BMSAutoSegAuxFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ('CHECKING IMAGE TYPE...')"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'CHECKING IMAGE TYPE...\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"GetParam(Case ${OrigAuxCasesList} 0)"<<std::endl;
   BMSAutoSegAuxFile<<"GetFilename (Extension ${Case} EXTENSION)"<<std::endl;
   BMSAutoSegAuxFile<<"set (Mode -1)"<<std::endl;
   BMSAutoSegAuxFile<<"If (${Extension} == '.gipl.gz')"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('Zipped Gipl Format')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Zipped Gipl Format\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl;
   BMSAutoSegAuxFile<<"If (${Extension} == '.mhd')"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('Meta Format')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Meta Format\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl;
   BMSAutoSegAuxFile<<"If (${Extension} == '.hdr')"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('Analyse Format')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Analyse Format\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl;  
   BMSAutoSegAuxFile<<"If (${Extension} == '.mha')"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('Meta Format')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Meta Format\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl;
   BMSAutoSegAuxFile<<"If (${Extension} == '.nhdr')"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('NHDR Format')"<<std::endl;  
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'NHDR Format\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl;  
   BMSAutoSegAuxFile<<"If (${Extension} == '.nrrd')"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 1)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('NRRD Format')"<<std::endl;  
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'NRRD Format\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl;
   BMSAutoSegAuxFile<<"If (${Extension} == '.gipl')"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 2)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('Gipl Format')"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('mode : '${Mode})"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Gipl Format\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'mode : '${Mode}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl; 
   BMSAutoSegAuxFile<<"If ( ${Mode} == -1)"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Mode 2)"<<std::endl;
   BMSAutoSegAuxFile<<"EndIf (${Extension})"<<std::endl;
 		
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ('CHECKING IMAGE TYPE: DONE!')"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'CHECKING IMAGE TYPE: DONE!\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
   BMSAutoSegAuxFile<<"#Creating Auxiliary Directories"<<std::endl;
-  BMSAutoSegAuxFile<<"echo (*************************************************)"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ('CREATING AUXILIARY DIRECTORIES...')"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'CREATING AUXILIARY DIRECTORIES...\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"set (CaseNumber 0)"<<std::endl;
   BMSAutoSegAuxFile<<"ForEach (SourceCase ${SourceCasesList})"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo('Source Case : '${SourceCase})"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo( )"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Source Case : '${SourceCase}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"   GetFilename (SourceCasePath ${SourceCase} PATH)"<<std::endl;
   BMSAutoSegAuxFile<<"   GetFilename (SourceCaseParentPath ${SourceCase} PARENT_PATH)"<<std::endl;
   if (GetAux1Image())
@@ -7504,10 +8134,10 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   set (Aux1Label "<<GetAux1Label()<<")"<<std::endl;
     BMSAutoSegAuxFile<<"   set (Aux1Dir ${SourceCaseParentPath}/${Aux1Label})"<<std::endl;
     BMSAutoSegAuxFile<<"   ListDirInDir (AutoSegList ${SourceCaseParentPath} ${Aux1Dir})"<<std::endl;
-    BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;  
+    BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux1Dir})"<<std::endl; 
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux1 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux1 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl;  
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${Aux1Label})"<<std::endl;
@@ -7519,10 +8149,10 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   set (Aux2Label "<<GetAux2Label()<<")"<<std::endl;
     BMSAutoSegAuxFile<<"   set (Aux2Dir ${SourceCaseParentPath}/${Aux2Label})"<<std::endl;
     BMSAutoSegAuxFile<<"   ListDirInDir (AutoSegList ${SourceCaseParentPath} ${Aux2Dir})"<<std::endl;
-    BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;  
+    BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux2Dir})"<<std::endl;
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux2 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux2 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl; 
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${AuxDirList} ${Aux2Label})"<<std::endl;
@@ -7537,7 +8167,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux3Dir})"<<std::endl;
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux3 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux3 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl;
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${AuxDirList} ${Aux3Label})"<<std::endl;
@@ -7552,7 +8182,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux4Dir})"<<std::endl;
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux4 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux4 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl;
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${AuxDirList} ${Aux4Label})"<<std::endl;
@@ -7567,7 +8197,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux5Dir})"<<std::endl;
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux5 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux5 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl;
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${AuxDirList} ${Aux5Label})"<<std::endl;
@@ -7582,7 +8212,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux6Dir})"<<std::endl;
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux6 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux6 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl;  
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${AuxDirList} ${Aux6Label})"<<std::endl;
@@ -7597,7 +8227,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux7Dir})"<<std::endl;
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux7 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux7 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl;
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${AuxDirList} ${Aux7Label})"<<std::endl;
@@ -7612,7 +8242,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"   If (${AutoSegList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      MakeDirectory (${Aux8Dir})"<<std::endl;
     BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Aux8 Directory already exists!)"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Aux8 Directory already exists!\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"   EndIf (${AutoSegList})"<<std::endl;
     BMSAutoSegAuxFile<<"   If (${CaseNumber} == 0)"<<std::endl;
     BMSAutoSegAuxFile<<"      set (AuxDirList ${AuxDirList} ${Aux8Label})"<<std::endl;
@@ -7622,9 +8252,9 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"   Int ({CaseNumber})"<<std::endl;
   BMSAutoSegAuxFile<<"EndForEach (SourceCase)"<<std::endl;
 
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ('CREATING AUXILIARY DIRECTORIES: DONE!')"<<std::endl;
-  BMSAutoSegAuxFile<<"echo ( )"<<std::endl<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} 'CREATING AUXILIARY DIRECTORIES: DONE!\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 
   BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegAuxFile<<"#---------------------------------------------------------------------"<<std::endl;
@@ -7640,9 +8270,9 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"   GetFilename (SourceParentPath ${SourceCase} PARENT_PATH)"<<std::endl;
   BMSAutoSegAuxFile<<"   GetFilename (SourceCaseHead ${SourceCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
 
-  BMSAutoSegAuxFile<<"   echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo('Source Case : '${SourceCaseHead})"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo( )"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Source Case : '${SourceCaseHead}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"   set (Aux1Dir "<<GetAux1Label()<<")"<<std::endl;
   BMSAutoSegAuxFile<<"   GetParam(Aux1Case ${OrigAux1CasesList} ${CaseNumber})"<<std::endl;
   BMSAutoSegAuxFile<<"   # Registration Repertory"<<std::endl;
@@ -7652,75 +8282,87 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"   set (TxtRegFile ${RegPath}/${TxtRegFileTail})"<<std::endl;
   BMSAutoSegAuxFile<<"   set (parFile "<<GetTissueSegmentationAtlasDirectory()<<"areg_par.txt)"<<std::endl;
   BMSAutoSegAuxFile<<"   # Report File (process)"<<std::endl;
-  BMSAutoSegAuxFile<<"   set (ReportFile ${RegPath}/${SourceCaseHead}_out.txt)"<<std::endl;
+  //BMSAutoSegAuxFile<<"   set (ReportFile ${RegPath}/${SourceCaseHead}_out.txt)"<<std::endl;
   BMSAutoSegAuxFile<<"   ListFileInDir(OutputList ${RegPath} ${TxtRegFileTail})"<<std::endl;
   BMSAutoSegAuxFile<<"   If (${OutputList} == '')"<<std::endl;
   BMSAutoSegAuxFile<<"     set (TxtinitFileTail ${SourceCaseHead}_init.txt)"<<std::endl;
   BMSAutoSegAuxFile<<"     ListFileInDir(TxtinitFileList ${RegPath} ${TxtinitFileTail})"<<std::endl;
   if(GetRigidTransformation())
   {
-    BMSAutoSegAuxFile<<"      echo (*************************************************)"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('RIGID REGISTRATION...')"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'RIGID REGISTRATION...\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 		
     BMSAutoSegAuxFile<<"      # Computing Transformation"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Computing rigid registration...')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Computing rigid registration...\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"     If (${TxtinitFileList} == '')"<<std::endl;
     //BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --initializeTransformMode useCenterOfHeadAlign --outputTransform ${TxtRegFile})"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --transformType Rigid --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtRegFile})"<<std::endl;
     BMSAutoSegAuxFile<<"     Else ()"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --transformType Rigid --outputTransform ${TxtRegFile} --initialTransform ${RegPath}/${TxtinitFileTail})"<<std::endl;
     BMSAutoSegAuxFile<<"     EndIf (${TxtinitFileList})"<<std::endl;
+    BMSAutoSegAuxFile<<"     AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"      WriteFile(${ReportFile} ${output})"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"      AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 		
-    BMSAutoSegAuxFile<<"      echo ('RIGID REGISTRATION: DONE!')"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl<<std::endl;	
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'RIGID REGISTRATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   else if(GetAffineTransformation())
   {
-    BMSAutoSegAuxFile<<"      echo (*************************************************)"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('AFFINE REGISTRATION...')"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'AFFINE REGISTRATION...\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 		
     BMSAutoSegAuxFile<<"      # Computing Transformation"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Computing affine registration...')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Computing affine registration...\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"     If (${TxtinitFileList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --transformType Affine  --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtRegFile})"<<std::endl;
     BMSAutoSegAuxFile<<"     Else ()"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --transformType Affine --outputTransform ${TxtRegFile} --initialTransform ${RegPath}/${TxtinitFileTail})"<<std::endl;
     BMSAutoSegAuxFile<<"     EndIf (${TxtinitFileList})"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"      WriteFile(${ReportFile} ${output})"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"      AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 		
-    BMSAutoSegAuxFile<<"      echo ('AFFINE REGISTRATION: DONE!')"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'AFFINE REGISTRATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   else
   {
-    BMSAutoSegAuxFile<<"      echo (*************************************************)"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('BSPLINE REGISTRATION...')"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'BSPLINE REGISTRATION...\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
 		
     BMSAutoSegAuxFile<<"      # Computing Transformations"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('Computing affine registration...')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Computing affine registration...\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      # Parameter File"<<std::endl;
     BMSAutoSegAuxFile<<"     If (${TxtinitFileList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --useAffine --initializeTransformMode ${RegistrationInitialization} --outputTransform ${TxtRegFile} --interpolationMode BSpline)"<<std::endl;
     BMSAutoSegAuxFile<<"     Else ()"<<std::endl;
     BMSAutoSegAuxFile<<"      set (command_line ${BRAINSFitCmd} --fixedVolume ${Aux1Case} --movingVolume ${SourceCase} --useRigid --useAffine --outputTransform ${TxtRegFile} --interpolationMode BSpline --initialTransform ${RegPath}/${TxtinitFileTail})"<<std::endl;
     BMSAutoSegAuxFile<<"     EndIf (${TxtinitFileList})"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"      WriteFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"      AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
 		
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ('BSPLINE REGISTRATION: DONE!')"<<std::endl;
-    BMSAutoSegAuxFile<<"      echo ( )"<<std::endl<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'BSPLINE REGISTRATION: DONE!\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   }
   BMSAutoSegAuxFile<<"   Else ()"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo ('File already exists: '${TxtRegFileTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'File already exists: '${TxtRegFileTail}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"   EndIf (${OutputList})"<<std::endl;
   BMSAutoSegAuxFile<<"   Inc(${CaseNumber} 1)"<<std::endl;
   BMSAutoSegAuxFile<<"   Int(${CaseNumber})"<<std::endl;
@@ -7954,25 +8596,25 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"   GetFilename (SourceParentPath ${SourceCase} PARENT_PATH)"<<std::endl;
   BMSAutoSegAuxFile<<"   GetFilename (SourceCaseHead ${SourceCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
 	
-  BMSAutoSegAuxFile<<"   echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo('Source Case: '${SourceCaseHead})"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo( )"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'Source Case: '${SourceCaseHead}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"   set (DirNumber 0)"<<std::endl;
   BMSAutoSegAuxFile<<"   set (SourceImageFlag 0)"<<std::endl;
   BMSAutoSegAuxFile<<"   ForEach (AuxDir ${AuxDirList})"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo('Auxiliary Directory: '${AuxDir})"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo (*************************************************)"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ('APPLYING TRANSFORMATION...')"<<std::endl;
-  BMSAutoSegAuxFile<<"   echo ( )"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Auxiliary Directory: '${AuxDir}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} 'APPLYING TRANSFORMATION...\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"   AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"      set (AuxPath ${SourceParentPath}/${AuxDir}/)"<<std::endl;
   BMSAutoSegAuxFile<<"      Math( NbAuxData2 ${NbAuxData} * ${DirNumber})"<<std::endl;
   BMSAutoSegAuxFile<<"      Math( NbAuxData3 ${NbAuxData2} + ${CaseNumber})"<<std::endl;
   BMSAutoSegAuxFile<<"      GetParam(AuxCase ${OrigAuxCasesList} ${NbAuxData3})"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo('Auxiliary Case: '${AuxCase})"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo( )"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'Auxiliary Case: '${AuxCase}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"      set (Aux1Dir "<<GetAux1Label()<<")"<<std::endl;
 
   BMSAutoSegAuxFile<<"      set (Aux1Path ${SourceParentPath}/${Aux1Dir}/)"<<std::endl;
@@ -7980,8 +8622,8 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"      set (TxtRegFileTail ${SourceCaseHead}_reg.txt)"<<std::endl;
   BMSAutoSegAuxFile<<"      set (TxtRegFile ${Aux1Path}${TxtRegFileTail})"<<std::endl;
 
-  BMSAutoSegAuxFile<<"      # Report File (process)"<<std::endl; 
-  BMSAutoSegAuxFile<<"      set (ReportFile ${Aux1Path}${SourceCaseHead}_out.txt)"<<std::endl;
+  //BMSAutoSegAuxFile<<"      # Report File (process)"<<std::endl;
+  //BMSAutoSegAuxFile<<"      set (ReportFile ${Aux1Path}${SourceCaseHead}_out.txt)"<<std::endl;
   BMSAutoSegAuxFile<<"      # WarpROI Repertory"<<std::endl;
   BMSAutoSegAuxFile<<"      set (WarpROIDir ${SourceParentPath}/WarpROI/)"<<std::endl;
   BMSAutoSegAuxFile<<"      set (StrippedDir ${SourceParentPath}/Stripped/)"<<std::endl;
@@ -7991,10 +8633,14 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${OutputFile2Tail}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
   BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${SourceCase} ${OutputFile2} --transformationFile ${TxtRegFile} -i bs --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-  BMSAutoSegAuxFile<<"         AppendFile(${ReportFile} ${output})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegAuxFile<<"         AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo ('File already exists: '${OutputFile2Tail})"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${OutputFile2Tail}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
   if(!IsParcellationMapListEmpty)
   {
@@ -8002,19 +8648,23 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"         GetFilename (ParcellationMapNameHead ${ParcellationMapName} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"      ListFileInDir(WarpRegCasesList ${WarpROIDir} *${ParcellationMapNameHead}-WarpReg.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"      ForEach (WarpRegCase ${WarpRegCasesList})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo('WarpReg Case: '${WarpRegCase})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'WarpReg Case: '${WarpRegCase}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (WarpRegCaseHead ${WarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${WarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${WarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} -i nn --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (WarpRegCase)"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (ParcellationMapName)"<<std::endl;
@@ -8025,19 +8675,23 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"         GetFilename(GenericROIMapHead ${GenericROIMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"      ListFileInDir(WarpRegCasesList ${WarpROIDir} *${GenericROIMapHead}-WarpReg.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"      ForEach (WarpRegCase ${WarpRegCasesList})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo('WarpReg Case: '${WarpRegCase})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'WarpReg Case: '${WarpRegCase}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (WarpRegCaseHead ${WarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${WarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${WarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} -i nn --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (WarpRegCase)"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (GenericROIMap)"<<std::endl;
@@ -8048,19 +8702,23 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"         GetFilename(StructureHead ${Structure} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"      ListFileInDir(WarpRegCasesList ${WarpROIDir} *${StructureHead}-WarpReg.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"      ForEach (WarpRegCase ${WarpRegCasesList})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo('WarpReg Case: '${WarpRegCase})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'WarpReg Case: '${WarpRegCase}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (WarpRegCaseHead ${WarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${WarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${WarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (WarpRegCase)"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (Structure)"<<std::endl;
@@ -8073,10 +8731,14 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"         ListFileInDir(MaskOutputList ${AuxPath} ${MaskOutputFileTail}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${MaskOutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${StrippedDir}${Mask} ${MaskOutputFile} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${MaskOutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${MaskOutputFileTail}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${MaskOutputList})"<<std::endl;
   }
   std::string SoftTissueMap =GetSoftTissueMap();
@@ -8087,80 +8749,96 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       {
 	BMSAutoSegAuxFile<<"      ListFileInDir(MWMWarpRegCasesList ${WarpROIDir} *WarpReg_MWM.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"      ForEach (MWMWarpRegCase ${MWMWarpRegCasesList})"<<std::endl;
-	BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-	BMSAutoSegAuxFile<<"         echo('MWM WarpReg Case: '${MWMWarpRegCase})"<<std::endl;
-	BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'MWM WarpReg Case: '${MWMWarpRegCase}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
 	BMSAutoSegAuxFile<<"         GetFilename (MWMWarpRegCaseHead ${MWMWarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
 	BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${MWMWarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
 	BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
 	BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
-	BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
+  BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
 	BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${MWMWarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} -i nn --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
 	BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-	BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
 	BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-	BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
 	BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
 	BMSAutoSegAuxFile<<"      EndForEach (MWMWarpRegCase)"<<std::endl;
       }
 
     BMSAutoSegAuxFile<<"      ListFileInDir(WMWarpRegCasesList ${WarpROIDir} *WarpReg_WM.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"      ForEach (WMWarpRegCase ${WMWarpRegCasesList})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo('WM WarpReg Case: '${WMWarpRegCase})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'WM WarpReg Case: '${WMWarpRegCase}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (WMWarpRegCaseHead ${WMWarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${WMWarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${WMWarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} -i nn --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (WMWarpRegCase)"<<std::endl;
     BMSAutoSegAuxFile<<"      ListFileInDir(GMWarpRegCasesList ${WarpROIDir} *WarpReg_GM.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"      ForEach (GMWarpRegCase ${GMWarpRegCasesList})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo('GM WarpReg Case: '${GMWarpRegCase})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'GM WarpReg Case: '${GMWarpRegCase}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (GMWarpRegCaseHead ${GMWarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${GMWarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${GMWarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} -i nn --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (GMWarpRegCase)"<<std::endl;
     BMSAutoSegAuxFile<<"      ListFileInDir(CSFWarpRegCasesList ${WarpROIDir} *WarpReg_CSF.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"      ForEach (CSFWarpRegCase ${CSFWarpRegCasesList})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo('CSF WarpReg Case: '${CSFWarpRegCase})"<<std::endl;
-    BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'CSF WarpReg Case: '${CSFWarpRegCase}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (CSFWarpRegCaseHead ${CSFWarpRegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${CSFWarpRegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         GetFilename (OutputFileTail ${OutputFile} NAME_WITHOUT_EXTENSION)"<<std::endl;
     BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WarpROIDir}${CSFWarpRegCase} ${OutputFile} --transformationFile ${TxtRegFile} -i nn --Reference ${AuxCase})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-    BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+    //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (CSFWarpRegCase)"<<std::endl;
   }
   BMSAutoSegAuxFile<<"      ListFileInDir(HardSegCasesList ${WarpROIDir} *HardSeg.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"      ForEach (HardSegCase ${HardSegCasesList})"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo('HardSeg Case: '${HardSegCase})"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo( )"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'HardSeg Case: '${HardSegCase}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"         GetFilename (HardSegCaseHead ${HardSegCase} NAME_WITHOUT_EXTENSION)"<<std::endl;
   BMSAutoSegAuxFile<<"         set (HardSegCase ${WarpROIDir}${HardSegCaseHead}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"         set (OutputFile ${AuxPath}${HardSegCaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
@@ -8168,17 +8846,21 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${OutputFileTail}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
   BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${HardSegCase} ${OutputFile} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-  BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegAuxFile<<"            AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-  BMSAutoSegAuxFile<<"            echo ('File already exists: '${OutputFileTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${OutputFileTail}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
   BMSAutoSegAuxFile<<"      EndForEach (HardSegCase)"<<std::endl;
   BMSAutoSegAuxFile<<"      ListFileInDir(AllROICase ${WarpROIDir} *AllROI.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"      If (${AllROICase} != '')"<<std::endl;
-  BMSAutoSegAuxFile<<"        echo( )"<<std::endl;
-  BMSAutoSegAuxFile<<"        echo('AllROI case: '${AllROICase})"<<std::endl;
-  BMSAutoSegAuxFile<<"        echo( )"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} 'AllROI case: '${AllROICase}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} '\\n' )"<<std::endl;
   BMSAutoSegAuxFile<<"        GetFilename (AllROICaseHead ${AllROICase} NAME_WITHOUT_EXTENSION)"<<std::endl;
   BMSAutoSegAuxFile<<"        set (AllROICase ${WarpROIDir}${AllROICaseHead}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"        set (AllROIOutputFile ${AuxPath}${AllROICaseHead}_Reg_${AuxDir}.nrrd)"<<std::endl;
@@ -8186,10 +8868,14 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"        ListFileInDir(OutputList ${AuxPath} ${AllROIOutputFileTail}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"        If (${OutputList} == '')"<<std::endl;
   BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${AllROICase} ${AllROIOutputFile} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
-  BMSAutoSegAuxFile<<"          AppendFile(${ReportFile} ${output})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
+  //BMSAutoSegAuxFile<<"          AppendFile(${ReportFile} ${output}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"        Else ()"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo ('File already exists: '${AllROIOutputFileTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${AllROIOutputFileTail}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"        EndIf (${OutputList})"<<std::endl;
   BMSAutoSegAuxFile<<"      EndIf (${AllROICase})"<<std::endl;
   BMSAutoSegAuxFile<<"      GetParam(OrigSourceCase ${OrigSourceCasesList} ${CaseNumber})"<<std::endl;
@@ -8226,7 +8912,7 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       BMSAutoSegAuxFile<<"       Int (${flagPosterior})"<<std::endl;
       BMSAutoSegAuxFile<<"      EndForEach (${PosteriorOrigSourceCasesList})"<<std::endl;
     }
-    BMSAutoSegAuxFile<<"         echo (${PosteriorOrigSourceCasesHead})"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} ${PosteriorOrigSourceCasesHead}'\\n')"<<std::endl;
     
     if (std::strcmp(GetEMSoftware(), "ABC") == 0)
       {
@@ -8286,9 +8972,13 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${OutputFileMWMTail}.nrrd)"<<std::endl;
       BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
       BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${MWMProbMap} ${OutputFileMWM} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-      BMSAutoSegAuxFile<<"         echo ('File already exists: '${OutputFileMWMTail})"<<std::endl;
+      BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${OutputFileMWMTail}'\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;      
     }
 
@@ -8298,9 +8988,13 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${OutputFileWMTail}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
   BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${WMProbMap} ${OutputFileWM} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo ('File already exists: '${OutputFileWMTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${OutputFileWMTail}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
 
   BMSAutoSegAuxFile<<"      GetFilename (GMProbMapHead ${GMProbMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
@@ -8309,9 +9003,13 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${OutputFileGMTail}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
   BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${GMProbMap} ${OutputFileGM} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo ('File already exists: '${OutputFileGMTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${OutputFileGMTail}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
 	
   BMSAutoSegAuxFile<<"      GetFilename (CSFProbMapHead ${CSFProbMap} NAME_WITHOUT_EXTENSION)"<<std::endl;
@@ -8320,14 +9018,18 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${OutputFileCSFTail}.nrrd)"<<std::endl;
   BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
   BMSAutoSegAuxFile<<"           set (command_line ${ResampleVolume2Cmd} ${CSFProbMap} ${OutputFileCSF} --transformationFile ${TxtRegFile} --Reference ${AuxCase})"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      	Run (output ${command_line} prog_error)"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-  BMSAutoSegAuxFile<<"         echo ('File already exists: '${OutputFileCSFTail})"<<std::endl;
+  BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${OutputFileCSFTail}'\\n')"<<std::endl;
   BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
 	
-  BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo ('APPLYING TRANSFORMATION: DONE!')"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo ( )"<<std::endl<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'APPLYING TRANSFORMATION: DONE!\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
 	
   BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
@@ -8337,9 +9039,9 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
   BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;
   BMSAutoSegAuxFile<<"# ---------------------------------------------------------------------"<<std::endl;	
 	
-  BMSAutoSegAuxFile<<"      echo (*************************************************)"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo ('WRITING STATISTICS FILES...')"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '*************************************************\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'WRITING STATISTICS FILES...\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
   if(!IsParcellationMapListEmpty)
   {
     BMSAutoSegAuxFile<<"      ForEach (ParcellationMapName ${ParcellationMapList})"<<std::endl;
@@ -8353,12 +9055,16 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
 	{
 	  BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${WarpRegCaseHead}_MWM_intensitySummary.csv)"<<std::endl;
-	  BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
+    BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
 	  BMSAutoSegAuxFile<<"         set(MWMProbMapTr ${OutputFileMWM})"<<std::endl;
 	  BMSAutoSegAuxFile<<"         set(command_line ${ImageStatCmd} ${AuxCase} -label ${AuxPath}${WarpRegCase} -intensitySummary -probabilityMap ${MWMProbMapTr} -outbase ${AuxPath}${WarpRegCaseHead}_MWM -quantile ${Quantiles})"<<std::endl;
-	  BMSAutoSegAuxFile<<"        Run (output ${command_line})"<<std::endl; 	
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
 	  BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-	  BMSAutoSegAuxFile<<"         echo ('File already exists: '${AuxPath}${WarpRegCaseHead}_MWM_intensitySummary.csv)"<<std::endl;
+    BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${AuxPath}${WarpRegCaseHead}'_MWM_intensitySummary.csv\\n')"<<std::endl;
 	  BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;	  
 	}
 
@@ -8366,27 +9072,39 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
       BMSAutoSegAuxFile<<"         set(WMProbMapTr ${OutputFileWM})"<<std::endl;
       BMSAutoSegAuxFile<<"         set(command_line ${ImageStatCmd} ${AuxCase} -label ${AuxPath}${WarpRegCase} -intensitySummary -probabilityMap ${WMProbMapTr} -outbase ${AuxPath}${WarpRegCaseHead}_WM -quantile ${Quantiles})"<<std::endl;
-      BMSAutoSegAuxFile<<"        Run (output ${command_line})"<<std::endl; 	
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-      BMSAutoSegAuxFile<<"         echo ('File already exists: '${AuxPath}${WarpRegCaseHead}_WM_intensitySummary.csv)"<<std::endl;
+      BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${AuxPath}${WarpRegCaseHead}'_WM_intensitySummary.csv\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
 
       BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath}  ${WarpRegCaseHead}_GM_intensitySummary.csv)"<<std::endl;
       BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
       BMSAutoSegAuxFile<<"         set(GMProbMapTr ${OutputFileGM})"<<std::endl;
       BMSAutoSegAuxFile<<"         set (command_line ${ImageStatCmd} ${AuxCase} -label ${AuxPath}${WarpRegCase} -intensitySummary -probabilityMap ${GMProbMapTr} -outbase ${AuxPath}${WarpRegCaseHead}_GM -quantile ${Quantiles})"<<std::endl;
-      BMSAutoSegAuxFile<<"        Run (output ${command_line})"<<std::endl; 	
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-      BMSAutoSegAuxFile<<"         echo ('File already exists: '${WarpRegCaseHead}_GM_intensitySummary.csv)"<<std::endl;
+      BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${WarpRegCaseHead}'_GM_intensitySummary.csv\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
 
       BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath}  ${WarpRegCaseHead}_CSF_intensitySummary.csv)"<<std::endl;
       BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
       BMSAutoSegAuxFile<<"         set(CSFProbMapTr ${OutputFileCSF})"<<std::endl;
       BMSAutoSegAuxFile<<"         set(command_line ${ImageStatCmd} ${AuxCase} -label ${AuxPath}${WarpRegCase} -intensitySummary -probabilityMap ${CSFProbMapTr} -outbase ${AuxPath}${WarpRegCaseHead}_CSF -quantile ${Quantiles})"<<std::endl;
-      BMSAutoSegAuxFile<<"        Run (output ${command_line})"<<std::endl; 	
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-      BMSAutoSegAuxFile<<"         echo ('File already exists: '${WarpRegCaseHead}_CSF_intensitySummary.csv)"<<std::endl;
+      BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${WarpRegCaseHead}'_CSF_intensitySummary.csv\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
 
       BMSAutoSegAuxFile<<"      EndForEach (WarpRegCase)"<<std::endl;
@@ -8405,9 +9123,13 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
       BMSAutoSegAuxFile<<"      ListFileInDir(OutputList ${AuxPath} ${WarpRegCaseHead}_intensitySummary.csv)"<<std::endl;
       BMSAutoSegAuxFile<<"      If (${OutputList} == '')"<<std::endl;
       BMSAutoSegAuxFile<<"         set (command_line ${ImageStatCmd} ${AuxCase} -label ${AuxPath}${WarpRegCase} -intensitySummary -outbase ${AuxPath}${WarpRegCaseHead} -quantile ${Quantiles})"<<std::endl;
-      BMSAutoSegAuxFile<<"        Run (output ${command_line})"<<std::endl; 	
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      Else ()"<<std::endl;
-      BMSAutoSegAuxFile<<"         echo ('File already exists: '${WarpRegCaseHead}_intensitySummary.csv)"<<std::endl;
+      BMSAutoSegAuxFile<<"         AppendFile(${logOutFile} 'File already exists: '${WarpRegCaseHead}'_intensitySummary.csv\\n')"<<std::endl;
       BMSAutoSegAuxFile<<"      EndIf (${OutputList})"<<std::endl;
       BMSAutoSegAuxFile<<"      EndForEach (WarpRegCase)"<<std::endl;
       BMSAutoSegAuxFile<<"      EndForEach (Label)"<<std::endl;
@@ -8424,9 +9146,13 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"         ListFileInDir(OutputList ${AuxPath} ${WarpRegCaseHead}_intensitySummary.csv)"<<std::endl;
     BMSAutoSegAuxFile<<"         If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"           set (command_line ${ImageStatCmd} ${AuxCase} -label ${MaskOutputFile} -intensitySummary -probabilityMap ${AuxPath}${WarpRegCase} -outbase ${AuxPath}${WarpRegCaseHead} -quantile ${Quantiles})"<<std::endl;
-      BMSAutoSegAuxFile<<"        Run (output ${command_line})"<<std::endl; 
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        Run (output ${command_line} error)"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      BMSAutoSegAuxFile<<"        AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"            echo ('File already exists: '${StructureHead}_intensitySummary.csv)"<<std::endl;
+    BMSAutoSegAuxFile<<"            AppendFile(${logOutFile} 'File already exists: '${StructureHead}'_intensitySummary.csv\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"         EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (WarpRegCase)"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (Structure)"<<std::endl;
@@ -8441,17 +9167,21 @@ void AutoSegComputation::WriteBMSAutoSegAuxFile()
     BMSAutoSegAuxFile<<"            ListFileInDir(OutputList ${AuxPath} ${WarpRegCaseHead}_intensitySummary.csv)"<<std::endl;
     BMSAutoSegAuxFile<<"            If (${OutputList} == '')"<<std::endl;
     BMSAutoSegAuxFile<<"               set (command_line ${ImageStatCmd} ${AuxCase} -label ${AuxPath}${WarpRegCase} -intensitySummary -outbase ${AuxPath}${WarpRegCaseHead} -quantile ${Quantiles})"<<std::endl;
-    BMSAutoSegAuxFile<<"              Run (output ${command_line})"<<std::endl; 
+    BMSAutoSegAuxFile<<"              AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"              Run (output ${command_line} error)"<<std::endl;
+    BMSAutoSegAuxFile<<"              AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"              AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+    BMSAutoSegAuxFile<<"              AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"            Else ()"<<std::endl;
-    BMSAutoSegAuxFile<<"                echo ('File already exists: '${WarpRegCaseHead}_intensitySummary.csv)"<<std::endl;
+    BMSAutoSegAuxFile<<"                AppendFile(${logOutFile} 'File already exists: '${WarpRegCaseHead}'_intensitySummary.csv\\n')"<<std::endl;
     BMSAutoSegAuxFile<<"            EndIf (${OutputList})"<<std::endl;
     BMSAutoSegAuxFile<<"         EndForEach (WarpRegCase)"<<std::endl;
     BMSAutoSegAuxFile<<"      EndForEach (GenericROIMap)"<<std::endl;
   }
 
-  BMSAutoSegAuxFile<<"      echo ( )"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo ('WRITING STATISTICS FILES: DONE!')"<<std::endl;
-  BMSAutoSegAuxFile<<"      echo ( )"<<std::endl<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} 'WRITING STATISTICS FILES: DONE!\\n')"<<std::endl;
+  BMSAutoSegAuxFile<<"      AppendFile(${logOutFile} '\\n' )"<<std::endl<<std::endl;
   BMSAutoSegAuxFile<<"      Inc(${DirNumber} 1)"<<std::endl;
   BMSAutoSegAuxFile<<"      Int(${DirNumber})"<<std::endl;
   BMSAutoSegAuxFile<<"   EndForEach (AuxDir)"<<std::endl;
@@ -8481,7 +9211,7 @@ void AutoSegComputation::ExecuteSlicer3withScene(std::string pathSlicer)
   if (!MRML.empty())
   {
 
-    std::ofstream LogFile(GetLogFile());
+    std::ofstream LogFile(GetStdOutLogFile().c_str());
 	
     std::vector<const char*> args;
     char* data = NULL;
@@ -8825,7 +9555,7 @@ void AutoSegComputation::LoadAuxComputationFile(const char *_FileName)
       }
       else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
       {
-	std::cout << "unknown line:" << Line << std::endl;
+  std::cerr << "unknown line:" << Line << std::endl;
       }
     }
     fclose(AuxComputationFile);
@@ -8839,7 +9569,7 @@ void AutoSegComputation::LoadAuxComputationFile(const char *_FileName)
   }
   else
   {
-    std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+    std::cerr<<"Error Opening File: "<<_FileName<<std::endl;
   }
 }
 
@@ -8997,7 +9727,7 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
       }
       else if (Line[0] != '/' && Line[0] != '#' && (std::strcmp("",Line) != 0) && (std::strcmp(" ",Line) != 0)) 
       {
-	std::cout << "unknown line:" << Line << std::endl;
+  std::cerr << "unknown line:" << Line << std::endl;
       }
     }
     fclose(ComputationFile);
@@ -9006,14 +9736,15 @@ void AutoSegComputation::LoadComputationFile(const char *_FileName)
     {
       SetNbData(nbData);
       AllocateDataList();
-      for(int i=0;i<nbData;i++) {
-	SetDataList(DataList[i].c_str(),i,0);
+      for(int i=0;i<nbData;i++)
+      {
+        SetDataList(DataList[i].c_str(),i,0);
         //std::cout << " data file: " << DataList[i] << std::endl;
       }
     }
   }
   else
-    std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+    std::cerr<<"Error Opening File: "<<_FileName<<std::endl;
 }
 
 bool AutoSegComputation::SetMultiAtlasDirectory(const char *_MultiAtlasDirectory)
@@ -10110,7 +10841,7 @@ bool AutoSegComputation::LoadParameterFile(const char *_FileName, enum Mode mode
     fclose(ParameterFile);
   }
   else
-    std::cout<<"Error Opening File: "<<_FileName<<std::endl;
+    std::cerr<<"Error Opening File: "<<_FileName<<std::endl;
 
   return IsParameterFileLoaded;
 }

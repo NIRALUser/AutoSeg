@@ -65,7 +65,11 @@ class AutoSegComputation
   //Get AutoSeg Environment
     void SetAutoSegPath(const char* _AutoSegPath){std::strcpy(m_AutoSegPath, _AutoSegPath);};
     char *GetAutoSegPath(){return m_AutoSegPath;};
-
+  // Set and get log Files
+    void SetStdOutLogFile( std::string _outLogFileName ) { m_outLogFileName = _outLogFileName ; };
+    void SetStdErrLogFile( std::string _errLogFileName ) { m_errLogFileName = _errLogFileName ; };
+    std::string GetStdOutLogFile() { return m_outLogFileName ; };
+    std::string GetStdErrLogFile() { return m_errLogFileName ; };
   // Get Automatic Data File
     char *GetDataFile(){return m_DataFile;};
     char *GetAuxDataFile(){return m_AuxDataFile;};
@@ -387,7 +391,7 @@ class AutoSegComputation
     float GetSlicerVersion(){return m_SlicerVersion;};
     int GetANTSWithBrainmask(){return m_ANTSWithBrainmask;};
     int GetUseInitialAffine(){return m_UseInitialAffine;};
-    char *GetLogFile(){return m_LogFile;};
+//    char *GetLogFile(){return m_LogFile;};
 
     //void SetABCANTSWarpButtonChecked(){m_ABCANTSWarpChecked = 1;};
     // int GetABCANTSWarpButtonChecked(){return m_ABCANTSWarpChecked;};
@@ -399,7 +403,7 @@ class AutoSegComputation
     
     // Log File
     std::string m_output;
-    char m_LogFile[512];
+   // char m_LogFile[512];
     // Parameter File
     char m_ParameterFile[512];
     char m_ComputationFile[512];
@@ -983,6 +987,10 @@ class AutoSegComputation
     ToolsMapPathsType m_RequiredToolsPaths ;
     std::vector< std::string > m_MissingTools ;
     std::vector< std::string > m_ToolsNotRequired ;
+
+    // log files
+    std::string m_outLogFileName ;
+    std::string m_errLogFileName ;
 };
 
 #endif
