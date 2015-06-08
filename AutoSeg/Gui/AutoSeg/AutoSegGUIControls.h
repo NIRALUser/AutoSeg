@@ -289,8 +289,6 @@ class AutoSegGUIControls : public AutoSegGUI
     void SetScale4NbIterationsGUI();
     void SetScale2NbIterationsGUI();
     void SetScale1NbIterationsGUI();
-    int FindTools( std::vector< std::string > listTools );
-    void RemoveRequiredTools( std::vector<std::string> &listTools );
     // - BRAINSDemonWarp
     void SetPyramidLevelsGUI();
     void SetMovingShrinkFactorsGUI();
@@ -347,7 +345,7 @@ class AutoSegGUIControls : public AutoSegGUI
 
   // Load Files
     bool UpdateParameterGUI(const char *_FileName, enum Mode mode=file, bool showError = true ) ;
-    void UpdateComputationGUI(const char *_FileName);
+    void UpdateComputationGUI(const char *_FileName, bool showError = true );
     void UpdateAuxComputationGUI(const char *_FileName);
   // Default Parameters Files
     void SetDefaultParameterFile(const char *_DefaultParameterFile);
@@ -418,8 +416,6 @@ class AutoSegGUIControls : public AutoSegGUI
     char *m_ProcessDataDirectory;
     char *m_DataDirectory;
     char *m_CurrentDirectory;
-    bool m_OldFluidRegistration ;
-    bool m_ActivateReorientation ;
     std::string m_logOutFileName ;
     std::string m_logErrFileName ;
 };

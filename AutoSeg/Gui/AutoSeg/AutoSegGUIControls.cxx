@@ -104,7 +104,6 @@ float CalculateIntensityEnergy(const char *fixedDirectory, const char *movingDir
     catch( itk::ExceptionObject & excep ){
         std::cerr << "Exception catched !" << std::endl;
         std::cerr << excep << std::endl;
-        exit(0);
         return -1;
     }
     float msm = MSMmetric->GetValue( transform->GetParameters( ) );
@@ -147,7 +146,6 @@ float CalculateHarmonicEnergy(const char *deformedFieldDirectory, const std::str
     catch( itk::ExceptionObject & err ) {
         std::cerr << "ExceptionObject caught !" << std::endl;
         std::cerr << err << std::endl;
-        exit(0);
         return -1;
     }
     for(index[2] = 0; index[2] < (int)size[2]; index[2]++) {
@@ -237,12 +235,26 @@ AutoSegGUIControls::AutoSegGUIControls(std::string _AutoSegPath,
   SetDefaultParameterFile(DefaultParameterFile);
   if( parameterFile != NULL )
   {
-    m_Computation.LoadParameterFile(parameterFile);
+    try
+    {
+      m_Computation.LoadParameterFile(parameterFile);
+    }
+    catch(...)
+    {
+      //do nothing
+    }
     UpdateParameterGUI(parameterFile, file , true );
   }
   else
   {
-    IsDefaultParameterFile = m_Computation.LoadParameterFile(GetDefaultParameterFile());
+    try
+    {
+      m_Computation.LoadParameterFile(GetDefaultParameterFile() , file, false);
+    }
+    catch(...)
+    {
+      //do nothing
+    }
     IsDefaultParameterFile = UpdateParameterGUI(GetDefaultParameterFile(), file , false );
     if (!IsDefaultParameterFile)
     {
@@ -254,61 +266,18 @@ AutoSegGUIControls::AutoSegGUIControls(std::string _AutoSegPath,
     m_Computation.LoadComputationFile(computationFile);
     UpdateComputationGUI(computationFile);
   }
-  std::vector< std::string > listTools ;
-  listTools.push_back("WarpTool");
-  listTools.push_back("txApply");
-  listTools.push_back("fWarp");
-  if( FindTools( listTools ) )
+  if( !m_Computation.GetOldFluidRegistrationAvailable() )
   {
-    m_OldFluidRegistration = false ;
     g_ClassicWarpingButton->deactivate() ;
     g_CoarseToFineWarpingButton->deactivate() ;
     g_FluidWarpingGroup->deactivate() ;
-    RemoveRequiredTools(listTools);
   }
-  else
-  {
-    m_OldFluidRegistration = true ;
-  }
-  listTools.clear() ;
-  listTools.push_back( "imconvert3" ) ;
-  if( FindTools( listTools ) )
+  if( !m_Computation.GetReorientationAvailable() )
   {
       g_ReorientationGroup->deactivate() ;
-      m_ActivateReorientation = false ;
-      RemoveRequiredTools(listTools);
-  }
-  else
-  {
-      m_ActivateReorientation = true ;
   }
   ABCButtonToggled();//This is necessary to initialize the tissue segmentation parameters in m_Computation
   SetANTSRegistrationFilterTypeGUI();//This is necessary to initialize the "step" for ANTS registration (default registration)
-}
-
-
-void AutoSegGUIControls::RemoveRequiredTools( std::vector<std::string> &listTools )
-{
-  for( size_t pos = 0 ; pos < listTools.size() ; pos ++ )
-  {
-    m_Computation.AddNotRequiredTools(listTools[pos]) ;
-  }
-}
-
-// Verify if old tools are on the system. They are not built by the Superbuild mechanism.
-// If they are not present, we just disable the radio buttons that allow to select them
-int AutoSegGUIControls::FindTools( std::vector< std::string > listTools )
-{
-  std::string result ;
-  for( size_t i = 0 ; i < listTools.size() ; i++ )
-  {
-    result = itksys::SystemTools::FindProgram( listTools[ i ] ) ;
-    if( result == "" )
-    {
-      return 1 ;
-    }
-  }
-  return 0 ;
 }
 
 
@@ -358,8 +327,16 @@ void AutoSegGUIControls::LoadParameterFileGUI()
   }
 
   //if a name has been set
-  if(fc.count()) {
-    m_Computation.LoadParameterFile(fc.value());  
+  if(fc.count())
+  {
+    try
+    {
+      m_Computation.LoadParameterFile(fc.value());
+    }
+    catch(const std::exception& ex)
+    {
+      fl_alert( "%s" , ex.what() ) ;
+    }
     UpdateParameterGUI(fc.value());
   }
   m_CurrentDirectory = strdup(fc.directory());
@@ -598,7 +575,14 @@ void AutoSegGUIControls::SaveComputationFileGUI()
 
 void AutoSegGUIControls::UseDefaultParametersGUI()
 {
-  m_Computation.LoadParameterFile(GetDefaultParameterFile());
+  try
+  {
+    m_Computation.LoadParameterFile(GetDefaultParameterFile());
+  }
+  catch(...)
+  {
+    //do nothing
+  }
   UpdateParameterGUI(GetDefaultParameterFile());
 
 }
@@ -630,7 +614,7 @@ char * AutoSegGUIControls::GetDefaultParameterFile()
 
 // Update GUI
 // THIS IS A DUPLICATION OF THE LOADING OF THE PARAMETER FILE, this needs to be adapted to be called from the main application
-void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
+void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName , bool showError )
 {
   FILE* ComputationFile;
   char Line[1536];
@@ -864,7 +848,11 @@ void AutoSegGUIControls::UpdateComputationGUI(const char *_FileName)
   }
   else
   {
-    std::cerr<<"Error Opening File: "<<_FileName<<std::endl;
+    if( showError )
+    {
+      fl_alert( "Error Opening File: %s" , _FileName) ;
+      std::cerr << "Error Opening File: " << _FileName << std::endl ;
+    }
   }
 }
 
@@ -1627,6 +1615,7 @@ void AutoSegGUIControls::UpdateAuxComputationGUI(const char *_FileName)
   }
   else
   {
+    fl_alert( "Error Opening File: %s" , _FileName ) ;
     std::cerr<<"Error Opening File: "<<_FileName<<std::endl;
   }
 }
@@ -2120,9 +2109,9 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   else if ((std::strncmp("Reorientation: ", Line, 15)) == 0)
   {
     Reorientation = (atoi(Line+15));
-      if (Reorientation == 1)
+    if (Reorientation == 1)
     {
-        if( m_ActivateReorientation )
+        if( m_Computation.GetReorientationAvailable() )
         {
           g_ReorientationButton->set();
           g_InputDataOrientationDisp->activate();
@@ -2133,9 +2122,9 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
           std::string message = "Reorientation not availabe: imconvert3 not found on the system " ;
           if( showError )
           {
-            fl_alert( message.c_str() ) ;
+            fl_alert( "%s" , message.c_str() ) ;
+            std::cerr << message << std::endl ;
           }
-          std::cerr << message << std::endl ;
           g_ReorientationButton->clear();
           //Forcing to "no reorientation"
           m_Computation.SetReorientation(0);
@@ -2337,10 +2326,10 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       softwareName += "\nNo such EM Software (Beware, itkEMS is no longer supported)!" ;
       if( showError )
       {
-        fl_alert( softwareName.c_str() ) ;
+        fl_alert( "%s" , softwareName.c_str() ) ;
+        std::cerr << "Tissue segmentation software: " << Line+13 << std::endl ;
+        std::cerr << "No such EM Software (Beware, itkEMS is no longer supported)!"<<std::endl;
       }
-      std::cerr << "Tissue segmentation software: " << Line+13 << std::endl ;
-      std::cerr << "No such EM Software (Beware, itkEMS is no longer supported)!"<<std::endl;
     }
   }
   else if ( (std::strncmp("Filter Iterations: ", Line, 19)) == 0)
@@ -2609,7 +2598,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       {
   if ( (std::strncmp("Warping Method: ", Line, 16)) == 0)
   {
-    if (std::strcmp(Line+16, "Classic") == 0 && m_OldFluidRegistration)
+    if (std::strcmp(Line+16, "Classic") == 0 && m_Computation.GetOldFluidRegistrationAvailable() )
     {
       g_ClassicWarpingButton->set();
       g_CoarseToFineWarpingButton->clear();
@@ -2622,7 +2611,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       g_Scale4NbIterations->deactivate();
       g_Scale2NbIterations->deactivate();
     }
-    else if (std::strcmp(Line+16, "Coarse-to-fine") == 0 && m_OldFluidRegistration)
+    else if (std::strcmp(Line+16, "Coarse-to-fine") == 0 && m_Computation.GetOldFluidRegistrationAvailable() )
     {
       g_CoarseToFineWarpingButton->set();
       g_ClassicWarpingButton->clear();
@@ -2645,22 +2634,22 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       g_BRAINSDemonWarpGroup->show();
       g_FluidWarpingGroup->hide();
     }
-      else
+    else
     {
-        if( std::strcmp(Line+16, "ANTS") != 0 )
+      if( std::strcmp(Line+16, "ANTS") != 0 )
+      {
+        const char* message = "Error while reading parameter file: warping method incorrect or not supported on this computer!" ;
+        if( showError )
         {
-          const char* message = "Error while reading parameter file: warping method incorrect or not supported on this computer!" ;
-          if( showError )
-          {
-            fl_alert( message ) ;
-          }
+          fl_alert( "%s",message ) ;
           std::cerr << message << std::endl ;
-          //Forcing ANTS registration in m_Computation
-          m_Computation.SetClassicWarpingMethod(0);
-          m_Computation.SetCoarseToFineWarpingMethod(0);
-          m_Computation.SetBRAINSDemonWarpMethod(0);
-          m_Computation.SetANTSWarpingMethod(1);
         }
+        //Forcing ANTS registration in m_Computation
+        m_Computation.SetClassicWarpingMethod(0);
+        m_Computation.SetCoarseToFineWarpingMethod(0);
+        m_Computation.SetBRAINSDemonWarpMethod(0);
+        m_Computation.SetANTSWarpingMethod(1);
+      }
       g_CoarseToFineWarpingButton->clear();
       g_ClassicWarpingButton->clear();
       g_BRAINSDemonWarpButton->clear();
@@ -2668,7 +2657,7 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
       g_ANTSWarpingGroup->show();
       g_BRAINSDemonWarpGroup->hide();
       g_FluidWarpingGroup->hide();
-      }
+    }
   }
   else if ( (std::strncmp("Alpha: ", Line, 7)) == 0)
   {
@@ -3028,14 +3017,13 @@ bool AutoSegGUIControls::UpdateParameterGUI(const char *_FileName, enum Mode mod
   }
   else
   {
-    std::string message = std::string( "Error Opening File: " ) + FileNameStr ;
     if( showError )
     {
-      fl_alert( message.c_str() ) ;
+      std::string message = std::string( "Error Opening File: " ) + FileNameStr ;
+      fl_alert( "%s" , message.c_str() ) ;
+      std::cerr << message << std::endl ;
     }
-    std::cerr << message << std::endl ;
   }
-  
   return IsParameterFileLoaded;
 }
 
@@ -4610,8 +4598,9 @@ void AutoSegGUIControls::AddBrowserAutoData()
   }
   else
   {
-    std::cerr<<"Error Opening File: "<<m_Computation.GetDataFile()<<std::endl;
-    exit(-1);
+    const char* errorMessage = "Error Opening File: " ;
+    std::cerr << errorMessage << m_Computation.GetDataFile() << std::endl ;
+    fl_alert( "%s %s" , errorMessage , m_Computation.GetDataFile() ) ;
   }
 }
 
@@ -4642,8 +4631,9 @@ void AutoSegGUIControls::AddAuxBrowserAutoData()
   }
   else
   {
-    std::cerr<<"Error Opening File: "<<m_Computation.GetAuxDataFile()<<std::endl;
-    exit(-1);
+    const char* errorMessage = "Error Opening File: " ;
+    std::cerr << errorMessage << m_Computation.GetAuxDataFile() << std::endl ;
+    fl_alert( "%s %s" , errorMessage , m_Computation.GetDataFile() ) ;
   }
 }
 
@@ -5823,13 +5813,13 @@ void AutoSegGUIControls::ComputeGUI()
               {
                 message += std::string( "\n" ) + missingTools[ i ] ;
               }
-              fl_alert( message.c_str() ) ;
+              fl_alert( "%s" , message.c_str() ) ;
             }
           }
         }
         catch(const std::exception& ex)
         {
-            fl_alert( ex.what() ) ;
+            fl_alert( "%s" , ex.what() ) ;
         }
         catch(...)
         {
@@ -7010,19 +7000,40 @@ void AutoSegGUIControls::SetANTSGaussianSigmaGUI()
 
 void AutoSegGUIControls::UseDefaultEMSAdvancedParametersGUI()
 {
-  m_Computation.LoadParameterFile(GetDefaultParameterFile(),tissueSeg);
+  try
+  {
+    m_Computation.LoadParameterFile(GetDefaultParameterFile(),tissueSeg);
+  }
+  catch(...)
+  {
+    //do nothing
+  }
   UpdateParameterGUI(GetDefaultParameterFile(),tissueSeg);
 }
 
 void AutoSegGUIControls::UseDefaultWarpingAdvancedParametersGUI()
 {
-  m_Computation.LoadParameterFile(GetDefaultParameterFile(),warping);
+  try
+  {
+    m_Computation.LoadParameterFile(GetDefaultParameterFile(),warping);
+  }
+  catch(...)
+  {
+    //do nothing
+  }
   UpdateParameterGUI(GetDefaultParameterFile(),warping);
 }
 
 void AutoSegGUIControls::UseDefaultN4AdvancedParametersGUI()
 {
-  m_Computation.LoadParameterFile(GetDefaultParameterFile(),N4biasFieldCorrection);
+  try
+  {
+    m_Computation.LoadParameterFile(GetDefaultParameterFile(),N4biasFieldCorrection);
+  }
+  catch(...)
+  {
+    //do nothing
+  }
   UpdateParameterGUI(GetDefaultParameterFile(),N4biasFieldCorrection);
 }
 

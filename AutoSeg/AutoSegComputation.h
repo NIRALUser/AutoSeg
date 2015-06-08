@@ -70,6 +70,9 @@ class AutoSegComputation
     void SetStdErrLogFile( std::string _errLogFileName ) { m_errLogFileName = _errLogFileName ; };
     std::string GetStdOutLogFile() { return m_outLogFileName ; };
     std::string GetStdErrLogFile() { return m_errLogFileName ; };
+    //What is available on this system: are all the tools installed?
+    bool GetReorientationAvailable() { return m_ReorientationAvailable ; } ;
+    bool GetOldFluidRegistrationAvailable() { return m_OldFluidRegistrationAvailable ; } ;
   // Get Automatic Data File
     char *GetDataFile(){return m_DataFile;};
     char *GetAuxDataFile(){return m_AuxDataFile;};
@@ -348,9 +351,8 @@ class AutoSegComputation
     void ComputeData();
 
     // Compute Automatic Segmentation
-    int FindTools() ;
+    int FindTools(ToolsMapType tools, bool recordMissing) ;
     std::vector< std::string > GetMissingTools() ;
-    void AddNotRequiredTools( std::string toolName ) ;
     int Computation();
     void ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile);
     void RunPipeline(int _GUImode);
@@ -361,7 +363,7 @@ class AutoSegComputation
   // Show MRML Scene
     void ExecuteSlicer3withScene(std::string pathSlicer);
   // Load Files
-    bool LoadParameterFile(const char *_FileName, enum Mode mode=file);
+    bool LoadParameterFile(const char *_FileName, enum Mode mode=file, bool showError=true);
     void LoadComputationFile(const char *_FileName);
     void LoadAuxComputationFile(const char *_FileName);
     void SortStringList(char **strList, int size);
@@ -982,9 +984,12 @@ class AutoSegComputation
     int m_batchMakeThreadID;
     bm::ScriptParser m_Parser;
     ToolsMapType m_RequiredTools ;
-    ToolsMapPathsType m_RequiredToolsPaths ;
+    ToolsMapType m_ReorientationTools ;
+    bool m_ReorientationAvailable ;
+    ToolsMapType m_OldFluidRegistrationTools ;
+    bool m_OldFluidRegistrationAvailable ;
+    ToolsMapPathsType m_ToolsPaths ;
     std::vector< std::string > m_MissingTools ;
-    std::vector< std::string > m_ToolsNotRequired ;
 
     // log files
     std::string m_outLogFileName ;
