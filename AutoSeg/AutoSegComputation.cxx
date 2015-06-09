@@ -1888,7 +1888,7 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
       Fl::check();
     }
     
-    itksys::SystemTools::Delay(100);
+    itksys::SystemTools::Delay(300);
 
     if (GetGUIMode())
     {
@@ -1896,17 +1896,8 @@ void AutoSegComputation::ExecuteBatchMake(char *_Input, int _GUIMode)
       int length = itksys::SystemTools::FileLength(GetStdOutLogFile().c_str());
       if (length != curFileLength) {
         curFileLength = length;
-        ifstream logInput (GetStdOutLogFile().c_str());
-
-        if (logInput) {
-          std::string log((std::istreambuf_iterator<char>(logInput)), std::istreambuf_iterator<char>());
-
-          m_output = log;
-
-          m_TextBuf.text(m_output.c_str());
-          TextDisplay.g_TextDisp->scroll(100000,0);
-        }
-        logInput.close();
+        m_TextBuf.loadfile(GetStdOutLogFile().c_str(), curFileLength);
+        TextDisplay.g_TextDisp->scroll(100000,0);
       }
     }
 
@@ -3957,7 +3948,7 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
       BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
       BMSAutoSegMainFile<<"               Run (output ${command_line} error)"<<std::endl;
       BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${output}'\\n')"<<std::endl;
-      BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;
+      //BMSAutoSegMainFile<<"               AppendFile(${logOutFile} ${error}'\\n')"<<std::endl;//Creates errors in showing message in FLTK log window
       BMSAutoSegMainFile<<"               AppendFile(${logErrFile} ${error}'\\n')"<<std::endl;
     }
     else if (std::strcmp(GetEMSoftware(), "neoseg") == 0)
