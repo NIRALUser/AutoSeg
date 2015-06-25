@@ -3176,8 +3176,8 @@ void AutoSegComputation::WriteBMSAutoSegMainFile()
         BMSAutoSegMainFile<<"    Set (command_line ${N4Cmd}  ${CaseN4} ${my_output} ${SlicerN4parameters})"<<std::endl;
     }
 
-    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line} ${parameters}'\\n')"<<std::endl;
-    BMSAutoSegMainFile<<"    Run (prog_output ${command_line} ${parameters} prog_error)"<<std::endl;
+    BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${command_line}'\\n')"<<std::endl;
+    BMSAutoSegMainFile<<"    Run (prog_output ${command_line} prog_error)"<<std::endl;
     BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_output}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    AppendFile(${logOutFile} ${prog_error}'\\n')"<<std::endl;
     BMSAutoSegMainFile<<"    AppendFile(${logErrFile} ${prog_error}'\\n')"<<std::endl;
