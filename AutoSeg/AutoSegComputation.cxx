@@ -283,11 +283,11 @@ void AutoSegComputation::SetLogFile()
 {
   if( m_outLogFileName.empty() )
   {
-    m_outLogFileName = std::string( GetProcessDataDirectory() ) + "AutoSeg.log" ;
+    m_outLogFileName = std::string( GetProcessDataDirectory() ) + "AutoSeg-log.txt" ;
   }
   if( m_errLogFileName.empty() )
   {
-    m_errLogFileName = m_outLogFileName + ".err" ;
+    m_errLogFileName = m_outLogFileName + "-err.txt" ;
   }
 }
 
@@ -1710,12 +1710,13 @@ int AutoSegComputation::FindTools( ToolsMapType tools , bool recordMissing )
     }
     if( toolPath.empty() )
     {
+      // We could not find the tool. We only write its name so that the BatchMake script is understandable when one reads it
+      // and to avoid errors when looking for the name of the tool in the map
+      ToolsPairPathsType toolPathPair( name , toolNames[ 0 ] ) ;
+      m_ToolsPaths.insert( toolPathPair ) ;
       missing++ ;
       if( recordMissing )
       {
-        //We could not find the tool. We only write its name so that the BatchMake script is understandable when one reads it
-        ToolsPairPathsType toolPathPair( name , toolNames[ 0 ] ) ;
-        m_ToolsPaths.insert( toolPathPair ) ;
         m_MissingTools.push_back( toolNames[ 0 ] ) ;
       }
     }

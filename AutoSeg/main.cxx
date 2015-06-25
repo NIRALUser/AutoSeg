@@ -23,7 +23,7 @@
 #include "AutoSegComputation.h"
 #include <itksys/SystemTools.hxx>
 
-#define AUTOSEG_VERSION "3.3.1"
+#define AUTOSEG_VERSION "3.3.2"
 
 void PrintHelp(char* progname)
 {
@@ -55,7 +55,6 @@ int main(int argc, char *argv[])
   {
     logErrorFilename = std::string(logFilename) + ".err";
   }
-
   std::string executableFullPath = itksys::SystemTools::CollapseFullPath( argv[0] ).c_str() ;
   std::string executableDirectory ;
   std::string filename ;
