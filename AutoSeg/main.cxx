@@ -50,11 +50,6 @@ int main(int argc, char *argv[])
   const char *computationFile = ipGetStringArgument(argv, "-computationFile", NULL);
   const char *parameterFile = ipGetStringArgument(argv, "-parameterFile", NULL);
   std::string logFilename = ipGetStringArgument(argv, "-logFile", "");
-  std::string logErrorFilename ;
-  if( !logFilename.empty() )
-  {
-    logErrorFilename = std::string(logFilename) + ".err";
-  }
   std::string executableFullPath = itksys::SystemTools::CollapseFullPath( argv[0] ).c_str() ;
   std::string executableDirectory ;
   std::string filename ;
@@ -84,8 +79,7 @@ int main(int argc, char *argv[])
                                                             AUTOSEG_VERSION ,
                                                             computationFile ,
                                                             parameterFile,
-                                                            logFilename,
-                                                            logErrorFilename
+                                                            logFilename
                                                             );
     Fl::scheme("plastic");
     Fl::run();
@@ -96,7 +90,6 @@ int main(int argc, char *argv[])
   {
     AutoSegComputation m_Computation;
     m_Computation.SetStdOutLogFile( logFilename ) ;
-    m_Computation.SetStdErrLogFile( logErrorFilename ) ;
     m_Computation.ComputationWithoutGUI(computationFile, parameterFile);
   }
   else if (version)

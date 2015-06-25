@@ -287,7 +287,10 @@ void AutoSegComputation::SetLogFile()
   }
   if( m_errLogFileName.empty() )
   {
-    m_errLogFileName = m_outLogFileName + "-err.txt" ;
+    m_errLogFileName = m_outLogFileName ;
+    std::string::size_type dot_pos = m_errLogFileName.rfind('.');
+    m_errLogFileName.erase( dot_pos ) ;
+    m_errLogFileName += "-err.txt" ;
   }
 }
 
@@ -1749,7 +1752,7 @@ int AutoSegComputation::Computation()
 // Compute Automatic Segmentation
 void AutoSegComputation::ComputationWithoutGUI(const char *_computationFile, const char *_parameterFile)
 {
-
+  SetLogFile();
   LoadAuxComputationFile(_computationFile);
   LoadComputationFile(_computationFile);
   LoadParameterFile(_parameterFile);

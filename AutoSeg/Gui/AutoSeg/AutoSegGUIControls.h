@@ -75,7 +75,7 @@ class AutoSegGUIControls : public AutoSegGUI
                        const char* computationFile ,
                        const char* parameterFile ,
                        std::string logOutFileName ,
-                       std::string logErrFileName
+                       std::string logErrFileName = ""
                        );
     virtual ~AutoSegGUIControls();
 
