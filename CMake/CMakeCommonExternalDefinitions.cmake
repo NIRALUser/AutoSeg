@@ -33,7 +33,7 @@ macro(PACKAGE_NEEDS_ITK LOCAL_CMAKE_BUILD_OPTIONS gen)
   else()
     set(proj Insight)
     set(${proj}_REPOSITORY ${git_protocol}://itk.org/ITK.git)
-    set(${proj}_GIT_TAG 12f11d1f408680d24b6380856dd28dbe43582285 )
+    set(${proj}_GIT_TAG 042875b0246b0b2da1c1c58bf2f606b9590f6979 )
     set(ITK_VERSION_ID ITK-4.8)
     ExternalProject_Add(${proj}
       GIT_REPOSITORY ${${proj}_REPOSITORY}

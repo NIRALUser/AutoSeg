@@ -332,7 +332,7 @@ set(proj ANTS)
 COMPILE_EXTERNAL_TOOLS( TOOL_NAMES ANTS WarpImageMultiTransform TOOL_PROJECT_NAME ${proj} )
 IF(COMPILE_EXTERNAL_ANTS)
   set( ${proj}_REPOSITORY ${git_protocol}://github.com/stnava/ANTs.git )
-  set( ${proj}_GIT_TAG 40285bf1c8e0d8f4395b7220225e67ed599a31ac )
+  set( ${proj}_GIT_TAG 7d1138e6237f816a9536e70997652a5fe60cf0b3 )
   set( ANTS_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${proj}-lib )
   set( ANTS_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${proj}-lib )
   ExternalProject_Add(${proj}
@@ -352,8 +352,7 @@ IF(COMPILE_EXTERNAL_ANTS)
       -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_CURRENT_BINARY_DIR}/${proj}-install
    )
   set(ANTs_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${proj})
-  # libantsUtilities does not get installed. Instead, we point to the build directory so that BRAINSTTools can find it. This would most likely not work on Windows as the library would likely be in a sub-folder named after the build type (eg Debug) but AutoSeg does not work on Windows, so this is not an issue.
-  set(ANTs_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${proj}-build/lib )
+  set(ANTs_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${proj}-install/lib )
   set(ANTs_DEPEND "${proj}")
   FORCE_BUILD_CHECK(${proj})
 ENDIF(COMPILE_EXTERNAL_ANTS)
